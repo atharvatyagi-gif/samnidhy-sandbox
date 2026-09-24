@@ -21,6 +21,10 @@ exclude_symbols = []         # add any symbol here to always skip it, e.g. ["ABC
 [source]
 # NSE's official end-of-day file ("bhavcopy"). {date} is filled in automatically.
 bhavcopy_url = "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_{date:%d%m%Y}.csv"
+# NSE's official index closing values. Used for the benchmark's session-day price
+# when Yahoo hasn't published it yet.
+index_close_url = "https://nsearchives.nseindia.com/content/indices/ind_close_all_{date:%d%m%Y}.csv"
+benchmark_index_name = "Nifty 50"
 lookback_days = 10           # how many days back to look for the last trading session
 retries = 3                  # attempts per download before giving up
 

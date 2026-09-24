@@ -5,3 +5,6 @@ __pycache__/
 # Secrets: API keys live in .env locally and in GitHub repository secrets, never in git
 .env
 .env.*
+
+# Raw price downloads: a cache the daily job rebuilds (new stocks every day would bloat git)
+data/raw/
