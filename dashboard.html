@@ -1,0 +1,5590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Understanding the Indian Stock Market</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js" onerror="window.__chartJsFailed = true;"></script>
+<script>
+  // Opt in to scroll animations before first paint (skipped for users who prefer reduced motion,
+  // and if this script never runs, content simply stays visible).
+  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('anim');
+  }
+</script>
+<style>
+  :root {
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.12);
+    --success:        #0ca30c;
+    --critical:       #e66767;
+    --warning:        #fab219;
+    --accent:         #22c55e;
+    --accent-strong:  #16a34a;
+    --on-color:       #0b0b0b; /* text on any solid accent/status fill; verified >= 5.8:1 on all of them */
+    --series-1:       #3987e5; /* RELIANCE */
+    --series-2:       #d95926; /* TCS */
+    --series-3:       #199e70; /* HDFCBANK */
+    --series-4:       #c98500; /* ITC */
+    --series-5:       #d55181; /* INFY */
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+  }
+
+  /* --- Scroll progress bar --- */
+  .scroll-progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    width: 0;
+    background: var(--accent);
+    z-index: 30;
+    transition: width 0.08s linear;
+  }
+
+  /* ================= TICKER TAPE ================= */
+  .ticker-tape {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    background: #070707;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  }
+  .ticker-track {
+    display: inline-flex;
+    padding: 9px 0;
+    animation: ticker 40s linear infinite;
+    will-change: transform;
+  }
+  .ticker-tape:hover .ticker-track { animation-play-state: paused; }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .tick-item { display: inline-flex; gap: 8px; align-items: baseline; padding-right: 40px; font-variant-numeric: tabular-nums; }
+  .tick-item .sym { font-weight: 700; color: var(--text-primary); letter-spacing: 0.03em; }
+  .tick-item .px { color: var(--text-secondary); }
+  .tick-item .up { color: var(--accent); font-weight: 600; }
+  .tick-item .down { color: var(--critical); font-weight: 600; }
+  .tick-item .lbl { color: var(--text-muted); font-size: 0.72rem; }
+
+  /* ================= HERO ================= */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border-bottom: 1px solid var(--border);
+    padding: 64px 16px 40px 16px;
+  }
+  .hero-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 25%, #000 25%, transparent 75%);
+            mask-image: radial-gradient(ellipse 80% 70% at 50% 25%, #000 25%, transparent 75%);
+    animation: grid-drift 22s linear infinite;
+  }
+  @keyframes grid-drift { to { background-position: 44px 44px; } }
+  .blob { position: absolute; border-radius: 50%; filter: blur(80px); will-change: transform; }
+  .blob.b1 { width: 480px; height: 480px; background: #16a34a; top: -200px; right: -80px; opacity: 0.45; animation: float1 16s ease-in-out infinite alternate; }
+  .blob.b2 { width: 380px; height: 380px; background: #0d9488; bottom: -220px; left: -140px; opacity: 0.30; animation: float2 20s ease-in-out infinite alternate; }
+  .blob.b3 { width: 260px; height: 260px; background: #65a30d; top: 35%; left: 42%; opacity: 0.18; animation: float3 18s ease-in-out infinite alternate; }
+  @keyframes float1 { to { transform: translate(-140px, 90px) scale(1.15); } }
+  @keyframes float2 { to { transform: translate(160px, -70px) scale(1.1); } }
+  @keyframes float3 { to { transform: translate(-90px, -60px) scale(0.85); } }
+
+  .hero-inner { max-width: 1100px; margin: 0 auto; }
+  .hero-top { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
+  @media (max-width: 900px) { .hero-top { grid-template-columns: 1fr; gap: 28px; } }
+  .hero-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(34,197,94,0.35);
+    background: rgba(34,197,94,0.06);
+    border-radius: 999px;
+    padding: 5px 12px;
+    margin-bottom: 18px;
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+    70%  { box-shadow: 0 0 0 9px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+  .hero h1 {
+    margin: 0 0 18px 0;
+    font-size: clamp(2.1rem, 5.4vw, 3.7rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.04;
+  }
+  .hero h1 .word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.6em) rotate(3deg);
+    filter: blur(8px);
+    animation: word-in 0.8s cubic-bezier(.2,.7,.2,1) forwards;
+    animation-delay: calc(var(--w) * 90ms + 150ms);
+  }
+  @keyframes word-in { to { opacity: 1; transform: none; filter: blur(0); } }
+  .hero h1 .word.gradient-text {
+    background: linear-gradient(90deg, #22c55e, #a3e635, #2dd4bf, #22c55e);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+    animation: word-in 0.8s cubic-bezier(.2,.7,.2,1) forwards, shimmer 6s linear infinite;
+    animation-delay: calc(var(--w) * 90ms + 150ms), 0s;
+  }
+  @keyframes shimmer { to { background-position: 300% 0; } }
+  .hero .lead {
+    margin: 0 0 26px 0;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    max-width: 52ch;
+  }
+  .hero-ctas { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* hero chart card */
+  .hero .hero-chart {
+    background: linear-gradient(180deg, rgba(26,26,25,0.88), rgba(13,13,13,0.88));
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px 18px 12px 18px;
+    box-shadow: 0 30px 80px -30px rgba(34,197,94,0.4);
+  }
+  .hc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .hc-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .hc-big { font-size: clamp(1.9rem, 4vw, 2.7rem); font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.1; }
+  .hc-sub { font-size: 0.8rem; color: var(--text-secondary); text-align: right; font-variant-numeric: tabular-nums; }
+  .hc-sub strong { color: var(--text-primary); }
+  #hc-svg { width: 100%; height: 200px; display: block; margin-top: 10px; overflow: visible; }
+  .hc-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(34,197,94,0.6)); }
+  .hc-area { opacity: 0; transition: opacity 1.2s ease 1.4s; }
+  .hc-drawn .hc-area { opacity: 1; }
+  .hc-base { stroke: var(--text-muted); stroke-dasharray: 3 4; stroke-width: 1; }
+  .hc-dot { fill: var(--accent); opacity: 0; transition: opacity 0.3s ease 2.2s; }
+  .hc-drawn .hc-dot { opacity: 1; }
+  .hc-ring { fill: none; stroke: var(--accent); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: ring 1.8s ease-out infinite; }
+  @keyframes ring { from { transform: scale(1); opacity: 0.8; } to { transform: scale(3.4); opacity: 0; } }
+  .hc-axis { font-size: 10px; fill: var(--text-muted); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .hc-caption { font-size: 0.78rem; color: var(--text-secondary); margin: 8px 0 0 0; border-top: 1px dashed var(--gridline); padding-top: 8px; }
+
+  /* hero stat strip */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 40px 0 24px 0;
+  }
+  @media (max-width: 760px) { .hero-stats { grid-template-columns: repeat(2, 1fr); } }
+  .hero-stat { background: rgba(13,13,13,0.92); padding: 16px 18px; }
+  .hero-stat .n { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .hero-stat .n .unit { font-size: 0.55em; color: var(--accent); margin-left: 3px; letter-spacing: 0; }
+  .hero-stat .t { font-size: 0.78rem; color: var(--text-secondary); }
+
+  /* lesson cards */
+  .hero-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 820px) { .hero-cards { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .hero-cards { grid-template-columns: 1fr; } }
+  .hero-card {
+    position: relative;
+    display: block;
+    text-decoration: none;
+    color: var(--text-primary);
+    background: rgba(26,26,25,0.85);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    transition: transform 0.25s cubic-bezier(.2,.7,.2,1), border-color 0.2s;
+    will-change: transform;
+  }
+  .hero-card:hover, .hero-card:focus-visible { border-color: var(--accent); outline: none; }
+  .hero-card .num { font-size: 0.72rem; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; }
+  .hero-card .title { display: block; font-weight: 700; font-size: 1rem; margin: 6px 0 3px 0; }
+  .hero-card .desc { display: block; font-size: 0.82rem; color: var(--text-secondary); }
+  .hero-card .arrow { position: absolute; right: 14px; top: 14px; color: var(--text-muted); transition: transform 0.2s, color 0.2s; }
+  .hero-card:hover .arrow { transform: translate(3px, -3px); color: var(--accent); }
+
+  .scroll-cue {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    width: max-content; margin: 30px auto 0 auto;
+    color: var(--text-muted); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none;
+  }
+  .scroll-cue .mouse { width: 22px; height: 34px; border: 2px solid var(--text-muted); border-radius: 12px; position: relative; }
+  .scroll-cue .mouse::after {
+    content: ""; position: absolute; left: 50%; top: 6px; width: 4px; height: 7px; margin-left: -2px;
+    border-radius: 2px; background: var(--accent); animation: wheel 1.6s ease-in-out infinite;
+  }
+  @keyframes wheel { 0% { opacity: 0; transform: translateY(-2px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(11px); } }
+
+  .btn-lg { padding: 12px 22px; font-size: 1rem; border-radius: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-ghost { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+
+  /* ================= SCROLL EFFECTS ================= */
+  /* Hidden start state only applies once JS has confirmed it can reveal things (html.anim). */
+  .anim .reveal {
+    opacity: 0;
+    transform: translateY(32px) scale(0.985);
+    filter: blur(6px);
+    transition: opacity 0.8s cubic-bezier(.2,.7,.2,1), transform 0.8s cubic-bezier(.2,.7,.2,1), filter 0.8s ease;
+    transition-delay: calc(var(--d, 0) * 90ms);
+  }
+  .anim .reveal.in { opacity: 1; transform: none; filter: none; }
+
+  .spotlight { isolation: isolate; }
+  .spotlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(460px circle at var(--mx, 50%) var(--my, 50%), rgba(34,197,94,0.11), transparent 45%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .spotlight:hover::before { opacity: 1; }
+  .card { position: relative; }
+
+  /* rotating glow border */
+  @property --ang { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+  .glow-card::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 13px;
+    padding: 1px;
+    background: conic-gradient(from var(--ang), transparent 0 65%, var(--accent) 82%, #a3e635 88%, transparent 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    animation: spin-border 6s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes spin-border { to { --ang: 360deg; } }
+
+  /* giant outlined lesson numbers with parallax */
+  .big-num {
+    position: absolute;
+    right: 0;
+    top: -64px;
+    font-size: clamp(5rem, 14vw, 10.5rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(34,197,94,0.28);
+    pointer-events: none;
+    user-select: none;
+    z-index: -1;
+    transform: translateY(var(--py, 0px));
+  }
+  @media (max-width: 600px) {
+    .big-num { font-size: 4.2rem; top: -58px; -webkit-text-stroke-color: rgba(34,197,94,0.18); }
+  }
+  .section-heading h2 { position: relative; }
+  .section-heading h2::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    height: 3px;
+    width: 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    transition: width 1s cubic-bezier(.2,.7,.2,1) 0.35s;
+  }
+  .section-heading.in h2::after, html:not(.anim) .section-heading h2::after { width: 140px; }
+
+  /* scroll-linked text bands */
+  .scroll-band {
+    overflow: hidden;
+    padding: 18px 0;
+    margin: 8px 0 64px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(34,197,94,0.07), transparent 35%, transparent 65%, rgba(34,197,94,0.07));
+  }
+  .band-row {
+    display: flex;
+    white-space: nowrap;
+    font-size: clamp(2rem, 6vw, 4.4rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    will-change: transform;
+  }
+  .band-row span { padding-right: 0.5em; }
+  .band-row .o { color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.32); }
+  .band-row .g { color: var(--accent); }
+  .band-row .s { color: var(--text-muted); font-weight: 400; }
+
+  /* --- Sticky menu bar --- */
+  header.site-header {
+    background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .menu-bar {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .brand-mark {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--accent);
+    display: inline-flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px;
+    padding: 4px;
+  }
+  .brand-mark i {
+    display: block;
+    width: 3px;
+    background: var(--on-color);
+    border-radius: 1px;
+  }
+  nav.section-nav {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  nav.section-nav a {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+  nav.section-nav a .n {
+    color: var(--text-muted);
+    margin-right: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  nav.section-nav a:hover { color: var(--text-primary); background: var(--surface-1); }
+  nav.section-nav a.active {
+    color: var(--accent);
+    background: rgba(34,197,94,0.10);
+    border-color: rgba(34,197,94,0.35);
+  }
+  nav.section-nav a.active .n { color: var(--accent); }
+  nav.section-nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .menu-toggle {
+    display: none;
+    margin-left: auto;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    align-items: center;
+    gap: 8px;
+  }
+  .menu-toggle .bars { display: inline-flex; flex-direction: column; gap: 3px; }
+  .menu-toggle .bars i { display: block; width: 14px; height: 2px; background: currentColor; border-radius: 1px; transition: transform 0.2s, opacity 0.2s; }
+  .menu-toggle[aria-expanded="true"] .bars i:nth-child(1) { transform: translateY(5px) rotate(45deg); }
+  .menu-toggle[aria-expanded="true"] .bars i:nth-child(2) { opacity: 0; }
+  .menu-toggle[aria-expanded="true"] .bars i:nth-child(3) { transform: translateY(-5px) rotate(-45deg); }
+
+  @media (max-width: 860px) {
+    .menu-toggle { display: inline-flex; }
+    nav.section-nav {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      flex-direction: column;
+      gap: 2px;
+      padding: 8px 16px 14px 16px;
+      background: var(--page-plane);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.6);
+    }
+    nav.section-nav.open { display: flex; }
+    nav.section-nav a { padding: 11px 12px; font-size: 0.95rem; }
+  }
+
+  /* --- Back to top --- */
+  .back-to-top {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: var(--on-color);
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 25;
+  }
+  .back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .back-to-top:hover { background: var(--accent-strong); }
+  .back-to-top:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 3px; }
+
+  /* --- Collapsible glossary --- */
+  details.glossary-wrap {
+    margin-top: 14px;
+    border: 1px solid var(--gridline);
+    border-radius: 10px;
+    background: var(--page-plane);
+  }
+  details.glossary-wrap > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  details.glossary-wrap > summary::-webkit-details-marker { display: none; }
+  details.glossary-wrap > summary::before {
+    content: '+';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: rgba(34,197,94,0.15);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  details.glossary-wrap[open] > summary::before { content: '\2212'; }
+  details.glossary-wrap > summary .hint { font-weight: 400; color: var(--text-muted); margin-left: auto; font-size: 0.78rem; }
+  details.glossary-wrap .glossary {
+    margin-top: 0;
+    border: none;
+    border-top: 1px solid var(--gridline);
+    border-radius: 0 0 10px 10px;
+  }
+
+  /* main is full-bleed so the scroll bands can span the viewport; each lesson is width-capped instead. */
+  main { padding: 72px 0 60px 0; }
+
+  section.dash-section {
+    position: relative;
+    isolation: isolate;
+    max-width: 1100px;
+    margin: 0 auto 72px auto;
+    padding: 0 16px;
+    scroll-margin-top: 72px;
+  }
+  .section-heading {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .section-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .section-heading h2 {
+    margin: 0;
+    font-size: clamp(1.5rem, 3.2vw, 2.1rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+  .section-intro {
+    color: var(--text-secondary);
+    max-width: 72ch;
+    margin: 0 0 20px 0;
+  }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .caption {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--gridline);
+  }
+  .caption strong { color: var(--text-primary); }
+
+  /* --- Glossary --- */
+  .glossary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px 20px;
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: var(--page-plane);
+    border: 1px solid var(--gridline);
+    border-radius: 10px;
+  }
+  .glossary dt {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+  }
+  .glossary dd {
+    margin: 2px 0 0 0;
+    font-size: 0.83rem;
+    color: var(--text-secondary);
+  }
+
+  /* --- Order book --- */
+  .orderbook-layout {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 760px) {
+    .orderbook-layout { grid-template-columns: 1fr; }
+  }
+
+  .book-ladder {
+    font-variant-numeric: tabular-nums;
+  }
+  .book-side-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin: 0 0 4px 2px;
+  }
+  .book-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 4px 8px;
+    font-size: 0.92rem;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    overflow: hidden;
+  }
+  .book-row .depth-fill {
+    position: absolute;
+    top: 0; bottom: 0;
+    z-index: 0;
+    opacity: 0.16;
+  }
+  .book-row.ask .depth-fill { right: 0; background: var(--critical); }
+  .book-row.bid .depth-fill { right: 0; background: var(--success); }
+  .book-row .price, .book-row .qty {
+    position: relative;
+    z-index: 1;
+  }
+  .book-row.ask .price { color: var(--critical); font-weight: 600; }
+  .book-row.bid .price { color: var(--success); font-weight: 600; }
+  .book-row .qty { text-align: right; color: var(--text-secondary); }
+  .book-row.best { outline: 1px solid currentColor; }
+
+  .spread-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--page-plane);
+    border-top: 1px dashed var(--gridline);
+    border-bottom: 1px dashed var(--gridline);
+    padding: 8px 10px;
+    margin: 4px 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  .spread-bar strong { color: var(--text-primary); }
+
+  /* --- Stat tiles --- */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-tile {
+    background: var(--page-plane);
+    border: 1px solid var(--gridline);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .stat-tile .label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .stat-tile .value {
+    font-size: 1.15rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-tile .explain {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  .risk-profile { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+  /* --- Controls --- */
+  .order-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    margin-bottom: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .side-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .side-toggle button {
+    border: none;
+    background: var(--surface-1);
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+  }
+  .side-toggle button.active[data-side="buy"] { background: var(--success); color: var(--on-color); font-weight: 600; }
+  .side-toggle button.active[data-side="sell"] { background: var(--critical); color: var(--on-color); font-weight: 600; }
+
+  input[type="number"] {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 110px;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  input[type="number"]:focus-visible,
+  input[type="range"]:focus-visible,
+  .btn:focus-visible,
+  .side-toggle button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  input[type="range"] { accent-color: var(--accent); }
+
+  .btn {
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--surface-1);
+    color: var(--text-primary);
+  }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-color);
+    font-weight: 600;
+  }
+  .btn:hover { border-color: var(--text-secondary); }
+  .btn-primary { transition: background 0.2s, box-shadow 0.25s, transform 0.2s; }
+  .btn-primary:hover {
+    background: var(--accent-strong);
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 0 4px rgba(34,197,94,0.18), 0 12px 30px -10px rgba(34,197,94,0.7);
+    transform: translateY(-1px);
+  }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-sm { font-size: 0.8rem; padding: 6px 12px; }
+
+  .order-message {
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+  }
+  .order-message.warn { color: var(--warning); }
+
+  table.trade-log {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+  table.trade-log th, table.trade-log td {
+    text-align: right;
+    padding: 5px 6px;
+    border-bottom: 1px solid var(--gridline);
+  }
+  table.trade-log th:first-child, table.trade-log td:first-child { text-align: left; }
+  table.trade-log th {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+  }
+  .side-chip {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--on-color);
+  }
+  .side-chip.buy { background: var(--success); }
+  .side-chip.sell { background: var(--critical); }
+
+  /* --- Section 2: valuation --- */
+  .pe-example {
+    background: var(--page-plane);
+    border: 1px solid var(--gridline);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  .pe-example strong { color: var(--text-primary); }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 8px;
+  }
+  @media (max-width: 760px) {
+    .chart-grid { grid-template-columns: 1fr; }
+  }
+  .chart-box h3 {
+    font-size: 0.95rem;
+    margin: 0 0 10px 0;
+  }
+  .chart-box canvas {
+    max-height: 280px;
+  }
+  .table-scroll {
+    overflow-x: auto;
+  }
+  .chart-fallback-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .chart-fallback-table th, .chart-fallback-table td {
+    text-align: right;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--gridline);
+  }
+  .chart-fallback-table th:first-child, .chart-fallback-table td:first-child { text-align: left; }
+  .chart-fallback-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 6px 0 0 0;
+  }
+
+  .growth-controls {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--gridline);
+  }
+  .growth-controls h3 {
+    font-size: 1.02rem;
+    margin: 0 0 4px 0;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 14px 0 18px 0;
+    flex-wrap: wrap;
+  }
+  .slider-row input[type="range"] {
+    flex: 1;
+    min-width: 200px;
+  }
+  .slider-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 56px;
+    text-align: right;
+  }
+
+  table.growth-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    font-variant-numeric: tabular-nums;
+  }
+  table.growth-table th, table.growth-table td {
+    text-align: right;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--gridline);
+  }
+  table.growth-table th:first-child, table.growth-table td:first-child { text-align: left; }
+  table.growth-table th {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+  }
+  .ticker-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 8px;
+  }
+  .gain-chip {
+    color: var(--success);
+    font-weight: 600;
+  }
+
+  /* --- Section 3: risk and return --- */
+  .risk-return-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .risk-return-layout { grid-template-columns: 1fr; }
+  }
+  #chart-scatter { max-height: 340px; }
+
+  .weight-slider {
+    display: grid;
+    grid-template-columns: 110px 1fr 48px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .weight-slider .stock-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+  }
+  .weight-slider .stock-tag .ticker-swatch { flex-shrink: 0; }
+  .weight-slider .weight-value {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.88rem;
+  }
+  .weight-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 6px 0 18px 0;
+    padding-top: 6px;
+    border-top: 1px dashed var(--gridline);
+  }
+  .weight-total-row strong { color: var(--text-primary); }
+
+  .diversification-callout {
+    background: var(--page-plane);
+    border: 1px solid var(--gridline);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 6px;
+  }
+  .diversification-callout .stat-row { margin-bottom: 0; }
+  .diversification-benefit {
+    margin-top: 10px;
+    font-size: 0.9rem;
+  }
+  .diversification-benefit .benefit-value {
+    color: var(--success);
+    font-weight: 700;
+  }
+
+  /* --- Correlation heatmap --- */
+  .heatmap-wrap { overflow-x: auto; margin-top: 10px; }
+  table.heatmap {
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin: 0 auto;
+  }
+  table.heatmap th, table.heatmap td {
+    padding: 8px 10px;
+    text-align: center;
+    min-width: 62px;
+  }
+  table.heatmap th {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.78rem;
+  }
+  table.heatmap td {
+    font-variant-numeric: tabular-nums;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid var(--surface-1);
+    transition: transform 0.1s;
+  }
+  table.heatmap td:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .heatmap-result {
+    min-height: 1.3em;
+    font-size: 0.86rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 10px 0 0 0;
+  }
+  .heatmap-result strong { color: var(--text-primary); }
+
+  /* --- Preset chips (shared) --- */
+  .preset-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .preset-row .preset-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-right: 4px;
+  }
+  .chip-btn {
+    font-family: inherit;
+    font-size: 0.8rem;
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--page-plane);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .chip-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+  .chip-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(34,197,94,0.10); }
+  .chip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* --- P/E verdict chips --- */
+  .pe-verdicts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .pe-verdict {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--page-plane);
+    font-size: 0.82rem;
+  }
+  .pe-verdict .tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    color: var(--on-color);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .pe-verdict .tag.expensive { background: var(--warning); }
+  .pe-verdict .tag.cheap { background: var(--accent); }
+  .pe-verdict .tag.median { background: var(--text-secondary); }
+
+  /* --- Section 4: SIP --- */
+  .sip-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .sip-layout { grid-template-columns: 1fr; }
+  }
+  .sip-input { margin-bottom: 18px; }
+  .sip-input .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .sip-input label { font-size: 0.85rem; color: var(--text-secondary); }
+  .sip-input .val {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+  }
+  .sip-input input[type="range"] { width: 100%; }
+  .sip-input .sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .sip-input .sub .accent { color: var(--accent); font-weight: 600; }
+  .toggle-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-line input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+  .stat-tile.hero-stat .value { font-size: 1.45rem; }
+  .stat-tile.hero-stat.gain .value { color: var(--accent); }
+  #chart-sip { max-height: 340px; }
+  .delay-callout {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(250,178,25,0.35);
+    background: rgba(250,178,25,0.07);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+  }
+  .delay-callout strong { color: var(--warning); }
+
+  /* --- Section 5: growth race --- */
+  .race-layout { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
+  @media (max-width: 900px) { .race-layout { grid-template-columns: 1fr; } }
+  .race-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .race-date { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .race-leader { font-size: 0.88rem; color: var(--text-secondary); text-align: right; }
+  .race-leader strong { color: var(--text-primary); }
+  #chart-race { max-height: 340px; }
+  .race-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .race-controls input[type="range"] { flex: 1; min-width: 160px; }
+  .leaderboard { position: relative; }
+  .lb-row {
+    position: absolute;
+    left: 0; right: 0;
+    height: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    transition: transform 0.28s cubic-bezier(.2,.7,.2,1);
+  }
+  .lb-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.86rem; gap: 8px; }
+  .lb-top .name { display: flex; align-items: center; gap: 6px; }
+  .lb-rank { color: var(--text-muted); font-variant-numeric: tabular-nums; width: 1.1em; }
+  .lb-top .v { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .lb-top .chg { font-size: 0.75rem; font-variant-numeric: tabular-nums; margin-left: 6px; }
+  .lb-bar { height: 8px; border-radius: 4px; background: var(--gridline); overflow: hidden; }
+  .lb-fill { height: 100%; border-radius: 4px; transition: width 0.25s linear; }
+  .lb-start-line { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.35); }
+
+  /* --- Section 6: quiz --- */
+  .quiz { max-width: 760px; margin: 0 auto; }
+  .quiz-progress { display: flex; gap: 6px; margin-bottom: 18px; }
+  .quiz-progress i { flex: 1; height: 5px; border-radius: 3px; background: var(--gridline); transition: background 0.3s; }
+  .quiz-progress i.current { background: var(--text-secondary); }
+  .quiz-progress i.ok { background: var(--accent); }
+  .quiz-progress i.no { background: var(--critical); }
+  .quiz-meta { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .quiz-q { font-size: clamp(1.1rem, 2.4vw, 1.35rem); font-weight: 700; margin: 0 0 6px 0; line-height: 1.3; }
+  .quiz-hint { font-size: 0.83rem; color: var(--text-secondary); margin: 0 0 16px 0; }
+  .quiz-options { display: grid; gap: 8px; }
+  .quiz-opt {
+    display: flex; align-items: center; gap: 12px;
+    text-align: left;
+    font-family: inherit; font-size: 0.95rem;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--page-plane);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  }
+  .quiz-opt:hover:not(:disabled) { border-color: var(--accent); transform: translateX(4px); }
+  .quiz-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-opt .key {
+    width: 26px; height: 26px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 7px; border: 1px solid var(--border);
+    font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+  }
+  .quiz-opt.correct { border-color: var(--accent); background: rgba(34,197,94,0.12); }
+  .quiz-opt.correct .key { background: var(--accent); color: var(--on-color); border-color: var(--accent); }
+  .quiz-opt.wrong { border-color: var(--critical); background: rgba(230,103,103,0.12); animation: shake 0.35s; }
+  .quiz-opt.wrong .key { background: var(--critical); color: var(--on-color); border-color: var(--critical); }
+  @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .quiz-feedback { margin-top: 14px; font-size: 0.92rem; color: var(--text-secondary); min-height: 1.4em; }
+  .quiz-feedback .ok { color: var(--accent); font-weight: 700; }
+  .quiz-feedback .no { color: var(--critical); font-weight: 700; }
+  .quiz-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .quiz-footer .score-live { font-size: 0.85rem; color: var(--text-secondary); }
+  .quiz-result { text-align: center; padding: 10px 0; }
+  .score-ring { width: 170px; height: 170px; display: block; margin: 0 auto 14px auto; }
+  .score-ring circle { fill: none; stroke-width: 10; }
+  .score-ring .track { stroke: var(--gridline); }
+  .score-ring .bar { stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1); }
+  .score-ring text { fill: var(--text-primary); font-size: 34px; font-weight: 800; text-anchor: middle; dominant-baseline: central; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .quiz-result h3 { margin: 0 0 6px 0; font-size: 1.3rem; }
+  .quiz-result p { color: var(--text-secondary); margin: 0 auto 16px auto; max-width: 52ch; }
+  .quiz-review { text-align: left; margin: 0 auto 18px auto; max-width: 620px; display: grid; gap: 6px; }
+  .quiz-review div { font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 8px; }
+  .quiz-review .mk { font-weight: 800; width: 1em; flex-shrink: 0; }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
+
+  /* --- Motion preferences --- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      transition-delay: 0s !important;
+      scroll-behavior: auto !important;
+    }
+    .ticker-track, .blob, .hero-grid, .glow-card::after { animation: none !important; }
+  }
+
+  footer.site-footer {
+    border-top: 1px solid var(--border);
+    background: var(--surface-1);
+  }
+  .footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 22px 16px 40px 16px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    justify-content: space-between;
+  }
+  .footer-inner strong { color: var(--text-secondary); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
+
+<div class="ticker-tape" aria-label="Five-year annualised returns, from the data">
+  <div class="ticker-track" id="ticker-track"></div>
+</div>
+
+<div class="hero" id="top">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-grid"></div>
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-top">
+      <div>
+        <span class="hero-kicker"><span class="live-dot" aria-hidden="true"></span>Interactive guide &middot; Real NSE data</span>
+        <h1>
+          <span class="word" style="--w:0">Understand</span> <span class="word" style="--w:1">the</span>
+          <span class="word gradient-text" style="--w:2">Indian</span> <span class="word gradient-text" style="--w:3">Stock</span>
+          <span class="word gradient-text" style="--w:4">Market</span> <span class="word" style="--w:5">by</span>
+          <span class="word" style="--w:6">playing</span> <span class="word" style="--w:7">with</span> <span class="word" style="--w:8">it.</span>
+        </h1>
+        <p class="lead">
+          Six hands-on lessons for people who have never bought a share, built on real prices and
+          company figures for five NSE-listed companies and the Nifty 50 index.
+        </p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary btn-lg" href="#section-1">Start lesson 1 &darr;</a>
+          <a class="btn btn-ghost btn-lg" href="#section-6">Jump to the quiz</a>
+        </div>
+      </div>
+
+      <div class="hero-chart card spotlight">
+        <div class="hc-top">
+          <div>
+            <div class="hc-label">&#8377;1,00,000 in the Nifty 50</div>
+            <div class="hc-big" id="hc-big">+0.0%</div>
+          </div>
+          <div class="hc-sub" id="hc-sub"></div>
+        </div>
+        <svg id="hc-svg" role="img" aria-labelledby="hc-caption"></svg>
+        <p class="hc-caption" id="hc-caption"></p>
+      </div>
+    </div>
+
+    <div class="hero-stats" id="hero-stats"></div>
+
+    <div class="hero-cards">
+      <a class="hero-card" href="#section-1"><span class="arrow">&nearr;</span><span class="num">LESSON 01</span><span class="title">How a price is set</span><span class="desc">Trade against a live order book and move the price</span></a>
+      <a class="hero-card" href="#section-2"><span class="arrow">&nearr;</span><span class="num">LESSON 02</span><span class="title">What a company is worth</span><span class="desc">Market cap and P/E, and who looks pricey</span></a>
+      <a class="hero-card" href="#section-3"><span class="arrow">&nearr;</span><span class="num">LESSON 03</span><span class="title">Risk and return</span><span class="desc">Build a portfolio and watch risk drop</span></a>
+      <a class="hero-card" href="#section-4"><span class="arrow">&nearr;</span><span class="num">LESSON 04</span><span class="title">The power of compounding</span><span class="desc">Plan a monthly SIP and see it snowball</span></a>
+      <a class="hero-card" href="#section-5"><span class="arrow">&nearr;</span><span class="num">LESSON 05</span><span class="title">Five years in the market</span><span class="desc">Race &#8377;1 lakh through real history</span></a>
+      <a class="hero-card" href="#section-6"><span class="arrow">&nearr;</span><span class="num">LESSON 06</span><span class="title">Test yourself</span><span class="desc">A quick quiz built from the real data</span></a>
+    </div>
+
+    <a class="scroll-cue" href="#section-1"><span class="mouse" aria-hidden="true"></span>Scroll to begin</a>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="menu-bar">
+    <a class="brand" href="#top" aria-label="Back to top">
+      <span class="brand-mark" aria-hidden="true"><i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i></span>
+      Markets 101
+    </a>
+    <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="section-nav">
+      <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
+      Lessons
+    </button>
+    <nav class="section-nav" id="section-nav" aria-label="Lessons">
+      <a href="#section-1" data-section="section-1"><span class="n">1</span>Price</a>
+      <a href="#section-2" data-section="section-2"><span class="n">2</span>Valuation</a>
+      <a href="#section-3" data-section="section-3"><span class="n">3</span>Risk &amp; Return</a>
+      <a href="#section-4" data-section="section-4"><span class="n">4</span>Compounding</a>
+      <a href="#section-5" data-section="section-5"><span class="n">5</span>The Race</a>
+      <a href="#section-6" data-section="section-6"><span class="n">6</span>Quiz</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= SECTION 1 ================= -->
+  <section class="dash-section" id="section-1">
+    <div class="section-heading">
+      <span class="big-num" aria-hidden="true">01</span>
+      <span class="section-badge">1</span>
+      <h2>How a Stock Price Is Set</h2>
+    </div>
+    <p class="section-intro">
+      A share price isn't set by a company or an exchange — it's set by buyers and sellers
+      posting orders, and a price only happens when one of them agrees to trade at the other's
+      price. Below is a simplified <strong>order book</strong> for Reliance Industries
+      (<strong>RELIANCE.NS</strong>), seeded from its real closing price. Place a buy or sell
+      order and watch what happens to the price.
+    </p>
+
+    <div class="card">
+      <div class="stat-row" id="ob-stats"></div>
+
+      <div class="orderbook-layout">
+        <div>
+          <div class="book-ladder" id="ob-ladder"></div>
+        </div>
+
+        <div>
+          <div class="order-form">
+            <div class="field">
+              <label>Side</label>
+              <div class="side-toggle">
+                <button type="button" data-side="buy" class="active">Buy</button>
+                <button type="button" data-side="sell">Sell</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="ob-qty">Quantity (shares)</label>
+              <input type="number" id="ob-qty" value="100" min="10" step="10">
+            </div>
+            <button class="btn btn-primary" id="ob-place-order">Place Order</button>
+            <button class="btn" id="ob-reset">Reset</button>
+          </div>
+          <div class="preset-row" id="ob-quick-sizes">
+            <span class="preset-label">Quick order</span>
+            <button type="button" class="chip-btn" data-qty="50">50</button>
+            <button type="button" class="chip-btn" data-qty="200">200</button>
+            <button type="button" class="chip-btn" data-qty="500">500</button>
+            <button type="button" class="chip-btn" data-qty="1000">1,000</button>
+          </div>
+          <p class="chart-fallback-note" style="margin:-6px 0 10px 0;">Try a small order, then a 1,000-share one — bigger orders eat through more levels and move the price further.</p>
+          <div class="order-message" id="ob-message" aria-live="polite"></div>
+
+          <div class="table-scroll">
+            <table class="trade-log">
+              <thead>
+                <tr><th>#</th><th>Side</th><th>Qty</th><th>Avg Price</th><th>New LTP</th></tr>
+              </thead>
+              <tbody id="ob-trade-log">
+                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No trades yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <details class="glossary-wrap" open>
+      <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
+      <dl class="glossary">
+        <div><dt>Order book</dt><dd>The live list of everyone currently willing to buy (bids) or sell (asks) a stock, and at what price.</dd></div>
+        <div><dt>Bid</dt><dd>The price a buyer is offering to pay. Shown in green.</dd></div>
+        <div><dt>Ask</dt><dd>The price a seller wants to receive. Shown in red.</dd></div>
+        <div><dt>Bid-ask spread</dt><dd>The gap between the best bid and best ask — see below for why it exists.</dd></div>
+        <div><dt>Market order</dt><dd>An order to buy or sell immediately at the best available price(s), rather than waiting at a chosen price.</dd></div>
+        <div><dt>LTP</dt><dd>Last Traded Price — the price at which the most recent trade actually happened.</dd></div>
+      </dl>
+      </details>
+
+      <p class="caption">
+        This shows why a stock's price constantly moves: it's simply the price of the most recent
+        trade, and every order that eats through the book pushes it up or down.
+        <strong>The spread exists because the best ask is always a little above the best bid</strong> —
+        that gap is how liquidity providers (traders who are always ready to buy or sell) get
+        compensated for the risk of holding shares while waiting for the next trade.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= SECTION 2 ================= -->
+  <section class="dash-section" id="section-2">
+    <div class="section-heading">
+      <span class="big-num" aria-hidden="true">02</span>
+      <span class="section-badge">2</span>
+      <h2>What a Company Is Worth</h2>
+    </div>
+    <p class="section-intro">
+      Two numbers investors use constantly: <strong>market capitalisation</strong> (how big the
+      company is, in rupees) and the <strong>P/E ratio</strong> (how expensive its shares are,
+      relative to its profit). Both below use each company's real, latest figures.
+    </p>
+
+    <div class="card">
+      <div class="pe-example">
+        <strong>What P/E means, concretely:</strong> if a company earns &#8377;10 per share over a year
+        (its <strong>EPS</strong>, or earnings per share) and its stock trades at &#8377;200, its
+        P/E ratio is 200 &divide; 10 = <strong>20</strong>. That means investors are paying
+        &#8377;20 today for every &#8377;1 of the company's annual profit.
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-box">
+          <h3>Market Capitalisation</h3>
+          <canvas id="chart-market-cap" height="280"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>P/E Ratio <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">&middot; dashed line = median of the five</span></h3>
+          <canvas id="chart-pe" height="280"></canvas>
+        </div>
+      </div>
+      <p class="book-side-label" style="margin-top:14px;">Expensive or cheap? Ranked by P/E, relative to the group median</p>
+      <div class="pe-verdicts" id="pe-verdicts"></div>
+      <p class="caption">
+        <strong>Market cap</strong> (share price &times; number of shares) is a measure of company
+        <em>size</em>, not profitability — it says nothing about whether the stock is cheap or
+        expensive. <strong>P/E</strong> is the opposite: it says nothing about size, but shows how
+        much investors are paying per rupee of profit — the taller bar is priced more expensively
+        relative to its own current earnings, which can mean the market expects faster growth, or
+        simply that the stock costs more for the same rupee of profit.
+      </p>
+
+      <div class="growth-controls">
+        <h3>See how an assumed growth rate changes value</h3>
+        <p class="section-intro" style="margin-bottom:10px;">
+          If a company's profit (and so its EPS) grows every year, and investors keep paying the
+          <em>same</em> P/E multiple for it, its share price has to grow at the same rate to match.
+          Drag the slider to assume a growth rate and see the implied price 3 years from now for
+          each company, starting from its real current price and real current P/E.
+        </p>
+        <div class="preset-row" id="growth-presets" style="margin-top:12px;">
+          <span class="preset-label">Try</span>
+          <button type="button" class="chip-btn" data-g="-5">Shrinking (-5%)</button>
+          <button type="button" class="chip-btn" data-g="0">Flat (0%)</button>
+          <button type="button" class="chip-btn" data-g="10">Steady (10%)</button>
+          <button type="button" class="chip-btn" data-g="25">Fast (25%)</button>
+        </div>
+        <div class="slider-row">
+          <label for="growth-slider" style="font-size:0.85rem; color:var(--text-secondary);">Assumed annual earnings growth</label>
+          <input type="range" id="growth-slider" min="-10" max="30" step="1" value="10">
+          <span class="slider-value" id="growth-slider-value">10.0%</span>
+        </div>
+        <div class="table-scroll">
+          <table class="growth-table">
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Current Price</th>
+                <th>Current P/E</th>
+                <th>Implied EPS (price &divide; P/E)</th>
+                <th>Implied Price in 3 Years</th>
+                <th>Gain</th>
+              </tr>
+            </thead>
+            <tbody id="growth-table-body"></tbody>
+          </table>
+        </div>
+        <p class="caption">
+          Notice the percentage gain is the <strong>same for every company</strong> — that's what
+          compounding a fixed growth rate does. The rupee gain differs only because each company's
+          starting price differs. This isolates one idea: growth compounds, regardless of a
+          company's size.
+        </p>
+      </div>
+
+      <details class="glossary-wrap" open>
+      <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
+      <dl class="glossary">
+        <div><dt>Market capitalisation</dt><dd>Share price &times; total shares outstanding — the stock market's current price tag for the whole company.</dd></div>
+        <div><dt>P/E ratio</dt><dd>Share price &divide; earnings per share (EPS). Shows how many rupees investors pay per rupee of annual profit.</dd></div>
+        <div><dt>EPS</dt><dd>Earnings per share — a company's annual profit divided by its number of shares.</dd></div>
+        <div><dt>Earnings growth rate</dt><dd>How fast a company's annual profit is assumed to increase, year over year.</dd></div>
+        <div><dt>Median P/E</dt><dd>The middle P/E of the five companies. Above it = relatively expensive within this group; below it = relatively cheap.</dd></div>
+      </dl>
+      </details>
+    </div>
+  </section>
+
+  <div class="scroll-band" aria-hidden="true">
+    <div class="band-row" data-dir="1"></div>
+    <div class="band-row" data-dir="-1"></div>
+  </div>
+
+  <!-- ================= SECTION 3 ================= -->
+  <section class="dash-section" id="section-3">
+    <div class="section-heading">
+      <span class="big-num" aria-hidden="true">03</span>
+      <span class="section-badge">3</span>
+      <h2>Risk and Return</h2>
+    </div>
+    <p class="section-intro">
+      Every investment trades off two things: how much it tends to earn, and how much its value
+      swings around along the way. The scatter plot below places each of the five companies by its
+      real, historical <strong>annualised return</strong> (higher is better) and
+      <strong>annualised volatility</strong> (lower is calmer). Then build your own portfolio with
+      the sliders and watch what happens when you combine them.
+    </p>
+
+    <div class="card">
+      <div class="risk-return-layout">
+        <div>
+          <canvas id="chart-scatter" height="340"></canvas>
+          <p class="caption">
+            Each dot is one company's real risk/return over the data period. A dot further right is
+            bumpier to hold; a dot further up made more money per year on average. The white
+            diamond is <strong>your portfolio</strong> — watch it move left (less risky) as you
+            spread money across stocks that don't move together.
+          </p>
+        </div>
+
+        <div>
+          <p class="book-side-label" style="margin-bottom:8px;">Allocate your portfolio (always totals 100%)</p>
+          <div class="preset-row" id="alloc-presets">
+            <span class="preset-label">Try</span>
+          </div>
+          <div id="weight-sliders"></div>
+          <div class="weight-total-row">
+            <span>Total allocated</span>
+            <strong id="weight-total">100%</strong>
+          </div>
+
+          <div class="diversification-callout">
+            <div class="stat-row">
+              <div class="stat-tile"><div class="label">Portfolio Return</div><div class="value" id="port-return">—</div></div>
+              <div class="stat-tile"><div class="label">Portfolio Volatility</div><div class="value" id="port-vol">—</div></div>
+            </div>
+            <div class="diversification-benefit">
+              Weighted average of the 5 stocks' <em>individual</em> volatilities (i.e. no
+              diversification credit): <strong id="naive-vol">—</strong><br>
+              Your portfolio's actual volatility, computed properly from the covariance matrix:
+              <strong id="actual-vol">—</strong><br>
+              <span class="benefit-value" id="diversification-benefit-text"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--gridline);">
+        <p class="book-side-label" style="margin-bottom:8px;">Risk profile of each company — pick one</p>
+        <div class="preset-row" id="risk-tabs" role="tablist" aria-label="Choose a company"></div>
+        <div class="stat-row risk-profile" id="risk-profile-body" role="tabpanel"></div>
+        <p class="caption" style="margin-top:0;">
+          Volatility tells you how bumpy the ride usually is; <strong>maximum drawdown tells you how
+          bad the worst stretch actually got</strong>; beta tells you how strongly the stock
+          amplifies or dampens the market's own moves.
+        </p>
+      </div>
+
+      <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--gridline);">
+        <p class="book-side-label" style="margin-bottom:4px;">Correlation matrix of daily returns</p>
+        <p class="chart-fallback-note" style="margin:0 0 6px 0;">Tip: click any cell to instantly build a 50/50 portfolio of that pair.</p>
+        <div class="heatmap-wrap">
+          <table class="heatmap" id="correlation-heatmap"></table>
+        </div>
+        <p class="heatmap-result" id="heatmap-result" aria-live="polite"></p>
+        <p class="caption">
+          Each cell shows how closely two stocks move together on the same day, from -1 (always
+          opposite) to +1 (always the same). <strong>Lower correlation between the stocks you hold
+          is what makes diversification work</strong> — if two stocks rarely move together, one
+          tends to hold steady while the other swings, smoothing out the combined ride.
+        </p>
+      </div>
+
+      <details class="glossary-wrap" open>
+      <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
+      <dl class="glossary">
+        <div><dt>Annualised volatility</dt><dd>How much a stock's daily returns typically swing, scaled up to a yearly figure. Higher means a bumpier ride.</dd></div>
+        <div><dt>Annualised return</dt><dd>The average yearly growth rate of the stock's price over the period, accounting for compounding.</dd></div>
+        <div><dt>Correlation</dt><dd>A number from -1 to +1 showing how closely two stocks' daily moves track each other.</dd></div>
+        <div><dt>Diversification</dt><dd>Holding several imperfectly-correlated investments together so their ups and downs partly cancel out, lowering overall risk.</dd></div>
+        <div><dt>Portfolio</dt><dd>The full collection of investments someone holds, and the weights (percentages) allocated to each.</dd></div>
+        <div><dt>Standard deviation</dt><dd>The statistical measure behind "volatility" here — how far values typically stray from their average.</dd></div>
+        <div><dt>Covariance matrix</dt><dd>A table of how much every pair of stocks moves together. Used to compute a portfolio's true risk.</dd></div>
+        <div><dt>Maximum drawdown</dt><dd>The biggest fall from a previous high to a later low over the period — the worst loss someone buying at the peak would have seen.</dd></div>
+        <div><dt>Beta</dt><dd>How much a stock tends to move when the Nifty 50 moves. 1 = in step with the market; above 1 = exaggerates its moves; below 1 = dampens them.</dd></div>
+      </dl>
+      </details>
+    </div>
+  </section>
+
+  <!-- ================= SECTION 4 ================= -->
+  <section class="dash-section" id="section-4">
+    <div class="section-heading">
+      <span class="big-num" aria-hidden="true">04</span>
+      <span class="section-badge">4</span>
+      <h2>The Power of Compounding</h2>
+    </div>
+    <p class="section-intro">
+      A <strong>SIP</strong> (Systematic Investment Plan) means investing a fixed amount every
+      month, whatever the market is doing. Each month's money starts earning returns — and then
+      those returns start earning returns of their own. That snowball is <strong>compounding</strong>.
+      Set your own plan below and watch the gap between what you put in and what it becomes.
+    </p>
+
+    <div class="card">
+      <div class="sip-layout">
+        <div>
+          <div class="preset-row" id="sip-presets">
+            <span class="preset-label">Try</span>
+            <button type="button" class="chip-btn" data-amt="500">&#8377;500/mo</button>
+            <button type="button" class="chip-btn" data-amt="5000">&#8377;5,000/mo</button>
+            <button type="button" class="chip-btn" data-amt="25000">&#8377;25,000/mo</button>
+          </div>
+
+          <div class="sip-input">
+            <div class="top"><label for="sip-amount">Monthly investment</label><span class="val" id="sip-amount-val"></span></div>
+            <input type="range" id="sip-amount" min="0" max="100000" step="500" value="5000">
+          </div>
+
+          <div class="sip-input">
+            <div class="top"><label for="sip-years">Duration</label><span class="val" id="sip-years-val"></span></div>
+            <input type="range" id="sip-years" min="1" max="40" step="1" value="15">
+          </div>
+
+          <div class="sip-input">
+            <div class="top"><label for="sip-return">Expected annual return</label><span class="val" id="sip-return-val"></span></div>
+            <input type="range" id="sip-return" min="-5" max="20" step="0.1">
+            <div class="sub" id="sip-return-note"></div>
+            <div class="btn-row" style="margin-top:8px;">
+              <button type="button" class="btn btn-sm" id="sip-reset-return">Reset to Nifty 50 figure</button>
+            </div>
+          </div>
+
+          <label class="toggle-line">
+            <input type="checkbox" id="sip-delay-toggle">
+            Compare: what if I started 5 years later?
+          </label>
+        </div>
+
+        <div>
+          <div class="stat-row">
+            <div class="stat-tile hero-stat"><div class="label">Final value</div><div class="value" id="sip-final">—</div></div>
+            <div class="stat-tile hero-stat"><div class="label">Total invested</div><div class="value" id="sip-invested">—</div></div>
+            <div class="stat-tile hero-stat gain"><div class="label">Total gains</div><div class="value" id="sip-gains">—</div></div>
+          </div>
+          <canvas id="chart-sip" height="340"></canvas>
+          <p class="caption">
+            The grey line is every rupee you put in; the green line is what those rupees are worth.
+            <strong>The gap between them is your gain — and it widens faster every year</strong>,
+            because later returns are earned on earlier returns, not just on your deposits.
+          </p>
+          <div class="delay-callout" id="sip-delay-callout" hidden></div>
+        </div>
+      </div>
+
+      <details class="glossary-wrap" open>
+      <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
+      <dl class="glossary">
+        <div><dt>SIP</dt><dd>Systematic Investment Plan — investing the same amount at regular intervals (usually monthly) into a fund or stock.</dd></div>
+        <div><dt>Compounding</dt><dd>Earning returns on your past returns, not just on the money you put in. It makes growth accelerate over time.</dd></div>
+        <div><dt>Expected annual return</dt><dd>The yearly growth rate you assume. Defaults to the Nifty 50's real annualised return over this data's period — past returns don't guarantee future ones.</dd></div>
+        <div><dt>Nifty 50</dt><dd>An index tracking 50 of the largest companies on India's National Stock Exchange — a common yardstick for "the market".</dd></div>
+      </dl>
+      </details>
+    </div>
+  </section>
+
+  <div class="scroll-band" aria-hidden="true">
+    <div class="band-row" data-dir="-1"></div>
+    <div class="band-row" data-dir="1"></div>
+  </div>
+
+  <!-- ================= SECTION 5 ================= -->
+  <section class="dash-section" id="section-5">
+    <div class="section-heading">
+      <span class="big-num" aria-hidden="true">05</span>
+      <span class="section-badge">5</span>
+      <h2>Five Years in the Market</h2>
+    </div>
+    <p class="section-intro">
+      Averages hide the journey. Imagine putting <strong>&#8377;1,00,000</strong> into each of the five
+      companies, and into the Nifty 50, on <span id="race-start"></span>, then not touching it. Press
+      play or drag the timeline to replay five years of real weekly prices.
+    </p>
+
+    <div class="card glow-card">
+      <div class="race-layout">
+        <div>
+          <div class="race-head">
+            <div>
+              <div class="hc-label">Week ending</div>
+              <div class="race-date" id="race-date">—</div>
+            </div>
+            <div class="race-leader" id="race-leader"></div>
+          </div>
+          <canvas id="chart-race" height="330"></canvas>
+          <div class="race-controls">
+            <button type="button" class="btn btn-primary" id="race-play" aria-label="Play">&#9654; Play</button>
+            <button type="button" class="btn" id="race-restart">&#8634; Replay</button>
+            <input type="range" id="race-scrub" min="0" max="1" step="1" value="0" aria-label="Timeline: drag to move through the weeks">
+          </div>
+          <div class="preset-row" id="race-speed" style="margin-top:10px; margin-bottom:0;">
+            <span class="preset-label">Speed</span>
+            <button type="button" class="chip-btn" data-speed="0.5">0.5&times;</button>
+            <button type="button" class="chip-btn active" data-speed="1">1&times;</button>
+            <button type="button" class="chip-btn" data-speed="2">2&times;</button>
+            <button type="button" class="chip-btn" data-speed="4">4&times;</button>
+          </div>
+        </div>
+        <div>
+          <p class="book-side-label" style="margin-bottom:10px;">Leaderboard &middot; value of &#8377;1,00,000</p>
+          <div class="leaderboard" id="leaderboard"></div>
+          <p class="chart-fallback-note" style="margin-top:8px;">The white tick on each bar marks &#8377;1,00,000, where everyone started.</p>
+        </div>
+      </div>
+      <p class="caption" id="race-caption"></p>
+
+      <details class="glossary-wrap" open>
+      <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
+      <dl class="glossary">
+        <div><dt>Buy and hold</dt><dd>Investing once and leaving the money untouched, whatever happens along the way.</dd></div>
+        <div><dt>Adjusted price</dt><dd>A share's price corrected for splits, bonus issues and dividends so returns over time compare fairly. The five stocks use adjusted prices.</dd></div>
+        <div><dt>Price index</dt><dd>An index that tracks prices only, not dividends. The Nifty 50 line here is a price index, so it slightly understates what an investor actually earned.</dd></div>
+        <div><dt>Dividend</dt><dd>A share of a company's profit paid out in cash to its shareholders.</dd></div>
+      </dl>
+      </details>
+    </div>
+  </section>
+
+  <!-- ================= SECTION 6 ================= -->
+  <section class="dash-section" id="section-6">
+    <div class="section-heading">
+      <span class="big-num" aria-hidden="true">06</span>
+      <span class="section-badge">6</span>
+      <h2>Test Yourself</h2>
+    </div>
+    <p class="section-intro">
+      Six quick questions on everything above. Every answer is worked out live from the same real
+      data the lessons use, so it stays correct whenever the data is refreshed.
+    </p>
+    <div class="card">
+      <div class="quiz" id="quiz" aria-live="polite"></div>
+    </div>
+  </section>
+
+</main>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span><strong>Data source:</strong> Yahoo Finance (via yfinance), NSE-listed tickers &middot; Period <span id="footer-period"></span></span>
+    <span><strong>Generated on</strong> <span id="footer-date"></span></span>
+    <span>Historical figures for education only — not investment advice.</span>
+  </div>
+</footer>
+
+<button class="back-to-top" id="back-to-top" type="button" aria-label="Back to top">&uarr;</button>
+
+<script type="application/json" id="dashboard-data">
+{
+  "generated_on": "2026-09-23T23:43:57+00:00",
+  "source": "Yahoo Finance (via yfinance), NSE-listed tickers",
+  "trading_days_per_year": 252,
+  "period": {
+    "start": "2021-09-16",
+    "end": "2026-09-22"
+  },
+  "benchmark": {
+    "ticker": "^NSEI",
+    "annualised_return": 0.05953
+  },
+  "stocks": {
+    "RELIANCE.NS": {
+      "name": "RELIANCE INDUSTRIES LTD",
+      "sector": "Energy",
+      "latest_close": 1240.4,
+      "trailing_pe": 22.711555,
+      "market_cap": 16888525488128,
+      "annualised_return": 0.028513,
+      "annualised_volatility": 0.222744,
+      "max_drawdown": -0.271758,
+      "beta": 1.1103,
+      "trading_days": 1246
+    },
+    "TCS.NS": {
+      "name": "TATA CONSULTANCY SERV LT",
+      "sector": "Technology",
+      "latest_close": 2105.0,
+      "trailing_pe": 15.178326,
+      "market_cap": 7560355643392,
+      "annualised_return": -0.092986,
+      "annualised_volatility": 0.225682,
+      "max_drawdown": -0.533934,
+      "beta": 0.8136,
+      "trading_days": 1246
+    },
+    "HDFCBANK.NS": {
+      "name": "HDFC BANK LTD",
+      "sector": "Financial Services",
+      "latest_close": 738.6,
+      "trailing_pe": 16.125328,
+      "market_cap": 11365873876992,
+      "annualised_return": 0.004056,
+      "annualised_volatility": 0.209745,
+      "max_drawdown": -0.310431,
+      "beta": 1.0619,
+      "trading_days": 1246
+    },
+    "ITC.NS": {
+      "name": "ITC LTD",
+      "sector": "Consumer Defensive",
+      "latest_close": 265.8,
+      "trailing_pe": 17.054924,
+      "market_cap": 3385119211520,
+      "annualised_return": 0.093049,
+      "annualised_volatility": 0.201448,
+      "max_drawdown": -0.449293,
+      "beta": 0.6617,
+      "trading_days": 1246
+    },
+    "INFY.NS": {
+      "name": "INFOSYS LIMITED",
+      "sector": "Technology",
+      "latest_close": 1029.4,
+      "trailing_pe": 13.130468,
+      "market_cap": 4133375705088,
+      "annualised_return": -0.071116,
+      "annualised_volatility": 0.25957,
+      "max_drawdown": -0.481716,
+      "beta": 0.9754,
+      "trading_days": 1246
+    }
+  },
+  "correlation_matrix": {
+    "RELIANCE.NS": {
+      "RELIANCE.NS": 1.0,
+      "TCS.NS": 0.267,
+      "HDFCBANK.NS": 0.3669,
+      "ITC.NS": 0.3128,
+      "INFY.NS": 0.2601
+    },
+    "TCS.NS": {
+      "RELIANCE.NS": 0.267,
+      "TCS.NS": 1.0,
+      "HDFCBANK.NS": 0.2276,
+      "ITC.NS": 0.1729,
+      "INFY.NS": 0.7333
+    },
+    "HDFCBANK.NS": {
+      "RELIANCE.NS": 0.3669,
+      "TCS.NS": 0.2276,
+      "HDFCBANK.NS": 1.0,
+      "ITC.NS": 0.2227,
+      "INFY.NS": 0.2544
+    },
+    "ITC.NS": {
+      "RELIANCE.NS": 0.3128,
+      "TCS.NS": 0.1729,
+      "HDFCBANK.NS": 0.2227,
+      "ITC.NS": 1.0,
+      "INFY.NS": 0.183
+    },
+    "INFY.NS": {
+      "RELIANCE.NS": 0.2601,
+      "TCS.NS": 0.7333,
+      "HDFCBANK.NS": 0.2544,
+      "ITC.NS": 0.183,
+      "INFY.NS": 1.0
+    }
+  },
+  "covariance_matrix": {
+    "RELIANCE.NS": {
+      "RELIANCE.NS": 0.049615,
+      "TCS.NS": 0.013424,
+      "HDFCBANK.NS": 0.017143,
+      "ITC.NS": 0.014034,
+      "INFY.NS": 0.015038
+    },
+    "TCS.NS": {
+      "RELIANCE.NS": 0.013424,
+      "TCS.NS": 0.050933,
+      "HDFCBANK.NS": 0.010775,
+      "ITC.NS": 0.00786,
+      "INFY.NS": 0.042956
+    },
+    "HDFCBANK.NS": {
+      "RELIANCE.NS": 0.017143,
+      "TCS.NS": 0.010775,
+      "HDFCBANK.NS": 0.043993,
+      "ITC.NS": 0.009412,
+      "INFY.NS": 0.013848
+    },
+    "ITC.NS": {
+      "RELIANCE.NS": 0.014034,
+      "TCS.NS": 0.00786,
+      "HDFCBANK.NS": 0.009412,
+      "ITC.NS": 0.040581,
+      "INFY.NS": 0.009571
+    },
+    "INFY.NS": {
+      "RELIANCE.NS": 0.015038,
+      "TCS.NS": 0.042956,
+      "HDFCBANK.NS": 0.013848,
+      "ITC.NS": 0.009571,
+      "INFY.NS": 0.067376
+    }
+  },
+  "weekly_growth": {
+    "note": "Value of 1 unit invested on the first date, weekly closes (last trading day of each week).",
+    "dates": [
+      "2021-09-15",
+      "2021-09-17",
+      "2021-09-24",
+      "2021-10-01",
+      "2021-10-08",
+      "2021-10-15",
+      "2021-10-22",
+      "2021-10-29",
+      "2021-11-05",
+      "2021-11-12",
+      "2021-11-19",
+      "2021-11-26",
+      "2021-12-03",
+      "2021-12-10",
+      "2021-12-17",
+      "2021-12-24",
+      "2021-12-31",
+      "2022-01-07",
+      "2022-01-14",
+      "2022-01-21",
+      "2022-01-28",
+      "2022-02-04",
+      "2022-02-11",
+      "2022-02-18",
+      "2022-02-25",
+      "2022-03-04",
+      "2022-03-11",
+      "2022-03-18",
+      "2022-03-25",
+      "2022-04-01",
+      "2022-04-08",
+      "2022-04-15",
+      "2022-04-22",
+      "2022-04-29",
+      "2022-05-06",
+      "2022-05-13",
+      "2022-05-20",
+      "2022-05-27",
+      "2022-06-03",
+      "2022-06-10",
+      "2022-06-17",
+      "2022-06-24",
+      "2022-07-01",
+      "2022-07-08",
+      "2022-07-15",
+      "2022-07-22",
+      "2022-07-29",
+      "2022-08-05",
+      "2022-08-12",
+      "2022-08-19",
+      "2022-08-26",
+      "2022-09-02",
+      "2022-09-09",
+      "2022-09-16",
+      "2022-09-23",
+      "2022-09-30",
+      "2022-10-07",
+      "2022-10-14",
+      "2022-10-21",
+      "2022-10-28",
+      "2022-11-04",
+      "2022-11-11",
+      "2022-11-18",
+      "2022-11-25",
+      "2022-12-02",
+      "2022-12-09",
+      "2022-12-16",
+      "2022-12-23",
+      "2022-12-30",
+      "2023-01-06",
+      "2023-01-13",
+      "2023-01-20",
+      "2023-01-27",
+      "2023-02-03",
+      "2023-02-10",
+      "2023-02-17",
+      "2023-02-24",
+      "2023-03-03",
+      "2023-03-10",
+      "2023-03-17",
+      "2023-03-24",
+      "2023-03-31",
+      "2023-04-07",
+      "2023-04-14",
+      "2023-04-21",
+      "2023-04-28",
+      "2023-05-05",
+      "2023-05-12",
+      "2023-05-19",
+      "2023-05-26",
+      "2023-06-02",
+      "2023-06-09",
+      "2023-06-16",
+      "2023-06-23",
+      "2023-06-30",
+      "2023-07-07",
+      "2023-07-14",
+      "2023-07-21",
+      "2023-07-28",
+      "2023-08-04",
+      "2023-08-11",
+      "2023-08-18",
+      "2023-08-25",
+      "2023-09-01",
+      "2023-09-08",
+      "2023-09-15",
+      "2023-09-22",
+      "2023-09-29",
+      "2023-10-06",
+      "2023-10-13",
+      "2023-10-20",
+      "2023-10-27",
+      "2023-11-03",
+      "2023-11-10",
+      "2023-11-17",
+      "2023-11-24",
+      "2023-12-01",
+      "2023-12-08",
+      "2023-12-15",
+      "2023-12-22",
+      "2023-12-29",
+      "2024-01-05",
+      "2024-01-12",
+      "2024-01-19",
+      "2024-01-26",
+      "2024-02-02",
+      "2024-02-09",
+      "2024-02-16",
+      "2024-02-23",
+      "2024-03-01",
+      "2024-03-08",
+      "2024-03-15",
+      "2024-03-22",
+      "2024-03-29",
+      "2024-04-05",
+      "2024-04-12",
+      "2024-04-19",
+      "2024-04-26",
+      "2024-05-03",
+      "2024-05-10",
+      "2024-05-17",
+      "2024-05-24",
+      "2024-05-31",
+      "2024-06-07",
+      "2024-06-14",
+      "2024-06-21",
+      "2024-06-28",
+      "2024-07-05",
+      "2024-07-12",
+      "2024-07-19",
+      "2024-07-26",
+      "2024-08-02",
+      "2024-08-09",
+      "2024-08-16",
+      "2024-08-23",
+      "2024-08-30",
+      "2024-09-06",
+      "2024-09-13",
+      "2024-09-20",
+      "2024-09-27",
+      "2024-10-04",
+      "2024-10-11",
+      "2024-10-18",
+      "2024-10-25",
+      "2024-11-01",
+      "2024-11-08",
+      "2024-11-15",
+      "2024-11-22",
+      "2024-11-29",
+      "2024-12-06",
+      "2024-12-13",
+      "2024-12-20",
+      "2024-12-27",
+      "2025-01-03",
+      "2025-01-10",
+      "2025-01-17",
+      "2025-01-24",
+      "2025-01-31",
+      "2025-02-07",
+      "2025-02-14",
+      "2025-02-21",
+      "2025-02-28",
+      "2025-03-07",
+      "2025-03-14",
+      "2025-03-21",
+      "2025-03-28",
+      "2025-04-04",
+      "2025-04-11",
+      "2025-04-18",
+      "2025-04-25",
+      "2025-05-02",
+      "2025-05-09",
+      "2025-05-16",
+      "2025-05-23",
+      "2025-05-30",
+      "2025-06-06",
+      "2025-06-13",
+      "2025-06-20",
+      "2025-06-27",
+      "2025-07-04",
+      "2025-07-11",
+      "2025-07-18",
+      "2025-07-25",
+      "2025-08-01",
+      "2025-08-08",
+      "2025-08-15",
+      "2025-08-22",
+      "2025-08-29",
+      "2025-09-05",
+      "2025-09-12",
+      "2025-09-19",
+      "2025-09-26",
+      "2025-10-03",
+      "2025-10-10",
+      "2025-10-17",
+      "2025-10-24",
+      "2025-10-31",
+      "2025-11-07",
+      "2025-11-14",
+      "2025-11-21",
+      "2025-11-28",
+      "2025-12-05",
+      "2025-12-12",
+      "2025-12-19",
+      "2025-12-26",
+      "2026-01-02",
+      "2026-01-09",
+      "2026-01-16",
+      "2026-01-23",
+      "2026-01-30",
+      "2026-02-06",
+      "2026-02-13",
+      "2026-02-20",
+      "2026-02-27",
+      "2026-03-06",
+      "2026-03-13",
+      "2026-03-20",
+      "2026-03-27",
+      "2026-04-03",
+      "2026-04-10",
+      "2026-04-17",
+      "2026-04-24",
+      "2026-05-01",
+      "2026-05-08",
+      "2026-05-15",
+      "2026-05-22",
+      "2026-05-29",
+      "2026-06-05",
+      "2026-06-12",
+      "2026-06-19",
+      "2026-06-26",
+      "2026-07-03",
+      "2026-07-10",
+      "2026-07-17",
+      "2026-07-24",
+      "2026-07-31",
+      "2026-08-07",
+      "2026-08-14",
+      "2026-08-21",
+      "2026-08-28",
+      "2026-09-04",
+      "2026-09-11",
+      "2026-09-18",
+      "2026-09-22"
+    ],
+    "series": {
+      "RELIANCE.NS": [
+        1.0,
+        1.0052,
+        1.0439,
+        1.0611,
+        1.1232,
+        1.1354,
+        1.1047,
+        1.0664,
+        1.0507,
+        1.0903,
+        1.0399,
+        1.0144,
+        1.0126,
+        1.0339,
+        0.9841,
+        0.9977,
+        0.9957,
+        1.0243,
+        1.0676,
+        1.0419,
+        0.9822,
+        0.9802,
+        0.9992,
+        1.0194,
+        0.9603,
+        0.9778,
+        1.0088,
+        1.0435,
+        1.0915,
+        1.1167,
+        1.0998,
+        1.0729,
+        1.16,
+        1.1732,
+        1.1019,
+        1.0203,
+        1.1035,
+        1.0827,
+        1.1687,
+        1.1413,
+        1.089,
+        1.0512,
+        1.0128,
+        1.0055,
+        1.0099,
+        1.0525,
+        1.0551,
+        1.0655,
+        1.1071,
+        1.1026,
+        1.1044,
+        1.0675,
+        1.0838,
+        1.0543,
+        1.0291,
+        1.003,
+        1.0261,
+        1.0001,
+        1.0426,
+        1.0656,
+        1.0937,
+        1.1102,
+        1.0958,
+        1.1042,
+        1.1483,
+        1.1006,
+        1.0823,
+        1.0555,
+        1.0745,
+        1.0702,
+        1.0409,
+        1.0304,
+        0.986,
+        0.9825,
+        0.9857,
+        1.0294,
+        1.0055,
+        1.0063,
+        0.9798,
+        0.9378,
+        0.9294,
+        0.9833,
+        0.9877,
+        0.9936,
+        0.9909,
+        1.0211,
+        1.03,
+        1.048,
+        1.0301,
+        1.0573,
+        1.0357,
+        1.047,
+        1.0873,
+        1.0608,
+        1.0758,
+        1.111,
+        1.1561,
+        1.1603,
+        1.1553,
+        1.1469,
+        1.1641,
+        1.1685,
+        1.1321,
+        1.1066,
+        1.1229,
+        1.1273,
+        1.0801,
+        1.0755,
+        1.0631,
+        1.0775,
+        1.0545,
+        1.0392,
+        1.0639,
+        1.0617,
+        1.0804,
+        1.098,
+        1.0981,
+        1.1263,
+        1.1446,
+        1.1765,
+        1.1856,
+        1.196,
+        1.2574,
+        1.2544,
+        1.2412,
+        1.3371,
+        1.3399,
+        1.3398,
+        1.3701,
+        1.3687,
+        1.3566,
+        1.3009,
+        1.3347,
+        1.363,
+        1.3393,
+        1.3458,
+        1.3485,
+        1.3324,
+        1.3154,
+        1.291,
+        1.317,
+        1.3578,
+        1.3121,
+        1.3484,
+        1.3553,
+        1.3339,
+        1.4359,
+        1.4572,
+        1.4647,
+        1.4265,
+        1.3842,
+        1.3753,
+        1.3524,
+        1.3559,
+        1.3806,
+        1.3895,
+        1.3482,
+        1.3554,
+        1.3677,
+        1.4047,
+        1.2762,
+        1.2629,
+        1.2511,
+        1.2222,
+        1.2321,
+        1.1816,
+        1.1667,
+        1.1647,
+        1.1893,
+        1.2072,
+        1.1715,
+        1.1094,
+        1.1239,
+        1.1516,
+        1.1431,
+        1.1987,
+        1.1471,
+        1.1644,
+        1.1659,
+        1.1204,
+        1.1304,
+        1.1046,
+        1.1503,
+        1.1486,
+        1.1748,
+        1.1736,
+        1.1088,
+        1.1219,
+        1.1731,
+        1.1969,
+        1.3068,
+        1.2676,
+        1.3405,
+        1.3132,
+        1.3078,
+        1.3286,
+        1.3142,
+        1.3495,
+        1.3948,
+        1.4057,
+        1.3762,
+        1.3585,
+        1.2809,
+        1.2828,
+        1.2589,
+        1.2695,
+        1.3022,
+        1.2542,
+        1.2706,
+        1.2891,
+        1.3006,
+        1.273,
+        1.2599,
+        1.2768,
+        1.3092,
+        1.3414,
+        1.3736,
+        1.3658,
+        1.4036,
+        1.4292,
+        1.4485,
+        1.4236,
+        1.4383,
+        1.4463,
+        1.4408,
+        1.4714,
+        1.3633,
+        1.3472,
+        1.2809,
+        1.2895,
+        1.3407,
+        1.3118,
+        1.3116,
+        1.2881,
+        1.2982,
+        1.2759,
+        1.307,
+        1.2458,
+        1.248,
+        1.2477,
+        1.2614,
+        1.227,
+        1.3222,
+        1.3262,
+        1.2349,
+        1.2517,
+        1.2209,
+        1.1985,
+        1.2004,
+        1.2157,
+        1.2237,
+        1.2106,
+        1.2141,
+        1.2321,
+        1.1864,
+        1.2141,
+        1.2392,
+        1.2161,
+        1.2217,
+        1.1948,
+        1.2273,
+        1.1674,
+        1.1385,
+        1.1515
+      ],
+      "TCS.NS": [
+        1.0,
+        0.968,
+        0.9789,
+        0.9433,
+        0.9952,
+        0.915,
+        0.8865,
+        0.8608,
+        0.8889,
+        0.8934,
+        0.8806,
+        0.8733,
+        0.9223,
+        0.9214,
+        0.9081,
+        0.9301,
+        0.9471,
+        0.9763,
+        1.0054,
+        0.973,
+        0.9365,
+        0.9682,
+        0.9378,
+        0.9629,
+        0.8936,
+        0.8945,
+        0.9135,
+        0.9322,
+        0.941,
+        0.954,
+        0.9354,
+        0.9294,
+        0.9169,
+        0.9002,
+        0.8712,
+        0.8667,
+        0.8358,
+        0.8333,
+        0.879,
+        0.8585,
+        0.7893,
+        0.8414,
+        0.8471,
+        0.8344,
+        0.7672,
+        0.8124,
+        0.8459,
+        0.8621,
+        0.8714,
+        0.8674,
+        0.8255,
+        0.802,
+        0.8243,
+        0.7708,
+        0.764,
+        0.7697,
+        0.7852,
+        0.794,
+        0.8058,
+        0.8125,
+        0.8264,
+        0.8517,
+        0.8588,
+        0.8706,
+        0.8833,
+        0.8457,
+        0.8323,
+        0.8292,
+        0.8365,
+        0.8249,
+        0.8668,
+        0.8834,
+        0.896,
+        0.9148,
+        0.9293,
+        0.9197,
+        0.8933,
+        0.8779,
+        0.875,
+        0.8352,
+        0.8197,
+        0.8422,
+        0.846,
+        0.8377,
+        0.8303,
+        0.8457,
+        0.8487,
+        0.8601,
+        0.8466,
+        0.8745,
+        0.8683,
+        0.843,
+        0.8402,
+        0.8512,
+        0.8739,
+        0.8811,
+        0.9301,
+        0.8937,
+        0.8903,
+        0.9137,
+        0.9151,
+        0.8934,
+        0.8972,
+        0.8966,
+        0.9132,
+        0.9547,
+        0.9562,
+        0.9362,
+        0.9609,
+        0.9475,
+        0.9296,
+        0.8914,
+        0.8914,
+        0.8868,
+        0.9317,
+        0.9196,
+        0.9342,
+        0.9648,
+        1.0271,
+        1.0173,
+        1.0091,
+        0.9943,
+        1.0329,
+        1.0562,
+        1.0207,
+        1.0625,
+        1.1073,
+        1.1059,
+        1.0854,
+        1.0968,
+        1.1006,
+        1.1302,
+        1.0476,
+        1.0383,
+        1.0659,
+        1.0719,
+        1.0249,
+        1.0236,
+        1.0295,
+        1.0431,
+        1.0345,
+        1.0387,
+        0.9905,
+        1.0507,
+        1.034,
+        1.0282,
+        1.0534,
+        1.0825,
+        1.1289,
+        1.1636,
+        1.1867,
+        1.1583,
+        1.1436,
+        1.1943,
+        1.2072,
+        1.2315,
+        1.2053,
+        1.2231,
+        1.1588,
+        1.1653,
+        1.15,
+        1.1221,
+        1.1178,
+        1.1,
+        1.0801,
+        1.1243,
+        1.124,
+        1.1507,
+        1.1578,
+        1.2052,
+        1.2129,
+        1.1306,
+        1.1291,
+        1.1115,
+        1.1564,
+        1.1387,
+        1.1464,
+        1.1354,
+        1.1125,
+        1.0864,
+        1.0453,
+        0.9617,
+        0.997,
+        0.9694,
+        0.9879,
+        0.9956,
+        0.9109,
+        0.8922,
+        0.9108,
+        0.952,
+        0.9473,
+        0.9498,
+        0.9832,
+        0.9704,
+        0.9562,
+        0.9427,
+        0.9598,
+        0.957,
+        0.9585,
+        0.9526,
+        0.9097,
+        0.8916,
+        0.8764,
+        0.8393,
+        0.8486,
+        0.8447,
+        0.8536,
+        0.8621,
+        0.852,
+        0.8758,
+        0.8858,
+        0.8103,
+        0.8111,
+        0.8464,
+        0.831,
+        0.8593,
+        0.8579,
+        0.8393,
+        0.8713,
+        0.8839,
+        0.8802,
+        0.9084,
+        0.9035,
+        0.9207,
+        0.9202,
+        0.9119,
+        0.8999,
+        0.9159,
+        0.9033,
+        0.8923,
+        0.8402,
+        0.769,
+        0.7673,
+        0.7533,
+        0.7305,
+        0.6885,
+        0.6828,
+        0.6826,
+        0.7,
+        0.721,
+        0.7374,
+        0.6846,
+        0.7066,
+        0.6839,
+        0.6467,
+        0.6619,
+        0.654,
+        0.6366,
+        0.6257,
+        0.6152,
+        0.6064,
+        0.6061,
+        0.599,
+        0.6605,
+        0.6562,
+        0.6886,
+        0.714,
+        0.6873,
+        0.6701,
+        0.6817,
+        0.6707,
+        0.6406,
+        0.6128,
+        0.6128
+      ],
+      "HDFCBANK.NS": [
+        1.0,
+        1.0229,
+        1.0354,
+        1.0232,
+        1.0361,
+        1.0909,
+        1.0866,
+        1.0233,
+        1.0305,
+        1.004,
+        0.9952,
+        0.9632,
+        0.9785,
+        0.9843,
+        0.9523,
+        0.9302,
+        0.9564,
+        1.0024,
+        0.9989,
+        0.9837,
+        0.946,
+        0.9853,
+        0.9819,
+        0.9777,
+        0.9414,
+        0.8834,
+        0.903,
+        0.9568,
+        0.9251,
+        0.9736,
+        0.9792,
+        0.9471,
+        0.8764,
+        0.8951,
+        0.8518,
+        0.8446,
+        0.8639,
+        0.9104,
+        0.9027,
+        0.8836,
+        0.8435,
+        0.8854,
+        0.8854,
+        0.9137,
+        0.8908,
+        0.9107,
+        0.938,
+        0.9333,
+        0.9713,
+        0.9765,
+        0.9582,
+        0.9715,
+        0.9801,
+        0.9763,
+        0.9458,
+        0.9296,
+        0.9358,
+        0.9411,
+        0.9409,
+        0.954,
+        0.9792,
+        1.0537,
+        1.0555,
+        1.058,
+        1.0511,
+        1.0667,
+        1.0724,
+        1.0449,
+        1.0648,
+        1.0428,
+        1.0468,
+        1.0863,
+        1.0568,
+        1.0849,
+        1.0838,
+        1.083,
+        1.0392,
+        1.0568,
+        1.039,
+        1.0285,
+        1.0207,
+        1.0527,
+        1.0898,
+        1.1069,
+        1.0952,
+        1.1037,
+        1.0632,
+        1.0908,
+        1.0894,
+        1.0689,
+        1.0627,
+        1.0654,
+        1.0602,
+        1.0872,
+        1.1255,
+        1.0984,
+        1.0879,
+        1.1085,
+        1.0872,
+        1.093,
+        1.0709,
+        1.0523,
+        1.033,
+        1.0417,
+        1.0739,
+        1.0993,
+        1.0119,
+        1.0097,
+        1.0148,
+        1.0159,
+        1.0074,
+        0.9719,
+        0.9815,
+        0.9866,
+        0.9956,
+        1.0135,
+        1.0289,
+        1.0936,
+        1.0958,
+        1.1053,
+        1.1307,
+        1.1128,
+        1.0857,
+        0.9729,
+        0.9492,
+        0.9566,
+        0.9285,
+        0.9393,
+        0.9397,
+        0.9465,
+        0.9566,
+        0.9609,
+        0.9545,
+        0.9578,
+        1.025,
+        1.0048,
+        1.013,
+        0.9988,
+        1.0052,
+        0.9642,
+        0.9817,
+        1.0174,
+        1.027,
+        1.055,
+        1.0708,
+        1.117,
+        1.1291,
+        1.1051,
+        1.0881,
+        1.0778,
+        1.085,
+        1.1125,
+        1.1065,
+        1.0944,
+        1.0897,
+        1.0976,
+        1.0977,
+        1.1171,
+        1.1676,
+        1.1752,
+        1.1115,
+        1.1071,
+        1.1278,
+        1.169,
+        1.1649,
+        1.1764,
+        1.1351,
+        1.1705,
+        1.2043,
+        1.2444,
+        1.2551,
+        1.1879,
+        1.2058,
+        1.1729,
+        1.1109,
+        1.0975,
+        1.1063,
+        1.1391,
+        1.1619,
+        1.1365,
+        1.1349,
+        1.1617,
+        1.1327,
+        1.1444,
+        1.1871,
+        1.2259,
+        1.2186,
+        1.2115,
+        1.2785,
+        1.2815,
+        1.2887,
+        1.2671,
+        1.2973,
+        1.2966,
+        1.3041,
+        1.3268,
+        1.2858,
+        1.3174,
+        1.3659,
+        1.3486,
+        1.3448,
+        1.327,
+        1.3623,
+        1.3675,
+        1.3415,
+        1.3532,
+        1.3352,
+        1.2934,
+        1.3095,
+        1.3148,
+        1.3142,
+        1.2845,
+        1.3119,
+        1.3333,
+        1.3627,
+        1.3521,
+        1.342,
+        1.3352,
+        1.3451,
+        1.3566,
+        1.3695,
+        1.3637,
+        1.3613,
+        1.3395,
+        1.3485,
+        1.3614,
+        1.2763,
+        1.2656,
+        1.2452,
+        1.2631,
+        1.2792,
+        1.2286,
+        1.2394,
+        1.2066,
+        1.1649,
+        1.1105,
+        1.0608,
+        1.0278,
+        1.0206,
+        1.1014,
+        1.0872,
+        1.0668,
+        1.0489,
+        1.0613,
+        1.0432,
+        1.0422,
+        1.012,
+        1.0154,
+        1.0499,
+        1.0775,
+        1.1002,
+        1.1068,
+        1.1398,
+        1.1324,
+        1.0263,
+        1.0337,
+        1.01,
+        1.0045,
+        1.0044,
+        0.9952,
+        0.9839,
+        0.9786,
+        1.01,
+        1.0205
+      ],
+      "ITC.NS": [
+        1.0,
+        1.0701,
+        1.1039,
+        1.0896,
+        1.0727,
+        1.1877,
+        1.0954,
+        1.0333,
+        1.0488,
+        1.0782,
+        1.0995,
+        1.037,
+        1.0262,
+        1.0931,
+        1.009,
+        1.0093,
+        1.0095,
+        1.0111,
+        1.0306,
+        1.0049,
+        1.0074,
+        1.0847,
+        1.0762,
+        1.052,
+        1.0143,
+        1.0691,
+        1.1205,
+        1.161,
+        1.2011,
+        1.2009,
+        1.2696,
+        1.2779,
+        1.2378,
+        1.2305,
+        1.2641,
+        1.226,
+        1.3274,
+        1.3073,
+        1.3243,
+        1.312,
+        1.2787,
+        1.2911,
+        1.3809,
+        1.4232,
+        1.4256,
+        1.4596,
+        1.4717,
+        1.5096,
+        1.4984,
+        1.5152,
+        1.5196,
+        1.5694,
+        1.605,
+        1.6089,
+        1.6823,
+        1.6133,
+        1.6225,
+        1.6128,
+        1.6784,
+        1.6793,
+        1.7172,
+        1.7306,
+        1.6563,
+        1.6526,
+        1.6373,
+        1.658,
+        1.6274,
+        1.5866,
+        1.6101,
+        1.6271,
+        1.5965,
+        1.625,
+        1.6803,
+        1.8486,
+        1.8034,
+        1.8925,
+        1.9009,
+        1.9001,
+        1.9152,
+        1.8537,
+        1.8693,
+        1.893,
+        1.912,
+        1.9527,
+        2.0151,
+        2.1005,
+        2.1163,
+        2.0753,
+        2.0724,
+        2.1896,
+        2.2378,
+        2.2128,
+        2.2867,
+        2.2446,
+        2.2792,
+        2.364,
+        2.3867,
+        2.4752,
+        2.3642,
+        2.2961,
+        2.2648,
+        2.229,
+        2.2375,
+        2.2259,
+        2.234,
+        2.2628,
+        2.2363,
+        2.2428,
+        2.2315,
+        2.2628,
+        2.212,
+        2.1891,
+        2.1866,
+        2.2032,
+        2.2168,
+        2.2095,
+        2.2701,
+        2.2668,
+        2.3125,
+        2.2973,
+        2.3322,
+        2.392,
+        2.3554,
+        2.3796,
+        2.2996,
+        2.2211,
+        2.129,
+        2.0731,
+        2.108,
+        2.0982,
+        2.119,
+        2.1474,
+        2.1961,
+        2.1948,
+        2.1907,
+        2.2038,
+        2.1764,
+        2.2545,
+        2.2363,
+        2.2204,
+        2.2356,
+        2.235,
+        2.1851,
+        2.2916,
+        2.2499,
+        2.1896,
+        2.2173,
+        2.2629,
+        2.3955,
+        2.4764,
+        2.6207,
+        2.5523,
+        2.5878,
+        2.623,
+        2.6394,
+        2.6191,
+        2.618,
+        2.6814,
+        2.6843,
+        2.7276,
+        2.6277,
+        2.5476,
+        2.5398,
+        2.5168,
+        2.5586,
+        2.4946,
+        2.4315,
+        2.4769,
+        2.4878,
+        2.4586,
+        2.4526,
+        2.4247,
+        2.4975,
+        2.5132,
+        2.4111,
+        2.3856,
+        2.3932,
+        2.4251,
+        2.3349,
+        2.2584,
+        2.2069,
+        2.1744,
+        2.2234,
+        2.2683,
+        2.2325,
+        2.2556,
+        2.2553,
+        2.3206,
+        2.352,
+        2.355,
+        2.3643,
+        2.3316,
+        2.3985,
+        2.4018,
+        2.3437,
+        2.3605,
+        2.3204,
+        2.3465,
+        2.3471,
+        2.3129,
+        2.3367,
+        2.3701,
+        2.2952,
+        2.3347,
+        2.3238,
+        2.3067,
+        2.233,
+        2.2972,
+        2.2837,
+        2.3196,
+        2.3022,
+        2.2711,
+        2.2666,
+        2.2582,
+        2.3106,
+        2.3367,
+        2.3566,
+        2.2652,
+        2.2882,
+        2.2865,
+        2.2663,
+        2.2703,
+        2.2431,
+        2.2484,
+        2.2658,
+        1.9625,
+        1.8902,
+        1.8456,
+        1.8131,
+        1.8061,
+        1.8648,
+        1.7958,
+        1.8717,
+        1.795,
+        1.7727,
+        1.7254,
+        1.7168,
+        1.6868,
+        1.6762,
+        1.7415,
+        1.7561,
+        1.7263,
+        1.8024,
+        1.7598,
+        1.7712,
+        1.7269,
+        1.6869,
+        1.6504,
+        1.6763,
+        1.7198,
+        1.7051,
+        1.7048,
+        1.6566,
+        1.6504,
+        1.6666,
+        1.6522,
+        1.6822,
+        1.6357,
+        1.584,
+        1.564,
+        1.5528,
+        1.5278,
+        1.5422,
+        1.5628
+      ],
+      "INFY.NS": [
+        1.0,
+        0.9882,
+        1.0306,
+        0.9729,
+        1.0072,
+        1.0025,
+        1.0049,
+        0.9831,
+        1.0072,
+        1.0494,
+        1.0489,
+        0.9972,
+        1.0231,
+        1.037,
+        1.0734,
+        1.0985,
+        1.1128,
+        1.0695,
+        1.1373,
+        1.0526,
+        0.994,
+        1.0263,
+        1.0147,
+        1.0062,
+        0.9989,
+        1.0158,
+        1.074,
+        1.0932,
+        1.1062,
+        1.1221,
+        1.0697,
+        1.0307,
+        0.9346,
+        0.924,
+        0.9095,
+        0.8868,
+        0.8578,
+        0.8614,
+        0.9065,
+        0.8798,
+        0.8264,
+        0.8585,
+        0.8813,
+        0.9022,
+        0.8521,
+        0.8973,
+        0.9232,
+        0.9631,
+        0.9496,
+        0.9514,
+        0.9064,
+        0.8656,
+        0.9005,
+        0.8203,
+        0.8134,
+        0.842,
+        0.8645,
+        0.8782,
+        0.8939,
+        0.9113,
+        0.9118,
+        0.9456,
+        0.9596,
+        0.985,
+        0.9864,
+        0.9451,
+        0.9167,
+        0.9016,
+        0.9083,
+        0.8723,
+        0.9055,
+        0.9187,
+        0.9149,
+        0.9632,
+        0.9687,
+        0.9538,
+        0.9339,
+        0.8909,
+        0.8862,
+        0.8556,
+        0.8315,
+        0.86,
+        0.8563,
+        0.8366,
+        0.7391,
+        0.7544,
+        0.7583,
+        0.7499,
+        0.7642,
+        0.7934,
+        0.7928,
+        0.7726,
+        0.7883,
+        0.7721,
+        0.8151,
+        0.8119,
+        0.8703,
+        0.8127,
+        0.8181,
+        0.8412,
+        0.8373,
+        0.8476,
+        0.8667,
+        0.8812,
+        0.8969,
+        0.9226,
+        0.9131,
+        0.8761,
+        0.9025,
+        0.8735,
+        0.8711,
+        0.8534,
+        0.8587,
+        0.8463,
+        0.8887,
+        0.8886,
+        0.8978,
+        0.9219,
+        0.9758,
+        0.9662,
+        0.9539,
+        0.9475,
+        0.997,
+        1.0258,
+        1.0319,
+        1.0469,
+        1.032,
+        1.052,
+        1.0367,
+        1.023,
+        0.9993,
+        1.0102,
+        0.9328,
+        0.9261,
+        0.9144,
+        0.9179,
+        0.8725,
+        0.8842,
+        0.8756,
+        0.8809,
+        0.8929,
+        0.9058,
+        0.8872,
+        0.9671,
+        0.9389,
+        0.9665,
+        0.988,
+        1.0389,
+        1.0794,
+        1.1306,
+        1.1848,
+        1.1484,
+        1.1166,
+        1.1722,
+        1.1742,
+        1.2257,
+        1.1993,
+        1.2259,
+        1.2018,
+        1.2024,
+        1.2096,
+        1.2203,
+        1.1853,
+        1.1742,
+        1.123,
+        1.1671,
+        1.1892,
+        1.2132,
+        1.1849,
+        1.2261,
+        1.2754,
+        1.2259,
+        1.2225,
+        1.2365,
+        1.2545,
+        1.1578,
+        1.1961,
+        1.1989,
+        1.2141,
+        1.184,
+        1.1576,
+        1.0764,
+        1.0753,
+        1.0076,
+        1.0157,
+        1.0017,
+        0.9258,
+        0.8989,
+        0.9053,
+        0.944,
+        0.9611,
+        0.9615,
+        1.014,
+        0.998,
+        1.0107,
+        1.0114,
+        1.0361,
+        1.0496,
+        1.04,
+        1.0611,
+        1.0315,
+        1.0258,
+        0.9803,
+        0.9505,
+        0.9204,
+        0.9363,
+        0.962,
+        0.9505,
+        0.9343,
+        0.9867,
+        0.9961,
+        0.9371,
+        0.9356,
+        0.9798,
+        0.932,
+        0.9866,
+        0.9734,
+        0.9697,
+        0.9868,
+        1.0145,
+        1.0244,
+        1.0613,
+        1.0495,
+        1.0761,
+        1.0875,
+        1.0772,
+        1.0599,
+        1.1096,
+        1.0971,
+        1.0776,
+        0.9896,
+        0.899,
+        0.8886,
+        0.8537,
+        0.8592,
+        0.8197,
+        0.8247,
+        0.8337,
+        0.8542,
+        0.8487,
+        0.8659,
+        0.7582,
+        0.776,
+        0.7743,
+        0.7348,
+        0.7712,
+        0.7623,
+        0.7863,
+        0.7489,
+        0.7053,
+        0.6985,
+        0.7025,
+        0.7165,
+        0.7356,
+        0.6983,
+        0.7581,
+        0.7883,
+        0.7844,
+        0.752,
+        0.7675,
+        0.7581,
+        0.6962,
+        0.7053,
+        0.6906
+      ],
+      "^NSEI": [
+        1.0,
+        1.0038,
+        1.0191,
+        1.0007,
+        1.0214,
+        1.0468,
+        1.034,
+        1.0087,
+        1.0227,
+        1.0333,
+        1.014,
+        0.9719,
+        0.9816,
+        0.9995,
+        0.9695,
+        0.9706,
+        0.9906,
+        1.0167,
+        1.042,
+        1.0056,
+        0.9762,
+        0.9998,
+        0.9917,
+        0.9861,
+        0.9509,
+        0.9273,
+        0.9493,
+        0.9867,
+        0.9791,
+        1.0086,
+        1.0151,
+        0.9975,
+        0.9802,
+        0.9762,
+        0.9367,
+        0.9008,
+        0.9285,
+        0.9334,
+        0.9466,
+        0.9248,
+        0.8729,
+        0.8961,
+        0.8991,
+        0.9259,
+        0.9161,
+        0.9543,
+        0.9794,
+        0.993,
+        1.0102,
+        1.0136,
+        1.0023,
+        1.0011,
+        1.0179,
+        1.0007,
+        0.989,
+        0.9757,
+        0.9883,
+        0.9809,
+        1.0032,
+        1.0153,
+        1.0341,
+        1.0474,
+        1.045,
+        1.0567,
+        1.0672,
+        1.0558,
+        1.0428,
+        1.0164,
+        1.0334,
+        1.0194,
+        1.025,
+        1.029,
+        1.0048,
+        1.0191,
+        1.0192,
+        1.0242,
+        0.9969,
+        1.0043,
+        0.9939,
+        0.9761,
+        0.9672,
+        0.9909,
+        1.0045,
+        1.0176,
+        1.006,
+        1.0311,
+        1.0314,
+        1.0454,
+        1.039,
+        1.0559,
+        1.0579,
+        1.0596,
+        1.0746,
+        1.0654,
+        1.0953,
+        1.1034,
+        1.1167,
+        1.127,
+        1.1214,
+        1.114,
+        1.109,
+        1.1022,
+        1.0997,
+        1.1094,
+        1.1313,
+        1.1526,
+        1.123,
+        1.1209,
+        1.1218,
+        1.1274,
+        1.1155,
+        1.0872,
+        1.0977,
+        1.1088,
+        1.1263,
+        1.1299,
+        1.1569,
+        1.1969,
+        1.2247,
+        1.2186,
+        1.2404,
+        1.2392,
+        1.2497,
+        1.2342,
+        1.2188,
+        1.2474,
+        1.2433,
+        1.2581,
+        1.2679,
+        1.2751,
+        1.2839,
+        1.2571,
+        1.2613,
+        1.2744,
+        1.2851,
+        1.2854,
+        1.2641,
+        1.2797,
+        1.2829,
+        1.2589,
+        1.2824,
+        1.3104,
+        1.286,
+        1.3294,
+        1.3394,
+        1.3414,
+        1.3705,
+        1.3884,
+        1.3986,
+        1.4002,
+        1.4176,
+        1.4109,
+        1.3909,
+        1.4008,
+        1.4169,
+        1.4405,
+        1.4185,
+        1.4473,
+        1.4721,
+        1.4943,
+        1.4278,
+        1.4249,
+        1.4187,
+        1.3802,
+        1.3873,
+        1.3784,
+        1.3432,
+        1.3646,
+        1.3774,
+        1.4086,
+        1.4138,
+        1.3464,
+        1.3593,
+        1.3702,
+        1.3375,
+        1.3244,
+        1.3181,
+        1.3418,
+        1.3448,
+        1.3088,
+        1.3012,
+        1.2629,
+        1.2873,
+        1.2784,
+        1.3328,
+        1.3425,
+        1.3074,
+        1.303,
+        1.3614,
+        1.3722,
+        1.3897,
+        1.3704,
+        1.4281,
+        1.4186,
+        1.4128,
+        1.4272,
+        1.4109,
+        1.4334,
+        1.4634,
+        1.4533,
+        1.4355,
+        1.4252,
+        1.4177,
+        1.4022,
+        1.3906,
+        1.4059,
+        1.4196,
+        1.3943,
+        1.4122,
+        1.4335,
+        1.4457,
+        1.4073,
+        1.4209,
+        1.4433,
+        1.4675,
+        1.4724,
+        1.4682,
+        1.4551,
+        1.4789,
+        1.488,
+        1.4956,
+        1.4947,
+        1.4867,
+        1.4821,
+        1.4865,
+        1.5028,
+        1.466,
+        1.4666,
+        1.4298,
+        1.4453,
+        1.4666,
+        1.4539,
+        1.4596,
+        1.4372,
+        1.3956,
+        1.3215,
+        1.3194,
+        1.3025,
+        1.2965,
+        1.3728,
+        1.3901,
+        1.3641,
+        1.3698,
+        1.38,
+        1.3496,
+        1.3539,
+        1.3441,
+        1.3338,
+        1.3484,
+        1.3707,
+        1.3731,
+        1.3854,
+        1.3817,
+        1.389,
+        1.3566,
+        1.3918,
+        1.4025,
+        1.3908,
+        1.3843,
+        1.3799,
+        1.3641,
+        1.3355,
+        1.3326,
+        1.3365
+      ]
+    }
+  }
+}
+</script>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Shared data + formatting helpers (used by every section) ----------
+  const DASHBOARD_DATA = JSON.parse(document.getElementById('dashboard-data').textContent);
+
+  function formatIndianNumber(num, decimals) {
+    if (decimals === undefined) decimals = 2;
+    const isNeg = num < 0;
+    num = Math.abs(num);
+    const parts = num.toFixed(decimals).split('.');
+    let intPart = parts[0];
+    const decPart = parts[1];
+    let lastThree = intPart.substring(intPart.length - 3);
+    let otherNumbers = intPart.substring(0, intPart.length - 3);
+    if (otherNumbers !== '') lastThree = ',' + lastThree;
+    const formattedInt = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+    const result = decimals > 0 ? formattedInt + '.' + decPart : formattedInt;
+    return (isNeg ? '-' : '') + result;
+  }
+
+  function formatRupees(num, decimals) {
+    const d = decimals === undefined ? 2 : decimals;
+    const body = formatIndianNumber(Math.abs(num), d);
+    const isZero = parseFloat(body.replace(/,/g, '')) === 0;
+    return (num < 0 && !isZero ? '-' : '') + '₹' + body;
+  }
+
+  // Future value of a monthly SIP, compounded monthly, with each instalment invested at the
+  // start of its month (annuity-due — the convention Indian SIP calculators use):
+  //   FV = P × [((1 + i)^n − 1) / i] × (1 + i)
+  // P = monthly amount, i = annual return / 12, n = number of monthly instalments.
+  function sipFutureValue(P, months, annualPct) {
+    if (months <= 0 || P <= 0) return 0;
+    const i = annualPct / 100 / 12;
+    if (Math.abs(i) < 1e-12) return P * months; // 0% return: no growth, avoids divide-by-zero
+    return P * ((Math.pow(1 + i, months) - 1) / i) * (1 + i);
+  }
+
+  // Lakh / crore shorthand for large amounts: ₹12.50 L, ₹3.25 Cr.
+  function formatINRCompact(num) {
+    const sign = num < 0 ? '-' : '';
+    const a = Math.abs(num);
+    if (a >= 1e7) return sign + '₹' + formatIndianNumber(a / 1e7, 2) + ' Cr';
+    if (a >= 1e5) return sign + '₹' + (a / 1e5).toFixed(2) + ' L';
+    return formatRupees(num, 0);
+  }
+
+  function formatPercent(fraction, decimals) {
+    if (decimals === undefined) decimals = 1;
+    return (fraction * 100).toFixed(decimals) + '%';
+  }
+
+  function formatCrores(rupees, decimals) {
+    if (decimals === undefined) decimals = 0;
+    return '₹' + formatIndianNumber(rupees / 1e7, decimals) + ' Cr';
+  }
+
+  function formatMultiple(num, decimals) {
+    if (decimals === undefined) decimals = 1;
+    return num.toFixed(decimals) + 'x';
+  }
+
+  // Fixed categorical color per ticker, reused across every section so the
+  // same company always reads as the same color throughout the dashboard.
+  const STOCK_ORDER = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'ITC.NS', 'INFY.NS'];
+  const STOCK_COLOR = {
+    'RELIANCE.NS': '#3987e5',
+    'TCS.NS':      '#d95926',
+    'HDFCBANK.NS': '#199e70',
+    'ITC.NS':      '#c98500',
+    'INFY.NS':     '#d55181'
+  };
+
+  // Theme constants for Chart.js (it draws on canvas, so it can't read CSS variables).
+  const THEME = {
+    grid:      '#2c2c2a',
+    tick:      '#c3c2b7',
+    accent:    '#22c55e',
+    invested:  '#898781',
+    warning:   '#fab219',
+    white:     '#ffffff'
+  };
+  const CHART_JS_AVAILABLE = typeof window.Chart !== 'undefined' && !window.__chartJsFailed;
+  if (CHART_JS_AVAILABLE) {
+    Chart.defaults.color = THEME.tick;
+    Chart.defaults.borderColor = THEME.grid;
+    Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+  }
+
+  // Scroll animations are on only when the <head> script opted in (reduced-motion users are excluded).
+  const MOTION_OK = document.documentElement.classList.contains('anim');
+
+  // Charts registered here replay their draw-in animation when first scrolled into view.
+  const revealCharts = [];
+  function registerRevealChart(chart) {
+    if (MOTION_OK && chart) revealCharts.push(chart);
+  }
+  const STOCK_SHORT_NAME = {
+    'RELIANCE.NS': 'RELIANCE',
+    'TCS.NS':      'TCS',
+    'HDFCBANK.NS': 'HDFC BANK',
+    'ITC.NS':      'ITC',
+    'INFY.NS':     'INFY'
+  };
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  document.getElementById('footer-date').textContent =
+    new Date(DASHBOARD_DATA.generated_on).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('footer-period').textContent =
+    formatDate(DASHBOARD_DATA.period.start) + ' – ' + formatDate(DASHBOARD_DATA.period.end);
+
+  // ---------- Navigation: scrollspy, mobile menu, progress bar, back-to-top ----------
+  (function navigation() {
+    const nav = document.getElementById('section-nav');
+    const toggle = document.getElementById('menu-toggle');
+    const links = Array.from(nav.querySelectorAll('a[data-section]'));
+    const progress = document.getElementById('scroll-progress');
+    const backToTop = document.getElementById('back-to-top');
+
+    toggle.addEventListener('click', () => {
+      const open = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+    links.forEach(a => a.addEventListener('click', () => {
+      nav.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && nav.classList.contains('open')) {
+        nav.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.focus();
+      }
+    });
+
+    // Highlight whichever lesson currently spans the line ~35% down the viewport.
+    const sections = links.map(a => document.getElementById(a.dataset.section));
+    function updateActive() {
+      const probe = window.innerHeight * 0.35;
+      let activeId = null;
+      sections.forEach(sec => {
+        const r = sec.getBoundingClientRect();
+        if (r.top <= probe && r.bottom > probe) activeId = sec.id;
+      });
+      links.forEach(a => {
+        const on = a.dataset.section === activeId;
+        a.classList.toggle('active', on);
+        if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+      });
+    }
+
+    function onScroll() {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+      progress.style.width = pct + '%';
+      backToTop.classList.toggle('visible', window.scrollY > 500);
+      updateActive();
+    }
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { onScroll(); ticking = false; });
+    }, { passive: true });
+    window.addEventListener('resize', onScroll);
+    backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    onScroll();
+  })();
+
+  // ---------- Section 1: Order book simulator ----------
+  (function orderBookSection() {
+    const TICKER = 'RELIANCE.NS';
+    const stock = DASHBOARD_DATA.stocks[TICKER];
+    const BASE_PRICE = Math.round(stock.latest_close);
+    const TICK = 1;      // simplified to whole rupees for a beginner-legible ladder (real NSE tick is 5 paise)
+    const LEVELS = 8;
+    const MAX_QTY_INPUT = 4000;
+
+    let book, ltp, tradeCounter, tradeLog;
+
+    function randomQty(levelIndex) {
+      const base = 80 + levelIndex * 40;
+      const variance = Math.floor(Math.random() * 120);
+      return Math.round((base + variance) / 10) * 10;
+    }
+
+    function buildBook(midPrice) {
+      const bids = [], asks = [];
+      for (let i = 0; i < LEVELS; i++) {
+        bids.push({ price: midPrice - TICK - i, qty: randomQty(i) });
+        asks.push({ price: midPrice + TICK + i, qty: randomQty(i) });
+      }
+      return { bids, asks };
+    }
+
+    function resetState() {
+      book = buildBook(BASE_PRICE);
+      ltp = BASE_PRICE;
+      tradeCounter = 0;
+      tradeLog = [];
+      document.getElementById('ob-message').textContent = '';
+      document.getElementById('ob-message').className = 'order-message';
+      render();
+    }
+
+    function maxQtyInBook() {
+      return Math.max(1, ...book.bids.map(l => l.qty), ...book.asks.map(l => l.qty));
+    }
+
+    function renderLadder() {
+      const maxQty = maxQtyInBook();
+      const ladder = document.getElementById('ob-ladder');
+      const bestAsk = book.asks[0].price;
+      const bestBid = book.bids[0].price;
+      const spread = bestAsk - bestBid;
+      const spreadPct = spread / ltp;
+
+      let html = '<p class="book-side-label">Asks (sellers) — lowest ask nearest the spread</p>';
+      // Show worst-to-best top to bottom so the best ask sits just above the spread bar.
+      const asksDesc = book.asks.slice().sort((a, b) => b.price - a.price);
+      asksDesc.forEach(level => {
+        const pct = (level.qty / maxQty) * 100;
+        const isBest = level.price === bestAsk;
+        html += `<div class="book-row ask${isBest ? ' best' : ''}">
+          <div class="depth-fill" style="width:${pct}%"></div>
+          <span class="price">${formatRupees(level.price, 2)}</span>
+          <span class="qty">${level.qty}</span>
+        </div>`;
+      });
+
+      html += `<div class="spread-bar">
+        <span>Last traded: <strong>${formatRupees(ltp, 2)}</strong></span>
+        <span>Spread: <strong>${formatRupees(spread, 2)}</strong> (${formatPercent(spreadPct)})</span>
+      </div>`;
+
+      html += '<p class="book-side-label">Bids (buyers) — highest bid nearest the spread</p>';
+      book.bids.forEach(level => {
+        const pct = (level.qty / maxQty) * 100;
+        const isBest = level.price === bestBid;
+        html += `<div class="book-row bid${isBest ? ' best' : ''}">
+          <div class="depth-fill" style="width:${pct}%"></div>
+          <span class="price">${formatRupees(level.price, 2)}</span>
+          <span class="qty">${level.qty}</span>
+        </div>`;
+      });
+
+      ladder.innerHTML = html;
+    }
+
+    function renderStats() {
+      const bestAsk = book.asks[0].price;
+      const bestBid = book.bids[0].price;
+      const spread = bestAsk - bestBid;
+      document.getElementById('ob-stats').innerHTML = `
+        <div class="stat-tile"><div class="label">Last Traded Price</div><div class="value">${formatRupees(ltp, 2)}</div></div>
+        <div class="stat-tile"><div class="label">Best Bid</div><div class="value" style="color:var(--success)">${formatRupees(bestBid, 2)}</div></div>
+        <div class="stat-tile"><div class="label">Best Ask</div><div class="value" style="color:var(--critical)">${formatRupees(bestAsk, 2)}</div></div>
+        <div class="stat-tile"><div class="label">Spread</div><div class="value">${formatRupees(spread, 2)}</div></div>
+      `;
+    }
+
+    function renderTradeLog() {
+      const tbody = document.getElementById('ob-trade-log');
+      if (tradeLog.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No trades yet</td></tr>';
+        return;
+      }
+      tbody.innerHTML = tradeLog.slice(0, 8).map(t => `
+        <tr>
+          <td>${t.id}</td>
+          <td><span class="side-chip ${t.side}">${t.side === 'buy' ? 'Buy' : 'Sell'}</span></td>
+          <td>${t.qty}</td>
+          <td>${formatRupees(t.avgPrice, 2)}</td>
+          <td>${formatRupees(t.newLtp, 2)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function render() {
+      renderStats();
+      renderLadder();
+      renderTradeLog();
+    }
+
+    function placeOrder(side, requestedQty) {
+      const levels = side === 'buy' ? book.asks : book.bids;
+      levels.sort((a, b) => side === 'buy' ? a.price - b.price : b.price - a.price);
+
+      let remaining = requestedQty;
+      let totalCost = 0;
+      let totalFilled = 0;
+      let lastFillPrice = ltp;
+
+      for (let i = 0; i < levels.length && remaining > 0; i++) {
+        const level = levels[i];
+        const filled = Math.min(remaining, level.qty);
+        if (filled <= 0) continue;
+        totalCost += filled * level.price;
+        totalFilled += filled;
+        lastFillPrice = level.price;
+        level.qty -= filled;
+        remaining -= filled;
+      }
+
+      if (totalFilled === 0) {
+        return { ok: false, message: 'No orders available on that side of the book. Try Reset.' };
+      }
+
+      // Remove exhausted levels and replenish the far end so the book stays full.
+      const remainingLevels = levels.filter(l => l.qty > 0);
+      const farthest = remainingLevels.length
+        ? remainingLevels[remainingLevels.length - 1].price
+        : (side === 'buy' ? ltp + TICK : ltp - TICK);
+      let nextPrice = farthest;
+      while (remainingLevels.length < LEVELS) {
+        nextPrice += side === 'buy' ? TICK : -TICK;
+        remainingLevels.push({ price: nextPrice, qty: randomQty(remainingLevels.length) });
+      }
+      if (side === 'buy') {
+        book.asks = remainingLevels.sort((a, b) => a.price - b.price);
+      } else {
+        book.bids = remainingLevels.sort((a, b) => b.price - a.price);
+      }
+
+      ltp = lastFillPrice;
+      tradeCounter += 1;
+      tradeLog.unshift({
+        id: tradeCounter,
+        side,
+        qty: totalFilled,
+        avgPrice: totalCost / totalFilled,
+        newLtp: ltp
+      });
+
+      const partial = totalFilled < requestedQty;
+      return {
+        ok: true,
+        partial,
+        message: partial
+          ? `Only ${totalFilled} of ${requestedQty} shares could be filled — the visible book ran out of depth at this level.`
+          : `Filled ${totalFilled} shares at an average price of ${formatRupees(totalCost / totalFilled, 2)}. Price moved to ${formatRupees(ltp, 2)}.`
+      };
+    }
+
+    // ---- wiring ----
+    let currentSide = 'buy';
+    document.querySelectorAll('.side-toggle button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentSide = btn.dataset.side;
+        document.querySelectorAll('.side-toggle button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    document.getElementById('ob-place-order').addEventListener('click', () => {
+      const qtyInput = document.getElementById('ob-qty');
+      let qty = parseInt(qtyInput.value, 10);
+      const msgEl = document.getElementById('ob-message');
+
+      if (!Number.isFinite(qty) || qty <= 0) {
+        msgEl.textContent = 'Enter a quantity greater than zero.';
+        msgEl.className = 'order-message warn';
+        return;
+      }
+      qty = Math.min(qty, MAX_QTY_INPUT);
+
+      const result = placeOrder(currentSide, qty);
+      msgEl.textContent = result.message;
+      msgEl.className = 'order-message' + (result.partial || !result.ok ? ' warn' : '');
+      render();
+    });
+
+    document.getElementById('ob-reset').addEventListener('click', resetState);
+
+    document.getElementById('ob-quick-sizes').addEventListener('click', e => {
+      const btn = e.target.closest('[data-qty]');
+      if (!btn) return;
+      document.getElementById('ob-qty').value = btn.dataset.qty;
+      document.getElementById('ob-place-order').click();
+    });
+
+    resetState();
+  })();
+
+  // ---------- Section 2: valuation (market cap, P/E, growth slider) ----------
+  (function valuationSection() {
+    const chartJsAvailable = typeof window.Chart !== 'undefined' && !window.__chartJsFailed;
+
+    const labels = STOCK_ORDER.map(t => STOCK_SHORT_NAME[t]);
+    const colors = STOCK_ORDER.map(t => STOCK_COLOR[t]);
+    const marketCapsCr = STOCK_ORDER.map(t => DASHBOARD_DATA.stocks[t].market_cap / 1e7);
+    const pes = STOCK_ORDER.map(t => DASHBOARD_DATA.stocks[t].trailing_pe);
+
+    function renderFallbackTable(canvasEl, columnLabel, values, formatter) {
+      const wrap = document.createElement('div');
+      wrap.className = 'table-scroll';
+      const table = document.createElement('table');
+      table.className = 'chart-fallback-table';
+      table.innerHTML = '<thead><tr><th>Company</th><th>' + columnLabel + '</th></tr></thead>' +
+        '<tbody>' + STOCK_ORDER.map((t, i) =>
+          `<tr><td>${STOCK_SHORT_NAME[t]}</td><td>${values[i] == null ? '—' : formatter(values[i])}</td></tr>`
+        ).join('') + '</tbody>';
+      const note = document.createElement('p');
+      note.className = 'chart-fallback-note';
+      note.textContent = 'Chart.js could not be loaded from the CDN (no network connection), so the data is shown as a table instead.';
+      wrap.appendChild(table);
+      wrap.appendChild(note);
+      canvasEl.replaceWith(wrap);
+    }
+
+    function median(arr) {
+      const s = arr.slice().sort((a, b) => a - b);
+      const mid = Math.floor(s.length / 2);
+      return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+    }
+    const medianPe = median(pes);
+
+    function buildBarChart(canvasId, values, axisLabel, tooltipFormatter, tickFormatter, referenceLine) {
+      const canvasEl = document.getElementById(canvasId);
+      if (!chartJsAvailable) {
+        renderFallbackTable(canvasEl, axisLabel, values, tooltipFormatter);
+        return;
+      }
+      const datasets = [{
+        type: 'bar',
+        label: axisLabel,
+        data: values,
+        backgroundColor: colors,
+        borderRadius: 4,
+        maxBarThickness: 56,
+        order: 2
+      }];
+      if (referenceLine) {
+        datasets.push({
+          type: 'line',
+          label: referenceLine.label,
+          data: values.map(() => referenceLine.value),
+          borderColor: THEME.white,
+          borderWidth: 1.5,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          fill: false,
+          order: 1
+        });
+      }
+      const chart = new Chart(canvasEl, {
+        data: { labels: labels, datasets: datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              filter: item => item.dataset.type === 'bar',
+              callbacks: {
+                label: ctx => tooltipFormatter(ctx.raw)
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: axisLabel },
+              grid: { color: THEME.grid },
+              ticks: tickFormatter ? { callback: v => tickFormatter(v) } : undefined
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+      registerRevealChart(chart);
+    }
+
+    buildBarChart(
+      'chart-market-cap', marketCapsCr, '₹ Crore',
+      v => '₹' + formatIndianNumber(v, 0) + ' Cr',
+      v => formatIndianNumber(v, 0)
+    );
+    buildBarChart('chart-pe', pes, 'P/E (x)', v => formatMultiple(v, 1), null,
+      { label: 'Median P/E', value: medianPe });
+
+    // ---- relative-valuation verdicts (vs the median P/E of these five) ----
+    (function renderVerdicts() {
+      const ranked = STOCK_ORDER
+        .map(t => ({ t, pe: DASHBOARD_DATA.stocks[t].trailing_pe }))
+        .filter(r => r.pe != null)
+        .sort((a, b) => b.pe - a.pe);
+      document.getElementById('pe-verdicts').innerHTML = ranked.map(r => {
+        const diff = r.pe / medianPe - 1;
+        let cls, text;
+        if (Math.abs(diff) < 0.005) { cls = 'median'; text = 'At median'; }
+        else if (diff > 0) { cls = 'expensive'; text = 'Pricier'; }
+        else { cls = 'cheap'; text = 'Cheaper'; }
+        const rel = cls === 'median' ? '' : ` &middot; ${diff > 0 ? '+' : ''}${formatPercent(diff)} vs median`;
+        return `<div class="pe-verdict">
+          <span class="ticker-swatch" style="background:${STOCK_COLOR[r.t]}; margin-right:0;"></span>
+          <span><strong>${STOCK_SHORT_NAME[r.t]}</strong> ${formatMultiple(r.pe)}<span style="color:var(--text-muted)">${rel}</span></span>
+          <span class="tag ${cls}">${text}</span>
+        </div>`;
+      }).join('');
+    })();
+
+    // ---- growth slider ----
+    const slider = document.getElementById('growth-slider');
+    const sliderValueEl = document.getElementById('growth-slider-value');
+    const tbody = document.getElementById('growth-table-body');
+    const YEARS = 3;
+
+    function renderGrowthTable() {
+      const g = parseFloat(slider.value) / 100;
+      sliderValueEl.textContent = formatPercent(g, 1);
+
+      tbody.innerHTML = STOCK_ORDER.map(t => {
+        const stock = DASHBOARD_DATA.stocks[t];
+        const eps = stock.latest_close / stock.trailing_pe;
+        const impliedPrice = stock.latest_close * Math.pow(1 + g, YEARS);
+        const gain = impliedPrice / stock.latest_close - 1;
+        return `<tr>
+          <td><span class="ticker-swatch" style="background:${STOCK_COLOR[t]}"></span>${STOCK_SHORT_NAME[t]}</td>
+          <td>${formatRupees(stock.latest_close, 2)}</td>
+          <td>${formatMultiple(stock.trailing_pe, 1)}</td>
+          <td>${formatRupees(eps, 2)}</td>
+          <td>${formatRupees(impliedPrice, 2)}</td>
+          <td class="gain-chip" style="color:${gain < 0 ? 'var(--critical)' : 'var(--success)'}">${gain >= 0 ? '+' : ''}${formatPercent(gain, 1)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    const growthPresets = document.getElementById('growth-presets');
+    function syncGrowthPresets() {
+      growthPresets.querySelectorAll('[data-g]').forEach(b =>
+        b.classList.toggle('active', b.dataset.g === slider.value));
+    }
+    growthPresets.addEventListener('click', e => {
+      const btn = e.target.closest('[data-g]');
+      if (!btn) return;
+      slider.value = btn.dataset.g;
+      renderGrowthTable();
+      syncGrowthPresets();
+    });
+    slider.addEventListener('input', () => { renderGrowthTable(); syncGrowthPresets(); });
+    renderGrowthTable();
+    syncGrowthPresets();
+  })();
+
+  // ---------- Section 3: risk, return, portfolio allocator, correlation heatmap ----------
+  (function riskReturnSection() {
+    const chartJsAvailable = typeof window.Chart !== 'undefined' && !window.__chartJsFailed;
+    const N = STOCK_ORDER.length;
+
+    // Weights are whole percentages that always sum to 100.
+    let weights = STOCK_ORDER.map(() => Math.round(100 / N)); // [20,20,20,20,20]
+    (function fixRounding() {
+      const total = weights.reduce((a, b) => a + b, 0);
+      weights[0] += 100 - total;
+    })();
+
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+    function setWeight(index, rawNewValue) {
+      const oldValue = weights[index];
+      let newValue = clamp(Math.round(rawNewValue), 0, 100);
+      const others = STOCK_ORDER.map((_, i) => i).filter(i => i !== index);
+      const sumOthers = others.reduce((s, i) => s + weights[i], 0);
+      let delta = newValue - oldValue;
+
+      // Can't take more away from the others than they currently hold.
+      if (sumOthers - delta < 0) {
+        delta = sumOthers;
+        newValue = oldValue + delta;
+      }
+      weights[index] = newValue;
+
+      if (sumOthers > 0) {
+        let distributed = 0;
+        others.forEach((i, idx) => {
+          let share;
+          if (idx === others.length - 1) {
+            share = -delta - distributed;
+          } else {
+            share = Math.round(-delta * (weights[i] / sumOthers));
+            distributed += share;
+          }
+          weights[i] = clamp(weights[i] + share, 0, 100);
+        });
+      } else {
+        const share = Math.floor(-delta / others.length);
+        const remainder = -delta - share * others.length;
+        others.forEach((i, idx) => {
+          weights[i] = share + (idx < remainder ? 1 : 0);
+        });
+      }
+
+      const total = weights.reduce((a, b) => a + b, 0);
+      if (total !== 100) weights[index] += 100 - total;
+    }
+
+    // ---- portfolio math ----
+    function portfolioReturn() {
+      return STOCK_ORDER.reduce((sum, t, i) => sum + (weights[i] / 100) * DASHBOARD_DATA.stocks[t].annualised_return, 0);
+    }
+
+    function naiveWeightedVolatility() {
+      return STOCK_ORDER.reduce((sum, t, i) => sum + (weights[i] / 100) * DASHBOARD_DATA.stocks[t].annualised_volatility, 0);
+    }
+
+    // True portfolio variance = w' * Cov * w, using the real annualised covariance
+    // matrix computed in process_data.py — NOT a weighted average of the individual
+    // volatilities. This is what lets combining stocks lower risk below the average
+    // of the parts (whenever correlations are below 1).
+    function portfolioVolatility() {
+      const cov = DASHBOARD_DATA.covariance_matrix;
+      let variance = 0;
+      for (let i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+          const wi = weights[i] / 100;
+          const wj = weights[j] / 100;
+          variance += wi * wj * cov[STOCK_ORDER[i]][STOCK_ORDER[j]];
+        }
+      }
+      return Math.sqrt(Math.max(variance, 0));
+    }
+
+    // ---- scatter chart ----
+    let scatterChart = null;
+    let portfolioFallbackRow = null;
+
+    function buildScatterChart() {
+      const canvasEl = document.getElementById('chart-scatter');
+      if (!chartJsAvailable) {
+        const wrap = document.createElement('div');
+        wrap.className = 'table-scroll';
+        const table = document.createElement('table');
+        table.className = 'chart-fallback-table';
+        table.innerHTML = '<thead><tr><th>Company</th><th>Volatility</th><th>Return</th></tr></thead><tbody>' +
+          STOCK_ORDER.map(t => {
+            const s = DASHBOARD_DATA.stocks[t];
+            return `<tr><td>${STOCK_SHORT_NAME[t]}</td><td>${formatPercent(s.annualised_volatility)}</td><td>${formatPercent(s.annualised_return)}</td></tr>`;
+          }).join('') +
+          '<tr id="scatter-fallback-portfolio-row"><td>Your Portfolio</td><td></td><td></td></tr></tbody>';
+        const note = document.createElement('p');
+        note.className = 'chart-fallback-note';
+        note.textContent = 'Chart.js could not be loaded from the CDN (no network connection), so the data is shown as a table instead.';
+        wrap.appendChild(table);
+        wrap.appendChild(note);
+        canvasEl.replaceWith(wrap);
+        portfolioFallbackRow = document.getElementById('scatter-fallback-portfolio-row');
+        return;
+      }
+
+      const stockDatasets = STOCK_ORDER.map(t => {
+        const s = DASHBOARD_DATA.stocks[t];
+        return {
+          label: STOCK_SHORT_NAME[t],
+          data: [{ x: s.annualised_volatility * 100, y: s.annualised_return * 100 }],
+          backgroundColor: STOCK_COLOR[t],
+          pointRadius: 7,
+          pointHoverRadius: 9
+        };
+      });
+
+      const portfolioDataset = {
+        label: 'Your Portfolio',
+        data: [{ x: portfolioVolatility() * 100, y: portfolioReturn() * 100 }],
+        backgroundColor: THEME.white,
+        pointStyle: 'rectRot',
+        pointRadius: 10,
+        pointHoverRadius: 12,
+        borderColor: THEME.accent,
+        borderWidth: 2
+      };
+
+      scatterChart = new Chart(canvasEl, {
+        type: 'scatter',
+        data: { datasets: stockDatasets.concat([portfolioDataset]) },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${formatPercent(ctx.raw.y / 100)} return, ${formatPercent(ctx.raw.x / 100)} volatility`
+              }
+            }
+          },
+          scales: {
+            x: { title: { display: true, text: 'Annualised Volatility (%)' }, grid: { color: THEME.grid } },
+            y: { title: { display: true, text: 'Annualised Return (%)' }, grid: { color: THEME.grid } }
+          }
+        }
+      });
+      registerRevealChart(scatterChart);
+    }
+
+    function updatePortfolioPoint() {
+      if (chartJsAvailable && scatterChart) {
+        scatterChart.data.datasets[N].data = [{ x: portfolioVolatility() * 100, y: portfolioReturn() * 100 }];
+        scatterChart.update('none');
+      } else if (portfolioFallbackRow) {
+        portfolioFallbackRow.children[1].textContent = formatPercent(portfolioVolatility());
+        portfolioFallbackRow.children[2].textContent = formatPercent(portfolioReturn());
+      }
+    }
+
+    // ---- sliders UI ----
+    const slidersContainer = document.getElementById('weight-sliders');
+    slidersContainer.innerHTML = STOCK_ORDER.map((t, i) => `
+      <div class="weight-slider">
+        <span class="stock-tag"><span class="ticker-swatch" style="background:${STOCK_COLOR[t]}"></span>${STOCK_SHORT_NAME[t]}</span>
+        <input type="range" min="0" max="100" step="1" value="${weights[i]}" data-index="${i}" id="weight-slider-${i}">
+        <span class="weight-value" id="weight-value-${i}">${weights[i]}%</span>
+      </div>
+    `).join('');
+
+    function renderSlidersAndStats() {
+      weights.forEach((w, i) => {
+        document.getElementById(`weight-slider-${i}`).value = w;
+        document.getElementById(`weight-value-${i}`).textContent = w + '%';
+      });
+      document.getElementById('weight-total').textContent = weights.reduce((a, b) => a + b, 0) + '%';
+
+      const pReturn = portfolioReturn();
+      const naiveVol = naiveWeightedVolatility();
+      const actualVol = portfolioVolatility();
+      const benefit = naiveVol - actualVol;
+
+      document.getElementById('port-return').textContent = formatPercent(pReturn);
+      document.getElementById('port-vol').textContent = formatPercent(actualVol);
+      document.getElementById('naive-vol').textContent = formatPercent(naiveVol);
+      document.getElementById('actual-vol').textContent = formatPercent(actualVol);
+
+      const benefitEl = document.getElementById('diversification-benefit-text');
+      if (benefit > 0.0005) {
+        benefitEl.innerHTML = `Diversification is lowering your risk by <span class="benefit-value">${(benefit * 100).toFixed(1)} percentage points</span> (${formatPercent(naiveVol)} &rarr; ${formatPercent(actualVol)}) — the stocks aren't moving in perfect lockstep.`;
+      } else {
+        benefitEl.innerHTML = `With 100% in a single stock, there's nothing to diversify against — try spreading the weights out.`;
+      }
+
+      updatePortfolioPoint();
+      markActivePreset();
+    }
+
+    slidersContainer.addEventListener('input', e => {
+      if (e.target.tagName !== 'INPUT') return;
+      const index = parseInt(e.target.dataset.index, 10);
+      setWeight(index, parseInt(e.target.value, 10));
+      renderSlidersAndStats();
+    });
+
+    // ---- correlation heatmap ----
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function hexToRgb(hex) {
+      const n = parseInt(hex.slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+    function rgbToHex([r, g, b]) {
+      return '#' + [r, g, b].map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+    }
+    function correlationColor(r) {
+      const gray = hexToRgb('#383835'); // neutral midpoint (dark surface)
+      const blue = hexToRgb('#3987e5'); // positive pole
+      const red = hexToRgb('#e66767');  // negative pole
+      const pole = r >= 0 ? blue : red;
+      const t = Math.min(Math.abs(r), 1);
+      return rgbToHex([lerp(gray[0], pole[0], t), lerp(gray[1], pole[1], t), lerp(gray[2], pole[2], t)]);
+    }
+    function textColorFor(bgHex) {
+      const [r, g, b] = hexToRgb(bgHex);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.6 ? '#0b0b0b' : '#ffffff';
+    }
+
+    function buildHeatmap() {
+      const table = document.getElementById('correlation-heatmap');
+      const corr = DASHBOARD_DATA.correlation_matrix;
+      let html = '<tr><th></th>' + STOCK_ORDER.map(t => `<th>${STOCK_SHORT_NAME[t]}</th>`).join('') + '</tr>';
+      STOCK_ORDER.forEach((rowT, i) => {
+        html += `<tr><th>${STOCK_SHORT_NAME[rowT]}</th>`;
+        STOCK_ORDER.forEach((colT, j) => {
+          const r = corr[rowT][colT];
+          const bg = correlationColor(r);
+          const tip = i === j ? `Click: put 100% in ${STOCK_SHORT_NAME[rowT]}` : `${STOCK_SHORT_NAME[rowT]} vs ${STOCK_SHORT_NAME[colT]}: ${r.toFixed(2)} — click to build a 50/50 portfolio`;
+          html += `<td data-i="${i}" data-j="${j}" title="${tip}" style="background:${bg}; color:${textColorFor(bg)};">${r.toFixed(2)}</td>`;
+        });
+        html += '</tr>';
+      });
+      table.innerHTML = html;
+    }
+
+    // ---- presets derived from the real correlation matrix ----
+    const corr = DASHBOARD_DATA.correlation_matrix;
+    function pairCorr(i, j) { return corr[STOCK_ORDER[i]][STOCK_ORDER[j]]; }
+
+    let mostCorrelatedPair = [0, 1];
+    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+      if (pairCorr(i, j) > pairCorr(mostCorrelatedPair[0], mostCorrelatedPair[1])) mostCorrelatedPair = [i, j];
+    }
+    let leastCorrelatedTrio = [0, 1, 2], bestAvg = Infinity;
+    for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) for (let k = j + 1; k < N; k++) {
+      const avg = (pairCorr(i, j) + pairCorr(i, k) + pairCorr(j, k)) / 3;
+      if (avg < bestAvg) { bestAvg = avg; leastCorrelatedTrio = [i, j, k]; }
+    }
+
+    function weightsFor(indices) {
+      const w = STOCK_ORDER.map(() => 0);
+      const base = Math.floor(100 / indices.length);
+      indices.forEach(i => { w[i] = base; });
+      w[indices[0]] += 100 - base * indices.length;
+      return w;
+    }
+    const names = idx => idx.map(i => STOCK_SHORT_NAME[STOCK_ORDER[i]]).join(' + ');
+    const presets = [
+      { label: 'Equal weight', weights: weightsFor([0, 1, 2, 3, 4]),
+        title: '20% in each of the five' },
+      { label: 'Most similar pair: ' + names(mostCorrelatedPair), weights: weightsFor(mostCorrelatedPair),
+        title: `Highest correlation in the data (${pairCorr(...mostCorrelatedPair).toFixed(2)}) — little diversification benefit` },
+      { label: 'Least-correlated trio: ' + names(leastCorrelatedTrio), weights: weightsFor(leastCorrelatedTrio),
+        title: `Lowest average correlation of any three (${bestAvg.toFixed(2)}) — strong diversification benefit` },
+      { label: 'All in ' + STOCK_SHORT_NAME[STOCK_ORDER[0]], weights: weightsFor([0]),
+        title: 'No diversification at all' }
+    ];
+
+    const presetRow = document.getElementById('alloc-presets');
+    presets.forEach((p, idx) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip-btn';
+      b.textContent = p.label;
+      b.title = p.title;
+      b.dataset.preset = idx;
+      presetRow.appendChild(b);
+    });
+
+    function markActivePreset() {
+      presetRow.querySelectorAll('[data-preset]').forEach(b => {
+        const p = presets[+b.dataset.preset];
+        b.classList.toggle('active', p.weights.every((w, i) => w === weights[i]));
+      });
+    }
+
+    function setAllWeights(arr) {
+      weights = arr.slice();
+      renderSlidersAndStats();
+    }
+
+    presetRow.addEventListener('click', e => {
+      const btn = e.target.closest('[data-preset]');
+      if (!btn) return;
+      setAllWeights(presets[+btn.dataset.preset].weights);
+    });
+
+    // ---- clicking a heatmap cell builds a 50/50 portfolio of that pair ----
+    const heatmapResult = document.getElementById('heatmap-result');
+    document.getElementById('correlation-heatmap').addEventListener('click', e => {
+      const cell = e.target.closest('td[data-i]');
+      if (!cell) return;
+      const i = +cell.dataset.i, j = +cell.dataset.j;
+      setAllWeights(i === j ? weightsFor([i]) : weightsFor([i, j]));
+      const label = i === j ? `100% ${STOCK_SHORT_NAME[STOCK_ORDER[i]]}` : `50% ${STOCK_SHORT_NAME[STOCK_ORDER[i]]} + 50% ${STOCK_SHORT_NAME[STOCK_ORDER[j]]}`;
+      const corrNote = i === j ? '' : ` (correlation ${pairCorr(i, j).toFixed(2)})`;
+      heatmapResult.innerHTML = `Portfolio set to <strong>${label}</strong>${corrNote}: ` +
+        `volatility <strong>${formatPercent(portfolioVolatility())}</strong> vs ${formatPercent(naiveWeightedVolatility())} simple average.`;
+    });
+
+    // ---- per-company risk profile tabs (volatility, max drawdown, beta) ----
+    const riskTabs = document.getElementById('risk-tabs');
+    const riskBody = document.getElementById('risk-profile-body');
+
+    function renderRiskProfile(ticker) {
+      const s = DASHBOARD_DATA.stocks[ticker];
+      const ret = s.annualised_return, vol = s.annualised_volatility, dd = s.max_drawdown, beta = s.beta;
+      const betaText = beta > 1.05 ? `moves about ${beta.toFixed(2)}&times; as much as the Nifty 50 — it amplifies market swings`
+        : beta < 0.95 ? `moves about ${beta.toFixed(2)}&times; as much as the Nifty 50 — calmer than the market`
+        : `moves roughly in step with the Nifty 50`;
+      riskBody.innerHTML = `
+        <div class="stat-tile"><div class="label">Annualised return</div>
+          <div class="value" style="color:${ret < 0 ? 'var(--critical)' : 'var(--success)'}">${ret > 0 ? '+' : ''}${formatPercent(ret)}</div>
+          <div class="explain">${ret < 0 ? 'Lost' : 'Grew'} ${formatPercent(Math.abs(ret))} a year on average over the period.</div></div>
+        <div class="stat-tile"><div class="label">Annualised volatility</div>
+          <div class="value">${formatPercent(vol)}</div>
+          <div class="explain">A typical year's swing is roughly &plusmn;${formatPercent(vol)} around its average.</div></div>
+        <div class="stat-tile"><div class="label">Maximum drawdown</div>
+          <div class="value" style="color:var(--critical)">${formatPercent(dd)}</div>
+          <div class="explain">&#8377;1,00,000 invested at the peak would have fallen to ${formatRupees(100000 * (1 + dd), 0)} at the worst point.</div></div>
+        <div class="stat-tile"><div class="label">Beta vs Nifty 50</div>
+          <div class="value">${beta.toFixed(2)}</div>
+          <div class="explain">Historically ${betaText}.</div></div>`;
+      riskTabs.querySelectorAll('[data-ticker]').forEach(b => {
+        const on = b.dataset.ticker === ticker;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', String(on));
+        b.tabIndex = on ? 0 : -1;
+      });
+    }
+
+    STOCK_ORDER.forEach(t => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip-btn';
+      b.setAttribute('role', 'tab');
+      b.dataset.ticker = t;
+      b.innerHTML = `<span class="ticker-swatch" style="background:${STOCK_COLOR[t]}; margin-right:6px;"></span>${STOCK_SHORT_NAME[t]}`;
+      riskTabs.appendChild(b);
+    });
+    riskTabs.addEventListener('click', e => {
+      const b = e.target.closest('[data-ticker]');
+      if (b) renderRiskProfile(b.dataset.ticker);
+    });
+    riskTabs.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const tabs = Array.from(riskTabs.querySelectorAll('[data-ticker]'));
+      const cur = tabs.findIndex(b => b.classList.contains('active'));
+      const next = tabs[(cur + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+      renderRiskProfile(next.dataset.ticker);
+      next.focus();
+    });
+    renderRiskProfile(STOCK_ORDER[0]);
+
+    buildScatterChart();
+    buildHeatmap();
+    renderSlidersAndStats();
+  })();
+
+  // ---------- Section 4: SIP compounding calculator ----------
+  (function sipSection() {
+    // Default return = the Nifty 50's real annualised return over the data period (from data.json).
+    const NIFTY_RETURN_PCT = DASHBOARD_DATA.benchmark.annualised_return * 100;
+    const DELAY_YEARS = 5;
+
+    const amountEl = document.getElementById('sip-amount');
+    const yearsEl = document.getElementById('sip-years');
+    const returnEl = document.getElementById('sip-return');
+    const delayToggle = document.getElementById('sip-delay-toggle');
+    const delayCallout = document.getElementById('sip-delay-callout');
+    const presetRow = document.getElementById('sip-presets');
+
+    // Kept separately from the slider so the unrounded Nifty figure is used until the user moves it.
+    let returnPct = NIFTY_RETURN_PCT;
+    returnEl.value = NIFTY_RETURN_PCT.toFixed(1);
+
+    function buildSeries(P, years, annualPct, startDelayYears) {
+      const invested = [], value = [];
+      const delayMonths = (startDelayYears || 0) * 12;
+      for (let m = 0; m <= years * 12; m++) {
+        const active = Math.max(0, m - delayMonths);
+        invested.push({ x: m / 12, y: P * active });
+        value.push({ x: m / 12, y: sipFutureValue(P, active, annualPct) });
+      }
+      return { invested, value };
+    }
+
+    // ---- chart (or table fallback) ----
+    let sipChart = null;
+    let fallbackBody = null;
+    const canvasEl = document.getElementById('chart-sip');
+
+    if (CHART_JS_AVAILABLE) {
+      sipChart = new Chart(canvasEl, {
+        type: 'line',
+        data: {
+          datasets: [
+            { label: 'Total invested', data: [], borderColor: THEME.invested, backgroundColor: THEME.invested,
+              borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, fill: false, tension: 0 },
+            { label: 'Portfolio value', data: [], borderColor: THEME.accent, backgroundColor: 'rgba(34,197,94,0.14)',
+              borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 4, fill: 0, tension: 0.15 },
+            { label: `Value if started ${DELAY_YEARS} years later`, data: [], borderColor: THEME.warning,
+              backgroundColor: THEME.warning, borderWidth: 2, borderDash: [6, 4], pointRadius: 0,
+              pointHoverRadius: 4, fill: false, hidden: true, tension: 0.15 }
+          ]
+        },
+        options: {
+          responsive: true,
+          animation: { duration: 250 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 12, filter: item => !sipChart || !sipChart.data.datasets[item.datasetIndex].hidden }
+            },
+            tooltip: {
+              callbacks: {
+                title: items => {
+                  const yrs = items[0].parsed.x;
+                  const y = Math.floor(yrs + 1e-9), mo = Math.round((yrs - y) * 12);
+                  return `Year ${y}${mo ? `, month ${mo}` : ''}`;
+                },
+                label: ctx => `${ctx.dataset.label}: ${formatRupees(ctx.parsed.y, 0)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min: 0,
+              title: { display: true, text: 'Years since starting' },
+              grid: { color: THEME.grid },
+              ticks: { precision: 0 }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Amount (₹)' },
+              grid: { color: THEME.grid },
+              ticks: { callback: v => formatINRCompact(v) }
+            }
+          }
+        }
+      });
+      registerRevealChart(sipChart);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.className = 'table-scroll';
+      wrap.style.maxHeight = '320px';
+      wrap.style.overflowY = 'auto';
+      wrap.innerHTML = '<table class="chart-fallback-table"><thead><tr><th>Year</th><th>Total invested</th><th>Portfolio value</th></tr></thead><tbody id="sip-fallback-body"></tbody></table>' +
+        '<p class="chart-fallback-note">Chart.js could not be loaded from the CDN (no network connection), so the data is shown as a table instead.</p>';
+      canvasEl.replaceWith(wrap);
+      fallbackBody = document.getElementById('sip-fallback-body');
+    }
+
+    function render() {
+      const P = parseFloat(amountEl.value) || 0;
+      const years = parseInt(yearsEl.value, 10) || 1;
+      const r = returnPct;
+
+      document.getElementById('sip-amount-val').textContent = formatRupees(P, 0) + ' / month';
+      document.getElementById('sip-years-val').textContent = years + (years === 1 ? ' year' : ' years');
+      document.getElementById('sip-return-val').textContent = formatPercent(r / 100);
+
+      const isDefault = Math.abs(r - NIFTY_RETURN_PCT) < 1e-9;
+      document.getElementById('sip-return-note').innerHTML = isDefault
+        ? `<span class="accent">Using the Nifty 50's real annualised return</span> (${formatDate(DASHBOARD_DATA.period.start)} – ${formatDate(DASHBOARD_DATA.period.end)})`
+        : `Your own assumption &middot; Nifty 50 historical figure: ${formatPercent(NIFTY_RETURN_PCT / 100)}`;
+
+      const months = years * 12;
+      const finalValue = sipFutureValue(P, months, r);
+      const invested = P * months;
+      const gains = finalValue - invested;
+
+      document.getElementById('sip-final').innerHTML = `${formatRupees(finalValue, 0)}<div class="label" style="margin-top:2px;text-transform:none;letter-spacing:0">${formatINRCompact(finalValue)}</div>`;
+      document.getElementById('sip-invested').innerHTML = `${formatRupees(invested, 0)}<div class="label" style="margin-top:2px;text-transform:none;letter-spacing:0">${formatINRCompact(invested)}</div>`;
+      const gainsEl = document.getElementById('sip-gains');
+      gainsEl.innerHTML = `${gains > 0 ? '+' : ''}${formatRupees(gains, 0)}<div class="label" style="margin-top:2px;text-transform:none;letter-spacing:0">${invested > 0 ? formatPercent(gains / invested) + ' on what you put in' : '—'}</div>`;
+      gainsEl.style.color = gains < 0 ? 'var(--critical)' : '';
+
+      const main = buildSeries(P, years, r, 0);
+      const showDelay = delayToggle.checked;
+      const delayed = buildSeries(P, years, r, DELAY_YEARS);
+
+      if (sipChart) {
+        sipChart.data.datasets[0].data = main.invested;
+        sipChart.data.datasets[1].data = main.value;
+        sipChart.data.datasets[2].data = delayed.value;
+        sipChart.data.datasets[2].hidden = !showDelay;
+        sipChart.getDatasetMeta(2).hidden = null; // let the checkbox win over any earlier legend click
+        sipChart.options.scales.x.max = years;
+        sipChart.update();
+      } else if (fallbackBody) {
+        let rows = '';
+        for (let y = 0; y <= years; y++) {
+          rows += `<tr><td>${y}</td><td>${formatRupees(P * y * 12, 0)}</td><td>${formatRupees(sipFutureValue(P, y * 12, r), 0)}</td></tr>`;
+        }
+        fallbackBody.innerHTML = rows;
+      }
+
+      // ---- cost-of-delay callout ----
+      if (!showDelay) {
+        delayCallout.hidden = true;
+      } else {
+        delayCallout.hidden = false;
+        if (years <= DELAY_YEARS) {
+          delayCallout.innerHTML = `With a ${years}-year plan, starting ${DELAY_YEARS} years later would mean never investing at all. Increase the duration above ${DELAY_YEARS} years to compare.`;
+        } else if (P <= 0) {
+          delayCallout.innerHTML = `Set a monthly amount above &#8377;0 to see the cost of waiting.`;
+        } else {
+          const lateMonths = (years - DELAY_YEARS) * 12;
+          const lateValue = sipFutureValue(P, lateMonths, r);
+          const lateInvested = P * lateMonths;
+          const investedLess = invested - lateInvested;
+          const valueLess = finalValue - lateValue;
+          delayCallout.innerHTML = `Starting ${DELAY_YEARS} years later, you'd invest <strong>${formatRupees(investedLess, 0)}</strong> less — ` +
+            `but end with <strong>${formatRupees(valueLess, 0)}</strong> less (${formatINRCompact(lateValue)} instead of ${formatINRCompact(finalValue)}). ` +
+            (valueLess > investedLess
+              ? `The extra ${formatRupees(valueLess - investedLess, 0)} is growth those early years would have earned.`
+              : `At this return, the early years add little growth — compounding needs a positive return to work.`);
+        }
+      }
+
+      presetRow.querySelectorAll('[data-amt]').forEach(b => b.classList.toggle('active', +b.dataset.amt === P));
+    }
+
+    amountEl.addEventListener('input', render);
+    yearsEl.addEventListener('input', render);
+    returnEl.addEventListener('input', () => { returnPct = parseFloat(returnEl.value); render(); });
+    delayToggle.addEventListener('change', render);
+    document.getElementById('sip-reset-return').addEventListener('click', () => {
+      returnPct = NIFTY_RETURN_PCT;
+      returnEl.value = NIFTY_RETURN_PCT.toFixed(1);
+      render();
+    });
+    presetRow.addEventListener('click', e => {
+      const btn = e.target.closest('[data-amt]');
+      if (!btn) return;
+      amountEl.value = btn.dataset.amt;
+      render();
+    });
+
+    render();
+  })();
+
+  // ---------- Shared animation helper ----------
+  // Counts a number up from 0 with an ease-out curve; jumps straight to the end without motion.
+  function animateNumber(el, to, duration, format) {
+    if (!MOTION_OK) { el.innerHTML = format(to); return; }
+    const t0 = performance.now();
+    function step(now) {
+      const p = Math.min(1, (now - t0) / duration);
+      el.innerHTML = format(to * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ---------- Hero: ticker tape of real 5-year annualised returns ----------
+  (function tickerTape() {
+    const items = STOCK_ORDER.map(t => ({
+      sym: STOCK_SHORT_NAME[t],
+      px: formatRupees(DASHBOARD_DATA.stocks[t].latest_close, 2),
+      r: DASHBOARD_DATA.stocks[t].annualised_return
+    }));
+    items.push({ sym: 'NIFTY 50', px: null, r: DASHBOARD_DATA.benchmark.annualised_return });
+    const unit = items.map(i => {
+      const up = i.r >= 0;
+      return `<span class="tick-item"><span class="sym">${i.sym}</span>` +
+        (i.px ? `<span class="px">${i.px}</span>` : '') +
+        `<span class="${up ? 'up' : 'down'}">${up ? '&#9650;' : '&#9660;'} ${formatPercent(Math.abs(i.r))}</span>` +
+        `<span class="lbl">a year, 5-yr average</span></span>`;
+    }).join('');
+    // Four copies: the track slides by exactly half its width, so the loop is seamless on wide screens.
+    document.getElementById('ticker-track').innerHTML = unit + unit + unit + unit;
+  })();
+
+  // ---------- Hero: self-drawing Nifty 50 chart from the real weekly series ----------
+  (function heroChart() {
+    const wg = DASHBOARD_DATA.weekly_growth;
+    const series = wg.series[DASHBOARD_DATA.benchmark.ticker];
+    const start = wg.dates[0], end = wg.dates[wg.dates.length - 1];
+    const final = series[series.length - 1];
+    const svg = document.getElementById('hc-svg');
+    const card = svg.closest('.hero-chart');
+    const NS_W = 'http://www.w3.org/2000/svg';
+
+    document.getElementById('hc-sub').innerHTML =
+      `${formatDate(start)} &rarr; ${formatDate(end)}<br><strong>${formatRupees(100000, 0)} &rarr; ${formatRupees(100000 * final, 0)}</strong>`;
+    document.getElementById('hc-caption').textContent =
+      `The Nifty 50's real weekly closing level, shown as the value of ₹1,00,000 invested on ${formatDate(start)}. ` +
+      `The dashed line marks the starting value. It's a price index, so dividends aren't included.`;
+
+    function build(animate) {
+      const W = Math.max(svg.clientWidth, 260), H = 200;
+      const padL = 52, padR = 12, padT = 10, padB = 22;
+      const lo0 = Math.min(...series, 1), hi0 = Math.max(...series, 1);
+      const lo = lo0 - (hi0 - lo0) * 0.08, hi = hi0 + (hi0 - lo0) * 0.08;
+      const x = i => padL + (i / (series.length - 1)) * (W - padL - padR);
+      const y = v => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+      const d = series.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+      const area = `${d} L${x(series.length - 1).toFixed(1)} ${H - padB} L${padL} ${H - padB} Z`;
+      const lx = x(series.length - 1), ly = y(final);
+
+      // y labels at the high, the start and the low — skipped when they'd overlap.
+      const labels = [];
+      [hi0, 1, lo0].forEach(v => { if (labels.every(u => Math.abs(y(u) - y(v)) >= 14)) labels.push(v); });
+
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML =
+        `<defs><linearGradient id="hcGrad" x1="0" y1="0" x2="0" y2="1">
+           <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/><stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+         </linearGradient></defs>` +
+        labels.map(v => `<text class="hc-axis" x="${padL - 8}" y="${(y(v) + 3).toFixed(1)}" text-anchor="end">&#8377;${v.toFixed(2)} L</text>`).join('') +
+        `<line class="hc-base" x1="${padL}" x2="${W - padR}" y1="${y(1).toFixed(1)}" y2="${y(1).toFixed(1)}"/>
+         <path class="hc-area" d="${area}" fill="url(#hcGrad)"/>
+         <path class="hc-line" d="${d}"/>
+         <circle class="hc-ring" cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="4" style="display:none"/>
+         <circle class="hc-dot" cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="4.5"/>
+         <text class="hc-axis" x="${padL}" y="${H - 4}">${formatDate(start)}</text>
+         <text class="hc-axis" x="${W - padR}" y="${H - 4}" text-anchor="end">${formatDate(end)}</text>`;
+
+      const line = svg.querySelector('.hc-line');
+      const ring = svg.querySelector('.hc-ring');
+      if (animate && MOTION_OK) {
+        const len = line.getTotalLength();
+        line.style.strokeDasharray = len;
+        line.style.strokeDashoffset = len;
+        line.getBoundingClientRect(); // commit the start state before transitioning
+        line.style.transition = 'stroke-dashoffset 2.2s cubic-bezier(.45,.05,.2,1)';
+        line.style.strokeDashoffset = '0';
+        setTimeout(() => { ring.style.display = ''; }, 2200);
+      } else {
+        ring.style.display = MOTION_OK ? '' : 'none';
+      }
+      card.classList.add('hc-drawn');
+    }
+
+    const bigEl = document.getElementById('hc-big');
+    const fmtChange = v => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+    setTimeout(() => {
+      build(true);
+      animateNumber(bigEl, (final - 1) * 100, 2200, fmtChange);
+    }, MOTION_OK ? 500 : 0);
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => build(false), 150);
+    });
+  })();
+
+  // ---------- Hero: stat strip with count-up numbers ----------
+  (function heroStats() {
+    const S = DASHBOARD_DATA.stocks;
+    const caps = STOCK_ORDER.map(t => S[t].market_cap).filter(v => v != null);
+    const years = (new Date(DASHBOARD_DATA.period.end) - new Date(DASHBOARD_DATA.period.start)) / (365.25 * 864e5);
+    const stats = [
+      { to: STOCK_ORDER.length, fmt: v => Math.round(v), label: 'NSE companies analysed' },
+      { to: Math.max(...STOCK_ORDER.map(t => S[t].trading_days)), fmt: v => formatIndianNumber(Math.round(v), 0), label: 'trading days of real prices' },
+      { to: caps.reduce((a, b) => a + b, 0) / 1e12, fmt: v => `&#8377;${v.toFixed(2)}<span class="unit">lakh cr</span>`, label: 'combined market value today' },
+      { to: years, fmt: v => `${v.toFixed(1)}<span class="unit">years</span>`, label: 'of daily history' }
+    ];
+    const strip = document.getElementById('hero-stats');
+    strip.innerHTML = stats.map((s, i) => `<div class="hero-stat"><div class="n" data-i="${i}">${s.fmt(0)}</div><div class="t">${s.label}</div></div>`).join('');
+    const run = () => strip.querySelectorAll('.n').forEach(el => {
+      const s = stats[+el.dataset.i];
+      animateNumber(el, s.to, 1600, s.fmt);
+    });
+    if (!MOTION_OK) { run(); return; }
+    const io = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) { run(); io.disconnect(); }
+    }, { threshold: 0.4 });
+    io.observe(strip);
+  })();
+
+  // ---------- Scroll bands: giant words that slide sideways as you scroll ----------
+  (function bands() {
+    const words = ['PRICES', 'VALUE', 'RISK', 'RETURN', 'COMPOUNDING', 'TIME'];
+    document.querySelectorAll('.band-row').forEach((row, r) => {
+      let html = '';
+      for (let k = 0; k < 4; k++) {
+        words.forEach((w, i) => { html += `<span class="${(i + r) % 2 ? 'o' : 'g'}">${w}</span><span class="s">&#10022;</span>`; });
+      }
+      row.innerHTML = html;
+    });
+  })();
+
+  // ---------- Section 5: five-year growth race on real weekly prices ----------
+  (function raceSection() {
+    const wg = DASHBOARD_DATA.weekly_growth;
+    const dates = wg.dates;
+    const LAST = dates.length - 1;
+    const START_AMT = 100000;
+    const BENCH = DASHBOARD_DATA.benchmark.ticker;
+    const MS_PER_WEEK = 45; // about 12 seconds for the full five years at 1x
+
+    const entries = STOCK_ORDER.map(t => ({
+      key: t, name: STOCK_SHORT_NAME[t], color: STOCK_COLOR[t],
+      values: wg.series[t].map(v => v * START_AMT)
+    })).concat([{
+      key: BENCH, name: 'NIFTY 50', color: THEME.white, dashed: true,
+      values: wg.series[BENCH].map(v => v * START_AMT)
+    }]);
+    const allVals = entries.flatMap(e => e.values);
+    const vMax = Math.max(...allVals), vMin = Math.min(...allVals);
+
+    document.getElementById('race-start').textContent = formatDate(dates[0]);
+
+    const scrub = document.getElementById('race-scrub');
+    const playBtn = document.getElementById('race-play');
+    const dateEl = document.getElementById('race-date');
+    const leaderEl = document.getElementById('race-leader');
+    scrub.max = LAST;
+
+    let idx = 0, playing = false, speed = 1, lastT = 0, acc = 0, started = false;
+
+    // ---- chart ----
+    let chart = null;
+    const canvas = document.getElementById('chart-race');
+    if (CHART_JS_AVAILABLE) {
+      const datasets = entries.map(e => ({
+        label: e.name,
+        data: [],
+        borderColor: e.color,
+        backgroundColor: e.color,
+        borderWidth: e.dashed ? 2 : 2.25,
+        borderDash: e.dashed ? [6, 4] : [],
+        pointRadius: ctx => (ctx.dataIndex === idx ? 4.5 : 0),
+        pointHoverRadius: 4,
+        tension: 0.2,
+        fill: false
+      }));
+      datasets.push({
+        label: 'Starting value', data: dates.map(() => START_AMT), borderColor: THEME.invested,
+        borderWidth: 1, borderDash: [2, 4], pointRadius: 0, pointHoverRadius: 0, fill: false
+      });
+      chart = new Chart(canvas, {
+        type: 'line',
+        data: { labels: dates.map(formatDate), datasets },
+        options: {
+          responsive: true,
+          animation: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, filter: item => item.text !== 'Starting value' } },
+            tooltip: {
+              filter: item => item.dataset.label !== 'Starting value',
+              callbacks: { label: ctx => `${ctx.dataset.label}: ${formatRupees(ctx.parsed.y, 0)}` }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Week' },
+              grid: { display: false },
+              ticks: { maxTicksLimit: window.innerWidth < 600 ? 3 : 6, maxRotation: 0, autoSkipPadding: 16 }
+            },
+            y: {
+              min: Math.floor(vMin / 10000) * 10000,
+              max: Math.ceil(vMax / 10000) * 10000,
+              title: { display: true, text: 'Value of ₹1,00,000 (₹ lakh)' },
+              grid: { color: THEME.grid },
+              ticks: { callback: v => `₹${(v / 1e5).toFixed(2)} L` }
+            }
+          }
+        }
+      });
+    } else {
+      const note = document.createElement('p');
+      note.className = 'chart-fallback-note';
+      note.textContent = 'Chart.js could not be loaded from the CDN (no network connection). The leaderboard, timeline and play controls still work.';
+      canvas.replaceWith(note);
+    }
+
+    // ---- leaderboard ----
+    const ROW_H = 54;
+    const lb = document.getElementById('leaderboard');
+    lb.style.height = entries.length * ROW_H + 'px';
+    const rows = entries.map(e => {
+      const row = document.createElement('div');
+      row.className = 'lb-row';
+      row.innerHTML =
+        `<div class="lb-top"><span class="name"><span class="lb-rank"></span><span class="ticker-swatch" style="background:${e.color}; margin-right:0;"></span>${e.name}</span>` +
+        `<span><span class="v"></span><span class="chg"></span></span></div>` +
+        `<div class="lb-bar" style="position:relative;"><div class="lb-fill" style="background:${e.color}"></div>` +
+        `<span class="lb-start-line" style="left:${(START_AMT / vMax * 100).toFixed(2)}%"></span></div>`;
+      lb.appendChild(row);
+      return { e, row, rank: row.querySelector('.lb-rank'), v: row.querySelector('.v'), chg: row.querySelector('.chg'), fill: row.querySelector('.lb-fill') };
+    });
+
+    function render() {
+      dateEl.textContent = formatDate(dates[idx]);
+      scrub.value = idx;
+      const ranked = rows.slice().sort((a, b) => b.e.values[idx] - a.e.values[idx]);
+      ranked.forEach((r, k) => {
+        const v = r.e.values[idx], chg = v / START_AMT - 1;
+        r.row.style.transform = `translateY(${k * ROW_H}px)`;
+        r.rank.textContent = k + 1;
+        r.v.textContent = formatRupees(v, 0);
+        r.chg.textContent = `${chg >= 0 ? '+' : ''}${formatPercent(chg)}`;
+        r.chg.style.color = chg >= 0 ? 'var(--success)' : 'var(--critical)';
+        r.fill.style.width = (v / vMax * 100).toFixed(2) + '%';
+      });
+      const lead = ranked[0];
+      leaderEl.innerHTML = `Leading: <strong>${lead.e.name}</strong><br>${formatRupees(lead.e.values[idx], 0)}`;
+      if (chart) {
+        entries.forEach((e, k) => { chart.data.datasets[k].data = e.values.slice(0, idx + 1); });
+        chart.update('none');
+      }
+    }
+
+    function frame(now) {
+      if (!playing) return;
+      acc += (now - lastT) * speed;
+      lastT = now;
+      while (acc >= MS_PER_WEEK && idx < LAST) { acc -= MS_PER_WEEK; idx++; }
+      render();
+      if (idx >= LAST) setPlaying(false);
+      else requestAnimationFrame(frame);
+    }
+
+    function setPlaying(p) {
+      playing = p;
+      playBtn.innerHTML = p ? '&#10074;&#10074; Pause' : '&#9654; Play';
+      playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play');
+      if (p) {
+        started = true;
+        if (idx >= LAST) idx = 0;
+        lastT = performance.now();
+        acc = 0;
+        requestAnimationFrame(frame);
+      }
+    }
+
+    playBtn.addEventListener('click', () => setPlaying(!playing));
+    document.getElementById('race-restart').addEventListener('click', () => { idx = 0; render(); setPlaying(true); });
+    scrub.addEventListener('input', () => { setPlaying(false); started = true; idx = +scrub.value; render(); });
+    document.getElementById('race-speed').addEventListener('click', e => {
+      const b = e.target.closest('[data-speed]');
+      if (!b) return;
+      speed = +b.dataset.speed;
+      document.querySelectorAll('#race-speed [data-speed]').forEach(x => x.classList.toggle('active', x === b));
+    });
+
+    // ---- caption written from the data, so it stays true after a refresh ----
+    const finals = entries.map(e => ({ e, v: e.values[LAST] }));
+    const stocksOnly = finals.filter(f => f.e.key !== BENCH).sort((a, b) => b.v - a.v);
+    const best = stocksOnly[0], worst = stocksOnly[stocksOnly.length - 1];
+    const nifty = finals.find(f => f.e.key === BENCH);
+    const beaten = stocksOnly.filter(f => f.v < nifty.v).length;
+    // The stock that gave back the most from its own peak: shows why the path matters, not just the endpoint.
+    const roundTrip = entries.filter(e => e.key !== BENCH).map(e => {
+      const peak = Math.max(...e.values);
+      return { e, peak, at: e.values.indexOf(peak), end: e.values[LAST] };
+    }).sort((a, b) => b.peak / b.end - a.peak / a.end)[0];
+    const roundTripText = roundTrip.peak / roundTrip.end > 1.2
+      ? ` ${roundTrip.e.name} shows why the ride matters: it was worth ${formatRupees(roundTrip.peak, 0)} at its peak ` +
+        `(${formatDate(dates[roundTrip.at])}), then gave back ${formatPercent(1 - roundTrip.end / roundTrip.peak)} of that by the end.`
+      : '';
+    document.getElementById('race-caption').innerHTML =
+      `Each line is the real value, week by week, of &#8377;1,00,000 invested on ${formatDate(dates[0])}. ` +
+      `<strong>Same market, same five years, very different outcomes:</strong> the best stock (${best.e.name}) ended at ` +
+      `${formatRupees(best.v, 0)} and the worst (${worst.e.name}) at ${formatRupees(worst.v, 0)}, a gap of ${formatRupees(best.v - worst.v, 0)}. ` +
+      `The Nifty 50, which spreads money across 50 companies, ended at ${formatRupees(nifty.v, 0)}, ahead of ${beaten} of the 5 individual stocks.` +
+      roundTripText + ' ' +
+      `<span style="color:var(--text-muted)">Stock lines use adjusted prices (splits and dividends included); the Nifty 50 is a price index (dividends excluded).</span>`;
+
+    // Without motion, show the finished race; with motion, auto-play the first time it scrolls into view.
+    if (!MOTION_OK) {
+      idx = LAST;
+      render();
+    } else {
+      render();
+      const io = new IntersectionObserver(ents => {
+        if (ents.some(x => x.isIntersecting) && !started) { setPlaying(true); io.disconnect(); }
+      }, { threshold: 0.45 });
+      io.observe(document.querySelector('#section-5 .race-layout'));
+    }
+  })();
+
+  // ---------- Confetti (decorative, for a good quiz score) ----------
+  function confettiBurst() {
+    if (!MOTION_OK) return;
+    const c = document.getElementById('confetti');
+    const ctx = c.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W = window.innerWidth, H = window.innerHeight;
+    c.width = W * dpr; c.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const colors = ['#22c55e', '#a3e635', '#2dd4bf', '#fab219', '#ffffff', '#3987e5'];
+    const parts = Array.from({ length: 180 }, () => ({
+      x: W / 2 + (Math.random() - 0.5) * 120, y: H * 0.55,
+      vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 15 - 5,
+      s: 5 + Math.random() * 6, rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 0.35,
+      c: colors[Math.floor(Math.random() * colors.length)]
+    }));
+    const t0 = performance.now();
+    function tick(now) {
+      ctx.clearRect(0, 0, W, H);
+      let alive = false;
+      parts.forEach(p => {
+        p.vy += 0.38; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        if (p.y < H + 20) alive = true;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+        ctx.restore();
+      });
+      if (alive && now - t0 < 4500) requestAnimationFrame(tick);
+      else ctx.clearRect(0, 0, W, H);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- Section 6: quiz generated from the data ----------
+  (function quizSection() {
+    const root = document.getElementById('quiz');
+    const S = DASHBOARD_DATA.stocks;
+    const nm = t => STOCK_SHORT_NAME[t];
+    const KEYS = 'ABCDE';
+
+    // Q1: highest P/E
+    const withPE = STOCK_ORDER.filter(t => S[t].trailing_pe != null);
+    const topPE = withPE.reduce((a, b) => (S[a].trailing_pe >= S[b].trailing_pe ? a : b));
+
+    // Q2: spread, using the same order-book setup as lesson 1
+    const mid = Math.round(S['RELIANCE.NS'].latest_close);
+    const bid = mid - 1, ask = mid + 1;
+
+    // Q3: most correlated pair
+    const corr = DASHBOARD_DATA.correlation_matrix;
+    const pairs = [];
+    for (let i = 0; i < STOCK_ORDER.length; i++) for (let j = i + 1; j < STOCK_ORDER.length; j++) {
+      pairs.push({ a: STOCK_ORDER[i], b: STOCK_ORDER[j], r: corr[STOCK_ORDER[i]][STOCK_ORDER[j]] });
+    }
+    pairs.sort((x, y) => y.r - x.r);
+    const topPair = pairs[0];
+    const pairOpts = [topPair, pairs[pairs.length - 1], pairs[Math.floor(pairs.length / 2)], pairs[pairs.length - 2]];
+    const pairText = p => `${nm(p.a)} and ${nm(p.b)}`;
+    const sameSector = S[topPair.a].sector && S[topPair.a].sector === S[topPair.b].sector;
+
+    // Q4: diversification, with the equal-weight numbers from lesson 3
+    const cov = DASHBOARD_DATA.covariance_matrix;
+    let eqVar = 0;
+    STOCK_ORDER.forEach(a => STOCK_ORDER.forEach(b => { eqVar += 0.04 * cov[a][b]; }));
+    const eqVol = Math.sqrt(eqVar);
+    const avgVol = STOCK_ORDER.reduce((s, t) => s + S[t].annualised_volatility, 0) / STOCK_ORDER.length;
+
+    // Q5: SIP at the Nifty 50's historical return
+    const rPct = DASHBOARD_DATA.benchmark.annualised_return * 100;
+    const P = 5000, n = 180;
+    const fv = sipFutureValue(P, n, rPct);
+    const invested = P * n;
+    const simple = invested + P * (rPct / 100 / 12) * n * (n + 1) / 2; // each instalment earns simple interest only
+
+    // Q6: deepest drawdown
+    const worstDD = STOCK_ORDER.reduce((a, b) => (S[a].max_drawdown <= S[b].max_drawdown ? a : b));
+
+    const questions = [
+      {
+        lesson: 'Lesson 2', q: 'Which company is the most expensive relative to its profit?',
+        hint: 'Look for the highest P/E ratio: share price ÷ yearly earnings per share.',
+        options: STOCK_ORDER.map(t => ({ text: `${nm(t)}`, ok: t === topPE })),
+        explain: `${nm(topPE)} has the highest P/E, at ${formatMultiple(S[topPE].trailing_pe)}: investors pay the most for each rupee of its yearly profit.`
+      },
+      {
+        lesson: 'Lesson 1', q: `The best bid is ${formatRupees(bid, 2)} and the best ask is ${formatRupees(ask, 2)}. What is the bid-ask spread?`,
+        hint: 'The spread is the gap between the highest price a buyer offers (bid) and the lowest price a seller accepts (ask).',
+        options: [
+          { text: formatRupees(ask - bid, 2), ok: true },
+          { text: formatRupees(1, 2), ok: false },
+          { text: formatRupees(mid, 2), ok: false },
+          { text: formatRupees(bid + ask, 2), ok: false }
+        ],
+        explain: `Spread = best ask − best bid = ${formatRupees(ask, 2)} − ${formatRupees(bid, 2)} = ${formatRupees(ask - bid, 2)}.`
+      },
+      {
+        lesson: 'Lesson 3', q: 'Which pair of stocks moved together most closely, day to day?',
+        hint: 'Correlation runs from −1 (always opposite) to +1 (always together). The highest correlation wins.',
+        options: pairOpts.map(p => ({ text: pairText(p), ok: p === topPair })),
+        explain: `${pairText(topPair)} have a correlation of ${topPair.r.toFixed(2)}, the highest of any pair` +
+          (sameSector ? `. Both are in the ${S[topPair.a].sector} sector.` : '.')
+      },
+      {
+        lesson: 'Lesson 3', q: "Holding stocks that don't move in perfect lockstep makes a portfolio's risk…",
+        hint: 'Risk here means volatility: how much the portfolio’s value tends to swing.',
+        options: [
+          { text: "Lower than the average of the individual stocks' risk", ok: true },
+          { text: 'Higher than the riskiest stock on its own', ok: false },
+          { text: "Exactly the average of the individual stocks' risk", ok: false },
+          { text: 'Zero: diversification removes all risk', ok: false }
+        ],
+        explain: `Their ups and downs partly cancel. In lesson 3, 20% in each of the five gave a volatility of ${formatPercent(eqVol)}, versus a ${formatPercent(avgVol)} simple average of the five.`
+      },
+      {
+        lesson: 'Lesson 4', q: `You invest ₹5,000 every month for 15 years at the Nifty 50's historical return (${formatPercent(rPct / 100)} a year). Roughly what is it worth at the end?`,
+        hint: 'An SIP compounds monthly: each month’s returns start earning returns of their own.',
+        options: [
+          { text: `About ${formatINRCompact(fv)}`, ok: true },
+          { text: `About ${formatINRCompact(simple)}`, ok: false },
+          { text: `About ${formatINRCompact(invested)}`, ok: false },
+          { text: `About ${formatINRCompact(fv - invested)}`, ok: false }
+        ],
+        explain: `Monthly compounding turns ${formatRupees(invested, 0)} of deposits into ${formatRupees(fv, 0)}. Simple interest with no compounding would give about ${formatRupees(simple, 0)}; ${formatINRCompact(fv - invested)} is only the gain.`
+      },
+      {
+        lesson: 'Lesson 3', q: 'Which stock had the deepest fall from a peak (maximum drawdown)?',
+        hint: 'Maximum drawdown is the biggest drop from a previous high to a later low.',
+        options: STOCK_ORDER.map(t => ({ text: nm(t), ok: t === worstDD })),
+        explain: `${nm(worstDD)} fell ${formatPercent(-S[worstDD].max_drawdown)} from a peak to its lowest point, the deepest drop of the five.`
+      }
+    ];
+    // Rotate options so the correct answer isn't always in the same slot.
+    const ROTATE = [0, 2, 1, 3, 1, 0];
+    questions.forEach((q, i) => {
+      const k = ROTATE[i] % q.options.length;
+      q.options = q.options.slice(k).concat(q.options.slice(0, k));
+    });
+
+    let current = 0, answers = [], answered = false;
+
+    function progressBar() {
+      return `<div class="quiz-progress">${questions.map((_, i) => {
+        const cls = i < answers.length ? (answers[i] ? 'ok' : 'no') : (i === current ? 'current' : '');
+        return `<i class="${cls}"></i>`;
+      }).join('')}</div>`;
+    }
+
+    function renderQuestion() {
+      answered = false;
+      const q = questions[current];
+      const score = answers.filter(Boolean).length;
+      root.innerHTML = progressBar() +
+        `<div class="quiz-meta">Question ${current + 1} of ${questions.length} &middot; ${q.lesson}</div>
+         <p class="quiz-q">${q.q}</p>
+         <p class="quiz-hint">${q.hint}</p>
+         <div class="quiz-options">${q.options.map((o, i) =>
+           `<button type="button" class="quiz-opt" data-i="${i}"><span class="key">${KEYS[i]}</span><span>${o.text}</span></button>`).join('')}</div>
+         <div class="quiz-feedback" id="quiz-feedback"></div>
+         <div class="quiz-footer">
+           <span class="score-live">Score: ${score} / ${answers.length}</span>
+           <button type="button" class="btn btn-primary" id="quiz-next" hidden>${current === questions.length - 1 ? 'See my score' : 'Next question &rarr;'}</button>
+         </div>`;
+    }
+
+    function answer(i) {
+      if (answered) return;
+      answered = true;
+      const q = questions[current];
+      const ok = q.options[i].ok;
+      answers.push(ok);
+      root.querySelectorAll('.quiz-opt').forEach((b, k) => {
+        b.disabled = true;
+        if (q.options[k].ok) b.classList.add('correct');
+        else if (k === i) b.classList.add('wrong');
+      });
+      document.getElementById('quiz-feedback').innerHTML =
+        `<span class="${ok ? 'ok' : 'no'}">${ok ? 'Correct!' : 'Not quite.'}</span> ${q.explain}`;
+      root.querySelector('.quiz-progress').outerHTML = progressBar();
+      root.querySelector('.score-live').textContent = `Score: ${answers.filter(Boolean).length} / ${answers.length}`;
+      const next = document.getElementById('quiz-next');
+      next.hidden = false;
+      next.focus({ preventScroll: true });
+    }
+
+    function renderResult() {
+      const score = answers.filter(Boolean).length, total = questions.length;
+      const C = 2 * Math.PI * 70;
+      const title = score === total ? 'Perfect score!' : score >= 4 ? 'Great work!' : score >= 2 ? 'Good start' : 'Worth another look';
+      root.innerHTML = progressBar() +
+        `<div class="quiz-result">
+           <svg class="score-ring" viewBox="0 0 170 170" aria-hidden="true">
+             <circle class="track" cx="85" cy="85" r="70"/>
+             <circle class="bar" cx="85" cy="85" r="70" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}"/>
+             <text x="85" y="85">${score}/${total}</text>
+           </svg>
+           <h3>${title}</h3>
+           <p>You answered ${score} of ${total} correctly. Each answer below was calculated from the same real data as the lessons.</p>
+           <div class="quiz-review">${questions.map((q, i) => {
+             const right = q.options.find(o => o.ok).text;
+             return `<div><span class="mk" style="color:${answers[i] ? 'var(--accent)' : 'var(--critical)'}">${answers[i] ? '&#10003;' : '&#10007;'}</span><span>${q.q} <strong style="color:var(--text-primary)">${right}</strong></span></div>`;
+           }).join('')}</div>
+           <div class="btn-row" style="justify-content:center;">
+             <button type="button" class="btn btn-primary" id="quiz-retry">Try again</button>
+             <a class="btn" href="#top" style="text-decoration:none;">Back to the top</a>
+           </div>
+         </div>`;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        root.querySelector('.score-ring .bar').style.strokeDashoffset = (C * (1 - score / total)).toFixed(1);
+      }));
+      if (score >= 4) setTimeout(confettiBurst, 400);
+    }
+
+    root.addEventListener('click', e => {
+      const opt = e.target.closest('.quiz-opt');
+      if (opt) { answer(+opt.dataset.i); return; }
+      if (e.target.closest('#quiz-next')) {
+        current++;
+        if (current < questions.length) renderQuestion(); else renderResult();
+        return;
+      }
+      if (e.target.closest('#quiz-retry')) {
+        current = 0; answers = [];
+        renderQuestion();
+      }
+    });
+
+    // Keyboard: A–E picks an answer while focus is inside the quiz.
+    root.addEventListener('keydown', e => {
+      const k = KEYS.indexOf(e.key.toUpperCase());
+      if (k >= 0 && !answered && current < questions.length && k < questions[current].options.length) {
+        answer(k);
+        e.preventDefault();
+      }
+    });
+
+    renderQuestion();
+  })();
+
+  // ---------- Scroll & hover effects ----------
+  (function effects() {
+    // Cursor spotlight on every card.
+    document.querySelectorAll('.card, .hero-card').forEach(c => c.classList.add('spotlight'));
+    document.addEventListener('pointermove', e => {
+      const el = e.target.closest && e.target.closest('.spotlight');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    }, { passive: true });
+
+    if (!MOTION_OK) return;
+
+    // 3D tilt on the lesson cards (mouse/trackpad only).
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      document.querySelectorAll('.hero-card').forEach(card => {
+        card.addEventListener('pointermove', e => {
+          const r = card.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5;
+          card.style.transform = `perspective(700px) rotateX(${(-py * 8).toFixed(2)}deg) rotateY(${(px * 10).toFixed(2)}deg) translateY(-3px)`;
+        });
+        card.addEventListener('pointerleave', () => { card.style.transform = ''; });
+      });
+    }
+
+    // Reveal-on-scroll: every block in every lesson, plus the hero pieces, fades/slides/unblurs in.
+    const targets = [];
+    const tag = (el, d) => { el.classList.add('reveal'); el.style.setProperty('--d', d); targets.push(el); };
+    document.querySelectorAll('.dash-section').forEach(sec => Array.from(sec.children).forEach((el, i) => tag(el, Math.min(i, 3))));
+    document.querySelectorAll('.scroll-band').forEach(el => tag(el, 0));
+    tag(document.querySelector('.hero-chart'), 4);
+    tag(document.getElementById('hero-stats'), 0);
+    document.querySelectorAll('.hero-cards > a').forEach((el, i) => tag(el, i));
+    document.querySelectorAll('.pe-verdicts > .pe-verdict, #hero-stats .hero-stat').forEach((el, i) => el.style.setProperty('--d', i % 5));
+
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { threshold: 0, rootMargin: '0px 0px -10% 0px' });
+    targets.forEach(t => {
+      io.observe(t);
+      // Once revealed, drop the reveal transition so it can't slow down hover effects (e.g. card tilt).
+      t.addEventListener('transitionend', function done(e) {
+        if (e.target !== t || e.propertyName !== 'opacity' || !t.classList.contains('in')) return;
+        t.classList.remove('reveal');
+        t.removeEventListener('transitionend', done);
+      });
+    });
+
+    // Charts replay their draw-in animation when first scrolled into view.
+    const chartIO = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        const ch = revealCharts.find(c => c.canvas === en.target);
+        if (ch) setTimeout(() => { ch.reset(); ch.update(); }, 300);
+        chartIO.unobserve(en.target);
+      });
+    }, { threshold: 0.35 });
+    revealCharts.forEach(c => chartIO.observe(c.canvas));
+
+    // Parallax lesson numbers and sideways-scrolling word bands.
+    const bigNums = Array.from(document.querySelectorAll('.big-num'));
+    const bandRows = Array.from(document.querySelectorAll('.band-row'));
+    function onScroll() {
+      const vh = window.innerHeight;
+      bigNums.forEach(n => {
+        const r = n.parentElement.getBoundingClientRect();
+        if (r.bottom < -300 || r.top > vh + 300) return;
+        n.style.setProperty('--py', ((r.top - vh * 0.5) * -0.18).toFixed(1) + 'px');
+      });
+      bandRows.forEach(row => {
+        const r = row.parentElement.getBoundingClientRect();
+        const progress = vh - r.top;
+        row.style.transform = `translate3d(${(-1400 + (+row.dataset.dir) * progress * 0.45).toFixed(1)}px, 0, 0)`;
+      });
+    }
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { onScroll(); ticking = false; });
+    }, { passive: true });
+    window.addEventListener('resize', onScroll);
+    onScroll();
+  })();
+
+})();
+</script>
+
+</body>
+</html>

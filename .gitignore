@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.pyc
+
+# Secrets: API keys live in .env locally and in GitHub repository secrets, never in git
+.env
+.env.*
