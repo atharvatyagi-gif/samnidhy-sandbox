@@ -11,3 +11,6 @@ data/raw/
 
 # Built website (GitHub Actions rebuilds and publishes it)
 site/
+
+# Screenshots for video editing (kept on this computer only)
+video_assets/

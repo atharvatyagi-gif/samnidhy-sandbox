@@ -5803,7 +5803,11 @@
         label: `${sel.universe_name} stocks passed the filters` },
       { to: win.years, fmt: v => `${v.toFixed(1)}<span class="unit">years</span>`,
         label: 'of shared price history analysed' },
-      { to: caps.reduce((a, b) => a + b, 0) / 1e12, fmt: v => `&#8377;${v.toFixed(2)}<span class="unit">lakh cr</span>`,
+      // Below ₹1 lakh crore, show whole crores (₹91,333 Cr) rather than an awkward "₹0.91 lakh cr".
+      caps.reduce((a, b) => a + b, 0) >= 1e12
+        ? { to: caps.reduce((a, b) => a + b, 0) / 1e12, fmt: v => `&#8377;${v.toFixed(2)}<span class="unit">lakh cr</span>`,
+            label: caps.length === STOCK_ORDER.length ? 'combined market value' : `combined market value (${caps.length} with data)` }
+        : { to: caps.reduce((a, b) => a + b, 0) / 1e7, fmt: v => `&#8377;${formatIndianNumber(Math.round(v), 0)}<span class="unit">Cr</span>`,
         label: caps.length === STOCK_ORDER.length ? 'combined market value' : `combined market value (${caps.length} with data)` }
     ];
     const strip = document.getElementById('hero-stats');
