@@ -1,0 +1,114 @@
+{
+  "session_date": "2026-09-18",
+  "fetched_at_utc": "2026-09-24T04:35:02+00:00",
+  "fetched_at_ist": "24 Sep 2026, 10:05 AM IST",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_20092026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "gainers": [
+    {
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "ATGL",
+      "yahoo_ticker": "ATGL.NS",
+      "name": "Adani Total Gas Ltd.",
+      "industry": "Oil Gas & Consumable Fuels",
+      "prev_close": 587.0,
+      "close": 660.7,
+      "pct_change": 12.5554,
+      "volume": 39305845,
+      "turnover_crore": 2565.13
+    },
+    {
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "POONAWALLA",
+      "yahoo_ticker": "POONAWALLA.NS",
+      "name": "Poonawalla Fincorp Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 432.8,
+      "close": 479.4,
+      "pct_change": 10.7671,
+      "volume": 7163603,
+      "turnover_crore": 335.52
+    },
+    {
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "WELCORP",
+      "yahoo_ticker": "WELCORP.NS",
+      "name": "Welspun Corp Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 2460.3,
+      "close": 2660.1,
+      "pct_change": 8.121,
+      "volume": 4629365,
+      "turnover_crore": 1209.29
+    }
+  ],
+  "losers": [
+    {
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "TATACHEM",
+      "yahoo_ticker": "TATACHEM.NS",
+      "name": "Tata Chemicals Ltd.",
+      "industry": "Chemicals",
+      "prev_close": 779.3,
+      "close": 693.25,
+      "pct_change": -11.042,
+      "volume": 14086032,
+      "turnover_crore": 999.88
+    },
+    {
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "GODIGIT",
+      "yahoo_ticker": "GODIGIT.NS",
+      "name": "Go Digit General Insurance Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 255.5,
+      "close": 239.0,
+      "pct_change": -6.4579,
+      "volume": 3424067,
+      "turnover_crore": 82.7
+    },
+    {
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "KPITTECH",
+      "yahoo_ticker": "KPITTECH.NS",
+      "name": "KPIT Technologies Ltd.",
+      "industry": "Information Technology",
+      "prev_close": 559.3,
+      "close": 532.0,
+      "pct_change": -4.8811,
+      "volume": 3944020,
+      "turnover_crore": 214.4
+    }
+  ],
+  "universe_count": 498,
+  "eligible_count": 464
+}

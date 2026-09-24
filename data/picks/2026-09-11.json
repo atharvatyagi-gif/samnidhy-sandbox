@@ -1,0 +1,114 @@
+{
+  "session_date": "2026-09-11",
+  "fetched_at_utc": "2026-09-24T04:35:06+00:00",
+  "fetched_at_ist": "24 Sep 2026, 10:05 AM IST",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_14092026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "gainers": [
+    {
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "PINELABS",
+      "yahoo_ticker": "PINELABS.NS",
+      "name": "Pine Labs Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 173.17,
+      "close": 202.17,
+      "pct_change": 16.7465,
+      "volume": 276696049,
+      "turnover_crore": 5309.31
+    },
+    {
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "PWL",
+      "yahoo_ticker": "PWL.NS",
+      "name": "Physicswallah Ltd.",
+      "industry": "Consumer Services",
+      "prev_close": 126.73,
+      "close": 136.1,
+      "pct_change": 7.3937,
+      "volume": 41161986,
+      "turnover_crore": 552.04
+    },
+    {
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "AIIL",
+      "yahoo_ticker": "AIIL.NS",
+      "name": "Authum Investment & Infrastructure Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 512.3,
+      "close": 544.35,
+      "pct_change": 6.2561,
+      "volume": 5994616,
+      "turnover_crore": 325.51
+    }
+  ],
+  "losers": [
+    {
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "COCHINSHIP",
+      "yahoo_ticker": "COCHINSHIP.NS",
+      "name": "Cochin Shipyard Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 1520.4,
+      "close": 1381.0,
+      "pct_change": -9.1686,
+      "volume": 6390480,
+      "turnover_crore": 898.07
+    },
+    {
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "GODREJPROP",
+      "yahoo_ticker": "GODREJPROP.NS",
+      "name": "Godrej Properties Ltd.",
+      "industry": "Realty",
+      "prev_close": 1872.0,
+      "close": 1748.0,
+      "pct_change": -6.6239,
+      "volume": 2684348,
+      "turnover_crore": 469.48
+    },
+    {
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "PIIND",
+      "yahoo_ticker": "PIIND.NS",
+      "name": "PI Industries Ltd.",
+      "industry": "Chemicals",
+      "prev_close": 2365.0,
+      "close": 2259.0,
+      "pct_change": -4.482,
+      "volume": 1124887,
+      "turnover_crore": 253.84
+    }
+  ],
+  "universe_count": 498,
+  "eligible_count": 437
+}

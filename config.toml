@@ -1,0 +1,29 @@
+# Samnidhy Sandbox settings.
+# Change the numbers here to change how the daily stocks are picked. No code changes needed.
+
+[picks]
+gainers_count = 3            # how many top gainers to show
+losers_count = 3             # how many top losers to show
+
+[filters]
+# Only stocks in this index are considered (official list from NSE's index site).
+universe_name = "NIFTY 500"
+universe_url = "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv"
+series = ["EQ"]              # EQ = normal equity shares
+min_price = 50               # closing price must be above this (rupees)
+min_turnover_crore = 10      # at least this much traded in the session (rupees crore)
+# Moves bigger than this are almost always a split or bonus issue, not a real price change,
+# so they are skipped (and listed in the log).
+max_abs_move_pct = 30
+exclude_prefixes = ["DUMMY"] # NSE sometimes puts placeholder symbols in index lists
+exclude_symbols = []         # add any symbol here to always skip it, e.g. ["ABC", "XYZ"]
+
+[source]
+# NSE's official end-of-day file ("bhavcopy"). {date} is filled in automatically.
+bhavcopy_url = "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_{date:%d%m%Y}.csv"
+lookback_days = 10           # how many days back to look for the last trading session
+retries = 3                  # attempts per download before giving up
+
+[history]
+years = 5                    # years of price history used by the lessons
+benchmark = "^NSEI"          # Nifty 50, used as the market comparison

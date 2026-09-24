@@ -1,0 +1,114 @@
+{
+  "session_date": "2026-09-23",
+  "fetched_at_utc": "2026-09-24T04:36:04+00:00",
+  "fetched_at_ist": "24 Sep 2026, 10:06 AM IST",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_23092026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "gainers": [
+    {
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "WHIRLPOOL",
+      "yahoo_ticker": "WHIRLPOOL.NS",
+      "name": "Whirlpool of India Ltd.",
+      "industry": "Consumer Durables",
+      "prev_close": 721.05,
+      "close": 865.25,
+      "pct_change": 19.9986,
+      "volume": 10753329,
+      "turnover_crore": 879.52
+    },
+    {
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "ELECON",
+      "yahoo_ticker": "ELECON.NS",
+      "name": "Elecon Engineering Co. Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 420.55,
+      "close": 466.6,
+      "pct_change": 10.9499,
+      "volume": 30987016,
+      "turnover_crore": 1433.57
+    },
+    {
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "BIKAJI",
+      "yahoo_ticker": "BIKAJI.NS",
+      "name": "Bikaji Foods International Ltd.",
+      "industry": "Fast Moving Consumer Goods",
+      "prev_close": 553.65,
+      "close": 591.1,
+      "pct_change": 6.7642,
+      "volume": 4379438,
+      "turnover_crore": 260.92
+    }
+  ],
+  "losers": [
+    {
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "PFOCUS",
+      "yahoo_ticker": "PFOCUS.NS",
+      "name": "Prime Focus Ltd.",
+      "industry": "Media Entertainment & Publication",
+      "prev_close": 357.45,
+      "close": 337.15,
+      "pct_change": -5.6791,
+      "volume": 6885605,
+      "turnover_crore": 235.97
+    },
+    {
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "PINELABS",
+      "yahoo_ticker": "PINELABS.NS",
+      "name": "Pine Labs Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 197.58,
+      "close": 188.3,
+      "pct_change": -4.6968,
+      "volume": 37096342,
+      "turnover_crore": 715.72
+    },
+    {
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "INOXWIND",
+      "yahoo_ticker": "INOXWIND.NS",
+      "name": "Inox Wind Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 77.9,
+      "close": 75.02,
+      "pct_change": -3.697,
+      "volume": 17183824,
+      "turnover_crore": 130.82
+    }
+  ],
+  "universe_count": 499,
+  "eligible_count": 442
+}
