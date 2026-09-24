@@ -30,7 +30,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from fetch_data import fetch_history          # noqa: E402
+from fetch_data import fetch_history, history_years  # noqa: E402
 from pick_movers import IST, compute_picks, load_config, print_picks  # noqa: E402
 from process_data import analyse              # noqa: E402
 
@@ -89,7 +89,8 @@ def main() -> int:
         as_of = date.fromisoformat(args.as_of) if args.as_of else now.astimezone(IST).date()
 
         print("=== 1. Picking stocks ===")
-        picks = compute_picks(cfg, as_of)
+        picks = compute_picks(cfg, as_of,
+                              history_years=lambda t, s: history_years(t, s, cfg["history"]["years"]))
         print_picks(picks)
 
         print("\n=== 2. Price history ===")

@@ -15,6 +15,10 @@ min_turnover_crore = 10      # at least this much traded in the session (rupees 
 # Moves bigger than this are almost always a split or bonus issue, not a real price change,
 # so they are skipped (and listed in the log).
 max_abs_move_pct = 30
+# Stocks with less price history than this are skipped as "too new to analyse", and the
+# next-ranked stock takes their place (the site says which stock was skipped and why).
+# Set to 0 to switch this rule off.
+min_history_years = 1
 exclude_prefixes = ["DUMMY"] # NSE sometimes puts placeholder symbols in index lists
 exclude_symbols = []         # add any symbol here to always skip it, e.g. ["ABC", "XYZ"]
 

@@ -134,6 +134,8 @@ def analyse(picks: dict, history: dict[str, pd.DataFrame], cfg: dict, sources: d
             "losers_count": len(picks["losers"]),
             "min_price": picks["settings"]["filters"]["min_price"],
             "min_turnover_crore": picks["settings"]["filters"]["min_turnover_crore"],
+            "min_history_years": picks["settings"]["filters"].get("min_history_years", 0),
+            "skipped": picks.get("skipped", []),
             "session_file": picks["source"]["session_file"],
         },
         "order": order,

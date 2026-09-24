@@ -163,9 +163,15 @@ def describe(r: pd.Series, universe: pd.DataFrame, group: str, rank: int) -> dic
     }
 
 
-def compute_picks(cfg: dict, as_of: date) -> dict:
-    """Everything needed to show the day's picks. Raises on any failure; writes nothing."""
+def compute_picks(cfg: dict, as_of: date, history_years=None) -> dict:
+    """Everything needed to show the day's picks. Raises on any failure; writes nothing.
+
+    history_years(yahoo_ticker, session_date) -> years of price history available. When given,
+    stocks with less than filters.min_history_years are skipped and the next-ranked stock is
+    used instead. update.py supplies it; without it the rule is not applied (preview only).
+    """
     p = cfg["picks"]
+    min_years = cfg["filters"].get("min_history_years", 0)
     print(f"Looking for the last NSE session on or before {as_of}...")
     session, bhav, bhav_url = find_last_session(cfg, as_of)
     print(f"  found session {session} ({bhav_url})")
@@ -177,9 +183,36 @@ def compute_picks(cfg: dict, as_of: date) -> dict:
     if len(ranked) < need:
         raise RuntimeError(f"only {len(ranked)} stocks passed the filters; need at least {need}")
 
-    gainers = [describe(r, universe, "gainer", i + 1) for i, (_, r) in enumerate(ranked.head(p["gainers_count"]).iterrows())]
-    losers = [describe(r, universe, "loser", i + 1)
-              for i, (_, r) in enumerate(ranked.iloc[::-1].head(p["losers_count"]).iterrows())]
+    taken, skipped = set(), []
+
+    def select(rows: pd.DataFrame, group: str, count: int) -> list[dict]:
+        chosen = []
+        for _, r in rows.iterrows():
+            if len(chosen) == count:
+                break
+            if r["SYMBOL"] in taken:
+                continue
+            if min_years and history_years is not None:
+                yrs = history_years(f"{r['SYMBOL']}.NS", session)
+                if yrs < min_years:
+                    label = "Top Gainer" if group == "gainer" else "Top Loser"
+                    skipped.append({
+                        "symbol": r["SYMBOL"], "group": group, "pct_change": round(float(r["pct_change"]), 4),
+                        "history_years": round(yrs, 2), "would_have_been": f"{label} #{len(chosen) + 1}",
+                        "reason": f"only {yrs:.1f} years of price history (minimum {min_years})",
+                    })
+                    print(f"  ! skipped {r['SYMBOL']} ({r['pct_change']:+.2f}%): {skipped[-1]['reason']}")
+                    continue
+            taken.add(r["SYMBOL"])
+            chosen.append(describe(r, universe, group, len(chosen) + 1))
+        if len(chosen) < count:
+            raise RuntimeError(f"only {len(chosen)} {group}s met every rule; need {count}")
+        return chosen
+
+    gainers = select(ranked, "gainer", p["gainers_count"])
+    losers = select(ranked.iloc[::-1], "loser", p["losers_count"])
+    if min_years and history_years is None:
+        print(f"  (preview only: the {min_years}-year minimum-history rule is applied by update.py)")
     if any(g["pct_change"] <= 0 for g in gainers) or any(l["pct_change"] >= 0 for l in losers):
         print("  ! note: a very one-sided day; some 'gainers' fell or some 'losers' rose")
 
@@ -191,6 +224,7 @@ def compute_picks(cfg: dict, as_of: date) -> dict:
         "eligible_count": int(len(ranked)),
         "gainers": gainers,
         "losers": losers,
+        "skipped": skipped,
     }
 
 
@@ -199,6 +233,8 @@ def print_picks(picks: dict) -> None:
     for s in picks["gainers"] + picks["losers"]:
         print(f"  {s['label']:14s} {s['symbol']:12s} {s['pct_change']:+7.2f}%  "
               f"Rs {s['prev_close']:>9,.2f} -> Rs {s['close']:>9,.2f}  traded Rs {s['turnover_crore']:,.0f} cr")
+    for s in picks.get("skipped", []):
+        print(f"  (skipped {s['symbol']} {s['pct_change']:+.2f}%, would have been {s['would_have_been']}: {s['reason']})")
 
 
 def main() -> int:

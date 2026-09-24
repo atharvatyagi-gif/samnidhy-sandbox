@@ -19,6 +19,7 @@
       "min_price": 50,
       "min_turnover_crore": 10,
       "max_abs_move_pct": 30,
+      "min_history_years": 1,
       "exclude_prefixes": [
         "DUMMY"
       ],
@@ -102,23 +103,6 @@
       "group": "loser",
       "rank": 2,
       "label": "Top Loser #2",
-      "symbol": "PINELABS",
-      "yahoo_ticker": "PINELABS.NS",
-      "name": "Pine Labs Ltd.",
-      "industry": "Financial Services",
-      "prev_close": 197.58,
-      "open": 196.99,
-      "high": 200.7,
-      "low": 187.11,
-      "close": 188.3,
-      "pct_change": -4.6968,
-      "volume": 37096342,
-      "turnover_crore": 715.72
-    },
-    {
-      "group": "loser",
-      "rank": 3,
-      "label": "Top Loser #3",
       "symbol": "INOXWIND",
       "yahoo_ticker": "INOXWIND.NS",
       "name": "Inox Wind Ltd.",
@@ -131,8 +115,35 @@
       "pct_change": -3.697,
       "volume": 17183824,
       "turnover_crore": 130.82
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "DEVYANI",
+      "yahoo_ticker": "DEVYANI.NS",
+      "name": "Devyani International Ltd.",
+      "industry": "Consumer Services",
+      "prev_close": 144.51,
+      "open": 144.31,
+      "high": 144.39,
+      "low": 139.2,
+      "close": 140.11,
+      "pct_change": -3.0448,
+      "volume": 1344367,
+      "turnover_crore": 19.05
     }
   ],
-  "fetched_at_utc": "2026-09-24T04:51:48+00:00",
-  "fetched_at_ist": "24 Sep 2026, 10:21 AM IST"
+  "skipped": [
+    {
+      "symbol": "PINELABS",
+      "group": "loser",
+      "pct_change": -4.6968,
+      "history_years": 0.86,
+      "would_have_been": "Top Loser #2",
+      "reason": "only 0.9 years of price history (minimum 1)"
+    }
+  ],
+  "fetched_at_utc": "2026-09-24T04:55:28+00:00",
+  "fetched_at_ist": "24 Sep 2026, 10:25 AM IST"
 }

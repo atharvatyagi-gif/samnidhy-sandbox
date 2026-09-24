@@ -73,6 +73,28 @@ def download_one(ticker: str, start: date, end_inclusive: date) -> pd.DataFrame:
     raise RuntimeError(f"could not download {ticker} from Yahoo after {MAX_RETRIES} attempts: {last_error}")
 
 
+_downloads: dict[str, pd.DataFrame] = {}  # raw downloads kept for this run, so nothing is fetched twice
+
+
+def start_date(session: date, years: int) -> date:
+    return session - timedelta(days=round(365.25 * years) + 7)
+
+
+def download_cached(ticker: str, session: date, years: int) -> pd.DataFrame:
+    if ticker not in _downloads:
+        _downloads[ticker] = download_one(ticker, start_date(session, years), session)
+    return _downloads[ticker]
+
+
+def history_years(ticker: str, session: date, years: int) -> float:
+    """How many years of real trading history Yahoo has for a stock, up to the session.
+    Capped by the download window (a stock listed 20 years ago shows about `years`)."""
+    df, _ = clean(download_cached(ticker, session, years), session, is_index=False)
+    if df.empty:
+        return 0.0
+    return (pd.Timestamp(session) - df.index[0]).days / 365.25
+
+
 def clean(df: pd.DataFrame, session: date, is_index: bool) -> tuple[pd.DataFrame, int]:
     df = df.sort_index()[["Open", "High", "Low", "Close", "Volume"]]
     df.index = pd.to_datetime(df.index).tz_localize(None).normalize()
@@ -103,7 +125,6 @@ def fetch_history(picks: dict, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict
     stock plus the benchmark. The second dict says where the session-day price came from."""
     benchmark, years = cfg["history"]["benchmark"], cfg["history"]["years"]
     session = date.fromisoformat(picks["session_date"])
-    start = session - timedelta(days=round(365.25 * years) + 7)
     stocks = picks["gainers"] + picks["losers"]
     nse = {s["yahoo_ticker"]: s for s in stocks}
     tickers = [s["yahoo_ticker"] for s in stocks] + [benchmark]
@@ -113,7 +134,7 @@ def fetch_history(picks: dict, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict
     for ticker in tickers:
         print(f"Fetching {ticker} ...")
         try:
-            df, holidays = clean(download_one(ticker, start, session), session, is_index=ticker == benchmark)
+            df, holidays = clean(download_cached(ticker, session, years), session, is_index=ticker == benchmark)
             if df.empty:
                 raise RuntimeError(f"{ticker}: Yahoo returned no usable prices")
 
