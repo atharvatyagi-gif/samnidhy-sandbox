@@ -94,10 +94,10 @@ def main() -> int:
         print_picks(picks)
 
         print("\n=== 2. Price history ===")
-        history, sources = fetch_history(picks, cfg)
+        history, sources, bench_session = fetch_history(picks, cfg)
 
         print("\n=== 3. Calculations ===")
-        analysis = analyse(picks, history, cfg, sources)
+        analysis = analyse(picks, history, cfg, sources, bench_session)
         check(picks, analysis, cfg)
 
         picks_record = {**picks, "fetched_at_utc": now.isoformat(timespec="seconds"), "fetched_at_ist": ist(now)}

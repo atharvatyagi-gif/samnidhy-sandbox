@@ -8,3 +8,6 @@ __pycache__/
 
 # Raw price downloads: a cache the daily job rebuilds (new stocks every day would bloat git)
 data/raw/
+
+# Built website (GitHub Actions rebuilds and publishes it)
+site/

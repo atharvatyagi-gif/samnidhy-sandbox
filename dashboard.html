@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Understanding the Indian Stock Market</title>
+<title>Samnidhy Sandbox</title>
+<meta name="description" content="Samnidhy Sandbox: learn the stock market from the last NSE session's top gainers and losers, with six interactive lessons on real data. Educational analysis only. Not investment advice.">
+<meta name="application-name" content="Samnidhy Sandbox">
+<meta property="og:title" content="Samnidhy Sandbox">
+<meta property="og:description" content="Daily NSE top gainers and losers, explained through six interactive lessons. Educational analysis only. Not investment advice.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0d0d0d">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js" onerror="window.__chartJsFailed = true;"></script>
 <script>
   // Opt in to scroll animations before first paint (skipped for users who prefer reduced motion,
@@ -168,6 +174,7 @@
     animation-delay: calc(var(--w) * 90ms + 150ms), 0s;
   }
   @keyframes shimmer { to { background-position: 300% 0; } }
+  .hero h1 .word.gradient-text.loss-text { background-image: linear-gradient(90deg, #e66767, #f59e0b, #ec4899, #e66767); }
   .hero .lead {
     margin: 0 0 26px 0;
     color: var(--text-secondary);
@@ -176,29 +183,8 @@
   }
   .hero-ctas { display: flex; gap: 10px; flex-wrap: wrap; }
 
-  /* hero chart card */
-  .hero .hero-chart {
-    background: linear-gradient(180deg, rgba(26,26,25,0.88), rgba(13,13,13,0.88));
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 18px 18px 12px 18px;
-    box-shadow: 0 30px 80px -30px rgba(34,197,94,0.4);
-  }
-  .hc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  /* small labels and captions shared by the hero board and the race */
   .hc-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-  .hc-big { font-size: clamp(1.9rem, 4vw, 2.7rem); font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.1; }
-  .hc-sub { font-size: 0.8rem; color: var(--text-secondary); text-align: right; font-variant-numeric: tabular-nums; }
-  .hc-sub strong { color: var(--text-primary); }
-  #hc-svg { width: 100%; height: 200px; display: block; margin-top: 10px; overflow: visible; }
-  .hc-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(34,197,94,0.6)); }
-  .hc-area { opacity: 0; transition: opacity 1.2s ease 1.4s; }
-  .hc-drawn .hc-area { opacity: 1; }
-  .hc-base { stroke: var(--text-muted); stroke-dasharray: 3 4; stroke-width: 1; }
-  .hc-dot { fill: var(--accent); opacity: 0; transition: opacity 0.3s ease 2.2s; }
-  .hc-drawn .hc-dot { opacity: 1; }
-  .hc-ring { fill: none; stroke: var(--accent); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: ring 1.8s ease-out infinite; }
-  @keyframes ring { from { transform: scale(1); opacity: 0.8; } to { transform: scale(3.4); opacity: 0; } }
-  .hc-axis { font-size: 10px; fill: var(--text-muted); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
   .hc-caption { font-size: 0.78rem; color: var(--text-secondary); margin: 8px 0 0 0; border-top: 1px dashed var(--gridline); padding-top: 8px; }
 
   /* hero stat strip */
@@ -1220,6 +1206,106 @@
   .quiz-review .mk { font-weight: 800; width: 1em; flex-shrink: 0; }
   #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
 
+  /* --- Session bar (top of page) --- */
+  .session-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 18px;
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    background: #0a0a0a;
+    border-bottom: 1px solid var(--border);
+  }
+  .session-bar strong { color: var(--text-primary); }
+  .session-bar .sb-item { display: inline-flex; gap: 6px; align-items: baseline; }
+  .session-bar.warn { background: rgba(250,178,25,0.12); border-bottom-color: rgba(250,178,25,0.45); }
+  .session-bar.archive { background: rgba(57,135,229,0.12); border-bottom-color: rgba(57,135,229,0.45); }
+  .session-bar .sb-alert { flex-basis: 100%; color: var(--text-primary); }
+  .session-bar.warn .sb-alert strong { color: var(--warning); }
+  .session-bar.archive .sb-alert strong { color: #7fb2f0; }
+  .session-bar a { color: var(--accent); }
+
+  /* --- Gainer / loser label chips (used everywhere a stock is named) --- */
+  .grp-chip {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .grp-chip.gainer { color: var(--accent); background: rgba(34,197,94,0.13); border: 1px solid rgba(34,197,94,0.4); }
+  .grp-chip.loser { color: var(--critical); background: rgba(230,103,103,0.13); border: 1px solid rgba(230,103,103,0.4); }
+  .up { color: var(--accent); }
+  .down { color: var(--critical); }
+
+  /* --- Movers board (hero) --- */
+  .hero .movers-board {
+    background: linear-gradient(180deg, rgba(26,26,25,0.9), rgba(13,13,13,0.9));
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 30px 80px -30px rgba(34,197,94,0.35);
+  }
+  .mb-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+  .mb-date { font-size: clamp(1.2rem, 2.6vw, 1.5rem); font-weight: 800; letter-spacing: -0.01em; }
+  .mb-count { font-size: 0.75rem; color: var(--text-muted); text-align: right; max-width: 16ch; }
+  .mb-group { margin-top: 10px; }
+  .mb-group-label { margin: 0 0 2px 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .mb-group.gainers .mb-group-label { color: var(--accent); }
+  .mb-group.losers .mb-group-label { color: var(--critical); }
+  .mb-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--gridline);
+  }
+  .mb-group:last-of-type .mb-row:last-child { border-bottom: none; }
+  .mb-name { min-width: 0; }
+  .mb-name .sym { font-weight: 700; margin-left: 6px; }
+  .mb-name .co { display: block; font-size: 0.74rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mb-bar { height: 4px; border-radius: 2px; margin-top: 6px; width: 0; transition: width 1.2s cubic-bezier(.2,.7,.2,1); }
+  .mb-pct { font-weight: 800; font-size: 1.05rem; font-variant-numeric: tabular-nums; text-align: right; }
+  .mb-pct small { display: block; font-weight: 400; font-size: 0.72rem; color: var(--text-muted); }
+
+  /* --- Notes --- */
+  .window-note {
+    font-size: 0.86rem;
+    color: var(--text-secondary);
+    background: rgba(57,135,229,0.08);
+    border: 1px solid rgba(57,135,229,0.3);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 0 0 16px 0;
+  }
+  .window-note strong { color: var(--text-primary); }
+  .ob-real-move { font-size: 0.9rem; color: var(--text-secondary); margin: 0 0 14px 0; }
+  .ob-real-move strong { color: var(--text-primary); }
+
+  /* --- Past sessions --- */
+  .past-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  .past-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    background: var(--page-plane);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  a.past-card:hover, a.past-card:focus-visible { border-color: var(--accent); transform: translateY(-2px); outline: none; }
+  .past-card.current { border-color: var(--accent); }
+  .past-card .d { font-weight: 800; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .past-card .d small { font-weight: 600; font-size: 0.72rem; color: var(--accent); }
+  .past-card ul { list-style: none; margin: 8px 0 0 0; padding: 0; display: grid; gap: 3px; font-size: 0.82rem; }
+  .past-card li { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+
   /* --- Motion preferences --- */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -1254,7 +1340,9 @@
 
 <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
 
-<div class="ticker-tape" aria-label="Five-year annualised returns, from the data">
+<div class="session-bar" id="session-bar" role="status" aria-live="polite"></div>
+
+<div class="ticker-tape" aria-label="This session's picked stocks and their move in the last trading session">
   <div class="ticker-track" id="ticker-track"></div>
 </div>
 
@@ -1266,45 +1354,54 @@
   <div class="hero-inner">
     <div class="hero-top">
       <div>
-        <span class="hero-kicker"><span class="live-dot" aria-hidden="true"></span>Interactive guide &middot; Real NSE data</span>
+        <span class="hero-kicker"><span class="live-dot" aria-hidden="true"></span>Samnidhy Sandbox &middot; Daily NSE movers</span>
         <h1>
-          <span class="word" style="--w:0">Understand</span> <span class="word" style="--w:1">the</span>
-          <span class="word gradient-text" style="--w:2">Indian</span> <span class="word gradient-text" style="--w:3">Stock</span>
-          <span class="word gradient-text" style="--w:4">Market</span> <span class="word" style="--w:5">by</span>
-          <span class="word" style="--w:6">playing</span> <span class="word" style="--w:7">with</span> <span class="word" style="--w:8">it.</span>
+          <span class="word" style="--w:0">Learn</span> <span class="word" style="--w:1">the</span>
+          <span class="word" style="--w:2">market</span> <span class="word" style="--w:3">from</span>
+          <span class="word" style="--w:4">its</span> <span class="word" style="--w:5">latest</span>
+          <span class="word gradient-text" style="--w:6">winners</span> <span class="word" style="--w:7">and</span>
+          <span class="word gradient-text loss-text" style="--w:8">losers.</span>
         </h1>
         <p class="lead">
-          Six hands-on lessons for people who have never bought a share, built on real prices and
-          company figures for five NSE-listed companies and the Nifty 50 index.
+          Every weekday morning, Samnidhy Sandbox picks the <strong>top gainers</strong> and
+          <strong>top losers</strong> of the last NSE trading session, then runs six hands-on lessons
+          on exactly those stocks, using real prices and company figures.
         </p>
         <div class="hero-ctas">
           <a class="btn btn-primary btn-lg" href="#section-1">Start lesson 1 &darr;</a>
-          <a class="btn btn-ghost btn-lg" href="#section-6">Jump to the quiz</a>
+          <a class="btn btn-ghost btn-lg" href="#past">See past sessions</a>
         </div>
       </div>
 
-      <div class="hero-chart card spotlight">
-        <div class="hc-top">
+      <div class="movers-board card" id="movers-board" aria-labelledby="movers-title">
+        <div class="mb-head">
           <div>
-            <div class="hc-label">&#8377;1,00,000 in the Nifty 50</div>
-            <div class="hc-big" id="hc-big">+0.0%</div>
+            <div class="hc-label" id="movers-title">Stocks for this session</div>
+            <div class="mb-date" id="mb-date"></div>
           </div>
-          <div class="hc-sub" id="hc-sub"></div>
+          <div class="mb-count" id="mb-count"></div>
         </div>
-        <svg id="hc-svg" role="img" aria-labelledby="hc-caption"></svg>
-        <p class="hc-caption" id="hc-caption"></p>
+        <div class="mb-group gainers">
+          <p class="mb-group-label">&#9650; Top gainers</p>
+          <div id="mb-gainers"></div>
+        </div>
+        <div class="mb-group losers">
+          <p class="mb-group-label">&#9660; Top losers</p>
+          <div id="mb-losers"></div>
+        </div>
+        <p class="hc-caption" id="mb-caption"></p>
       </div>
     </div>
 
     <div class="hero-stats" id="hero-stats"></div>
 
     <div class="hero-cards">
-      <a class="hero-card" href="#section-1"><span class="arrow">&nearr;</span><span class="num">LESSON 01</span><span class="title">How a price is set</span><span class="desc">Trade against a live order book and move the price</span></a>
+      <a class="hero-card" href="#section-1"><span class="arrow">&nearr;</span><span class="num">LESSON 01</span><span class="title">How a price is set</span><span class="desc">Trade this session's stocks in a live order book</span></a>
       <a class="hero-card" href="#section-2"><span class="arrow">&nearr;</span><span class="num">LESSON 02</span><span class="title">What a company is worth</span><span class="desc">Market cap and P/E, and who looks pricey</span></a>
-      <a class="hero-card" href="#section-3"><span class="arrow">&nearr;</span><span class="num">LESSON 03</span><span class="title">Risk and return</span><span class="desc">Build a portfolio and watch risk drop</span></a>
+      <a class="hero-card" href="#section-3"><span class="arrow">&nearr;</span><span class="num">LESSON 03</span><span class="title">Risk and return</span><span class="desc">Mix gainers and losers, watch risk drop</span></a>
       <a class="hero-card" href="#section-4"><span class="arrow">&nearr;</span><span class="num">LESSON 04</span><span class="title">The power of compounding</span><span class="desc">Plan a monthly SIP and see it snowball</span></a>
-      <a class="hero-card" href="#section-5"><span class="arrow">&nearr;</span><span class="num">LESSON 05</span><span class="title">Five years in the market</span><span class="desc">Race &#8377;1 lakh through real history</span></a>
-      <a class="hero-card" href="#section-6"><span class="arrow">&nearr;</span><span class="num">LESSON 06</span><span class="title">Test yourself</span><span class="desc">A quick quiz built from the real data</span></a>
+      <a class="hero-card" href="#section-5"><span class="arrow">&nearr;</span><span class="num">LESSON 05</span><span class="title">The longer story</span><span class="desc">Race &#8377;1 lakh through their real history</span></a>
+      <a class="hero-card" href="#section-6"><span class="arrow">&nearr;</span><span class="num">LESSON 06</span><span class="title">Test yourself</span><span class="desc">A quick quiz built from this session's data</span></a>
     </div>
 
     <a class="scroll-cue" href="#section-1"><span class="mouse" aria-hidden="true"></span>Scroll to begin</a>
@@ -1313,9 +1410,9 @@
 
 <header class="site-header">
   <div class="menu-bar">
-    <a class="brand" href="#top" aria-label="Back to top">
+    <a class="brand" href="#top" aria-label="Samnidhy Sandbox, back to top">
       <span class="brand-mark" aria-hidden="true"><i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i></span>
-      Markets 101
+      Samnidhy Sandbox
     </a>
     <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="section-nav">
       <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -1328,6 +1425,7 @@
       <a href="#section-4" data-section="section-4"><span class="n">4</span>Compounding</a>
       <a href="#section-5" data-section="section-5"><span class="n">5</span>The Race</a>
       <a href="#section-6" data-section="section-6"><span class="n">6</span>Quiz</a>
+      <a href="#past" data-section="past"><span class="n">&#8634;</span>Past days</a>
     </nav>
   </div>
 </header>
@@ -1342,14 +1440,16 @@
       <h2>How a Stock Price Is Set</h2>
     </div>
     <p class="section-intro">
-      A share price isn't set by a company or an exchange — it's set by buyers and sellers
-      posting orders, and a price only happens when one of them agrees to trade at the other's
-      price. Below is a simplified <strong>order book</strong> for Reliance Industries
-      (<strong>RELIANCE.NS</strong>), seeded from its real closing price. Place a buy or sell
-      order and watch what happens to the price.
+      A share price isn't set by a company or an exchange. It's set by buyers and sellers posting
+      orders, and a price only happens when one of them agrees to trade at the other's price. Below
+      is a simplified <strong>order book</strong> for one of this session's stocks, starting from its
+      real closing price. Pick a stock, then place buy or sell orders and watch what happens to the
+      price.
     </p>
 
     <div class="card">
+      <div class="preset-row" id="ob-stock-tabs" role="tablist" aria-label="Choose a stock"></div>
+      <p class="ob-real-move" id="ob-real-move"></p>
       <div class="stat-row" id="ob-stats"></div>
 
       <div class="orderbook-layout">
@@ -1380,7 +1480,7 @@
             <button type="button" class="chip-btn" data-qty="500">500</button>
             <button type="button" class="chip-btn" data-qty="1000">1,000</button>
           </div>
-          <p class="chart-fallback-note" style="margin:-6px 0 10px 0;">Try a small order, then a 1,000-share one — bigger orders eat through more levels and move the price further.</p>
+          <p class="chart-fallback-note" style="margin:-6px 0 10px 0;">Try a small order, then a 1,000-share one. Bigger orders eat through more levels and move the price further.</p>
           <div class="order-message" id="ob-message" aria-live="polite"></div>
 
           <div class="table-scroll">
@@ -1399,21 +1499,24 @@
       <details class="glossary-wrap" open>
       <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
       <dl class="glossary">
+        <div><dt>Top gainer / top loser</dt><dd>The stocks whose price rose (or fell) the most in percentage terms during the last trading session, after our quality filters.</dd></div>
+        <div><dt>Trading session</dt><dd>One day of trading on the NSE, 9:15 AM to 3:30 PM IST on weekdays that aren't market holidays.</dd></div>
         <div><dt>Order book</dt><dd>The live list of everyone currently willing to buy (bids) or sell (asks) a stock, and at what price.</dd></div>
         <div><dt>Bid</dt><dd>The price a buyer is offering to pay. Shown in green.</dd></div>
         <div><dt>Ask</dt><dd>The price a seller wants to receive. Shown in red.</dd></div>
-        <div><dt>Bid-ask spread</dt><dd>The gap between the best bid and best ask — see below for why it exists.</dd></div>
+        <div><dt>Bid-ask spread</dt><dd>The gap between the best bid and best ask. See below for why it exists.</dd></div>
         <div><dt>Market order</dt><dd>An order to buy or sell immediately at the best available price(s), rather than waiting at a chosen price.</dd></div>
-        <div><dt>LTP</dt><dd>Last Traded Price — the price at which the most recent trade actually happened.</dd></div>
+        <div><dt>LTP</dt><dd>Last Traded Price: the price at which the most recent trade actually happened.</dd></div>
       </dl>
       </details>
 
       <p class="caption">
         This shows why a stock's price constantly moves: it's simply the price of the most recent
-        trade, and every order that eats through the book pushes it up or down.
-        <strong>The spread exists because the best ask is always a little above the best bid</strong> —
-        that gap is how liquidity providers (traders who are always ready to buy or sell) get
-        compensated for the risk of holding shares while waiting for the next trade.
+        trade, and every order that eats through the book pushes it up or down. A top gainer's
+        whole day is thousands of buy orders like these, outpacing the sellers.
+        <strong>The spread exists because the best ask is always a little above the best bid</strong>.
+        That gap is how liquidity providers (traders who are always ready to buy or sell) get paid
+        for the risk of holding shares while waiting for the next trade.
       </p>
     </div>
   </section>
@@ -1428,7 +1531,7 @@
     <p class="section-intro">
       Two numbers investors use constantly: <strong>market capitalisation</strong> (how big the
       company is, in rupees) and the <strong>P/E ratio</strong> (how expensive its shares are,
-      relative to its profit). Both below use each company's real, latest figures.
+      relative to its profit). Both below use the real, latest figures for this session's stocks.
     </p>
 
     <div class="card">
@@ -1443,21 +1546,23 @@
         <div class="chart-box">
           <h3>Market Capitalisation</h3>
           <canvas id="chart-market-cap" height="280"></canvas>
+          <p class="chart-fallback-note" id="mcap-missing" hidden></p>
         </div>
         <div class="chart-box">
-          <h3>P/E Ratio <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">&middot; dashed line = median of the five</span></h3>
+          <h3>P/E Ratio <span style="font-weight:400; color:var(--text-muted); font-size:0.8rem;">&middot; dashed line = median</span></h3>
           <canvas id="chart-pe" height="280"></canvas>
+          <p class="chart-fallback-note" id="pe-missing" hidden></p>
         </div>
       </div>
       <p class="book-side-label" style="margin-top:14px;">Expensive or cheap? Ranked by P/E, relative to the group median</p>
       <div class="pe-verdicts" id="pe-verdicts"></div>
       <p class="caption">
-        <strong>Market cap</strong> (share price &times; number of shares) is a measure of company
-        <em>size</em>, not profitability — it says nothing about whether the stock is cheap or
+        <strong>Market cap</strong> (share price &times; number of shares) measures a company's
+        <em>size</em>, not its profitability. It says nothing about whether the stock is cheap or
         expensive. <strong>P/E</strong> is the opposite: it says nothing about size, but shows how
-        much investors are paying per rupee of profit — the taller bar is priced more expensively
-        relative to its own current earnings, which can mean the market expects faster growth, or
-        simply that the stock costs more for the same rupee of profit.
+        much investors pay per rupee of profit. The taller bar is priced more expensively relative
+        to its own current earnings, which can mean the market expects faster growth, or simply
+        that the stock costs more for the same rupee of profit.
       </p>
 
       <div class="growth-controls">
@@ -1496,7 +1601,7 @@
           </table>
         </div>
         <p class="caption">
-          Notice the percentage gain is the <strong>same for every company</strong> — that's what
+          Notice the percentage gain is the <strong>same for every company</strong>. That's what
           compounding a fixed growth rate does. The rupee gain differs only because each company's
           starting price differs. This isolates one idea: growth compounds, regardless of a
           company's size.
@@ -1506,11 +1611,12 @@
       <details class="glossary-wrap" open>
       <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
       <dl class="glossary">
-        <div><dt>Market capitalisation</dt><dd>Share price &times; total shares outstanding — the stock market's current price tag for the whole company.</dd></div>
+        <div><dt>Market capitalisation</dt><dd>Share price &times; total shares outstanding: the stock market's current price tag for the whole company.</dd></div>
         <div><dt>P/E ratio</dt><dd>Share price &divide; earnings per share (EPS). Shows how many rupees investors pay per rupee of annual profit.</dd></div>
-        <div><dt>EPS</dt><dd>Earnings per share — a company's annual profit divided by its number of shares.</dd></div>
+        <div><dt>EPS</dt><dd>Earnings per share: a company's annual profit divided by its number of shares.</dd></div>
         <div><dt>Earnings growth rate</dt><dd>How fast a company's annual profit is assumed to increase, year over year.</dd></div>
-        <div><dt>Median P/E</dt><dd>The middle P/E of the five companies. Above it = relatively expensive within this group; below it = relatively cheap.</dd></div>
+        <div><dt>Median P/E</dt><dd>The middle P/E of the stocks shown. Above it = relatively expensive within this group; below it = relatively cheap.</dd></div>
+        <div><dt>P/E "n/a"</dt><dd>Shown when there is no trailing P/E. This usually means the company made a loss over the last year, so the ratio has no meaning.</dd></div>
       </dl>
       </details>
     </div>
@@ -1530,21 +1636,23 @@
     </div>
     <p class="section-intro">
       Every investment trades off two things: how much it tends to earn, and how much its value
-      swings around along the way. The scatter plot below places each of the five companies by its
-      real, historical <strong>annualised return</strong> (higher is better) and
-      <strong>annualised volatility</strong> (lower is calmer). Then build your own portfolio with
-      the sliders and watch what happens when you combine them.
+      swings around along the way. The scatter plot places each of this session's stocks by its
+      real <strong>annualised return</strong> (higher is better) and <strong>annualised
+      volatility</strong> (lower is calmer). Then build your own portfolio with the sliders and watch
+      what happens when you combine them.
     </p>
 
     <div class="card">
+      <p class="window-note" id="window-note"></p>
       <div class="risk-return-layout">
         <div>
           <canvas id="chart-scatter" height="340"></canvas>
           <p class="caption">
-            Each dot is one company's real risk/return over the data period. A dot further right is
-            bumpier to hold; a dot further up made more money per year on average. The white
-            diamond is <strong>your portfolio</strong> — watch it move left (less risky) as you
-            spread money across stocks that don't move together.
+            Each dot is one stock's real risk and return over the analysis period. A dot further
+            right is bumpier to hold; a dot further up made more money per year on average. Gainers
+            are green shades and losers red shades. The white diamond is <strong>your
+            portfolio</strong>: watch it move left (less risky) as you spread money across stocks
+            that don't move together.
           </p>
         </div>
 
@@ -1565,7 +1673,7 @@
               <div class="stat-tile"><div class="label">Portfolio Volatility</div><div class="value" id="port-vol">—</div></div>
             </div>
             <div class="diversification-benefit">
-              Weighted average of the 5 stocks' <em>individual</em> volatilities (i.e. no
+              Weighted average of the stocks' <em>individual</em> volatilities (no
               diversification credit): <strong id="naive-vol">—</strong><br>
               Your portfolio's actual volatility, computed properly from the covariance matrix:
               <strong id="actual-vol">—</strong><br>
@@ -1576,8 +1684,8 @@
       </div>
 
       <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--gridline);">
-        <p class="book-side-label" style="margin-bottom:8px;">Risk profile of each company — pick one</p>
-        <div class="preset-row" id="risk-tabs" role="tablist" aria-label="Choose a company"></div>
+        <p class="book-side-label" style="margin-bottom:8px;">Risk profile of each stock: pick one</p>
+        <div class="preset-row" id="risk-tabs" role="tablist" aria-label="Choose a stock"></div>
         <div class="stat-row risk-profile" id="risk-profile-body" role="tabpanel"></div>
         <p class="caption" style="margin-top:0;">
           Volatility tells you how bumpy the ride usually is; <strong>maximum drawdown tells you how
@@ -1596,7 +1704,7 @@
         <p class="caption">
           Each cell shows how closely two stocks move together on the same day, from -1 (always
           opposite) to +1 (always the same). <strong>Lower correlation between the stocks you hold
-          is what makes diversification work</strong> — if two stocks rarely move together, one
+          is what makes diversification work</strong>: if two stocks rarely move together, one
           tends to hold steady while the other swings, smoothing out the combined ride.
         </p>
       </div>
@@ -1604,14 +1712,15 @@
       <details class="glossary-wrap" open>
       <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
       <dl class="glossary">
+        <div><dt>Analysis period</dt><dd>The dates on which every stock shown and the Nifty 50 all have prices. All comparisons use this same period so they're fair.</dd></div>
         <div><dt>Annualised volatility</dt><dd>How much a stock's daily returns typically swing, scaled up to a yearly figure. Higher means a bumpier ride.</dd></div>
         <div><dt>Annualised return</dt><dd>The average yearly growth rate of the stock's price over the period, accounting for compounding.</dd></div>
         <div><dt>Correlation</dt><dd>A number from -1 to +1 showing how closely two stocks' daily moves track each other.</dd></div>
         <div><dt>Diversification</dt><dd>Holding several imperfectly-correlated investments together so their ups and downs partly cancel out, lowering overall risk.</dd></div>
         <div><dt>Portfolio</dt><dd>The full collection of investments someone holds, and the weights (percentages) allocated to each.</dd></div>
-        <div><dt>Standard deviation</dt><dd>The statistical measure behind "volatility" here — how far values typically stray from their average.</dd></div>
+        <div><dt>Standard deviation</dt><dd>The statistical measure behind "volatility" here: how far values typically stray from their average.</dd></div>
         <div><dt>Covariance matrix</dt><dd>A table of how much every pair of stocks moves together. Used to compute a portfolio's true risk.</dd></div>
-        <div><dt>Maximum drawdown</dt><dd>The biggest fall from a previous high to a later low over the period — the worst loss someone buying at the peak would have seen.</dd></div>
+        <div><dt>Maximum drawdown</dt><dd>The biggest fall from a previous high to a later low over the period: the worst loss someone buying at the peak would have seen.</dd></div>
         <div><dt>Beta</dt><dd>How much a stock tends to move when the Nifty 50 moves. 1 = in step with the market; above 1 = exaggerates its moves; below 1 = dampens them.</dd></div>
       </dl>
       </details>
@@ -1627,7 +1736,7 @@
     </div>
     <p class="section-intro">
       A <strong>SIP</strong> (Systematic Investment Plan) means investing a fixed amount every
-      month, whatever the market is doing. Each month's money starts earning returns — and then
+      month, whatever the market is doing. Each month's money starts earning returns, and then
       those returns start earning returns of their own. That snowball is <strong>compounding</strong>.
       Set your own plan below and watch the gap between what you put in and what it becomes.
     </p>
@@ -1661,6 +1770,10 @@
             </div>
           </div>
 
+          <div class="preset-row" id="sip-stock-returns">
+            <span class="preset-label">Or use a stock's past return</span>
+          </div>
+
           <label class="toggle-line">
             <input type="checkbox" id="sip-delay-toggle">
             Compare: what if I started 5 years later?
@@ -1676,7 +1789,7 @@
           <canvas id="chart-sip" height="340"></canvas>
           <p class="caption">
             The grey line is every rupee you put in; the green line is what those rupees are worth.
-            <strong>The gap between them is your gain — and it widens faster every year</strong>,
+            <strong>The gap between them is your gain, and it widens faster every year</strong>,
             because later returns are earned on earlier returns, not just on your deposits.
           </p>
           <div class="delay-callout" id="sip-delay-callout" hidden></div>
@@ -1686,10 +1799,10 @@
       <details class="glossary-wrap" open>
       <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
       <dl class="glossary">
-        <div><dt>SIP</dt><dd>Systematic Investment Plan — investing the same amount at regular intervals (usually monthly) into a fund or stock.</dd></div>
+        <div><dt>SIP</dt><dd>Systematic Investment Plan: investing the same amount at regular intervals (usually monthly) into a fund or stock.</dd></div>
         <div><dt>Compounding</dt><dd>Earning returns on your past returns, not just on the money you put in. It makes growth accelerate over time.</dd></div>
-        <div><dt>Expected annual return</dt><dd>The yearly growth rate you assume. Defaults to the Nifty 50's real annualised return over this data's period — past returns don't guarantee future ones.</dd></div>
-        <div><dt>Nifty 50</dt><dd>An index tracking 50 of the largest companies on India's National Stock Exchange — a common yardstick for "the market".</dd></div>
+        <div><dt>Expected annual return</dt><dd>The yearly growth rate you assume. Defaults to the Nifty 50's real annualised return over the last 5 years. Past returns don't guarantee future ones, and one stock's past return is far less reliable than the market's.</dd></div>
+        <div><dt>Nifty 50</dt><dd>An index tracking 50 of the largest companies on India's National Stock Exchange: a common yardstick for "the market".</dd></div>
       </dl>
       </details>
     </div>
@@ -1705,12 +1818,13 @@
     <div class="section-heading">
       <span class="big-num" aria-hidden="true">05</span>
       <span class="section-badge">5</span>
-      <h2>Five Years in the Market</h2>
+      <h2>The Longer Story</h2>
     </div>
     <p class="section-intro">
-      Averages hide the journey. Imagine putting <strong>&#8377;1,00,000</strong> into each of the five
-      companies, and into the Nifty 50, on <span id="race-start"></span>, then not touching it. Press
-      play or drag the timeline to replay five years of real weekly prices.
+      One day's move says little on its own. Imagine putting <strong>&#8377;1,00,000</strong> into
+      each of this session's stocks, and into the Nifty 50, on <span id="race-start"></span>, then
+      not touching it. Press play or drag the timeline to replay <span id="race-years"></span> of
+      real weekly prices, and see how yesterday's winners and losers really got here.
     </p>
 
     <div class="card glow-card">
@@ -1749,7 +1863,7 @@
       <summary>Key terms in this lesson <span class="hint">click to collapse</span></summary>
       <dl class="glossary">
         <div><dt>Buy and hold</dt><dd>Investing once and leaving the money untouched, whatever happens along the way.</dd></div>
-        <div><dt>Adjusted price</dt><dd>A share's price corrected for splits, bonus issues and dividends so returns over time compare fairly. The five stocks use adjusted prices.</dd></div>
+        <div><dt>Adjusted price</dt><dd>A share's price corrected for splits, bonus issues and dividends so returns over time compare fairly. The stocks here use adjusted prices.</dd></div>
         <div><dt>Price index</dt><dd>An index that tracks prices only, not dividends. The Nifty 50 line here is a price index, so it slightly understates what an investor actually earned.</dd></div>
         <div><dt>Dividend</dt><dd>A share of a company's profit paid out in cash to its shareholders.</dd></div>
       </dl>
@@ -1765,11 +1879,26 @@
       <h2>Test Yourself</h2>
     </div>
     <p class="section-intro">
-      Six quick questions on everything above. Every answer is worked out live from the same real
-      data the lessons use, so it stays correct whenever the data is refreshed.
+      Six quick questions on this session's stocks. Every answer is worked out live from the same
+      real data the lessons use, so the quiz changes with the stocks every day.
     </p>
     <div class="card">
       <div class="quiz" id="quiz" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ================= PAST SESSIONS ================= -->
+  <section class="dash-section" id="past">
+    <div class="section-heading">
+      <span class="section-badge">&#8634;</span>
+      <h2>Past Sessions</h2>
+    </div>
+    <p class="section-intro">
+      Every weekday's picks are saved. Open any past session to see all six lessons exactly as they
+      were for that day's stocks.
+    </p>
+    <div class="card">
+      <div class="past-grid" id="past-grid"></div>
     </div>
   </section>
 
@@ -1779,2030 +1908,2549 @@
 
 <footer class="site-footer">
   <div class="footer-inner">
-    <span><strong>Data source:</strong> Yahoo Finance (via yfinance), NSE-listed tickers &middot; Period <span id="footer-period"></span></span>
-    <span><strong>Generated on</strong> <span id="footer-date"></span></span>
-    <span>Historical figures for education only — not investment advice.</span>
+    <span><strong>Educational analysis only. Not investment advice.</strong></span>
+    <span><strong>Data:</strong> NSE end-of-day files (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)</span>
+    <span><strong>Trading session</strong> <span id="footer-session"></span> &middot; <strong>Last updated</strong> <span id="footer-date"></span></span>
   </div>
 </footer>
 
 <button class="back-to-top" id="back-to-top" type="button" aria-label="Back to top">&uarr;</button>
 
+<script type="application/json" id="dashboard-status">
+{
+ "last_attempt_utc": "2026-09-24T05:21:08+00:00",
+ "last_attempt_ist": "24 Sep 2026, 10:51 AM IST",
+ "last_success_utc": "2026-09-24T05:21:08+00:00",
+ "last_success_ist": "24 Sep 2026, 10:51 AM IST",
+ "session_date": "2026-09-23",
+ "ok": true,
+ "error": null
+}
+</script>
+<script type="application/json" id="dashboard-sessions">
+[
+ {
+  "session_date": "2026-09-23",
+  "gainers": [
+   {
+    "symbol": "WHIRLPOOL",
+    "label": "Top Gainer #1",
+    "group": "gainer",
+    "pct_change": 19.9986
+   },
+   {
+    "symbol": "ELECON",
+    "label": "Top Gainer #2",
+    "group": "gainer",
+    "pct_change": 10.9499
+   },
+   {
+    "symbol": "BIKAJI",
+    "label": "Top Gainer #3",
+    "group": "gainer",
+    "pct_change": 6.7642
+   }
+  ],
+  "losers": [
+   {
+    "symbol": "PFOCUS",
+    "label": "Top Loser #1",
+    "group": "loser",
+    "pct_change": -5.6791
+   },
+   {
+    "symbol": "INOXWIND",
+    "label": "Top Loser #2",
+    "group": "loser",
+    "pct_change": -3.697
+   },
+   {
+    "symbol": "DEVYANI",
+    "label": "Top Loser #3",
+    "group": "loser",
+    "pct_change": -3.0448
+   }
+  ],
+  "skipped": [
+   {
+    "symbol": "PINELABS",
+    "would_have_been": "Top Loser #2"
+   }
+  ]
+ }
+]
+</script>
+<script type="application/json" id="dashboard-meta">
+{
+ "view": "latest",
+ "days_prefix": "site/days/",
+ "home": "dashboard.html"
+}
+</script>
+
 <script type="application/json" id="dashboard-data">
 {
-  "generated_on": "2026-09-23T23:43:57+00:00",
-  "source": "Yahoo Finance (via yfinance), NSE-listed tickers",
-  "trading_days_per_year": 252,
-  "period": {
-    "start": "2021-09-16",
-    "end": "2026-09-22"
+ "site_name": "Samnidhy Sandbox",
+ "generated_on": "2026-09-24T05:22:03+00:00",
+ "session_date": "2026-09-23",
+ "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
+ "trading_days_per_year": 252,
+ "selection": {
+  "universe_name": "NIFTY 500",
+  "universe_count": 499,
+  "eligible_count": 442,
+  "gainers_count": 3,
+  "losers_count": 3,
+  "min_price": 50,
+  "min_turnover_crore": 10,
+  "min_history_years": 1,
+  "skipped": [
+   {
+    "symbol": "PINELABS",
+    "group": "loser",
+    "pct_change": -4.6968,
+    "history_years": 0.86,
+    "would_have_been": "Top Loser #2",
+    "reason": "only 0.9 years of price history (minimum 1)"
+   }
+  ],
+  "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_23092026.csv"
+ },
+ "order": [
+  "WHIRLPOOL.NS",
+  "ELECON.NS",
+  "BIKAJI.NS",
+  "PFOCUS.NS",
+  "INOXWIND.NS",
+  "DEVYANI.NS"
+ ],
+ "stocks": {
+  "WHIRLPOOL.NS": {
+   "symbol": "WHIRLPOOL",
+   "name": "Whirlpool of India Ltd.",
+   "industry": "Consumer Durables",
+   "group": "gainer",
+   "rank": 1,
+   "label": "Top Gainer #1",
+   "session": {
+    "prev_close": 721.05,
+    "close": 865.25,
+    "pct_change": 19.9986,
+    "volume": 10753329,
+    "turnover_crore": 879.52
+   },
+   "latest_close": 865.25,
+   "trailing_pe": 34.656265,
+   "market_cap": 104290451456,
+   "history": {
+    "first_date": "2021-09-16",
+    "trading_days": 1240,
+    "years": 5.02,
+    "session_price_from": "Yahoo"
+   },
+   "annualised_return": -0.132954,
+   "total_return": -0.422797,
+   "annualised_volatility": 0.346776,
+   "max_drawdown": -0.69897,
+   "beta": 0.7194
   },
-  "benchmark": {
-    "ticker": "^NSEI",
-    "annualised_return": 0.05953
+  "ELECON.NS": {
+   "symbol": "ELECON",
+   "name": "Elecon Engineering Co. Ltd.",
+   "industry": "Capital Goods",
+   "group": "gainer",
+   "rank": 2,
+   "label": "Top Gainer #2",
+   "session": {
+    "prev_close": 420.55,
+    "close": 466.6,
+    "pct_change": 10.9499,
+    "volume": 30987016,
+    "turnover_crore": 1433.57
+   },
+   "latest_close": 466.6,
+   "trailing_pe": 43.966667,
+   "market_cap": 103594229760,
+   "history": {
+    "first_date": "2021-09-16",
+    "trading_days": 1240,
+    "years": 5.02,
+    "session_price_from": "Yahoo"
+   },
+   "annualised_return": 0.216208,
+   "total_return": 1.125513,
+   "annualised_volatility": 0.469384,
+   "max_drawdown": -0.512884,
+   "beta": 1.4285
   },
-  "stocks": {
-    "RELIANCE.NS": {
-      "name": "RELIANCE INDUSTRIES LTD",
-      "sector": "Energy",
-      "latest_close": 1240.4,
-      "trailing_pe": 22.711555,
-      "market_cap": 16888525488128,
-      "annualised_return": 0.028513,
-      "annualised_volatility": 0.222744,
-      "max_drawdown": -0.271758,
-      "beta": 1.1103,
-      "trading_days": 1246
-    },
-    "TCS.NS": {
-      "name": "TATA CONSULTANCY SERV LT",
-      "sector": "Technology",
-      "latest_close": 2105.0,
-      "trailing_pe": 15.178326,
-      "market_cap": 7560355643392,
-      "annualised_return": -0.092986,
-      "annualised_volatility": 0.225682,
-      "max_drawdown": -0.533934,
-      "beta": 0.8136,
-      "trading_days": 1246
-    },
-    "HDFCBANK.NS": {
-      "name": "HDFC BANK LTD",
-      "sector": "Financial Services",
-      "latest_close": 738.6,
-      "trailing_pe": 16.125328,
-      "market_cap": 11365873876992,
-      "annualised_return": 0.004056,
-      "annualised_volatility": 0.209745,
-      "max_drawdown": -0.310431,
-      "beta": 1.0619,
-      "trading_days": 1246
-    },
-    "ITC.NS": {
-      "name": "ITC LTD",
-      "sector": "Consumer Defensive",
-      "latest_close": 265.8,
-      "trailing_pe": 17.054924,
-      "market_cap": 3385119211520,
-      "annualised_return": 0.093049,
-      "annualised_volatility": 0.201448,
-      "max_drawdown": -0.449293,
-      "beta": 0.6617,
-      "trading_days": 1246
-    },
-    "INFY.NS": {
-      "name": "INFOSYS LIMITED",
-      "sector": "Technology",
-      "latest_close": 1029.4,
-      "trailing_pe": 13.130468,
-      "market_cap": 4133375705088,
-      "annualised_return": -0.071116,
-      "annualised_volatility": 0.25957,
-      "max_drawdown": -0.481716,
-      "beta": 0.9754,
-      "trading_days": 1246
-    }
+  "BIKAJI.NS": {
+   "symbol": "BIKAJI",
+   "name": "Bikaji Foods International Ltd.",
+   "industry": "Fast Moving Consumer Goods",
+   "group": "gainer",
+   "rank": 3,
+   "label": "Top Gainer #3",
+   "session": {
+    "prev_close": 553.65,
+    "close": 591.1,
+    "pct_change": 6.7642,
+    "volume": 4379438,
+    "turnover_crore": 260.92
+   },
+   "latest_close": 591.1,
+   "trailing_pe": 56.713593,
+   "market_cap": 146467667968,
+   "history": {
+    "first_date": "2022-11-16",
+    "trading_days": 950,
+    "years": 3.85,
+    "session_price_from": "NSE"
+   },
+   "annualised_return": 0.177144,
+   "total_return": 0.874335,
+   "annualised_volatility": 0.33127,
+   "max_drawdown": -0.445498,
+   "beta": 0.6482
   },
-  "correlation_matrix": {
-    "RELIANCE.NS": {
-      "RELIANCE.NS": 1.0,
-      "TCS.NS": 0.267,
-      "HDFCBANK.NS": 0.3669,
-      "ITC.NS": 0.3128,
-      "INFY.NS": 0.2601
-    },
-    "TCS.NS": {
-      "RELIANCE.NS": 0.267,
-      "TCS.NS": 1.0,
-      "HDFCBANK.NS": 0.2276,
-      "ITC.NS": 0.1729,
-      "INFY.NS": 0.7333
-    },
-    "HDFCBANK.NS": {
-      "RELIANCE.NS": 0.3669,
-      "TCS.NS": 0.2276,
-      "HDFCBANK.NS": 1.0,
-      "ITC.NS": 0.2227,
-      "INFY.NS": 0.2544
-    },
-    "ITC.NS": {
-      "RELIANCE.NS": 0.3128,
-      "TCS.NS": 0.1729,
-      "HDFCBANK.NS": 0.2227,
-      "ITC.NS": 1.0,
-      "INFY.NS": 0.183
-    },
-    "INFY.NS": {
-      "RELIANCE.NS": 0.2601,
-      "TCS.NS": 0.7333,
-      "HDFCBANK.NS": 0.2544,
-      "ITC.NS": 0.183,
-      "INFY.NS": 1.0
-    }
+  "PFOCUS.NS": {
+   "symbol": "PFOCUS",
+   "name": "Prime Focus Ltd.",
+   "industry": "Media Entertainment & Publication",
+   "group": "loser",
+   "rank": 1,
+   "label": "Top Loser #1",
+   "session": {
+    "prev_close": 357.45,
+    "close": 337.15,
+    "pct_change": -5.6791,
+    "volume": 6885605,
+    "turnover_crore": 235.97
+   },
+   "latest_close": 337.15,
+   "trailing_pe": 251.75572,
+   "market_cap": 256839614464,
+   "history": {
+    "first_date": "2021-09-16",
+    "trading_days": 1240,
+    "years": 5.02,
+    "session_price_from": "Yahoo"
+   },
+   "annualised_return": 0.512713,
+   "total_return": 3.925493,
+   "annualised_volatility": 0.578424,
+   "max_drawdown": -0.443418,
+   "beta": 1.0231
   },
-  "covariance_matrix": {
-    "RELIANCE.NS": {
-      "RELIANCE.NS": 0.049615,
-      "TCS.NS": 0.013424,
-      "HDFCBANK.NS": 0.017143,
-      "ITC.NS": 0.014034,
-      "INFY.NS": 0.015038
-    },
-    "TCS.NS": {
-      "RELIANCE.NS": 0.013424,
-      "TCS.NS": 0.050933,
-      "HDFCBANK.NS": 0.010775,
-      "ITC.NS": 0.00786,
-      "INFY.NS": 0.042956
-    },
-    "HDFCBANK.NS": {
-      "RELIANCE.NS": 0.017143,
-      "TCS.NS": 0.010775,
-      "HDFCBANK.NS": 0.043993,
-      "ITC.NS": 0.009412,
-      "INFY.NS": 0.013848
-    },
-    "ITC.NS": {
-      "RELIANCE.NS": 0.014034,
-      "TCS.NS": 0.00786,
-      "HDFCBANK.NS": 0.009412,
-      "ITC.NS": 0.040581,
-      "INFY.NS": 0.009571
-    },
-    "INFY.NS": {
-      "RELIANCE.NS": 0.015038,
-      "TCS.NS": 0.042956,
-      "HDFCBANK.NS": 0.013848,
-      "ITC.NS": 0.009571,
-      "INFY.NS": 0.067376
-    }
+  "INOXWIND.NS": {
+   "symbol": "INOXWIND",
+   "name": "Inox Wind Ltd.",
+   "industry": "Capital Goods",
+   "group": "loser",
+   "rank": 2,
+   "label": "Top Loser #2",
+   "session": {
+    "prev_close": 77.9,
+    "close": 75.02,
+    "pct_change": -3.697,
+    "volume": 17183824,
+    "turnover_crore": 130.82
+   },
+   "latest_close": 75.02,
+   "trailing_pe": 37.543148,
+   "market_cap": 127820464128,
+   "history": {
+    "first_date": "2021-09-16",
+    "trading_days": 1240,
+    "years": 5.02,
+    "session_price_from": "Yahoo"
+   },
+   "annualised_return": 0.271107,
+   "total_return": 1.519563,
+   "annualised_volatility": 0.499192,
+   "max_drawdown": -0.726744,
+   "beta": 1.628
   },
-  "weekly_growth": {
-    "note": "Value of 1 unit invested on the first date, weekly closes (last trading day of each week).",
-    "dates": [
-      "2021-09-15",
-      "2021-09-17",
-      "2021-09-24",
-      "2021-10-01",
-      "2021-10-08",
-      "2021-10-15",
-      "2021-10-22",
-      "2021-10-29",
-      "2021-11-05",
-      "2021-11-12",
-      "2021-11-19",
-      "2021-11-26",
-      "2021-12-03",
-      "2021-12-10",
-      "2021-12-17",
-      "2021-12-24",
-      "2021-12-31",
-      "2022-01-07",
-      "2022-01-14",
-      "2022-01-21",
-      "2022-01-28",
-      "2022-02-04",
-      "2022-02-11",
-      "2022-02-18",
-      "2022-02-25",
-      "2022-03-04",
-      "2022-03-11",
-      "2022-03-18",
-      "2022-03-25",
-      "2022-04-01",
-      "2022-04-08",
-      "2022-04-15",
-      "2022-04-22",
-      "2022-04-29",
-      "2022-05-06",
-      "2022-05-13",
-      "2022-05-20",
-      "2022-05-27",
-      "2022-06-03",
-      "2022-06-10",
-      "2022-06-17",
-      "2022-06-24",
-      "2022-07-01",
-      "2022-07-08",
-      "2022-07-15",
-      "2022-07-22",
-      "2022-07-29",
-      "2022-08-05",
-      "2022-08-12",
-      "2022-08-19",
-      "2022-08-26",
-      "2022-09-02",
-      "2022-09-09",
-      "2022-09-16",
-      "2022-09-23",
-      "2022-09-30",
-      "2022-10-07",
-      "2022-10-14",
-      "2022-10-21",
-      "2022-10-28",
-      "2022-11-04",
-      "2022-11-11",
-      "2022-11-18",
-      "2022-11-25",
-      "2022-12-02",
-      "2022-12-09",
-      "2022-12-16",
-      "2022-12-23",
-      "2022-12-30",
-      "2023-01-06",
-      "2023-01-13",
-      "2023-01-20",
-      "2023-01-27",
-      "2023-02-03",
-      "2023-02-10",
-      "2023-02-17",
-      "2023-02-24",
-      "2023-03-03",
-      "2023-03-10",
-      "2023-03-17",
-      "2023-03-24",
-      "2023-03-31",
-      "2023-04-07",
-      "2023-04-14",
-      "2023-04-21",
-      "2023-04-28",
-      "2023-05-05",
-      "2023-05-12",
-      "2023-05-19",
-      "2023-05-26",
-      "2023-06-02",
-      "2023-06-09",
-      "2023-06-16",
-      "2023-06-23",
-      "2023-06-30",
-      "2023-07-07",
-      "2023-07-14",
-      "2023-07-21",
-      "2023-07-28",
-      "2023-08-04",
-      "2023-08-11",
-      "2023-08-18",
-      "2023-08-25",
-      "2023-09-01",
-      "2023-09-08",
-      "2023-09-15",
-      "2023-09-22",
-      "2023-09-29",
-      "2023-10-06",
-      "2023-10-13",
-      "2023-10-20",
-      "2023-10-27",
-      "2023-11-03",
-      "2023-11-10",
-      "2023-11-17",
-      "2023-11-24",
-      "2023-12-01",
-      "2023-12-08",
-      "2023-12-15",
-      "2023-12-22",
-      "2023-12-29",
-      "2024-01-05",
-      "2024-01-12",
-      "2024-01-19",
-      "2024-01-26",
-      "2024-02-02",
-      "2024-02-09",
-      "2024-02-16",
-      "2024-02-23",
-      "2024-03-01",
-      "2024-03-08",
-      "2024-03-15",
-      "2024-03-22",
-      "2024-03-29",
-      "2024-04-05",
-      "2024-04-12",
-      "2024-04-19",
-      "2024-04-26",
-      "2024-05-03",
-      "2024-05-10",
-      "2024-05-17",
-      "2024-05-24",
-      "2024-05-31",
-      "2024-06-07",
-      "2024-06-14",
-      "2024-06-21",
-      "2024-06-28",
-      "2024-07-05",
-      "2024-07-12",
-      "2024-07-19",
-      "2024-07-26",
-      "2024-08-02",
-      "2024-08-09",
-      "2024-08-16",
-      "2024-08-23",
-      "2024-08-30",
-      "2024-09-06",
-      "2024-09-13",
-      "2024-09-20",
-      "2024-09-27",
-      "2024-10-04",
-      "2024-10-11",
-      "2024-10-18",
-      "2024-10-25",
-      "2024-11-01",
-      "2024-11-08",
-      "2024-11-15",
-      "2024-11-22",
-      "2024-11-29",
-      "2024-12-06",
-      "2024-12-13",
-      "2024-12-20",
-      "2024-12-27",
-      "2025-01-03",
-      "2025-01-10",
-      "2025-01-17",
-      "2025-01-24",
-      "2025-01-31",
-      "2025-02-07",
-      "2025-02-14",
-      "2025-02-21",
-      "2025-02-28",
-      "2025-03-07",
-      "2025-03-14",
-      "2025-03-21",
-      "2025-03-28",
-      "2025-04-04",
-      "2025-04-11",
-      "2025-04-18",
-      "2025-04-25",
-      "2025-05-02",
-      "2025-05-09",
-      "2025-05-16",
-      "2025-05-23",
-      "2025-05-30",
-      "2025-06-06",
-      "2025-06-13",
-      "2025-06-20",
-      "2025-06-27",
-      "2025-07-04",
-      "2025-07-11",
-      "2025-07-18",
-      "2025-07-25",
-      "2025-08-01",
-      "2025-08-08",
-      "2025-08-15",
-      "2025-08-22",
-      "2025-08-29",
-      "2025-09-05",
-      "2025-09-12",
-      "2025-09-19",
-      "2025-09-26",
-      "2025-10-03",
-      "2025-10-10",
-      "2025-10-17",
-      "2025-10-24",
-      "2025-10-31",
-      "2025-11-07",
-      "2025-11-14",
-      "2025-11-21",
-      "2025-11-28",
-      "2025-12-05",
-      "2025-12-12",
-      "2025-12-19",
-      "2025-12-26",
-      "2026-01-02",
-      "2026-01-09",
-      "2026-01-16",
-      "2026-01-23",
-      "2026-01-30",
-      "2026-02-06",
-      "2026-02-13",
-      "2026-02-20",
-      "2026-02-27",
-      "2026-03-06",
-      "2026-03-13",
-      "2026-03-20",
-      "2026-03-27",
-      "2026-04-03",
-      "2026-04-10",
-      "2026-04-17",
-      "2026-04-24",
-      "2026-05-01",
-      "2026-05-08",
-      "2026-05-15",
-      "2026-05-22",
-      "2026-05-29",
-      "2026-06-05",
-      "2026-06-12",
-      "2026-06-19",
-      "2026-06-26",
-      "2026-07-03",
-      "2026-07-10",
-      "2026-07-17",
-      "2026-07-24",
-      "2026-07-31",
-      "2026-08-07",
-      "2026-08-14",
-      "2026-08-21",
-      "2026-08-28",
-      "2026-09-04",
-      "2026-09-11",
-      "2026-09-18",
-      "2026-09-22"
-    ],
-    "series": {
-      "RELIANCE.NS": [
-        1.0,
-        1.0052,
-        1.0439,
-        1.0611,
-        1.1232,
-        1.1354,
-        1.1047,
-        1.0664,
-        1.0507,
-        1.0903,
-        1.0399,
-        1.0144,
-        1.0126,
-        1.0339,
-        0.9841,
-        0.9977,
-        0.9957,
-        1.0243,
-        1.0676,
-        1.0419,
-        0.9822,
-        0.9802,
-        0.9992,
-        1.0194,
-        0.9603,
-        0.9778,
-        1.0088,
-        1.0435,
-        1.0915,
-        1.1167,
-        1.0998,
-        1.0729,
-        1.16,
-        1.1732,
-        1.1019,
-        1.0203,
-        1.1035,
-        1.0827,
-        1.1687,
-        1.1413,
-        1.089,
-        1.0512,
-        1.0128,
-        1.0055,
-        1.0099,
-        1.0525,
-        1.0551,
-        1.0655,
-        1.1071,
-        1.1026,
-        1.1044,
-        1.0675,
-        1.0838,
-        1.0543,
-        1.0291,
-        1.003,
-        1.0261,
-        1.0001,
-        1.0426,
-        1.0656,
-        1.0937,
-        1.1102,
-        1.0958,
-        1.1042,
-        1.1483,
-        1.1006,
-        1.0823,
-        1.0555,
-        1.0745,
-        1.0702,
-        1.0409,
-        1.0304,
-        0.986,
-        0.9825,
-        0.9857,
-        1.0294,
-        1.0055,
-        1.0063,
-        0.9798,
-        0.9378,
-        0.9294,
-        0.9833,
-        0.9877,
-        0.9936,
-        0.9909,
-        1.0211,
-        1.03,
-        1.048,
-        1.0301,
-        1.0573,
-        1.0357,
-        1.047,
-        1.0873,
-        1.0608,
-        1.0758,
-        1.111,
-        1.1561,
-        1.1603,
-        1.1553,
-        1.1469,
-        1.1641,
-        1.1685,
-        1.1321,
-        1.1066,
-        1.1229,
-        1.1273,
-        1.0801,
-        1.0755,
-        1.0631,
-        1.0775,
-        1.0545,
-        1.0392,
-        1.0639,
-        1.0617,
-        1.0804,
-        1.098,
-        1.0981,
-        1.1263,
-        1.1446,
-        1.1765,
-        1.1856,
-        1.196,
-        1.2574,
-        1.2544,
-        1.2412,
-        1.3371,
-        1.3399,
-        1.3398,
-        1.3701,
-        1.3687,
-        1.3566,
-        1.3009,
-        1.3347,
-        1.363,
-        1.3393,
-        1.3458,
-        1.3485,
-        1.3324,
-        1.3154,
-        1.291,
-        1.317,
-        1.3578,
-        1.3121,
-        1.3484,
-        1.3553,
-        1.3339,
-        1.4359,
-        1.4572,
-        1.4647,
-        1.4265,
-        1.3842,
-        1.3753,
-        1.3524,
-        1.3559,
-        1.3806,
-        1.3895,
-        1.3482,
-        1.3554,
-        1.3677,
-        1.4047,
-        1.2762,
-        1.2629,
-        1.2511,
-        1.2222,
-        1.2321,
-        1.1816,
-        1.1667,
-        1.1647,
-        1.1893,
-        1.2072,
-        1.1715,
-        1.1094,
-        1.1239,
-        1.1516,
-        1.1431,
-        1.1987,
-        1.1471,
-        1.1644,
-        1.1659,
-        1.1204,
-        1.1304,
-        1.1046,
-        1.1503,
-        1.1486,
-        1.1748,
-        1.1736,
-        1.1088,
-        1.1219,
-        1.1731,
-        1.1969,
-        1.3068,
-        1.2676,
-        1.3405,
-        1.3132,
-        1.3078,
-        1.3286,
-        1.3142,
-        1.3495,
-        1.3948,
-        1.4057,
-        1.3762,
-        1.3585,
-        1.2809,
-        1.2828,
-        1.2589,
-        1.2695,
-        1.3022,
-        1.2542,
-        1.2706,
-        1.2891,
-        1.3006,
-        1.273,
-        1.2599,
-        1.2768,
-        1.3092,
-        1.3414,
-        1.3736,
-        1.3658,
-        1.4036,
-        1.4292,
-        1.4485,
-        1.4236,
-        1.4383,
-        1.4463,
-        1.4408,
-        1.4714,
-        1.3633,
-        1.3472,
-        1.2809,
-        1.2895,
-        1.3407,
-        1.3118,
-        1.3116,
-        1.2881,
-        1.2982,
-        1.2759,
-        1.307,
-        1.2458,
-        1.248,
-        1.2477,
-        1.2614,
-        1.227,
-        1.3222,
-        1.3262,
-        1.2349,
-        1.2517,
-        1.2209,
-        1.1985,
-        1.2004,
-        1.2157,
-        1.2237,
-        1.2106,
-        1.2141,
-        1.2321,
-        1.1864,
-        1.2141,
-        1.2392,
-        1.2161,
-        1.2217,
-        1.1948,
-        1.2273,
-        1.1674,
-        1.1385,
-        1.1515
-      ],
-      "TCS.NS": [
-        1.0,
-        0.968,
-        0.9789,
-        0.9433,
-        0.9952,
-        0.915,
-        0.8865,
-        0.8608,
-        0.8889,
-        0.8934,
-        0.8806,
-        0.8733,
-        0.9223,
-        0.9214,
-        0.9081,
-        0.9301,
-        0.9471,
-        0.9763,
-        1.0054,
-        0.973,
-        0.9365,
-        0.9682,
-        0.9378,
-        0.9629,
-        0.8936,
-        0.8945,
-        0.9135,
-        0.9322,
-        0.941,
-        0.954,
-        0.9354,
-        0.9294,
-        0.9169,
-        0.9002,
-        0.8712,
-        0.8667,
-        0.8358,
-        0.8333,
-        0.879,
-        0.8585,
-        0.7893,
-        0.8414,
-        0.8471,
-        0.8344,
-        0.7672,
-        0.8124,
-        0.8459,
-        0.8621,
-        0.8714,
-        0.8674,
-        0.8255,
-        0.802,
-        0.8243,
-        0.7708,
-        0.764,
-        0.7697,
-        0.7852,
-        0.794,
-        0.8058,
-        0.8125,
-        0.8264,
-        0.8517,
-        0.8588,
-        0.8706,
-        0.8833,
-        0.8457,
-        0.8323,
-        0.8292,
-        0.8365,
-        0.8249,
-        0.8668,
-        0.8834,
-        0.896,
-        0.9148,
-        0.9293,
-        0.9197,
-        0.8933,
-        0.8779,
-        0.875,
-        0.8352,
-        0.8197,
-        0.8422,
-        0.846,
-        0.8377,
-        0.8303,
-        0.8457,
-        0.8487,
-        0.8601,
-        0.8466,
-        0.8745,
-        0.8683,
-        0.843,
-        0.8402,
-        0.8512,
-        0.8739,
-        0.8811,
-        0.9301,
-        0.8937,
-        0.8903,
-        0.9137,
-        0.9151,
-        0.8934,
-        0.8972,
-        0.8966,
-        0.9132,
-        0.9547,
-        0.9562,
-        0.9362,
-        0.9609,
-        0.9475,
-        0.9296,
-        0.8914,
-        0.8914,
-        0.8868,
-        0.9317,
-        0.9196,
-        0.9342,
-        0.9648,
-        1.0271,
-        1.0173,
-        1.0091,
-        0.9943,
-        1.0329,
-        1.0562,
-        1.0207,
-        1.0625,
-        1.1073,
-        1.1059,
-        1.0854,
-        1.0968,
-        1.1006,
-        1.1302,
-        1.0476,
-        1.0383,
-        1.0659,
-        1.0719,
-        1.0249,
-        1.0236,
-        1.0295,
-        1.0431,
-        1.0345,
-        1.0387,
-        0.9905,
-        1.0507,
-        1.034,
-        1.0282,
-        1.0534,
-        1.0825,
-        1.1289,
-        1.1636,
-        1.1867,
-        1.1583,
-        1.1436,
-        1.1943,
-        1.2072,
-        1.2315,
-        1.2053,
-        1.2231,
-        1.1588,
-        1.1653,
-        1.15,
-        1.1221,
-        1.1178,
-        1.1,
-        1.0801,
-        1.1243,
-        1.124,
-        1.1507,
-        1.1578,
-        1.2052,
-        1.2129,
-        1.1306,
-        1.1291,
-        1.1115,
-        1.1564,
-        1.1387,
-        1.1464,
-        1.1354,
-        1.1125,
-        1.0864,
-        1.0453,
-        0.9617,
-        0.997,
-        0.9694,
-        0.9879,
-        0.9956,
-        0.9109,
-        0.8922,
-        0.9108,
-        0.952,
-        0.9473,
-        0.9498,
-        0.9832,
-        0.9704,
-        0.9562,
-        0.9427,
-        0.9598,
-        0.957,
-        0.9585,
-        0.9526,
-        0.9097,
-        0.8916,
-        0.8764,
-        0.8393,
-        0.8486,
-        0.8447,
-        0.8536,
-        0.8621,
-        0.852,
-        0.8758,
-        0.8858,
-        0.8103,
-        0.8111,
-        0.8464,
-        0.831,
-        0.8593,
-        0.8579,
-        0.8393,
-        0.8713,
-        0.8839,
-        0.8802,
-        0.9084,
-        0.9035,
-        0.9207,
-        0.9202,
-        0.9119,
-        0.8999,
-        0.9159,
-        0.9033,
-        0.8923,
-        0.8402,
-        0.769,
-        0.7673,
-        0.7533,
-        0.7305,
-        0.6885,
-        0.6828,
-        0.6826,
-        0.7,
-        0.721,
-        0.7374,
-        0.6846,
-        0.7066,
-        0.6839,
-        0.6467,
-        0.6619,
-        0.654,
-        0.6366,
-        0.6257,
-        0.6152,
-        0.6064,
-        0.6061,
-        0.599,
-        0.6605,
-        0.6562,
-        0.6886,
-        0.714,
-        0.6873,
-        0.6701,
-        0.6817,
-        0.6707,
-        0.6406,
-        0.6128,
-        0.6128
-      ],
-      "HDFCBANK.NS": [
-        1.0,
-        1.0229,
-        1.0354,
-        1.0232,
-        1.0361,
-        1.0909,
-        1.0866,
-        1.0233,
-        1.0305,
-        1.004,
-        0.9952,
-        0.9632,
-        0.9785,
-        0.9843,
-        0.9523,
-        0.9302,
-        0.9564,
-        1.0024,
-        0.9989,
-        0.9837,
-        0.946,
-        0.9853,
-        0.9819,
-        0.9777,
-        0.9414,
-        0.8834,
-        0.903,
-        0.9568,
-        0.9251,
-        0.9736,
-        0.9792,
-        0.9471,
-        0.8764,
-        0.8951,
-        0.8518,
-        0.8446,
-        0.8639,
-        0.9104,
-        0.9027,
-        0.8836,
-        0.8435,
-        0.8854,
-        0.8854,
-        0.9137,
-        0.8908,
-        0.9107,
-        0.938,
-        0.9333,
-        0.9713,
-        0.9765,
-        0.9582,
-        0.9715,
-        0.9801,
-        0.9763,
-        0.9458,
-        0.9296,
-        0.9358,
-        0.9411,
-        0.9409,
-        0.954,
-        0.9792,
-        1.0537,
-        1.0555,
-        1.058,
-        1.0511,
-        1.0667,
-        1.0724,
-        1.0449,
-        1.0648,
-        1.0428,
-        1.0468,
-        1.0863,
-        1.0568,
-        1.0849,
-        1.0838,
-        1.083,
-        1.0392,
-        1.0568,
-        1.039,
-        1.0285,
-        1.0207,
-        1.0527,
-        1.0898,
-        1.1069,
-        1.0952,
-        1.1037,
-        1.0632,
-        1.0908,
-        1.0894,
-        1.0689,
-        1.0627,
-        1.0654,
-        1.0602,
-        1.0872,
-        1.1255,
-        1.0984,
-        1.0879,
-        1.1085,
-        1.0872,
-        1.093,
-        1.0709,
-        1.0523,
-        1.033,
-        1.0417,
-        1.0739,
-        1.0993,
-        1.0119,
-        1.0097,
-        1.0148,
-        1.0159,
-        1.0074,
-        0.9719,
-        0.9815,
-        0.9866,
-        0.9956,
-        1.0135,
-        1.0289,
-        1.0936,
-        1.0958,
-        1.1053,
-        1.1307,
-        1.1128,
-        1.0857,
-        0.9729,
-        0.9492,
-        0.9566,
-        0.9285,
-        0.9393,
-        0.9397,
-        0.9465,
-        0.9566,
-        0.9609,
-        0.9545,
-        0.9578,
-        1.025,
-        1.0048,
-        1.013,
-        0.9988,
-        1.0052,
-        0.9642,
-        0.9817,
-        1.0174,
-        1.027,
-        1.055,
-        1.0708,
-        1.117,
-        1.1291,
-        1.1051,
-        1.0881,
-        1.0778,
-        1.085,
-        1.1125,
-        1.1065,
-        1.0944,
-        1.0897,
-        1.0976,
-        1.0977,
-        1.1171,
-        1.1676,
-        1.1752,
-        1.1115,
-        1.1071,
-        1.1278,
-        1.169,
-        1.1649,
-        1.1764,
-        1.1351,
-        1.1705,
-        1.2043,
-        1.2444,
-        1.2551,
-        1.1879,
-        1.2058,
-        1.1729,
-        1.1109,
-        1.0975,
-        1.1063,
-        1.1391,
-        1.1619,
-        1.1365,
-        1.1349,
-        1.1617,
-        1.1327,
-        1.1444,
-        1.1871,
-        1.2259,
-        1.2186,
-        1.2115,
-        1.2785,
-        1.2815,
-        1.2887,
-        1.2671,
-        1.2973,
-        1.2966,
-        1.3041,
-        1.3268,
-        1.2858,
-        1.3174,
-        1.3659,
-        1.3486,
-        1.3448,
-        1.327,
-        1.3623,
-        1.3675,
-        1.3415,
-        1.3532,
-        1.3352,
-        1.2934,
-        1.3095,
-        1.3148,
-        1.3142,
-        1.2845,
-        1.3119,
-        1.3333,
-        1.3627,
-        1.3521,
-        1.342,
-        1.3352,
-        1.3451,
-        1.3566,
-        1.3695,
-        1.3637,
-        1.3613,
-        1.3395,
-        1.3485,
-        1.3614,
-        1.2763,
-        1.2656,
-        1.2452,
-        1.2631,
-        1.2792,
-        1.2286,
-        1.2394,
-        1.2066,
-        1.1649,
-        1.1105,
-        1.0608,
-        1.0278,
-        1.0206,
-        1.1014,
-        1.0872,
-        1.0668,
-        1.0489,
-        1.0613,
-        1.0432,
-        1.0422,
-        1.012,
-        1.0154,
-        1.0499,
-        1.0775,
-        1.1002,
-        1.1068,
-        1.1398,
-        1.1324,
-        1.0263,
-        1.0337,
-        1.01,
-        1.0045,
-        1.0044,
-        0.9952,
-        0.9839,
-        0.9786,
-        1.01,
-        1.0205
-      ],
-      "ITC.NS": [
-        1.0,
-        1.0701,
-        1.1039,
-        1.0896,
-        1.0727,
-        1.1877,
-        1.0954,
-        1.0333,
-        1.0488,
-        1.0782,
-        1.0995,
-        1.037,
-        1.0262,
-        1.0931,
-        1.009,
-        1.0093,
-        1.0095,
-        1.0111,
-        1.0306,
-        1.0049,
-        1.0074,
-        1.0847,
-        1.0762,
-        1.052,
-        1.0143,
-        1.0691,
-        1.1205,
-        1.161,
-        1.2011,
-        1.2009,
-        1.2696,
-        1.2779,
-        1.2378,
-        1.2305,
-        1.2641,
-        1.226,
-        1.3274,
-        1.3073,
-        1.3243,
-        1.312,
-        1.2787,
-        1.2911,
-        1.3809,
-        1.4232,
-        1.4256,
-        1.4596,
-        1.4717,
-        1.5096,
-        1.4984,
-        1.5152,
-        1.5196,
-        1.5694,
-        1.605,
-        1.6089,
-        1.6823,
-        1.6133,
-        1.6225,
-        1.6128,
-        1.6784,
-        1.6793,
-        1.7172,
-        1.7306,
-        1.6563,
-        1.6526,
-        1.6373,
-        1.658,
-        1.6274,
-        1.5866,
-        1.6101,
-        1.6271,
-        1.5965,
-        1.625,
-        1.6803,
-        1.8486,
-        1.8034,
-        1.8925,
-        1.9009,
-        1.9001,
-        1.9152,
-        1.8537,
-        1.8693,
-        1.893,
-        1.912,
-        1.9527,
-        2.0151,
-        2.1005,
-        2.1163,
-        2.0753,
-        2.0724,
-        2.1896,
-        2.2378,
-        2.2128,
-        2.2867,
-        2.2446,
-        2.2792,
-        2.364,
-        2.3867,
-        2.4752,
-        2.3642,
-        2.2961,
-        2.2648,
-        2.229,
-        2.2375,
-        2.2259,
-        2.234,
-        2.2628,
-        2.2363,
-        2.2428,
-        2.2315,
-        2.2628,
-        2.212,
-        2.1891,
-        2.1866,
-        2.2032,
-        2.2168,
-        2.2095,
-        2.2701,
-        2.2668,
-        2.3125,
-        2.2973,
-        2.3322,
-        2.392,
-        2.3554,
-        2.3796,
-        2.2996,
-        2.2211,
-        2.129,
-        2.0731,
-        2.108,
-        2.0982,
-        2.119,
-        2.1474,
-        2.1961,
-        2.1948,
-        2.1907,
-        2.2038,
-        2.1764,
-        2.2545,
-        2.2363,
-        2.2204,
-        2.2356,
-        2.235,
-        2.1851,
-        2.2916,
-        2.2499,
-        2.1896,
-        2.2173,
-        2.2629,
-        2.3955,
-        2.4764,
-        2.6207,
-        2.5523,
-        2.5878,
-        2.623,
-        2.6394,
-        2.6191,
-        2.618,
-        2.6814,
-        2.6843,
-        2.7276,
-        2.6277,
-        2.5476,
-        2.5398,
-        2.5168,
-        2.5586,
-        2.4946,
-        2.4315,
-        2.4769,
-        2.4878,
-        2.4586,
-        2.4526,
-        2.4247,
-        2.4975,
-        2.5132,
-        2.4111,
-        2.3856,
-        2.3932,
-        2.4251,
-        2.3349,
-        2.2584,
-        2.2069,
-        2.1744,
-        2.2234,
-        2.2683,
-        2.2325,
-        2.2556,
-        2.2553,
-        2.3206,
-        2.352,
-        2.355,
-        2.3643,
-        2.3316,
-        2.3985,
-        2.4018,
-        2.3437,
-        2.3605,
-        2.3204,
-        2.3465,
-        2.3471,
-        2.3129,
-        2.3367,
-        2.3701,
-        2.2952,
-        2.3347,
-        2.3238,
-        2.3067,
-        2.233,
-        2.2972,
-        2.2837,
-        2.3196,
-        2.3022,
-        2.2711,
-        2.2666,
-        2.2582,
-        2.3106,
-        2.3367,
-        2.3566,
-        2.2652,
-        2.2882,
-        2.2865,
-        2.2663,
-        2.2703,
-        2.2431,
-        2.2484,
-        2.2658,
-        1.9625,
-        1.8902,
-        1.8456,
-        1.8131,
-        1.8061,
-        1.8648,
-        1.7958,
-        1.8717,
-        1.795,
-        1.7727,
-        1.7254,
-        1.7168,
-        1.6868,
-        1.6762,
-        1.7415,
-        1.7561,
-        1.7263,
-        1.8024,
-        1.7598,
-        1.7712,
-        1.7269,
-        1.6869,
-        1.6504,
-        1.6763,
-        1.7198,
-        1.7051,
-        1.7048,
-        1.6566,
-        1.6504,
-        1.6666,
-        1.6522,
-        1.6822,
-        1.6357,
-        1.584,
-        1.564,
-        1.5528,
-        1.5278,
-        1.5422,
-        1.5628
-      ],
-      "INFY.NS": [
-        1.0,
-        0.9882,
-        1.0306,
-        0.9729,
-        1.0072,
-        1.0025,
-        1.0049,
-        0.9831,
-        1.0072,
-        1.0494,
-        1.0489,
-        0.9972,
-        1.0231,
-        1.037,
-        1.0734,
-        1.0985,
-        1.1128,
-        1.0695,
-        1.1373,
-        1.0526,
-        0.994,
-        1.0263,
-        1.0147,
-        1.0062,
-        0.9989,
-        1.0158,
-        1.074,
-        1.0932,
-        1.1062,
-        1.1221,
-        1.0697,
-        1.0307,
-        0.9346,
-        0.924,
-        0.9095,
-        0.8868,
-        0.8578,
-        0.8614,
-        0.9065,
-        0.8798,
-        0.8264,
-        0.8585,
-        0.8813,
-        0.9022,
-        0.8521,
-        0.8973,
-        0.9232,
-        0.9631,
-        0.9496,
-        0.9514,
-        0.9064,
-        0.8656,
-        0.9005,
-        0.8203,
-        0.8134,
-        0.842,
-        0.8645,
-        0.8782,
-        0.8939,
-        0.9113,
-        0.9118,
-        0.9456,
-        0.9596,
-        0.985,
-        0.9864,
-        0.9451,
-        0.9167,
-        0.9016,
-        0.9083,
-        0.8723,
-        0.9055,
-        0.9187,
-        0.9149,
-        0.9632,
-        0.9687,
-        0.9538,
-        0.9339,
-        0.8909,
-        0.8862,
-        0.8556,
-        0.8315,
-        0.86,
-        0.8563,
-        0.8366,
-        0.7391,
-        0.7544,
-        0.7583,
-        0.7499,
-        0.7642,
-        0.7934,
-        0.7928,
-        0.7726,
-        0.7883,
-        0.7721,
-        0.8151,
-        0.8119,
-        0.8703,
-        0.8127,
-        0.8181,
-        0.8412,
-        0.8373,
-        0.8476,
-        0.8667,
-        0.8812,
-        0.8969,
-        0.9226,
-        0.9131,
-        0.8761,
-        0.9025,
-        0.8735,
-        0.8711,
-        0.8534,
-        0.8587,
-        0.8463,
-        0.8887,
-        0.8886,
-        0.8978,
-        0.9219,
-        0.9758,
-        0.9662,
-        0.9539,
-        0.9475,
-        0.997,
-        1.0258,
-        1.0319,
-        1.0469,
-        1.032,
-        1.052,
-        1.0367,
-        1.023,
-        0.9993,
-        1.0102,
-        0.9328,
-        0.9261,
-        0.9144,
-        0.9179,
-        0.8725,
-        0.8842,
-        0.8756,
-        0.8809,
-        0.8929,
-        0.9058,
-        0.8872,
-        0.9671,
-        0.9389,
-        0.9665,
-        0.988,
-        1.0389,
-        1.0794,
-        1.1306,
-        1.1848,
-        1.1484,
-        1.1166,
-        1.1722,
-        1.1742,
-        1.2257,
-        1.1993,
-        1.2259,
-        1.2018,
-        1.2024,
-        1.2096,
-        1.2203,
-        1.1853,
-        1.1742,
-        1.123,
-        1.1671,
-        1.1892,
-        1.2132,
-        1.1849,
-        1.2261,
-        1.2754,
-        1.2259,
-        1.2225,
-        1.2365,
-        1.2545,
-        1.1578,
-        1.1961,
-        1.1989,
-        1.2141,
-        1.184,
-        1.1576,
-        1.0764,
-        1.0753,
-        1.0076,
-        1.0157,
-        1.0017,
-        0.9258,
-        0.8989,
-        0.9053,
-        0.944,
-        0.9611,
-        0.9615,
-        1.014,
-        0.998,
-        1.0107,
-        1.0114,
-        1.0361,
-        1.0496,
-        1.04,
-        1.0611,
-        1.0315,
-        1.0258,
-        0.9803,
-        0.9505,
-        0.9204,
-        0.9363,
-        0.962,
-        0.9505,
-        0.9343,
-        0.9867,
-        0.9961,
-        0.9371,
-        0.9356,
-        0.9798,
-        0.932,
-        0.9866,
-        0.9734,
-        0.9697,
-        0.9868,
-        1.0145,
-        1.0244,
-        1.0613,
-        1.0495,
-        1.0761,
-        1.0875,
-        1.0772,
-        1.0599,
-        1.1096,
-        1.0971,
-        1.0776,
-        0.9896,
-        0.899,
-        0.8886,
-        0.8537,
-        0.8592,
-        0.8197,
-        0.8247,
-        0.8337,
-        0.8542,
-        0.8487,
-        0.8659,
-        0.7582,
-        0.776,
-        0.7743,
-        0.7348,
-        0.7712,
-        0.7623,
-        0.7863,
-        0.7489,
-        0.7053,
-        0.6985,
-        0.7025,
-        0.7165,
-        0.7356,
-        0.6983,
-        0.7581,
-        0.7883,
-        0.7844,
-        0.752,
-        0.7675,
-        0.7581,
-        0.6962,
-        0.7053,
-        0.6906
-      ],
-      "^NSEI": [
-        1.0,
-        1.0038,
-        1.0191,
-        1.0007,
-        1.0214,
-        1.0468,
-        1.034,
-        1.0087,
-        1.0227,
-        1.0333,
-        1.014,
-        0.9719,
-        0.9816,
-        0.9995,
-        0.9695,
-        0.9706,
-        0.9906,
-        1.0167,
-        1.042,
-        1.0056,
-        0.9762,
-        0.9998,
-        0.9917,
-        0.9861,
-        0.9509,
-        0.9273,
-        0.9493,
-        0.9867,
-        0.9791,
-        1.0086,
-        1.0151,
-        0.9975,
-        0.9802,
-        0.9762,
-        0.9367,
-        0.9008,
-        0.9285,
-        0.9334,
-        0.9466,
-        0.9248,
-        0.8729,
-        0.8961,
-        0.8991,
-        0.9259,
-        0.9161,
-        0.9543,
-        0.9794,
-        0.993,
-        1.0102,
-        1.0136,
-        1.0023,
-        1.0011,
-        1.0179,
-        1.0007,
-        0.989,
-        0.9757,
-        0.9883,
-        0.9809,
-        1.0032,
-        1.0153,
-        1.0341,
-        1.0474,
-        1.045,
-        1.0567,
-        1.0672,
-        1.0558,
-        1.0428,
-        1.0164,
-        1.0334,
-        1.0194,
-        1.025,
-        1.029,
-        1.0048,
-        1.0191,
-        1.0192,
-        1.0242,
-        0.9969,
-        1.0043,
-        0.9939,
-        0.9761,
-        0.9672,
-        0.9909,
-        1.0045,
-        1.0176,
-        1.006,
-        1.0311,
-        1.0314,
-        1.0454,
-        1.039,
-        1.0559,
-        1.0579,
-        1.0596,
-        1.0746,
-        1.0654,
-        1.0953,
-        1.1034,
-        1.1167,
-        1.127,
-        1.1214,
-        1.114,
-        1.109,
-        1.1022,
-        1.0997,
-        1.1094,
-        1.1313,
-        1.1526,
-        1.123,
-        1.1209,
-        1.1218,
-        1.1274,
-        1.1155,
-        1.0872,
-        1.0977,
-        1.1088,
-        1.1263,
-        1.1299,
-        1.1569,
-        1.1969,
-        1.2247,
-        1.2186,
-        1.2404,
-        1.2392,
-        1.2497,
-        1.2342,
-        1.2188,
-        1.2474,
-        1.2433,
-        1.2581,
-        1.2679,
-        1.2751,
-        1.2839,
-        1.2571,
-        1.2613,
-        1.2744,
-        1.2851,
-        1.2854,
-        1.2641,
-        1.2797,
-        1.2829,
-        1.2589,
-        1.2824,
-        1.3104,
-        1.286,
-        1.3294,
-        1.3394,
-        1.3414,
-        1.3705,
-        1.3884,
-        1.3986,
-        1.4002,
-        1.4176,
-        1.4109,
-        1.3909,
-        1.4008,
-        1.4169,
-        1.4405,
-        1.4185,
-        1.4473,
-        1.4721,
-        1.4943,
-        1.4278,
-        1.4249,
-        1.4187,
-        1.3802,
-        1.3873,
-        1.3784,
-        1.3432,
-        1.3646,
-        1.3774,
-        1.4086,
-        1.4138,
-        1.3464,
-        1.3593,
-        1.3702,
-        1.3375,
-        1.3244,
-        1.3181,
-        1.3418,
-        1.3448,
-        1.3088,
-        1.3012,
-        1.2629,
-        1.2873,
-        1.2784,
-        1.3328,
-        1.3425,
-        1.3074,
-        1.303,
-        1.3614,
-        1.3722,
-        1.3897,
-        1.3704,
-        1.4281,
-        1.4186,
-        1.4128,
-        1.4272,
-        1.4109,
-        1.4334,
-        1.4634,
-        1.4533,
-        1.4355,
-        1.4252,
-        1.4177,
-        1.4022,
-        1.3906,
-        1.4059,
-        1.4196,
-        1.3943,
-        1.4122,
-        1.4335,
-        1.4457,
-        1.4073,
-        1.4209,
-        1.4433,
-        1.4675,
-        1.4724,
-        1.4682,
-        1.4551,
-        1.4789,
-        1.488,
-        1.4956,
-        1.4947,
-        1.4867,
-        1.4821,
-        1.4865,
-        1.5028,
-        1.466,
-        1.4666,
-        1.4298,
-        1.4453,
-        1.4666,
-        1.4539,
-        1.4596,
-        1.4372,
-        1.3956,
-        1.3215,
-        1.3194,
-        1.3025,
-        1.2965,
-        1.3728,
-        1.3901,
-        1.3641,
-        1.3698,
-        1.38,
-        1.3496,
-        1.3539,
-        1.3441,
-        1.3338,
-        1.3484,
-        1.3707,
-        1.3731,
-        1.3854,
-        1.3817,
-        1.389,
-        1.3566,
-        1.3918,
-        1.4025,
-        1.3908,
-        1.3843,
-        1.3799,
-        1.3641,
-        1.3355,
-        1.3326,
-        1.3365
-      ]
-    }
+  "DEVYANI.NS": {
+   "symbol": "DEVYANI",
+   "name": "Devyani International Ltd.",
+   "industry": "Consumer Services",
+   "group": "loser",
+   "rank": 3,
+   "label": "Top Loser #3",
+   "session": {
+    "prev_close": 144.51,
+    "close": 140.11,
+    "pct_change": -3.0448,
+    "volume": 1344367,
+    "turnover_crore": 19.05
+   },
+   "latest_close": 140.11,
+   "trailing_pe": null,
+   "market_cap": 170811473920,
+   "history": {
+    "first_date": "2021-09-16",
+    "trading_days": 1239,
+    "years": 5.02,
+    "session_price_from": "NSE"
+   },
+   "annualised_return": -0.067639,
+   "total_return": -0.236458,
+   "annualised_volatility": 0.343036,
+   "max_drawdown": -0.579039,
+   "beta": 0.8412
   }
+ },
+ "analysis_window": {
+  "start": "2022-11-16",
+  "end": "2026-09-23",
+  "trading_days": 949,
+  "years": 3.85,
+  "limited_by": [
+   "BIKAJI.NS"
+  ],
+  "short": false
+ },
+ "benchmark": {
+  "ticker": "^NSEI",
+  "name": "Nifty 50",
+  "annualised_return_full": 0.058467,
+  "full_history": {
+   "start": "2021-09-16",
+   "end": "2026-09-23",
+   "years": 5.02,
+   "session_price_from": "Yahoo"
+  },
+  "latest_close": 23446.8,
+  "session_pct_change": 0.505,
+  "annualised_return": 0.064798,
+  "total_return": 0.273615,
+  "annualised_volatility": 0.125502,
+  "max_drawdown": -0.157667
+ },
+ "correlation_matrix": {
+  "WHIRLPOOL.NS": {
+   "WHIRLPOOL.NS": 1.0,
+   "ELECON.NS": 0.259,
+   "BIKAJI.NS": 0.1698,
+   "PFOCUS.NS": 0.0936,
+   "INOXWIND.NS": 0.1175,
+   "DEVYANI.NS": 0.1539
+  },
+  "ELECON.NS": {
+   "WHIRLPOOL.NS": 0.259,
+   "ELECON.NS": 1.0,
+   "BIKAJI.NS": 0.2071,
+   "PFOCUS.NS": 0.1923,
+   "INOXWIND.NS": 0.3025,
+   "DEVYANI.NS": 0.2216
+  },
+  "BIKAJI.NS": {
+   "WHIRLPOOL.NS": 0.1698,
+   "ELECON.NS": 0.2071,
+   "BIKAJI.NS": 1.0,
+   "PFOCUS.NS": 0.1396,
+   "INOXWIND.NS": 0.2017,
+   "DEVYANI.NS": 0.1986
+  },
+  "PFOCUS.NS": {
+   "WHIRLPOOL.NS": 0.0936,
+   "ELECON.NS": 0.1923,
+   "BIKAJI.NS": 0.1396,
+   "PFOCUS.NS": 1.0,
+   "INOXWIND.NS": 0.1684,
+   "DEVYANI.NS": 0.1346
+  },
+  "INOXWIND.NS": {
+   "WHIRLPOOL.NS": 0.1175,
+   "ELECON.NS": 0.3025,
+   "BIKAJI.NS": 0.2017,
+   "PFOCUS.NS": 0.1684,
+   "INOXWIND.NS": 1.0,
+   "DEVYANI.NS": 0.2136
+  },
+  "DEVYANI.NS": {
+   "WHIRLPOOL.NS": 0.1539,
+   "ELECON.NS": 0.2216,
+   "BIKAJI.NS": 0.1986,
+   "PFOCUS.NS": 0.1346,
+   "INOXWIND.NS": 0.2136,
+   "DEVYANI.NS": 1.0
+  }
+ },
+ "covariance_matrix": {
+  "WHIRLPOOL.NS": {
+   "WHIRLPOOL.NS": 0.120254,
+   "ELECON.NS": 0.042163,
+   "BIKAJI.NS": 0.019501,
+   "PFOCUS.NS": 0.018782,
+   "INOXWIND.NS": 0.020347,
+   "DEVYANI.NS": 0.018302
+  },
+  "ELECON.NS": {
+   "WHIRLPOOL.NS": 0.042163,
+   "ELECON.NS": 0.220321,
+   "BIKAJI.NS": 0.032201,
+   "PFOCUS.NS": 0.052215,
+   "INOXWIND.NS": 0.070876,
+   "DEVYANI.NS": 0.035688
+  },
+  "BIKAJI.NS": {
+   "WHIRLPOOL.NS": 0.019501,
+   "ELECON.NS": 0.032201,
+   "BIKAJI.NS": 0.10974,
+   "PFOCUS.NS": 0.026743,
+   "INOXWIND.NS": 0.033359,
+   "DEVYANI.NS": 0.022572
+  },
+  "PFOCUS.NS": {
+   "WHIRLPOOL.NS": 0.018782,
+   "ELECON.NS": 0.052215,
+   "BIKAJI.NS": 0.026743,
+   "PFOCUS.NS": 0.334574,
+   "INOXWIND.NS": 0.048631,
+   "DEVYANI.NS": 0.026698
+  },
+  "INOXWIND.NS": {
+   "WHIRLPOOL.NS": 0.020347,
+   "ELECON.NS": 0.070876,
+   "BIKAJI.NS": 0.033359,
+   "PFOCUS.NS": 0.048631,
+   "INOXWIND.NS": 0.249193,
+   "DEVYANI.NS": 0.036584
+  },
+  "DEVYANI.NS": {
+   "WHIRLPOOL.NS": 0.018302,
+   "ELECON.NS": 0.035688,
+   "BIKAJI.NS": 0.022572,
+   "PFOCUS.NS": 0.026698,
+   "INOXWIND.NS": 0.036584,
+   "DEVYANI.NS": 0.117674
+  }
+ },
+ "weekly": {
+  "dates": [
+   "2021-09-17",
+   "2021-09-24",
+   "2021-10-01",
+   "2021-10-08",
+   "2021-10-15",
+   "2021-10-22",
+   "2021-10-29",
+   "2021-11-05",
+   "2021-11-12",
+   "2021-11-19",
+   "2021-11-26",
+   "2021-12-03",
+   "2021-12-10",
+   "2021-12-17",
+   "2021-12-24",
+   "2021-12-31",
+   "2022-01-07",
+   "2022-01-14",
+   "2022-01-21",
+   "2022-01-28",
+   "2022-02-04",
+   "2022-02-11",
+   "2022-02-18",
+   "2022-02-25",
+   "2022-03-04",
+   "2022-03-11",
+   "2022-03-18",
+   "2022-03-25",
+   "2022-04-01",
+   "2022-04-08",
+   "2022-04-15",
+   "2022-04-22",
+   "2022-04-29",
+   "2022-05-06",
+   "2022-05-13",
+   "2022-05-20",
+   "2022-05-27",
+   "2022-06-03",
+   "2022-06-10",
+   "2022-06-17",
+   "2022-06-24",
+   "2022-07-01",
+   "2022-07-08",
+   "2022-07-15",
+   "2022-07-22",
+   "2022-07-29",
+   "2022-08-05",
+   "2022-08-12",
+   "2022-08-19",
+   "2022-08-26",
+   "2022-09-02",
+   "2022-09-09",
+   "2022-09-16",
+   "2022-09-23",
+   "2022-09-30",
+   "2022-10-07",
+   "2022-10-14",
+   "2022-10-21",
+   "2022-10-28",
+   "2022-11-04",
+   "2022-11-11",
+   "2022-11-18",
+   "2022-11-25",
+   "2022-12-02",
+   "2022-12-09",
+   "2022-12-16",
+   "2022-12-23",
+   "2022-12-30",
+   "2023-01-06",
+   "2023-01-13",
+   "2023-01-20",
+   "2023-01-27",
+   "2023-02-03",
+   "2023-02-10",
+   "2023-02-17",
+   "2023-02-24",
+   "2023-03-03",
+   "2023-03-10",
+   "2023-03-17",
+   "2023-03-24",
+   "2023-03-31",
+   "2023-04-07",
+   "2023-04-14",
+   "2023-04-21",
+   "2023-04-28",
+   "2023-05-05",
+   "2023-05-12",
+   "2023-05-19",
+   "2023-05-26",
+   "2023-06-02",
+   "2023-06-09",
+   "2023-06-16",
+   "2023-06-23",
+   "2023-06-30",
+   "2023-07-07",
+   "2023-07-14",
+   "2023-07-21",
+   "2023-07-28",
+   "2023-08-04",
+   "2023-08-11",
+   "2023-08-18",
+   "2023-08-25",
+   "2023-09-01",
+   "2023-09-08",
+   "2023-09-15",
+   "2023-09-22",
+   "2023-09-29",
+   "2023-10-06",
+   "2023-10-13",
+   "2023-10-20",
+   "2023-10-27",
+   "2023-11-03",
+   "2023-11-10",
+   "2023-11-17",
+   "2023-11-24",
+   "2023-12-01",
+   "2023-12-08",
+   "2023-12-15",
+   "2023-12-22",
+   "2023-12-29",
+   "2024-01-05",
+   "2024-01-12",
+   "2024-01-19",
+   "2024-01-26",
+   "2024-02-02",
+   "2024-02-09",
+   "2024-02-16",
+   "2024-02-23",
+   "2024-03-01",
+   "2024-03-08",
+   "2024-03-15",
+   "2024-03-22",
+   "2024-03-29",
+   "2024-04-05",
+   "2024-04-12",
+   "2024-04-19",
+   "2024-04-26",
+   "2024-05-03",
+   "2024-05-10",
+   "2024-05-17",
+   "2024-05-24",
+   "2024-05-31",
+   "2024-06-07",
+   "2024-06-14",
+   "2024-06-21",
+   "2024-06-28",
+   "2024-07-05",
+   "2024-07-12",
+   "2024-07-19",
+   "2024-07-26",
+   "2024-08-02",
+   "2024-08-09",
+   "2024-08-16",
+   "2024-08-23",
+   "2024-08-30",
+   "2024-09-06",
+   "2024-09-13",
+   "2024-09-20",
+   "2024-09-27",
+   "2024-10-04",
+   "2024-10-11",
+   "2024-10-18",
+   "2024-10-25",
+   "2024-11-01",
+   "2024-11-08",
+   "2024-11-15",
+   "2024-11-22",
+   "2024-11-29",
+   "2024-12-06",
+   "2024-12-13",
+   "2024-12-20",
+   "2024-12-27",
+   "2025-01-03",
+   "2025-01-10",
+   "2025-01-17",
+   "2025-01-24",
+   "2025-01-31",
+   "2025-02-07",
+   "2025-02-14",
+   "2025-02-21",
+   "2025-02-28",
+   "2025-03-07",
+   "2025-03-14",
+   "2025-03-21",
+   "2025-03-28",
+   "2025-04-04",
+   "2025-04-11",
+   "2025-04-18",
+   "2025-04-25",
+   "2025-05-02",
+   "2025-05-09",
+   "2025-05-16",
+   "2025-05-23",
+   "2025-05-30",
+   "2025-06-06",
+   "2025-06-13",
+   "2025-06-20",
+   "2025-06-27",
+   "2025-07-04",
+   "2025-07-11",
+   "2025-07-18",
+   "2025-07-25",
+   "2025-08-01",
+   "2025-08-08",
+   "2025-08-15",
+   "2025-08-22",
+   "2025-08-29",
+   "2025-09-05",
+   "2025-09-12",
+   "2025-09-19",
+   "2025-09-26",
+   "2025-10-03",
+   "2025-10-10",
+   "2025-10-17",
+   "2025-10-24",
+   "2025-10-31",
+   "2025-11-07",
+   "2025-11-14",
+   "2025-11-21",
+   "2025-11-28",
+   "2025-12-05",
+   "2025-12-12",
+   "2025-12-19",
+   "2025-12-26",
+   "2026-01-02",
+   "2026-01-09",
+   "2026-01-16",
+   "2026-01-23",
+   "2026-01-30",
+   "2026-02-06",
+   "2026-02-13",
+   "2026-02-20",
+   "2026-02-27",
+   "2026-03-06",
+   "2026-03-13",
+   "2026-03-20",
+   "2026-03-27",
+   "2026-04-03",
+   "2026-04-10",
+   "2026-04-17",
+   "2026-04-24",
+   "2026-05-01",
+   "2026-05-08",
+   "2026-05-15",
+   "2026-05-22",
+   "2026-05-29",
+   "2026-06-05",
+   "2026-06-12",
+   "2026-06-19",
+   "2026-06-26",
+   "2026-07-03",
+   "2026-07-10",
+   "2026-07-17",
+   "2026-07-24",
+   "2026-07-31",
+   "2026-08-07",
+   "2026-08-14",
+   "2026-08-21",
+   "2026-08-28",
+   "2026-09-04",
+   "2026-09-11",
+   "2026-09-18",
+   "2026-09-23"
+  ],
+  "close": {
+   "WHIRLPOOL.NS": [
+    2205.32,
+    2208.36,
+    2251.65,
+    2337.28,
+    2400.39,
+    2139.71,
+    2171.36,
+    2075.27,
+    2234.82,
+    2238.69,
+    2067.47,
+    1989.54,
+    1883.2,
+    1781.71,
+    1720.61,
+    1729.15,
+    1806.54,
+    1842.27,
+    1798.59,
+    1802.76,
+    1766.25,
+    1726.35,
+    1672.96,
+    1643.66,
+    1607.05,
+    1544.78,
+    1615.54,
+    1562.25,
+    1573.98,
+    1630.85,
+    1630.56,
+    1610.93,
+    1593.51,
+    1574.02,
+    1525.88,
+    1514.99,
+    1592.38,
+    1604.89,
+    1530.64,
+    1434.41,
+    1492.56,
+    1529.61,
+    1633.2,
+    1666.88,
+    1712.08,
+    1746.24,
+    1760.03,
+    1758.8,
+    1810.45,
+    1788.68,
+    1765.94,
+    1727.44,
+    1687.21,
+    1630.35,
+    1609.47,
+    1621.24,
+    1542.22,
+    1568.8,
+    1541.09,
+    1496.92,
+    1507.11,
+    1499.38,
+    1488.31,
+    1512.48,
+    1493.57,
+    1465.51,
+    1452.07,
+    1474.18,
+    1478.02,
+    1426.22,
+    1402.1,
+    1371.08,
+    1241.49,
+    1272.02,
+    1267.0,
+    1300.77,
+    1300.62,
+    1333.66,
+    1342.13,
+    1314.16,
+    1294.91,
+    1308.31,
+    1316.63,
+    1301.95,
+    1302.79,
+    1305.35,
+    1307.22,
+    1346.76,
+    1414.5,
+    1397.52,
+    1399.44,
+    1445.08,
+    1429.37,
+    1451.58,
+    1438.97,
+    1415.09,
+    1425.48,
+    1413.62,
+    1439.32,
+    1518.59,
+    1560.14,
+    1615.8,
+    1611.66,
+    1660.45,
+    1620.74,
+    1643.66,
+    1605.23,
+    1629.98,
+    1693.74,
+    1625.14,
+    1629.73,
+    1598.37,
+    1563.3,
+    1569.58,
+    1541.82,
+    1398.73,
+    1296.35,
+    1330.62,
+    1342.68,
+    1350.18,
+    1347.42,
+    1339.86,
+    1339.27,
+    1300.94,
+    1330.38,
+    1341.98,
+    1315.21,
+    1262.07,
+    1225.47,
+    1245.72,
+    1214.41,
+    1222.36,
+    1206.56,
+    1337.74,
+    1404.91,
+    1424.27,
+    1482.8,
+    1449.41,
+    1411.77,
+    1540.53,
+    1509.62,
+    1479.88,
+    1601.14,
+    1763.14,
+    1824.68,
+    1973.98,
+    1997.69,
+    1962.92,
+    1983.81,
+    2037.21,
+    2110.34,
+    2069.1,
+    2076.48,
+    2023.01,
+    2162.18,
+    2202.68,
+    2080.83,
+    2042.17,
+    2179.96,
+    2339.53,
+    2344.04,
+    2315.03,
+    2167.38,
+    2025.33,
+    2042.76,
+    1785.35,
+    1748.07,
+    1830.95,
+    1876.55,
+    1894.32,
+    1921.01,
+    1856.89,
+    1855.75,
+    1684.99,
+    1667.36,
+    1605.17,
+    1128.67,
+    1097.48,
+    992.61,
+    969.79,
+    918.99,
+    986.97,
+    932.65,
+    971.67,
+    980.24,
+    1052.03,
+    1095.75,
+    1094.06,
+    1145.26,
+    1223.64,
+    1210.96,
+    1283.74,
+    1250.47,
+    1223.83,
+    1275.82,
+    1315.73,
+    1336.92,
+    1389.1,
+    1364.25,
+    1359.1,
+    1430.6,
+    1385.34,
+    1302.76,
+    1252.25,
+    1228.59,
+    1288.3,
+    1292.87,
+    1348.93,
+    1343.47,
+    1329.85,
+    1225.27,
+    1172.39,
+    1162.55,
+    1376.17,
+    1362.45,
+    1390.78,
+    1332.03,
+    1237.6,
+    1173.28,
+    1065.73,
+    943.86,
+    919.9,
+    920.69,
+    903.4,
+    899.17,
+    840.23,
+    797.18,
+    792.01,
+    773.13,
+    849.57,
+    893.06,
+    924.72,
+    916.37,
+    891.17,
+    832.67,
+    831.38,
+    804.04,
+    809.56,
+    825.12,
+    884.51,
+    946.89,
+    979.74,
+    950.12,
+    850.17,
+    840.72,
+    817.61,
+    795.39,
+    765.37,
+    790.22,
+    798.03,
+    803.35,
+    790.42,
+    767.21,
+    766.86,
+    798.13,
+    808.32,
+    774.27,
+    763.93,
+    813.25,
+    815.95,
+    762.35,
+    717.7,
+    865.25
+   ],
+   "ELECON.NS": [
+    85.15,
+    83.29,
+    82.6,
+    84.57,
+    81.52,
+    75.02,
+    84.2,
+    82.68,
+    85.06,
+    89.37,
+    101.54,
+    99.38,
+    100.73,
+    88.1,
+    83.44,
+    90.43,
+    92.29,
+    100.07,
+    95.12,
+    87.24,
+    85.45,
+    79.66,
+    73.18,
+    69.11,
+    70.24,
+    77.72,
+    77.94,
+    70.63,
+    76.15,
+    85.65,
+    92.54,
+    91.46,
+    92.34,
+    84.89,
+    90.58,
+    100.41,
+    94.23,
+    113.0,
+    122.99,
+    128.04,
+    132.78,
+    128.86,
+    145.31,
+    153.06,
+    162.78,
+    178.72,
+    169.42,
+    168.16,
+    170.92,
+    184.69,
+    179.24,
+    185.58,
+    190.44,
+    172.62,
+    168.7,
+    167.42,
+    162.8,
+    179.19,
+    183.78,
+    196.43,
+    220.95,
+    210.64,
+    225.17,
+    222.46,
+    207.78,
+    208.84,
+    171.76,
+    179.9,
+    177.02,
+    193.57,
+    186.39,
+    187.65,
+    186.29,
+    189.47,
+    205.24,
+    201.29,
+    190.46,
+    196.43,
+    190.71,
+    186.69,
+    188.56,
+    198.82,
+    222.02,
+    219.45,
+    214.22,
+    219.2,
+    248.88,
+    277.85,
+    286.6,
+    265.24,
+    279.8,
+    287.94,
+    273.21,
+    289.36,
+    318.57,
+    357.39,
+    365.34,
+    363.58,
+    395.67,
+    413.94,
+    411.09,
+    420.65,
+    445.88,
+    421.64,
+    376.95,
+    356.16,
+    382.94,
+    382.08,
+    414.73,
+    399.68,
+    391.14,
+    438.65,
+    448.82,
+    439.67,
+    474.1,
+    464.48,
+    464.73,
+    453.97,
+    442.99,
+    459.57,
+    463.49,
+    506.03,
+    538.21,
+    513.74,
+    529.16,
+    502.81,
+    505.81,
+    505.16,
+    490.78,
+    477.12,
+    432.8,
+    456.25,
+    470.38,
+    498.39,
+    481.91,
+    578.22,
+    558.36,
+    544.11,
+    494.03,
+    566.74,
+    568.13,
+    549.88,
+    547.13,
+    656.26,
+    649.65,
+    656.48,
+    683.59,
+    639.33,
+    636.57,
+    622.57,
+    604.2,
+    577.98,
+    601.37,
+    606.73,
+    617.16,
+    612.09,
+    633.64,
+    631.7,
+    690.5,
+    671.13,
+    684.93,
+    622.07,
+    537.81,
+    578.71,
+    568.17,
+    555.15,
+    557.59,
+    581.25,
+    627.17,
+    644.47,
+    598.14,
+    638.5,
+    630.05,
+    591.39,
+    586.71,
+    540.99,
+    529.21,
+    507.74,
+    458.29,
+    472.55,
+    411.72,
+    434.93,
+    388.76,
+    437.31,
+    446.46,
+    431.65,
+    433.44,
+    467.43,
+    514.65,
+    573.19,
+    618.37,
+    659.28,
+    677.07,
+    660.02,
+    690.14,
+    667.18,
+    630.62,
+    650.89,
+    643.67,
+    616.97,
+    598.74,
+    574.88,
+    561.53,
+    539.02,
+    550.42,
+    554.06,
+    550.22,
+    551.72,
+    598.24,
+    619.16,
+    563.57,
+    582.35,
+    554.76,
+    539.86,
+    567.48,
+    559.86,
+    536.22,
+    534.13,
+    512.89,
+    503.02,
+    473.1,
+    481.48,
+    481.43,
+    477.14,
+    499.58,
+    422.35,
+    390.79,
+    373.93,
+    406.94,
+    441.09,
+    432.97,
+    420.1,
+    414.67,
+    408.99,
+    379.57,
+    388.74,
+    371.24,
+    387.05,
+    418.31,
+    411.58,
+    511.29,
+    505.21,
+    556.07,
+    483.47,
+    531.74,
+    508.55,
+    529.84,
+    536.85,
+    539.05,
+    522.2,
+    526.7,
+    510.55,
+    464.35,
+    421.65,
+    419.05,
+    437.85,
+    432.35,
+    451.55,
+    425.25,
+    433.75,
+    422.1,
+    421.2,
+    466.6
+   ],
+   "BIKAJI.NS": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    315.41,
+    389.28,
+    409.19,
+    390.72,
+    382.52,
+    347.85,
+    433.34,
+    406.51,
+    430.6,
+    416.35,
+    418.14,
+    371.2,
+    378.05,
+    374.87,
+    361.01,
+    360.77,
+    364.89,
+    350.68,
+    352.17,
+    360.22,
+    356.2,
+    354.9,
+    363.89,
+    372.74,
+    369.86,
+    370.25,
+    381.68,
+    373.28,
+    379.74,
+    394.67,
+    407.37,
+    424.84,
+    415.88,
+    413.54,
+    427.22,
+    460.57,
+    471.32,
+    473.86,
+    485.9,
+    476.5,
+    473.11,
+    484.81,
+    524.62,
+    492.37,
+    479.68,
+    482.72,
+    468.43,
+    481.22,
+    486.8,
+    465.35,
+    477.14,
+    513.43,
+    536.87,
+    545.63,
+    551.3,
+    525.17,
+    545.08,
+    549.81,
+    543.59,
+    570.71,
+    580.37,
+    573.4,
+    571.16,
+    545.03,
+    549.26,
+    534.93,
+    525.32,
+    515.52,
+    531.39,
+    482.72,
+    487.6,
+    488.19,
+    537.07,
+    536.12,
+    518.55,
+    525.02,
+    528.16,
+    523.33,
+    543.64,
+    553.74,
+    591.12,
+    688.47,
+    723.22,
+    726.56,
+    713.3,
+    704.38,
+    705.48,
+    695.26,
+    714.5,
+    736.88,
+    812.83,
+    845.68,
+    851.86,
+    822.45,
+    858.54,
+    875.03,
+    950.19,
+    955.97,
+    898.11,
+    839.05,
+    907.73,
+    863.37,
+    854.25,
+    859.98,
+    784.08,
+    731.89,
+    800.12,
+    817.87,
+    796.79,
+    767.68,
+    761.75,
+    745.95,
+    703.98,
+    698.65,
+    685.19,
+    688.78,
+    657.13,
+    575.9,
+    673.13,
+    632.12,
+    668.0,
+    670.64,
+    694.76,
+    658.88,
+    674.93,
+    707.17,
+    714.4,
+    726.51,
+    699.0,
+    672.19,
+    715.35,
+    717.14,
+    762.94,
+    754.87,
+    743.81,
+    705.58,
+    752.38,
+    730.55,
+    725.51,
+    753.62,
+    769.57,
+    752.23,
+    720.43,
+    719.88,
+    767.68,
+    788.76,
+    798.49,
+    774.73,
+    786.71,
+    729.72,
+    727.83,
+    727.78,
+    732.77,
+    731.22,
+    729.17,
+    716.05,
+    710.56,
+    710.61,
+    715.75,
+    715.4,
+    727.78,
+    747.74,
+    747.94,
+    734.16,
+    700.73,
+    698.33,
+    649.63,
+    656.57,
+    648.48,
+    638.5,
+    634.11,
+    636.9,
+    613.15,
+    602.27,
+    628.47,
+    615.8,
+    625.78,
+    639.35,
+    658.76,
+    658.01,
+    675.33,
+    670.44,
+    667.74,
+    651.92,
+    648.78,
+    653.67,
+    672.48,
+    658.91,
+    639.35,
+    660.91,
+    642.04,
+    638.4,
+    630.7,
+    641.65,
+    623.5,
+    613.3,
+    605.75,
+    618.8,
+    584.2,
+    548.25,
+    580.25,
+    591.1
+   ],
+   "PFOCUS.NS": [
+    86.85,
+    77.15,
+    74.25,
+    71.9,
+    87.3,
+    83.0,
+    80.7,
+    79.4,
+    78.35,
+    71.05,
+    70.4,
+    79.7,
+    74.5,
+    68.05,
+    66.7,
+    70.25,
+    67.15,
+    65.25,
+    67.85,
+    72.9,
+    92.9,
+    90.1,
+    82.7,
+    75.15,
+    74.7,
+    81.5,
+    89.3,
+    84.95,
+    91.6,
+    86.45,
+    87.25,
+    83.35,
+    77.55,
+    71.35,
+    69.75,
+    71.4,
+    69.75,
+    79.0,
+    71.05,
+    65.55,
+    61.8,
+    63.25,
+    68.35,
+    68.6,
+    69.25,
+    69.6,
+    72.6,
+    72.6,
+    67.45,
+    70.0,
+    79.4,
+    80.8,
+    78.0,
+    76.05,
+    71.9,
+    73.25,
+    77.15,
+    74.05,
+    75.1,
+    75.95,
+    74.1,
+    68.4,
+    68.55,
+    90.6,
+    92.0,
+    87.05,
+    70.35,
+    74.1,
+    74.1,
+    73.55,
+    72.2,
+    70.05,
+    69.7,
+    70.3,
+    68.9,
+    70.1,
+    77.1,
+    81.15,
+    78.4,
+    76.0,
+    78.95,
+    79.15,
+    102.55,
+    91.35,
+    82.7,
+    81.7,
+    80.45,
+    79.15,
+    91.6,
+    95.45,
+    106.3,
+    105.25,
+    103.75,
+    115.85,
+    121.3,
+    119.8,
+    116.2,
+    115.05,
+    106.8,
+    93.65,
+    90.7,
+    90.35,
+    88.8,
+    87.75,
+    81.05,
+    98.0,
+    93.1,
+    96.45,
+    96.95,
+    94.4,
+    92.8,
+    99.85,
+    99.7,
+    107.35,
+    111.8,
+    106.0,
+    106.45,
+    115.05,
+    109.3,
+    106.15,
+    115.65,
+    116.95,
+    116.3,
+    116.75,
+    132.4,
+    127.25,
+    119.5,
+    120.6,
+    111.95,
+    110.0,
+    96.25,
+    100.25,
+    98.2,
+    109.8,
+    103.95,
+    102.05,
+    100.6,
+    105.95,
+    98.55,
+    101.0,
+    99.2,
+    102.1,
+    96.55,
+    104.21,
+    105.23,
+    122.46,
+    146.48,
+    134.98,
+    122.83,
+    142.89,
+    142.72,
+    144.72,
+    139.05,
+    150.41,
+    143.09,
+    137.87,
+    144.07,
+    138.99,
+    146.5,
+    141.02,
+    150.84,
+    158.12,
+    129.57,
+    134.83,
+    131.13,
+    130.5,
+    124.39,
+    126.98,
+    128.97,
+    134.39,
+    132.88,
+    135.0,
+    134.78,
+    127.65,
+    126.67,
+    110.1,
+    107.9,
+    108.47,
+    106.28,
+    109.3,
+    95.16,
+    101.66,
+    93.95,
+    100.12,
+    90.79,
+    91.77,
+    90.13,
+    93.17,
+    96.38,
+    109.4,
+    103.96,
+    98.17,
+    102.15,
+    110.65,
+    116.76,
+    123.06,
+    114.9,
+    136.83,
+    165.94,
+    157.99,
+    168.42,
+    147.68,
+    146.51,
+    154.4,
+    158.99,
+    151.97,
+    144.74,
+    158.37,
+    188.89,
+    184.02,
+    183.41,
+    176.41,
+    168.18,
+    167.61,
+    178.49,
+    181.9,
+    172.96,
+    172.67,
+    167.44,
+    169.73,
+    186.45,
+    200.89,
+    219.74,
+    244.88,
+    232.98,
+    230.22,
+    235.15,
+    217.52,
+    225.63,
+    262.67,
+    261.8,
+    259.22,
+    254.83,
+    275.65,
+    257.45,
+    276.65,
+    327.05,
+    331.2,
+    334.5,
+    345.05,
+    306.9,
+    309.95,
+    300.9,
+    247.7,
+    242.65,
+    233.4,
+    240.19,
+    239.27,
+    231.72,
+    209.94,
+    235.99,
+    256.69,
+    289.47,
+    289.29,
+    287.11,
+    287.6,
+    269.6,
+    296.95,
+    294.4,
+    307.0,
+    310.85,
+    344.35,
+    337.15
+   ],
+   "INOXWIND.NS": [
+    25.71,
+    25.61,
+    24.79,
+    25.04,
+    32.28,
+    28.42,
+    29.7,
+    33.44,
+    32.66,
+    30.94,
+    31.15,
+    36.39,
+    34.16,
+    31.88,
+    29.25,
+    28.92,
+    29.52,
+    32.2,
+    32.11,
+    30.3,
+    32.2,
+    32.08,
+    29.94,
+    27.86,
+    27.1,
+    26.76,
+    27.33,
+    28.35,
+    28.35,
+    27.19,
+    29.35,
+    28.33,
+    27.12,
+    24.02,
+    23.61,
+    23.33,
+    21.59,
+    23.11,
+    22.75,
+    21.0,
+    20.39,
+    19.4,
+    20.49,
+    19.5,
+    20.27,
+    22.2,
+    26.02,
+    28.01,
+    26.9,
+    27.12,
+    31.3,
+    33.88,
+    36.28,
+    35.46,
+    36.9,
+    37.99,
+    37.61,
+    37.06,
+    37.72,
+    37.72,
+    32.15,
+    28.86,
+    29.91,
+    31.8,
+    30.01,
+    28.11,
+    26.33,
+    27.14,
+    25.99,
+    26.99,
+    26.94,
+    24.0,
+    23.17,
+    23.27,
+    24.05,
+    27.02,
+    27.09,
+    28.49,
+    25.62,
+    24.0,
+    23.34,
+    25.31,
+    24.24,
+    24.92,
+    26.58,
+    28.99,
+    28.66,
+    28.41,
+    29.25,
+    36.67,
+    36.65,
+    38.34,
+    37.97,
+    38.45,
+    42.74,
+    48.74,
+    47.34,
+    52.72,
+    53.35,
+    52.34,
+    47.53,
+    50.1,
+    51.51,
+    50.15,
+    49.41,
+    47.9,
+    48.26,
+    52.34,
+    50.35,
+    53.1,
+    52.47,
+    53.66,
+    59.44,
+    62.96,
+    66.64,
+    71.97,
+    90.84,
+    101.96,
+    113.31,
+    124.94,
+    127.54,
+    110.01,
+    112.55,
+    117.36,
+    127.19,
+    128.05,
+    147.74,
+    152.89,
+    146.25,
+    130.93,
+    117.19,
+    120.22,
+    130.4,
+    132.32,
+    139.6,
+    142.26,
+    160.15,
+    153.91,
+    135.7,
+    152.41,
+    165.0,
+    148.95,
+    150.2,
+    145.4,
+    141.01,
+    141.86,
+    158.8,
+    171.75,
+    153.5,
+    170.22,
+    179.38,
+    174.23,
+    212.74,
+    218.68,
+    221.11,
+    225.88,
+    250.99,
+    254.34,
+    238.18,
+    222.25,
+    218.61,
+    222.37,
+    202.94,
+    222.96,
+    209.29,
+    190.03,
+    184.72,
+    191.04,
+    207.68,
+    196.8,
+    188.46,
+    180.67,
+    184.81,
+    155.36,
+    166.27,
+    142.89,
+    168.59,
+    168.5,
+    171.93,
+    172.88,
+    150.19,
+    170.75,
+    162.41,
+    171.94,
+    163.04,
+    153.85,
+    151.59,
+    162.85,
+    172.14,
+    165.62,
+    156.82,
+    179.82,
+    184.98,
+    195.0,
+    184.0,
+    172.46,
+    170.65,
+    175.78,
+    179.98,
+    176.23,
+    164.58,
+    156.26,
+    151.76,
+    139.72,
+    137.03,
+    144.05,
+    138.12,
+    145.82,
+    148.92,
+    151.34,
+    137.46,
+    141.37,
+    150.08,
+    146.28,
+    154.08,
+    155.13,
+    149.45,
+    148.69,
+    137.77,
+    134.5,
+    130.24,
+    124.61,
+    126.87,
+    126.43,
+    128.04,
+    113.79,
+    113.6,
+    103.56,
+    107.94,
+    106.4,
+    106.38,
+    96.67,
+    92.13,
+    83.86,
+    79.59,
+    81.84,
+    79.27,
+    79.55,
+    86.88,
+    97.9,
+    100.13,
+    100.95,
+    103.6,
+    95.53,
+    94.31,
+    93.02,
+    86.79,
+    88.03,
+    90.72,
+    89.52,
+    88.0,
+    82.61,
+    78.12,
+    76.97,
+    78.14,
+    78.0,
+    73.67,
+    73.6,
+    71.79,
+    74.4,
+    76.5,
+    76.8,
+    75.02
+   ],
+   "DEVYANI.NS": [
+    115.8,
+    119.7,
+    115.8,
+    113.4,
+    112.55,
+    120.25,
+    122.7,
+    146.5,
+    160.55,
+    149.85,
+    147.0,
+    153.7,
+    188.6,
+    175.65,
+    167.6,
+    165.05,
+    186.85,
+    184.9,
+    183.15,
+    167.6,
+    178.55,
+    177.45,
+    165.45,
+    154.5,
+    156.5,
+    155.55,
+    160.0,
+    168.35,
+    173.15,
+    173.9,
+    172.5,
+    168.25,
+    172.75,
+    161.15,
+    152.7,
+    152.7,
+    157.25,
+    162.9,
+    162.8,
+    146.45,
+    152.6,
+    158.1,
+    167.55,
+    164.75,
+    166.3,
+    178.95,
+    187.3,
+    202.25,
+    198.35,
+    185.25,
+    182.0,
+    192.8,
+    193.15,
+    190.85,
+    194.7,
+    197.55,
+    186.9,
+    191.8,
+    192.45,
+    187.75,
+    181.45,
+    181.9,
+    189.95,
+    188.0,
+    188.3,
+    188.6,
+    171.2,
+    180.75,
+    171.4,
+    162.4,
+    161.65,
+    152.85,
+    151.6,
+    157.9,
+    153.45,
+    148.85,
+    152.05,
+    149.25,
+    144.45,
+    138.05,
+    144.65,
+    145.2,
+    156.2,
+    160.05,
+    161.4,
+    177.3,
+    176.45,
+    182.95,
+    187.1,
+    185.6,
+    180.75,
+    192.2,
+    188.75,
+    188.35,
+    191.45,
+    193.75,
+    198.05,
+    196.9,
+    188.85,
+    198.35,
+    197.85,
+    191.35,
+    197.05,
+    222.45,
+    211.45,
+    208.7,
+    214.35,
+    222.0,
+    210.85,
+    195.55,
+    188.05,
+    185.6,
+    182.75,
+    185.3,
+    182.2,
+    175.1,
+    186.75,
+    184.9,
+    190.1,
+    193.75,
+    186.35,
+    185.75,
+    182.75,
+    178.15,
+    173.0,
+    154.25,
+    158.75,
+    160.95,
+    154.4,
+    155.75,
+    154.1,
+    155.2,
+    150.45,
+    156.5,
+    164.05,
+    161.05,
+    168.65,
+    165.55,
+    161.2,
+    152.2,
+    151.8,
+    154.0,
+    172.05,
+    178.39,
+    171.39,
+    164.71,
+    165.29,
+    163.03,
+    175.22,
+    176.94,
+    177.85,
+    172.55,
+    170.31,
+    184.92,
+    175.91,
+    183.48,
+    189.91,
+    209.88,
+    195.6,
+    178.45,
+    182.01,
+    174.98,
+    163.38,
+    170.97,
+    170.9,
+    163.96,
+    167.83,
+    165.23,
+    168.96,
+    168.47,
+    172.37,
+    192.72,
+    190.08,
+    180.19,
+    185.14,
+    171.22,
+    168.65,
+    179.5,
+    158.29,
+    176.53,
+    165.02,
+    168.88,
+    152.39,
+    150.11,
+    149.14,
+    145.28,
+    155.92,
+    165.31,
+    175.2,
+    177.0,
+    176.74,
+    186.89,
+    179.68,
+    167.59,
+    171.1,
+    165.71,
+    166.6,
+    171.52,
+    172.96,
+    169.33,
+    176.16,
+    171.76,
+    161.47,
+    155.69,
+    155.19,
+    171.27,
+    174.22,
+    179.72,
+    187.23,
+    178.64,
+    169.91,
+    167.35,
+    163.48,
+    167.58,
+    162.54,
+    161.8,
+    147.97,
+    138.07,
+    144.29,
+    135.64,
+    136.75,
+    134.33,
+    130.86,
+    144.84,
+    148.07,
+    133.13,
+    132.13,
+    114.59,
+    116.18,
+    130.19,
+    132.02,
+    133.0,
+    127.44,
+    116.83,
+    111.94,
+    104.17,
+    99.56,
+    96.43,
+    108.55,
+    107.7,
+    106.98,
+    124.73,
+    118.47,
+    118.08,
+    114.4,
+    115.36,
+    113.13,
+    109.42,
+    116.91,
+    112.84,
+    114.19,
+    112.47,
+    112.0,
+    112.3,
+    114.18,
+    134.73,
+    143.76,
+    144.4,
+    139.94,
+    139.28,
+    137.97,
+    140.62,
+    140.11
+   ],
+   "^NSEI": [
+    17585.15,
+    17853.2,
+    17532.05,
+    17895.2,
+    18338.55,
+    18114.9,
+    17671.65,
+    17916.8,
+    18102.75,
+    17764.8,
+    17026.45,
+    17196.7,
+    17511.3,
+    16985.2,
+    17003.75,
+    17354.05,
+    17812.7,
+    18255.75,
+    17617.15,
+    17101.95,
+    17516.3,
+    17374.75,
+    17276.3,
+    16658.4,
+    16245.35,
+    16630.45,
+    17287.05,
+    17153.0,
+    17670.45,
+    17784.35,
+    17475.65,
+    17171.95,
+    17102.55,
+    16411.25,
+    15782.15,
+    16266.15,
+    16352.45,
+    16584.3,
+    16201.8,
+    15293.5,
+    15699.25,
+    15752.05,
+    16220.6,
+    16049.2,
+    16719.45,
+    17158.25,
+    17397.5,
+    17698.15,
+    17758.45,
+    17558.9,
+    17539.45,
+    17833.35,
+    17530.85,
+    17327.35,
+    17094.35,
+    17314.65,
+    17185.7,
+    17576.3,
+    17786.8,
+    18117.15,
+    18349.7,
+    18307.65,
+    18512.75,
+    18696.1,
+    18496.6,
+    18269.0,
+    17806.8,
+    18105.3,
+    17859.45,
+    17956.6,
+    18027.65,
+    17604.35,
+    17854.05,
+    17856.5,
+    17944.2,
+    17465.8,
+    17594.35,
+    17412.9,
+    17100.05,
+    16945.05,
+    17359.75,
+    17599.15,
+    17828.0,
+    17624.05,
+    18065.0,
+    18069.0,
+    18314.8,
+    18203.4,
+    18499.35,
+    18534.1,
+    18563.4,
+    18826.0,
+    18665.5,
+    19189.05,
+    19331.8,
+    19564.5,
+    19745.0,
+    19646.05,
+    19517.0,
+    19428.3,
+    19310.15,
+    19265.8,
+    19435.3,
+    19819.95,
+    20192.35,
+    19674.25,
+    19638.3,
+    19653.5,
+    19751.05,
+    19542.65,
+    19047.25,
+    19230.6,
+    19425.35,
+    19731.8,
+    19794.7,
+    20267.9,
+    20969.4,
+    21456.65,
+    21349.4,
+    21731.4,
+    21710.8,
+    21894.55,
+    21622.4,
+    21352.6,
+    21853.8,
+    21782.5,
+    22040.7,
+    22212.7,
+    22338.75,
+    22493.55,
+    22023.35,
+    22096.75,
+    22326.9,
+    22513.7,
+    22519.4,
+    22147.0,
+    22419.95,
+    22475.85,
+    22055.2,
+    22466.1,
+    22957.1,
+    22530.7,
+    23290.15,
+    23465.6,
+    23501.1,
+    24010.6,
+    24323.85,
+    24502.15,
+    24530.9,
+    24834.85,
+    24717.7,
+    24367.5,
+    24541.15,
+    24823.15,
+    25235.9,
+    24852.15,
+    25356.5,
+    25790.95,
+    26178.95,
+    25014.6,
+    24964.25,
+    24854.05,
+    24180.8,
+    24304.35,
+    24148.2,
+    23532.7,
+    23907.25,
+    24131.1,
+    24677.8,
+    24768.3,
+    23587.5,
+    23813.4,
+    24004.75,
+    23431.5,
+    23203.2,
+    23092.2,
+    23508.4,
+    23559.95,
+    22929.25,
+    22795.9,
+    22124.7,
+    22552.5,
+    22397.2,
+    23350.4,
+    23519.35,
+    22904.45,
+    22828.55,
+    23851.65,
+    24039.35,
+    24346.7,
+    24008.0,
+    25019.8,
+    24853.15,
+    24750.7,
+    25003.05,
+    24718.6,
+    25112.4,
+    25637.8,
+    25461.0,
+    25149.85,
+    24968.4,
+    24837.0,
+    24565.35,
+    24363.3,
+    24631.3,
+    24870.1,
+    24426.85,
+    24741.0,
+    25114.0,
+    25327.05,
+    24654.7,
+    24894.25,
+    25285.35,
+    25709.85,
+    25795.15,
+    25722.1,
+    25492.3,
+    25910.05,
+    26068.15,
+    26202.95,
+    26186.45,
+    26046.95,
+    25966.4,
+    26042.3,
+    26328.55,
+    25683.3,
+    25694.35,
+    25048.65,
+    25320.65,
+    25693.7,
+    25471.1,
+    25571.25,
+    25178.65,
+    24450.45,
+    23151.1,
+    23114.5,
+    22819.6,
+    22713.1,
+    24050.6,
+    24353.55,
+    23897.95,
+    23997.55,
+    24176.15,
+    23643.5,
+    23719.3,
+    23547.75,
+    23366.7,
+    23622.9,
+    24013.1,
+    24056.0,
+    24270.85,
+    24206.9,
+    24334.3,
+    23767.45,
+    24383.6,
+    24570.65,
+    24366.0,
+    24252.0,
+    24175.65,
+    23897.7,
+    23398.1,
+    23346.4,
+    23446.8
+   ]
+  }
+ }
 }
 </script>
 
@@ -3870,16 +4518,35 @@
     return num.toFixed(decimals) + 'x';
   }
 
-  // Fixed categorical color per ticker, reused across every section so the
-  // same company always reads as the same color throughout the dashboard.
-  const STOCK_ORDER = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'ITC.NS', 'INFY.NS'];
-  const STOCK_COLOR = {
-    'RELIANCE.NS': '#3987e5',
-    'TCS.NS':      '#d95926',
-    'HDFCBANK.NS': '#199e70',
-    'ITC.NS':      '#c98500',
-    'INFY.NS':     '#d55181'
-  };
+  // ---------- The session's stocks: everything below is driven by the data ----------
+  const STATUS = JSON.parse(document.getElementById('dashboard-status').textContent || '{}');
+  const SESSIONS = JSON.parse(document.getElementById('dashboard-sessions').textContent || '[]');
+  const META = JSON.parse(document.getElementById('dashboard-meta').textContent || '{}');
+  const STOCKS = DASHBOARD_DATA.stocks;
+  const STOCK_ORDER = DASHBOARD_DATA.order; // top gainers #1.., then top losers #1..
+  const BENCH_TICKER = DASHBOARD_DATA.benchmark.ticker;
+  const GAINERS = STOCK_ORDER.filter(t => STOCKS[t].group === 'gainer');
+  const LOSERS = STOCK_ORDER.filter(t => STOCKS[t].group === 'loser');
+  const STOCK_SHORT_NAME = {};
+  STOCK_ORDER.forEach(t => { STOCK_SHORT_NAME[t] = STOCKS[t].symbol; });
+
+  // Gainers get green shades and losers red/warm shades, by rank: the group reads at a glance,
+  // each stock stays distinguishable in charts, and a text label always goes with the colour.
+  const GAINER_COLORS = ['#22c55e', '#a3e635', '#2dd4bf', '#86efac', '#4ade80'];
+  const LOSER_COLORS = ['#e66767', '#f59e0b', '#ec4899', '#fb7185', '#fdba74'];
+  const STOCK_COLOR = {};
+  STOCK_ORDER.forEach(t => {
+    const pal = STOCKS[t].group === 'gainer' ? GAINER_COLORS : LOSER_COLORS;
+    STOCK_COLOR[t] = pal[(STOCKS[t].rank - 1) % pal.length];
+  });
+
+  function grpChip(t) {
+    return `<span class="grp-chip ${STOCKS[t].group}">${STOCKS[t].label}</span>`;
+  }
+  // Session moves are stored in percent already (e.g. 20.0 means +20.0%).
+  function signedPct(p) {
+    return `${p > 0 ? '+' : ''}${p.toFixed(1)}%`;
+  }
 
   // Theme constants for Chart.js (it draws on canvas, so it can't read CSS variables).
   const THEME = {
@@ -3905,21 +4572,102 @@
   function registerRevealChart(chart) {
     if (MOTION_OK && chart) revealCharts.push(chart);
   }
-  const STOCK_SHORT_NAME = {
-    'RELIANCE.NS': 'RELIANCE',
-    'TCS.NS':      'TCS',
-    'HDFCBANK.NS': 'HDFC BANK',
-    'ITC.NS':      'ITC',
-    'INFY.NS':     'INFY'
-  };
-
-  function formatDate(iso) {
-    return new Date(iso).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+  // Dates are built from their parts so a "2026-09-23" session shows as 23 Sep in every time zone
+  // (new Date("2026-09-23") would be midnight UTC, i.e. the previous day in the Americas).
+  const LONG_DATE = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+  function formatDate(iso, opts) {
+    const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-IN', opts || { year: 'numeric', month: 'short', day: 'numeric' });
   }
-  document.getElementById('footer-date').textContent =
-    new Date(DASHBOARD_DATA.generated_on).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
-  document.getElementById('footer-period').textContent =
-    formatDate(DASHBOARD_DATA.period.start) + ' – ' + formatDate(DASHBOARD_DATA.period.end);
+  function formatIST(isoTimestamp) {
+    return new Date(isoTimestamp).toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit'
+    }) + ' IST';
+  }
+
+  const SESSION_TEXT = formatDate(DASHBOARD_DATA.session_date, LONG_DATE);
+  // A past-session page shows when that day was fetched; the live page shows the last successful update.
+  const UPDATED_TEXT = META.view === 'archive' || !STATUS.last_success_utc
+    ? formatIST(DASHBOARD_DATA.generated_on) : formatIST(STATUS.last_success_utc);
+  document.getElementById('footer-session').textContent = SESSION_TEXT;
+  document.getElementById('footer-date').textContent = UPDATED_TEXT;
+
+  // ---------- Top bar: session date, last update, and any "Data not updated" warning ----------
+  (function sessionBar() {
+    const bar = document.getElementById('session-bar');
+    let html = `<span class="sb-item">Data for trading session: <strong>${SESSION_TEXT}</strong></span>` +
+               `<span class="sb-item">Last updated: <strong>${UPDATED_TEXT}</strong></span>`;
+    if (META.view === 'archive') {
+      bar.classList.add('archive');
+      html += `<span class="sb-alert"><strong>You're viewing a past session.</strong> ` +
+              `<a href="${META.home}">Go to the latest session &rarr;</a></span>`;
+    } else {
+      const lastOk = Date.parse(STATUS.last_success_utc || DASHBOARD_DATA.generated_on);
+      const daysOld = (Date.now() - lastOk) / 864e5;
+      if (STATUS.ok === false) {
+        bar.classList.add('warn');
+        html += `<span class="sb-alert"><strong>&#9888; Data not updated.</strong> The latest update ` +
+                `(${formatIST(STATUS.last_attempt_utc)}) could not load fresh data, so this page still shows ` +
+                `the last good session. Nothing here has been estimated or replaced.</span>`;
+      } else if (daysOld > 4) {
+        // Safety net in case the daily job stops running altogether (it covers weekends plus a holiday).
+        bar.classList.add('warn');
+        html += `<span class="sb-alert"><strong>&#9888; Data not updated.</strong> The last successful update ` +
+                `was ${Math.floor(daysOld)} days ago, so this may not be the latest session.</span>`;
+      }
+    }
+    bar.innerHTML = html;
+  })();
+
+  // ---------- Hero: the session's top gainers and losers ----------
+  (function moversBoard() {
+    const sel = DASHBOARD_DATA.selection;
+    document.getElementById('mb-date').textContent = SESSION_TEXT;
+    document.getElementById('mb-count').textContent =
+      `Picked from ${sel.eligible_count} ${sel.universe_name} stocks that passed the filters`;
+    const maxAbs = Math.max(...STOCK_ORDER.map(t => Math.abs(STOCKS[t].session.pct_change)), 0.01);
+    const row = t => {
+      const s = STOCKS[t], up = s.session.pct_change >= 0;
+      return `<div class="mb-row">
+        <div class="mb-name">${grpChip(t)}<span class="sym">${s.symbol}</span>
+          <span class="co">${s.name || ''}${s.industry ? ' &middot; ' + s.industry : ''}</span>
+          <div class="mb-bar" style="background:${up ? 'var(--accent)' : 'var(--critical)'}"
+               data-w="${(Math.abs(s.session.pct_change) / maxAbs * 100).toFixed(1)}"></div></div>
+        <div class="mb-pct ${up ? 'up' : 'down'}">${signedPct(s.session.pct_change)}
+          <small>${formatRupees(s.session.prev_close)} &rarr; ${formatRupees(s.session.close)}</small></div>
+      </div>`;
+    };
+    document.getElementById('mb-gainers').innerHTML = GAINERS.map(row).join('');
+    document.getElementById('mb-losers').innerHTML = LOSERS.map(row).join('');
+
+    const rules = `${sel.universe_name} stocks only, closing price above &#8377;${sel.min_price}, at least ` +
+      `&#8377;${sel.min_turnover_crore} crore traded in the session` +
+      (sel.min_history_years ? `, and at least ${sel.min_history_years} year${sel.min_history_years === 1 ? '' : 's'} of price history` : '');
+    const skipped = (sel.skipped || []).map(s =>
+      ` ${s.symbol} (${signedPct(s.pct_change)}) would have been ${s.would_have_been} but was skipped: ${s.reason}.`).join('');
+    document.getElementById('mb-caption').innerHTML =
+      `Move = closing price vs previous close, from NSE's official end-of-day file. Filters: ${rules}.${skipped}`;
+
+    const bars = document.querySelectorAll('#movers-board .mb-bar');
+    const grow = () => bars.forEach(b => { b.style.width = b.dataset.w + '%'; });
+    if (MOTION_OK) setTimeout(grow, 700); else grow();
+  })();
+
+  // ---------- Past sessions ----------
+  (function pastSessions() {
+    const grid = document.getElementById('past-grid');
+    if (!SESSIONS.length) { grid.innerHTML = '<p class="chart-fallback-note">No saved sessions yet.</p>'; return; }
+    const li = x => `<li><span><span class="grp-chip ${x.group}">${x.label.replace('Top ', '')}</span> ${x.symbol}</span>` +
+                    `<span class="${x.pct_change >= 0 ? 'up' : 'down'}">${signedPct(x.pct_change)}</span></li>`;
+    grid.innerHTML = SESSIONS.map(s => {
+      const current = s.session_date === DASHBOARD_DATA.session_date;
+      const inner = `<div class="d">${formatDate(s.session_date, LONG_DATE)}${current ? '<small>Showing now</small>' : ''}</div>` +
+                    `<ul>${s.gainers.map(li).join('')}${s.losers.map(li).join('')}</ul>`;
+      return current || !META.days_prefix
+        ? `<div class="past-card current">${inner}</div>`
+        : `<a class="past-card" href="${META.days_prefix}${s.session_date}.html">${inner}</a>`;
+    }).join('');
+  })();
 
   // ---------- Navigation: scrollspy, mobile menu, progress bar, back-to-top ----------
   (function navigation() {
@@ -3982,14 +4730,45 @@
 
   // ---------- Section 1: Order book simulator ----------
   (function orderBookSection() {
-    const TICKER = 'RELIANCE.NS';
-    const stock = DASHBOARD_DATA.stocks[TICKER];
-    const BASE_PRICE = Math.round(stock.latest_close);
-    const TICK = 1;      // simplified to whole rupees for a beginner-legible ladder (real NSE tick is 5 paise)
+    // Price step between levels, scaled to the share price so the ladder stays readable.
+    // (Simplified: real NSE steps are as small as 1-5 paise.)
+    const tickFor = price => (price >= 1000 ? 1 : price >= 200 ? 0.5 : 0.1);
+    const r2 = x => Math.round(x * 100) / 100; // keeps prices exact to the paisa despite floating point
     const LEVELS = 8;
     const MAX_QTY_INPUT = 4000;
 
+    let TICKER, BASE_PRICE, TICK;
     let book, ltp, tradeCounter, tradeLog;
+
+    const tabs = document.getElementById('ob-stock-tabs');
+    tabs.innerHTML = '<span class="preset-label">Stock</span>' + STOCK_ORDER.map(t =>
+      `<button type="button" class="chip-btn" role="tab" data-ticker="${t}">` +
+      `<span class="ticker-swatch" style="background:${STOCK_COLOR[t]}; margin-right:6px;"></span>${STOCKS[t].symbol}` +
+      ` <span class="${STOCKS[t].session.pct_change >= 0 ? 'up' : 'down'}">${signedPct(STOCKS[t].session.pct_change)}</span></button>`).join('');
+
+    function setStock(t) {
+      TICKER = t;
+      const s = STOCKS[t];
+      TICK = tickFor(s.latest_close);
+      BASE_PRICE = s.latest_close; // the real close; bid and ask levels sit on either side of it
+      tabs.querySelectorAll('[data-ticker]').forEach(b => {
+        const on = b.dataset.ticker === t;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', String(on));
+      });
+      const up = s.session.pct_change >= 0;
+      document.getElementById('ob-real-move').innerHTML =
+        `${grpChip(t)} In the real session on ${SESSION_TEXT}, <strong>${s.symbol}</strong>` +
+        `${s.name ? ` (${s.name})` : ''} closed at <strong>${formatRupees(s.session.close)}</strong>, ` +
+        `<span class="${up ? 'up' : 'down'}"><strong>${signedPct(s.session.pct_change)}</strong></span> from ` +
+        `${formatRupees(s.session.prev_close)}. A move like that is made of thousands of orders like the ones ` +
+        `below, eating through the book. The simulated book starts from that real close.`;
+      resetState();
+    }
+    tabs.addEventListener('click', e => {
+      const b = e.target.closest('[data-ticker]');
+      if (b) setStock(b.dataset.ticker);
+    });
 
     function randomQty(levelIndex) {
       const base = 80 + levelIndex * 40;
@@ -3999,9 +4778,12 @@
 
     function buildBook(midPrice) {
       const bids = [], asks = [];
+      // Nearest price steps strictly below and above the real close.
+      const below = r2(Math.floor((midPrice - 1e-9) / TICK) * TICK);
+      const above = r2(Math.ceil((midPrice + 1e-9) / TICK) * TICK);
       for (let i = 0; i < LEVELS; i++) {
-        bids.push({ price: midPrice - TICK - i, qty: randomQty(i) });
-        asks.push({ price: midPrice + TICK + i, qty: randomQty(i) });
+        bids.push({ price: r2(below - TICK * i), qty: randomQty(i) });
+        asks.push({ price: r2(above + TICK * i), qty: randomQty(i) });
       }
       return { bids, asks };
     }
@@ -4123,10 +4905,10 @@
       const remainingLevels = levels.filter(l => l.qty > 0);
       const farthest = remainingLevels.length
         ? remainingLevels[remainingLevels.length - 1].price
-        : (side === 'buy' ? ltp + TICK : ltp - TICK);
+        : (side === 'buy' ? r2(ltp + TICK) : r2(ltp - TICK));
       let nextPrice = farthest;
       while (remainingLevels.length < LEVELS) {
-        nextPrice += side === 'buy' ? TICK : -TICK;
+        nextPrice = r2(nextPrice + (side === 'buy' ? TICK : -TICK));
         remainingLevels.push({ price: nextPrice, qty: randomQty(remainingLevels.length) });
       }
       if (side === 'buy') {
@@ -4192,32 +4974,35 @@
       document.getElementById('ob-place-order').click();
     });
 
-    resetState();
+    setStock(STOCK_ORDER[0]);
   })();
 
   // ---------- Section 2: valuation (market cap, P/E, growth slider) ----------
   (function valuationSection() {
-    const chartJsAvailable = typeof window.Chart !== 'undefined' && !window.__chartJsFailed;
+    const S = STOCKS;
+    // Only stocks that actually have a figure are charted; the others are named in a note, never guessed.
+    const withCap = STOCK_ORDER.filter(t => S[t].market_cap != null);
+    const withPE = STOCK_ORDER.filter(t => S[t].trailing_pe != null);
+    const noCap = STOCK_ORDER.filter(t => S[t].market_cap == null);
+    const noPE = STOCK_ORDER.filter(t => S[t].trailing_pe == null);
+    const names = list => list.map(t => S[t].symbol).join(', ');
+    if (noCap.length) {
+      const el = document.getElementById('mcap-missing');
+      el.hidden = false;
+      el.textContent = `Not shown: ${names(noCap)} (no market cap available in the data).`;
+    }
+    if (noPE.length) {
+      const el = document.getElementById('pe-missing');
+      el.hidden = false;
+      el.textContent = `Not shown: ${names(noPE)} (no trailing P/E, which usually means the company made a loss over the last year).`;
+    }
 
-    const labels = STOCK_ORDER.map(t => STOCK_SHORT_NAME[t]);
-    const colors = STOCK_ORDER.map(t => STOCK_COLOR[t]);
-    const marketCapsCr = STOCK_ORDER.map(t => DASHBOARD_DATA.stocks[t].market_cap / 1e7);
-    const pes = STOCK_ORDER.map(t => DASHBOARD_DATA.stocks[t].trailing_pe);
-
-    function renderFallbackTable(canvasEl, columnLabel, values, formatter) {
+    function renderFallbackTable(canvasEl, tickers, columnLabel, values, formatter) {
       const wrap = document.createElement('div');
       wrap.className = 'table-scroll';
-      const table = document.createElement('table');
-      table.className = 'chart-fallback-table';
-      table.innerHTML = '<thead><tr><th>Company</th><th>' + columnLabel + '</th></tr></thead>' +
-        '<tbody>' + STOCK_ORDER.map((t, i) =>
-          `<tr><td>${STOCK_SHORT_NAME[t]}</td><td>${values[i] == null ? '—' : formatter(values[i])}</td></tr>`
-        ).join('') + '</tbody>';
-      const note = document.createElement('p');
-      note.className = 'chart-fallback-note';
-      note.textContent = 'Chart.js could not be loaded from the CDN (no network connection), so the data is shown as a table instead.';
-      wrap.appendChild(table);
-      wrap.appendChild(note);
+      wrap.innerHTML = '<table class="chart-fallback-table"><thead><tr><th>Company</th><th>' + columnLabel + '</th></tr></thead><tbody>' +
+        tickers.map((t, i) => `<tr><td>${S[t].symbol} ${grpChip(t)}</td><td>${formatter(values[i])}</td></tr>`).join('') +
+        '</tbody></table><p class="chart-fallback-note">Chart.js could not be loaded from the CDN (no network connection), so the data is shown as a table instead.</p>';
       canvasEl.replaceWith(wrap);
     }
 
@@ -4226,19 +5011,26 @@
       const mid = Math.floor(s.length / 2);
       return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
     }
-    const medianPe = median(pes);
+    const medianPe = withPE.length ? median(withPE.map(t => S[t].trailing_pe)) : null;
 
-    function buildBarChart(canvasId, values, axisLabel, tooltipFormatter, tickFormatter, referenceLine) {
+    function buildBarChart(canvasId, tickers, values, axisLabel, tooltipFormatter, tickFormatter, referenceLine) {
       const canvasEl = document.getElementById(canvasId);
-      if (!chartJsAvailable) {
-        renderFallbackTable(canvasEl, axisLabel, values, tooltipFormatter);
+      if (!tickers.length) {
+        const p = document.createElement('p');
+        p.className = 'chart-fallback-note';
+        p.textContent = 'None of this session\'s stocks has this figure available.';
+        canvasEl.replaceWith(p);
+        return;
+      }
+      if (!CHART_JS_AVAILABLE) {
+        renderFallbackTable(canvasEl, tickers, axisLabel, values, tooltipFormatter);
         return;
       }
       const datasets = [{
         type: 'bar',
         label: axisLabel,
         data: values,
-        backgroundColor: colors,
+        backgroundColor: tickers.map(t => STOCK_COLOR[t]),
         borderRadius: 4,
         maxBarThickness: 56,
         order: 2
@@ -4258,7 +5050,7 @@
         });
       }
       const chart = new Chart(canvasEl, {
-        data: { labels: labels, datasets: datasets },
+        data: { labels: tickers.map(t => S[t].symbol), datasets: datasets },
         options: {
           responsive: true,
           plugins: {
@@ -4266,6 +5058,7 @@
             tooltip: {
               filter: item => item.dataset.type === 'bar',
               callbacks: {
+                title: items => `${S[tickers[items[0].dataIndex]].symbol} · ${S[tickers[items[0].dataIndex]].label}`,
                 label: ctx => tooltipFormatter(ctx.raw)
               }
             }
@@ -4277,39 +5070,37 @@
               grid: { color: THEME.grid },
               ticks: tickFormatter ? { callback: v => tickFormatter(v) } : undefined
             },
-            x: {
-              grid: { display: false }
-            }
+            x: { grid: { display: false } }
           }
         }
       });
       registerRevealChart(chart);
     }
 
-    buildBarChart(
-      'chart-market-cap', marketCapsCr, '₹ Crore',
-      v => '₹' + formatIndianNumber(v, 0) + ' Cr',
-      v => formatIndianNumber(v, 0)
-    );
-    buildBarChart('chart-pe', pes, 'P/E (x)', v => formatMultiple(v, 1), null,
-      { label: 'Median P/E', value: medianPe });
+    buildBarChart('chart-market-cap', withCap, withCap.map(t => S[t].market_cap / 1e7), '₹ Crore',
+      v => '₹' + formatIndianNumber(v, 0) + ' Cr', v => formatIndianNumber(v, 0));
+    buildBarChart('chart-pe', withPE, withPE.map(t => S[t].trailing_pe), 'P/E (x)',
+      v => formatMultiple(v, 1), null,
+      withPE.length > 1 ? { label: 'Median P/E', value: medianPe } : null);
 
-    // ---- relative-valuation verdicts (vs the median P/E of these five) ----
+    // ---- relative-valuation verdicts (vs the median P/E of the stocks that have one) ----
     (function renderVerdicts() {
-      const ranked = STOCK_ORDER
-        .map(t => ({ t, pe: DASHBOARD_DATA.stocks[t].trailing_pe }))
-        .filter(r => r.pe != null)
-        .sort((a, b) => b.pe - a.pe);
-      document.getElementById('pe-verdicts').innerHTML = ranked.map(r => {
-        const diff = r.pe / medianPe - 1;
+      const box = document.getElementById('pe-verdicts');
+      if (withPE.length < 2) {
+        box.innerHTML = '<p class="chart-fallback-note">At least two stocks need a P/E to compare them; not enough this session.</p>';
+        return;
+      }
+      const ranked = withPE.slice().sort((a, b) => S[b].trailing_pe - S[a].trailing_pe);
+      box.innerHTML = ranked.map(t => {
+        const pe = S[t].trailing_pe, diff = pe / medianPe - 1;
         let cls, text;
         if (Math.abs(diff) < 0.005) { cls = 'median'; text = 'At median'; }
         else if (diff > 0) { cls = 'expensive'; text = 'Pricier'; }
         else { cls = 'cheap'; text = 'Cheaper'; }
         const rel = cls === 'median' ? '' : ` &middot; ${diff > 0 ? '+' : ''}${formatPercent(diff)} vs median`;
         return `<div class="pe-verdict">
-          <span class="ticker-swatch" style="background:${STOCK_COLOR[r.t]}; margin-right:0;"></span>
-          <span><strong>${STOCK_SHORT_NAME[r.t]}</strong> ${formatMultiple(r.pe)}<span style="color:var(--text-muted)">${rel}</span></span>
+          <span class="ticker-swatch" style="background:${STOCK_COLOR[t]}; margin-right:0;"></span>
+          <span><strong>${S[t].symbol}</strong> ${formatMultiple(pe)}<span style="color:var(--text-muted)">${rel}</span></span>
           <span class="tag ${cls}">${text}</span>
         </div>`;
       }).join('');
@@ -4324,16 +5115,20 @@
     function renderGrowthTable() {
       const g = parseFloat(slider.value) / 100;
       sliderValueEl.textContent = formatPercent(g, 1);
-
       tbody.innerHTML = STOCK_ORDER.map(t => {
-        const stock = DASHBOARD_DATA.stocks[t];
-        const eps = stock.latest_close / stock.trailing_pe;
-        const impliedPrice = stock.latest_close * Math.pow(1 + g, YEARS);
-        const gain = impliedPrice / stock.latest_close - 1;
-        return `<tr>
-          <td><span class="ticker-swatch" style="background:${STOCK_COLOR[t]}"></span>${STOCK_SHORT_NAME[t]}</td>
-          <td>${formatRupees(stock.latest_close, 2)}</td>
-          <td>${formatMultiple(stock.trailing_pe, 1)}</td>
+        const s = S[t];
+        const name = `<td><span class="ticker-swatch" style="background:${STOCK_COLOR[t]}"></span>${s.symbol} ${grpChip(t)}</td>`;
+        if (s.trailing_pe == null) {
+          // "Keep paying the same P/E" has no meaning without a P/E, so nothing is projected.
+          return `<tr>${name}<td>${formatRupees(s.latest_close, 2)}</td><td>n/a</td><td>n/a</td>` +
+                 `<td colspan="2" style="color:var(--text-muted)">not projected: no P/E</td></tr>`;
+        }
+        const eps = s.latest_close / s.trailing_pe;
+        const impliedPrice = s.latest_close * Math.pow(1 + g, YEARS);
+        const gain = impliedPrice / s.latest_close - 1;
+        return `<tr>${name}
+          <td>${formatRupees(s.latest_close, 2)}</td>
+          <td>${formatMultiple(s.trailing_pe, 1)}</td>
           <td>${formatRupees(eps, 2)}</td>
           <td>${formatRupees(impliedPrice, 2)}</td>
           <td class="gain-chip" style="color:${gain < 0 ? 'var(--critical)' : 'var(--success)'}">${gain >= 0 ? '+' : ''}${formatPercent(gain, 1)}</td>
@@ -4363,12 +5158,18 @@
     const chartJsAvailable = typeof window.Chart !== 'undefined' && !window.__chartJsFailed;
     const N = STOCK_ORDER.length;
 
-    // Weights are whole percentages that always sum to 100.
-    let weights = STOCK_ORDER.map(() => Math.round(100 / N)); // [20,20,20,20,20]
-    (function fixRounding() {
-      const total = weights.reduce((a, b) => a + b, 0);
-      weights[0] += 100 - total;
-    })();
+    // Weights are whole percentages that always sum to 100; start equal across every stock.
+    let weights = weightsFor(STOCK_ORDER.map((_, i) => i));
+
+    const win = DASHBOARD_DATA.analysis_window;
+    const monthsOrYears = y => (y < 1 ? `${Math.round(y * 12)} months` : `${y.toFixed(1)} years`);
+    document.getElementById('window-note').innerHTML =
+      `<strong>Analysis period: ${formatDate(win.start)} to ${formatDate(win.end)} (${monthsOrYears(win.years)}, ` +
+      `${formatIndianNumber(win.trading_days, 0)} trading days).</strong> Every figure in this lesson and the next ` +
+      `uses this same period: the dates on which all ${STOCK_ORDER.length} stocks and the Nifty 50 have prices` +
+      (win.limited_by.length ? `. It's shorter than 5 years because ${win.limited_by.map(t => STOCKS[t].symbol).join(' and ')} ` +
+        `only has prices from ${formatDate(win.start)}` : '') +
+      (win.short ? '. <strong>Annualised figures over less than a year can look extreme; treat them with care.</strong>' : '.');
 
     function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -4467,6 +5268,7 @@
         const s = DASHBOARD_DATA.stocks[t];
         return {
           label: STOCK_SHORT_NAME[t],
+          stockLabel: STOCKS[t].label,
           data: [{ x: s.annualised_volatility * 100, y: s.annualised_return * 100 }],
           backgroundColor: STOCK_COLOR[t],
           pointRadius: 7,
@@ -4494,7 +5296,8 @@
             legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } },
             tooltip: {
               callbacks: {
-                label: ctx => `${ctx.dataset.label}: ${formatPercent(ctx.raw.y / 100)} return, ${formatPercent(ctx.raw.x / 100)} volatility`
+                label: ctx => `${ctx.dataset.label}${ctx.dataset.stockLabel ? ' (' + ctx.dataset.stockLabel + ')' : ''}: ` +
+                  `${formatPercent(ctx.raw.y / 100)} return, ${formatPercent(ctx.raw.x / 100)} volatility`
               }
             }
           },
@@ -4616,17 +5419,23 @@
       if (avg < bestAvg) { bestAvg = avg; leastCorrelatedTrio = [i, j, k]; }
     }
 
+    // Split 100% as evenly as whole percentages allow (e.g. six stocks -> 17,17,17,17,16,16).
     function weightsFor(indices) {
       const w = STOCK_ORDER.map(() => 0);
       const base = Math.floor(100 / indices.length);
-      indices.forEach(i => { w[i] = base; });
-      w[indices[0]] += 100 - base * indices.length;
+      const extra = 100 - base * indices.length;
+      indices.forEach((i, k) => { w[i] = base + (k < extra ? 1 : 0); });
       return w;
     }
     const names = idx => idx.map(i => STOCK_SHORT_NAME[STOCK_ORDER[i]]).join(' + ');
+    const idxOf = list => list.map(t => STOCK_ORDER.indexOf(t));
     const presets = [
-      { label: 'Equal weight', weights: weightsFor([0, 1, 2, 3, 4]),
-        title: '20% in each of the five' },
+      { label: 'Equal weight', weights: weightsFor(STOCK_ORDER.map((_, i) => i)),
+        title: `An equal share in each of the ${STOCK_ORDER.length} stocks` },
+      { label: 'Gainers only', weights: weightsFor(idxOf(GAINERS)),
+        title: 'Only the session\'s top gainers' },
+      { label: 'Losers only', weights: weightsFor(idxOf(LOSERS)),
+        title: 'Only the session\'s top losers' },
       { label: 'Most similar pair: ' + names(mostCorrelatedPair), weights: weightsFor(mostCorrelatedPair),
         title: `Highest correlation in the data (${pairCorr(...mostCorrelatedPair).toFixed(2)}) — little diversification benefit` },
       { label: 'Least-correlated trio: ' + names(leastCorrelatedTrio), weights: weightsFor(leastCorrelatedTrio),
@@ -4687,10 +5496,14 @@
       const betaText = beta > 1.05 ? `moves about ${beta.toFixed(2)}&times; as much as the Nifty 50 — it amplifies market swings`
         : beta < 0.95 ? `moves about ${beta.toFixed(2)}&times; as much as the Nifty 50 — calmer than the market`
         : `moves roughly in step with the Nifty 50`;
+      const mv = s.session.pct_change;
       riskBody.innerHTML = `
+        <div class="stat-tile"><div class="label">Last session's move</div>
+          <div class="value ${mv >= 0 ? 'up' : 'down'}">${signedPct(mv)}</div>
+          <div class="explain">${s.label} on ${SESSION_TEXT}: ${formatRupees(s.session.prev_close)} &rarr; ${formatRupees(s.session.close)}.</div></div>
         <div class="stat-tile"><div class="label">Annualised return</div>
           <div class="value" style="color:${ret < 0 ? 'var(--critical)' : 'var(--success)'}">${ret > 0 ? '+' : ''}${formatPercent(ret)}</div>
-          <div class="explain">${ret < 0 ? 'Lost' : 'Grew'} ${formatPercent(Math.abs(ret))} a year on average over the period.</div></div>
+          <div class="explain">${ret < 0 ? 'Lost' : 'Grew'} ${formatPercent(Math.abs(ret))} a year on average over the analysis period.</div></div>
         <div class="stat-tile"><div class="label">Annualised volatility</div>
           <div class="value">${formatPercent(vol)}</div>
           <div class="explain">A typical year's swing is roughly &plusmn;${formatPercent(vol)} around its average.</div></div>
@@ -4714,7 +5527,8 @@
       b.className = 'chip-btn';
       b.setAttribute('role', 'tab');
       b.dataset.ticker = t;
-      b.innerHTML = `<span class="ticker-swatch" style="background:${STOCK_COLOR[t]}; margin-right:6px;"></span>${STOCK_SHORT_NAME[t]}`;
+      b.innerHTML = `<span class="ticker-swatch" style="background:${STOCK_COLOR[t]}; margin-right:6px;"></span>${STOCK_SHORT_NAME[t]} ` +
+        `<span class="grp-chip ${STOCKS[t].group}">${STOCKS[t].label.replace('Top ', '')}</span>`;
       riskTabs.appendChild(b);
     });
     riskTabs.addEventListener('click', e => {
@@ -4738,8 +5552,10 @@
 
   // ---------- Section 4: SIP compounding calculator ----------
   (function sipSection() {
-    // Default return = the Nifty 50's real annualised return over the data period (from data.json).
-    const NIFTY_RETURN_PCT = DASHBOARD_DATA.benchmark.annualised_return * 100;
+    // Default = the Nifty 50's annualised return over its full history (about 5 years), independent of
+    // which stocks were picked: one stock's short history would make a poor default assumption.
+    const NIFTY_RETURN_PCT = DASHBOARD_DATA.benchmark.annualised_return_full * 100;
+    const NIFTY_HIST = DASHBOARD_DATA.benchmark.full_history;
     const DELAY_YEARS = 5;
 
     const amountEl = document.getElementById('sip-amount');
@@ -4751,7 +5567,26 @@
 
     // Kept separately from the slider so the unrounded Nifty figure is used until the user moves it.
     let returnPct = NIFTY_RETURN_PCT;
+    let returnSource = null; // null = Nifty default or user's own; otherwise the ticker whose return is used
+
+    // Widen the slider if a stock's real return lies outside the usual range, so it can be shown honestly.
+    const stockReturns = STOCK_ORDER.map(t => STOCKS[t].annualised_return * 100);
+    returnEl.min = Math.min(-5, Math.floor(Math.min(...stockReturns)));
+    returnEl.max = Math.max(20, Math.ceil(Math.max(...stockReturns)));
     returnEl.value = NIFTY_RETURN_PCT.toFixed(1);
+
+    const stockRow = document.getElementById('sip-stock-returns');
+    stockRow.insertAdjacentHTML('beforeend', STOCK_ORDER.map(t =>
+      `<button type="button" class="chip-btn" data-ticker="${t}" title="${STOCKS[t].label}">` +
+      `${STOCKS[t].symbol} ${formatPercent(STOCKS[t].annualised_return)}</button>`).join(''));
+    stockRow.addEventListener('click', e => {
+      const b = e.target.closest('[data-ticker]');
+      if (!b) return;
+      returnSource = b.dataset.ticker;
+      returnPct = STOCKS[returnSource].annualised_return * 100;
+      returnEl.value = returnPct.toFixed(1);
+      render();
+    });
 
     function buildSeries(P, years, annualPct, startDelayYears) {
       const invested = [], value = [];
@@ -4841,10 +5676,15 @@
       document.getElementById('sip-years-val').textContent = years + (years === 1 ? ' year' : ' years');
       document.getElementById('sip-return-val').textContent = formatPercent(r / 100);
 
-      const isDefault = Math.abs(r - NIFTY_RETURN_PCT) < 1e-9;
+      const isDefault = returnSource === null && Math.abs(r - NIFTY_RETURN_PCT) < 1e-9;
+      stockRow.querySelectorAll('[data-ticker]').forEach(b => b.classList.toggle('active', b.dataset.ticker === returnSource));
       document.getElementById('sip-return-note').innerHTML = isDefault
-        ? `<span class="accent">Using the Nifty 50's real annualised return</span> (${formatDate(DASHBOARD_DATA.period.start)} – ${formatDate(DASHBOARD_DATA.period.end)})`
-        : `Your own assumption &middot; Nifty 50 historical figure: ${formatPercent(NIFTY_RETURN_PCT / 100)}`;
+        ? `<span class="accent">Using the Nifty 50's real annualised return</span> (${formatDate(NIFTY_HIST.start)} – ${formatDate(NIFTY_HIST.end)})`
+        : returnSource
+          ? `<span class="accent">Using ${STOCKS[returnSource].symbol}'s annualised return</span> over the analysis period ` +
+            `(${formatDate(DASHBOARD_DATA.analysis_window.start)} – ${formatDate(DASHBOARD_DATA.analysis_window.end)}). ` +
+            `One stock's past is a much weaker guide than the market's.`
+          : `Your own assumption &middot; Nifty 50 historical figure: ${formatPercent(NIFTY_RETURN_PCT / 100)}`;
 
       const months = years * 12;
       const finalValue = sipFutureValue(P, months, r);
@@ -4905,10 +5745,11 @@
 
     amountEl.addEventListener('input', render);
     yearsEl.addEventListener('input', render);
-    returnEl.addEventListener('input', () => { returnPct = parseFloat(returnEl.value); render(); });
+    returnEl.addEventListener('input', () => { returnSource = null; returnPct = parseFloat(returnEl.value); render(); });
     delayToggle.addEventListener('change', render);
     document.getElementById('sip-reset-return').addEventListener('click', () => {
       returnPct = NIFTY_RETURN_PCT;
+      returnSource = null;
       returnEl.value = NIFTY_RETURN_PCT.toFixed(1);
       render();
     });
@@ -4935,110 +5776,35 @@
     requestAnimationFrame(step);
   }
 
-  // ---------- Hero: ticker tape of real 5-year annualised returns ----------
+  // ---------- Hero: ticker tape of the session's real moves ----------
   (function tickerTape() {
+    const b = DASHBOARD_DATA.benchmark;
     const items = STOCK_ORDER.map(t => ({
-      sym: STOCK_SHORT_NAME[t],
-      px: formatRupees(DASHBOARD_DATA.stocks[t].latest_close, 2),
-      r: DASHBOARD_DATA.stocks[t].annualised_return
+      sym: STOCKS[t].symbol, px: formatRupees(STOCKS[t].session.close), p: STOCKS[t].session.pct_change, lbl: STOCKS[t].label
     }));
-    items.push({ sym: 'NIFTY 50', px: null, r: DASHBOARD_DATA.benchmark.annualised_return });
-    const unit = items.map(i => {
-      const up = i.r >= 0;
-      return `<span class="tick-item"><span class="sym">${i.sym}</span>` +
-        (i.px ? `<span class="px">${i.px}</span>` : '') +
-        `<span class="${up ? 'up' : 'down'}">${up ? '&#9650;' : '&#9660;'} ${formatPercent(Math.abs(i.r))}</span>` +
-        `<span class="lbl">a year, 5-yr average</span></span>`;
-    }).join('');
+    items.push({ sym: 'NIFTY 50', px: formatIndianNumber(b.latest_close, 2), p: b.session_pct_change, lbl: 'Market index' });
+    const unit = items.map(i =>
+      `<span class="tick-item"><span class="sym">${i.sym}</span><span class="px">${i.px}</span>` +
+      (i.p == null ? '' : `<span class="${i.p >= 0 ? 'up' : 'down'}">${i.p >= 0 ? '&#9650;' : '&#9660;'} ${Math.abs(i.p).toFixed(1)}%</span>`) +
+      `<span class="lbl">${i.lbl}</span></span>`).join('');
     // Four copies: the track slides by exactly half its width, so the loop is seamless on wide screens.
     document.getElementById('ticker-track').innerHTML = unit + unit + unit + unit;
   })();
 
-  // ---------- Hero: self-drawing Nifty 50 chart from the real weekly series ----------
-  (function heroChart() {
-    const wg = DASHBOARD_DATA.weekly_growth;
-    const series = wg.series[DASHBOARD_DATA.benchmark.ticker];
-    const start = wg.dates[0], end = wg.dates[wg.dates.length - 1];
-    const final = series[series.length - 1];
-    const svg = document.getElementById('hc-svg');
-    const card = svg.closest('.hero-chart');
-    const NS_W = 'http://www.w3.org/2000/svg';
-
-    document.getElementById('hc-sub').innerHTML =
-      `${formatDate(start)} &rarr; ${formatDate(end)}<br><strong>${formatRupees(100000, 0)} &rarr; ${formatRupees(100000 * final, 0)}</strong>`;
-    document.getElementById('hc-caption').textContent =
-      `The Nifty 50's real weekly closing level, shown as the value of ₹1,00,000 invested on ${formatDate(start)}. ` +
-      `The dashed line marks the starting value. It's a price index, so dividends aren't included.`;
-
-    function build(animate) {
-      const W = Math.max(svg.clientWidth, 260), H = 200;
-      const padL = 52, padR = 12, padT = 10, padB = 22;
-      const lo0 = Math.min(...series, 1), hi0 = Math.max(...series, 1);
-      const lo = lo0 - (hi0 - lo0) * 0.08, hi = hi0 + (hi0 - lo0) * 0.08;
-      const x = i => padL + (i / (series.length - 1)) * (W - padL - padR);
-      const y = v => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
-      const d = series.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
-      const area = `${d} L${x(series.length - 1).toFixed(1)} ${H - padB} L${padL} ${H - padB} Z`;
-      const lx = x(series.length - 1), ly = y(final);
-
-      // y labels at the high, the start and the low — skipped when they'd overlap.
-      const labels = [];
-      [hi0, 1, lo0].forEach(v => { if (labels.every(u => Math.abs(y(u) - y(v)) >= 14)) labels.push(v); });
-
-      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-      svg.innerHTML =
-        `<defs><linearGradient id="hcGrad" x1="0" y1="0" x2="0" y2="1">
-           <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/><stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
-         </linearGradient></defs>` +
-        labels.map(v => `<text class="hc-axis" x="${padL - 8}" y="${(y(v) + 3).toFixed(1)}" text-anchor="end">&#8377;${v.toFixed(2)} L</text>`).join('') +
-        `<line class="hc-base" x1="${padL}" x2="${W - padR}" y1="${y(1).toFixed(1)}" y2="${y(1).toFixed(1)}"/>
-         <path class="hc-area" d="${area}" fill="url(#hcGrad)"/>
-         <path class="hc-line" d="${d}"/>
-         <circle class="hc-ring" cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="4" style="display:none"/>
-         <circle class="hc-dot" cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="4.5"/>
-         <text class="hc-axis" x="${padL}" y="${H - 4}">${formatDate(start)}</text>
-         <text class="hc-axis" x="${W - padR}" y="${H - 4}" text-anchor="end">${formatDate(end)}</text>`;
-
-      const line = svg.querySelector('.hc-line');
-      const ring = svg.querySelector('.hc-ring');
-      if (animate && MOTION_OK) {
-        const len = line.getTotalLength();
-        line.style.strokeDasharray = len;
-        line.style.strokeDashoffset = len;
-        line.getBoundingClientRect(); // commit the start state before transitioning
-        line.style.transition = 'stroke-dashoffset 2.2s cubic-bezier(.45,.05,.2,1)';
-        line.style.strokeDashoffset = '0';
-        setTimeout(() => { ring.style.display = ''; }, 2200);
-      } else {
-        ring.style.display = MOTION_OK ? '' : 'none';
-      }
-      card.classList.add('hc-drawn');
-    }
-
-    const bigEl = document.getElementById('hc-big');
-    const fmtChange = v => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
-    setTimeout(() => {
-      build(true);
-      animateNumber(bigEl, (final - 1) * 100, 2200, fmtChange);
-    }, MOTION_OK ? 500 : 0);
-
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => build(false), 150);
-    });
-  })();
-
   // ---------- Hero: stat strip with count-up numbers ----------
   (function heroStats() {
-    const S = DASHBOARD_DATA.stocks;
-    const caps = STOCK_ORDER.map(t => S[t].market_cap).filter(v => v != null);
-    const years = (new Date(DASHBOARD_DATA.period.end) - new Date(DASHBOARD_DATA.period.start)) / (365.25 * 864e5);
+    const sel = DASHBOARD_DATA.selection;
+    const win = DASHBOARD_DATA.analysis_window;
+    const caps = STOCK_ORDER.map(t => STOCKS[t].market_cap).filter(v => v != null);
     const stats = [
-      { to: STOCK_ORDER.length, fmt: v => Math.round(v), label: 'NSE companies analysed' },
-      { to: Math.max(...STOCK_ORDER.map(t => S[t].trading_days)), fmt: v => formatIndianNumber(Math.round(v), 0), label: 'trading days of real prices' },
-      { to: caps.reduce((a, b) => a + b, 0) / 1e12, fmt: v => `&#8377;${v.toFixed(2)}<span class="unit">lakh cr</span>`, label: 'combined market value today' },
-      { to: years, fmt: v => `${v.toFixed(1)}<span class="unit">years</span>`, label: 'of daily history' }
+      { to: STOCK_ORDER.length, fmt: v => Math.round(v),
+        label: `stocks picked: ${GAINERS.length} top gainers + ${LOSERS.length} top losers` },
+      { to: sel.eligible_count, fmt: v => formatIndianNumber(Math.round(v), 0),
+        label: `${sel.universe_name} stocks passed the filters` },
+      { to: win.years, fmt: v => `${v.toFixed(1)}<span class="unit">years</span>`,
+        label: 'of shared price history analysed' },
+      { to: caps.reduce((a, b) => a + b, 0) / 1e12, fmt: v => `&#8377;${v.toFixed(2)}<span class="unit">lakh cr</span>`,
+        label: caps.length === STOCK_ORDER.length ? 'combined market value' : `combined market value (${caps.length} with data)` }
     ];
     const strip = document.getElementById('hero-stats');
     strip.innerHTML = stats.map((s, i) => `<div class="hero-stat"><div class="n" data-i="${i}">${s.fmt(0)}</div><div class="t">${s.label}</div></div>`).join('');
@@ -5065,26 +5831,30 @@
     });
   })();
 
-  // ---------- Section 5: five-year growth race on real weekly prices ----------
+  // ---------- Section 5: growth race on real weekly prices, over the shared analysis period ----------
   (function raceSection() {
-    const wg = DASHBOARD_DATA.weekly_growth;
-    const dates = wg.dates;
-    const LAST = dates.length - 1;
+    const wk = DASHBOARD_DATA.weekly;
     const START_AMT = 100000;
-    const BENCH = DASHBOARD_DATA.benchmark.ticker;
-    const MS_PER_WEEK = 45; // about 12 seconds for the full five years at 1x
+    const BENCH = BENCH_TICKER;
+    const keys = STOCK_ORDER.concat([BENCH]);
+    // Start at the first week in which every stock and the index has a price (weeks before a stock
+    // listed are null in the data and are never filled in).
+    const k0 = wk.dates.findIndex((_, i) => keys.every(t => wk.close[t][i] != null));
+    const dates = wk.dates.slice(k0);
+    const LAST = dates.length - 1;
+    const MS_PER_WEEK = 12000 / Math.max(LAST, 1); // the whole race takes about 12 seconds at 1x
+    const rebased = t => wk.close[t].slice(k0).map(v => (v / wk.close[t][k0]) * START_AMT);
 
     const entries = STOCK_ORDER.map(t => ({
-      key: t, name: STOCK_SHORT_NAME[t], color: STOCK_COLOR[t],
-      values: wg.series[t].map(v => v * START_AMT)
-    })).concat([{
-      key: BENCH, name: 'NIFTY 50', color: THEME.white, dashed: true,
-      values: wg.series[BENCH].map(v => v * START_AMT)
-    }]);
+      key: t, name: STOCK_SHORT_NAME[t], color: STOCK_COLOR[t], values: rebased(t)
+    })).concat([{ key: BENCH, name: 'NIFTY 50', color: THEME.white, dashed: true, values: rebased(BENCH) }]);
     const allVals = entries.flatMap(e => e.values);
     const vMax = Math.max(...allVals), vMin = Math.min(...allVals);
 
+    const spanYears = (Date.parse(dates[LAST]) - Date.parse(dates[0])) / (365.25 * 864e5);
     document.getElementById('race-start').textContent = formatDate(dates[0]);
+    document.getElementById('race-years').textContent =
+      spanYears < 1 ? `${Math.round(spanYears * 12)} months` : `${spanYears.toFixed(1)} years`;
 
     const scrub = document.getElementById('race-scrub');
     const playBtn = document.getElementById('race-play');
@@ -5232,16 +6002,22 @@
       const peak = Math.max(...e.values);
       return { e, peak, at: e.values.indexOf(peak), end: e.values[LAST] };
     }).sort((a, b) => b.peak / b.end - a.peak / a.end)[0];
+    // How the session's gainers and losers fared over the whole period, on average.
+    const avgFinal = list => list.reduce((s, t) => s + finals.find(f => f.e.key === t).v, 0) / list.length;
+    const groupText = GAINERS.length && LOSERS.length
+      ? ` Over this period the session's top gainers turned &#8377;1,00,000 into ${formatRupees(avgFinal(GAINERS), 0)} on average, ` +
+        `and its top losers into ${formatRupees(avgFinal(LOSERS), 0)}: one day's move says little about the long run.`
+      : '';
     const roundTripText = roundTrip.peak / roundTrip.end > 1.2
       ? ` ${roundTrip.e.name} shows why the ride matters: it was worth ${formatRupees(roundTrip.peak, 0)} at its peak ` +
         `(${formatDate(dates[roundTrip.at])}), then gave back ${formatPercent(1 - roundTrip.end / roundTrip.peak)} of that by the end.`
       : '';
     document.getElementById('race-caption').innerHTML =
       `Each line is the real value, week by week, of &#8377;1,00,000 invested on ${formatDate(dates[0])}. ` +
-      `<strong>Same market, same five years, very different outcomes:</strong> the best stock (${best.e.name}) ended at ` +
+      `<strong>Same market, same period, very different outcomes:</strong> the best stock (${best.e.name}) ended at ` +
       `${formatRupees(best.v, 0)} and the worst (${worst.e.name}) at ${formatRupees(worst.v, 0)}, a gap of ${formatRupees(best.v - worst.v, 0)}. ` +
-      `The Nifty 50, which spreads money across 50 companies, ended at ${formatRupees(nifty.v, 0)}, ahead of ${beaten} of the 5 individual stocks.` +
-      roundTripText + ' ' +
+      `The Nifty 50, which spreads money across 50 companies, ended at ${formatRupees(nifty.v, 0)}, ahead of ${beaten} of the ${stocksOnly.length} individual stocks.` +
+      roundTripText + groupText + ' ' +
       `<span style="color:var(--text-muted)">Stock lines use adjusted prices (splits and dividends included); the Nifty 50 is a price index (dividends excluded).</span>`;
 
     // Without motion, show the finished race; with motion, auto-play the first time it scrolls into view.
@@ -5296,13 +6072,21 @@
     const S = DASHBOARD_DATA.stocks;
     const nm = t => STOCK_SHORT_NAME[t];
     const KEYS = 'ABCDE';
+    const N = STOCK_ORDER.length;
+    // At most 5 answer options: the right one plus the first others in the list.
+    const stockOptions = correct => [correct].concat(STOCK_ORDER.filter(t => t !== correct).slice(0, 4))
+      .sort((a, b) => STOCK_ORDER.indexOf(a) - STOCK_ORDER.indexOf(b))
+      .map(t => ({ text: nm(t), ok: t === correct }));
 
-    // Q1: highest P/E
+    // Q1: highest P/E (or, if fewer than two stocks have a P/E, the largest company)
     const withPE = STOCK_ORDER.filter(t => S[t].trailing_pe != null);
-    const topPE = withPE.reduce((a, b) => (S[a].trailing_pe >= S[b].trailing_pe ? a : b));
+    const topPE = withPE.length >= 2 ? withPE.reduce((a, b) => (S[a].trailing_pe >= S[b].trailing_pe ? a : b)) : null;
+    const withCap = STOCK_ORDER.filter(t => S[t].market_cap != null);
+    const topCap = withCap.length ? withCap.reduce((a, b) => (S[a].market_cap >= S[b].market_cap ? a : b)) : STOCK_ORDER[0];
 
-    // Q2: spread, using the same order-book setup as lesson 1
-    const mid = Math.round(S['RELIANCE.NS'].latest_close);
+    // Q2: spread, in an order book for the session's top gainer (whole-rupee levels, as a simple example)
+    const q2Stock = GAINERS[0] || STOCK_ORDER[0];
+    const mid = Math.round(S[q2Stock].latest_close);
     const bid = mid - 1, ask = mid + 1;
 
     // Q3: most correlated pair
@@ -5313,19 +6097,20 @@
     }
     pairs.sort((x, y) => y.r - x.r);
     const topPair = pairs[0];
-    const pairOpts = [topPair, pairs[pairs.length - 1], pairs[Math.floor(pairs.length / 2)], pairs[pairs.length - 2]];
+    const pairOpts = [...new Set([topPair, pairs[pairs.length - 1], pairs[Math.floor(pairs.length / 2)], pairs[pairs.length - 2]])]
+      .filter(Boolean);
     const pairText = p => `${nm(p.a)} and ${nm(p.b)}`;
-    const sameSector = S[topPair.a].sector && S[topPair.a].sector === S[topPair.b].sector;
+    const sameIndustry = S[topPair.a].industry && S[topPair.a].industry === S[topPair.b].industry;
 
     // Q4: diversification, with the equal-weight numbers from lesson 3
     const cov = DASHBOARD_DATA.covariance_matrix;
     let eqVar = 0;
-    STOCK_ORDER.forEach(a => STOCK_ORDER.forEach(b => { eqVar += 0.04 * cov[a][b]; }));
+    STOCK_ORDER.forEach(a => STOCK_ORDER.forEach(b => { eqVar += cov[a][b] / (N * N); }));
     const eqVol = Math.sqrt(eqVar);
     const avgVol = STOCK_ORDER.reduce((s, t) => s + S[t].annualised_volatility, 0) / STOCK_ORDER.length;
 
     // Q5: SIP at the Nifty 50's historical return
-    const rPct = DASHBOARD_DATA.benchmark.annualised_return * 100;
+    const rPct = DASHBOARD_DATA.benchmark.annualised_return_full * 100;
     const P = 5000, n = 180;
     const fv = sipFutureValue(P, n, rPct);
     const invested = P * n;
@@ -5335,14 +6120,20 @@
     const worstDD = STOCK_ORDER.reduce((a, b) => (S[a].max_drawdown <= S[b].max_drawdown ? a : b));
 
     const questions = [
-      {
-        lesson: 'Lesson 2', q: 'Which company is the most expensive relative to its profit?',
+      topPE ? {
+        lesson: 'Lesson 2', q: "Which of this session's stocks is the most expensive relative to its profit?",
         hint: 'Look for the highest P/E ratio: share price ÷ yearly earnings per share.',
-        options: STOCK_ORDER.map(t => ({ text: `${nm(t)}`, ok: t === topPE })),
+        options: [topPE].concat(withPE.filter(t => t !== topPE).slice(0, 4))
+          .sort((a, b) => STOCK_ORDER.indexOf(a) - STOCK_ORDER.indexOf(b)).map(t => ({ text: nm(t), ok: t === topPE })),
         explain: `${nm(topPE)} has the highest P/E, at ${formatMultiple(S[topPE].trailing_pe)}: investors pay the most for each rupee of its yearly profit.`
+      } : {
+        lesson: 'Lesson 2', q: "Which of this session's stocks is the largest company by market value?",
+        hint: 'Market capitalisation = share price × number of shares.',
+        options: stockOptions(topCap),
+        explain: `${nm(topCap)} has the largest market capitalisation of the stocks shown.`
       },
       {
-        lesson: 'Lesson 1', q: `The best bid is ${formatRupees(bid, 2)} and the best ask is ${formatRupees(ask, 2)}. What is the bid-ask spread?`,
+        lesson: 'Lesson 1', q: `In an order book for ${nm(q2Stock)}, the best bid is ${formatRupees(bid, 2)} and the best ask is ${formatRupees(ask, 2)}. What is the bid-ask spread?`,
         hint: 'The spread is the gap between the highest price a buyer offers (bid) and the lowest price a seller accepts (ask).',
         options: [
           { text: formatRupees(ask - bid, 2), ok: true },
@@ -5357,7 +6148,7 @@
         hint: 'Correlation runs from −1 (always opposite) to +1 (always together). The highest correlation wins.',
         options: pairOpts.map(p => ({ text: pairText(p), ok: p === topPair })),
         explain: `${pairText(topPair)} have a correlation of ${topPair.r.toFixed(2)}, the highest of any pair` +
-          (sameSector ? `. Both are in the ${S[topPair.a].sector} sector.` : '.')
+          (sameIndustry ? `. Both are in the ${S[topPair.a].industry} industry.` : '.')
       },
       {
         lesson: 'Lesson 3', q: "Holding stocks that don't move in perfect lockstep makes a portfolio's risk…",
@@ -5368,7 +6159,7 @@
           { text: "Exactly the average of the individual stocks' risk", ok: false },
           { text: 'Zero: diversification removes all risk', ok: false }
         ],
-        explain: `Their ups and downs partly cancel. In lesson 3, 20% in each of the five gave a volatility of ${formatPercent(eqVol)}, versus a ${formatPercent(avgVol)} simple average of the five.`
+        explain: `Their ups and downs partly cancel. In lesson 3, an equal share in each of the ${N} stocks gave a volatility of ${formatPercent(eqVol)}, versus a ${formatPercent(avgVol)} simple average of the ${N}.`
       },
       {
         lesson: 'Lesson 4', q: `You invest ₹5,000 every month for 15 years at the Nifty 50's historical return (${formatPercent(rPct / 100)} a year). Roughly what is it worth at the end?`,
@@ -5384,8 +6175,8 @@
       {
         lesson: 'Lesson 3', q: 'Which stock had the deepest fall from a peak (maximum drawdown)?',
         hint: 'Maximum drawdown is the biggest drop from a previous high to a later low.',
-        options: STOCK_ORDER.map(t => ({ text: nm(t), ok: t === worstDD })),
-        explain: `${nm(worstDD)} fell ${formatPercent(-S[worstDD].max_drawdown)} from a peak to its lowest point, the deepest drop of the five.`
+        options: stockOptions(worstDD),
+        explain: `${nm(worstDD)} fell ${formatPercent(-S[worstDD].max_drawdown)} from a peak to its lowest point over the analysis period, the deepest drop of the ${N}.`
       }
     ];
     // Rotate options so the correct answer isn't always in the same slot.
@@ -5526,7 +6317,7 @@
     const tag = (el, d) => { el.classList.add('reveal'); el.style.setProperty('--d', d); targets.push(el); };
     document.querySelectorAll('.dash-section').forEach(sec => Array.from(sec.children).forEach((el, i) => tag(el, Math.min(i, 3))));
     document.querySelectorAll('.scroll-band').forEach(el => tag(el, 0));
-    tag(document.querySelector('.hero-chart'), 4);
+    tag(document.querySelector('.movers-board'), 4);
     tag(document.getElementById('hero-stats'), 0);
     document.querySelectorAll('.hero-cards > a').forEach((el, i) => tag(el, i));
     document.querySelectorAll('.pe-verdicts > .pe-verdict, #hero-stats .hero-stat').forEach((el, i) => el.style.setProperty('--d', i % 5));

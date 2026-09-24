@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-09-24T04:55:40+00:00",
+  "generated_on": "2026-09-24T05:22:03+00:00",
   "session_date": "2026-09-23",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -49,8 +49,8 @@
         "turnover_crore": 879.52
       },
       "latest_close": 865.25,
-      "trailing_pe": 34.73429,
-      "market_cap": 104525250560,
+      "trailing_pe": 34.656265,
+      "market_cap": 104290451456,
       "history": {
         "first_date": "2021-09-16",
         "trading_days": 1240,
@@ -78,8 +78,8 @@
         "turnover_crore": 1433.57
       },
       "latest_close": 466.6,
-      "trailing_pe": 44.033333,
-      "market_cap": 103751311360,
+      "trailing_pe": 43.966667,
+      "market_cap": 103594229760,
       "history": {
         "first_date": "2021-09-16",
         "trading_days": 1240,
@@ -107,8 +107,8 @@
         "turnover_crore": 260.92
       },
       "latest_close": 591.1,
-      "trailing_pe": 56.844658,
-      "market_cap": 146806161408,
+      "trailing_pe": 56.713593,
+      "market_cap": 146467667968,
       "history": {
         "first_date": "2022-11-16",
         "trading_days": 950,
@@ -136,8 +136,8 @@
         "turnover_crore": 235.97
       },
       "latest_close": 337.15,
-      "trailing_pe": 253.77864,
-      "market_cap": 258903392256,
+      "trailing_pe": 251.75572,
+      "market_cap": 256839614464,
       "history": {
         "first_date": "2021-09-16",
         "trading_days": 1240,
@@ -165,8 +165,8 @@
         "turnover_crore": 130.82
       },
       "latest_close": 75.02,
-      "trailing_pe": 37.61929,
-      "market_cap": 128079708160,
+      "trailing_pe": 37.543148,
+      "market_cap": 127820464128,
       "history": {
         "first_date": "2021-09-16",
         "trading_days": 1240,
@@ -195,7 +195,7 @@
       },
       "latest_close": 140.11,
       "trailing_pe": null,
-      "market_cap": 171255332864,
+      "market_cap": 170811473920,
       "history": {
         "first_date": "2021-09-16",
         "trading_days": 1239,
@@ -229,6 +229,8 @@
       "years": 5.02,
       "session_price_from": "Yahoo"
     },
+    "latest_close": 23446.8,
+    "session_pct_change": 0.505,
     "annualised_return": 0.064798,
     "total_return": 0.273615,
     "annualised_volatility": 0.125502,

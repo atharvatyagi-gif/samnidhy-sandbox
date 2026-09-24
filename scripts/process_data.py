@@ -73,8 +73,10 @@ def weekly_closes(series: dict[str, pd.Series], session: pd.Timestamp) -> dict:
     }
 
 
-def analyse(picks: dict, history: dict[str, pd.DataFrame], cfg: dict, sources: dict[str, str]) -> dict:
-    """sources says, per ticker, whether the session-day price came from Yahoo or NSE."""
+def analyse(picks: dict, history: dict[str, pd.DataFrame], cfg: dict, sources: dict[str, str],
+            bench_session: dict | None) -> dict:
+    """sources says, per ticker, whether the session-day price came from Yahoo or NSE.
+    bench_session is NSE's official session move for the benchmark (None if unavailable)."""
     bench = cfg["history"]["benchmark"]
     meta = picks["gainers"] + picks["losers"]
     order = [s["yahoo_ticker"] for s in meta]
@@ -158,6 +160,9 @@ def analyse(picks: dict, history: dict[str, pd.DataFrame], cfg: dict, sources: d
                 "years": round((bench_close.index[-1] - bench_close.index[0]).days / 365.25, 2),
                 "session_price_from": sources[bench],
             },
+            "latest_close": round(float(bench_close.iloc[-1]), 2),
+            # From NSE's official index file (Yahoo's index history can skip a day); null if unavailable.
+            "session_pct_change": None if bench_session is None else bench_session["pct_change"],
             "annualised_return": round(cagr(frame[bench]), 6),
             "total_return": round(float(frame[bench].iloc[-1] / frame[bench].iloc[0] - 1), 6),
             "annualised_volatility": round(float(returns[bench].std() * np.sqrt(TRADING_DAYS_PER_YEAR)), 6),

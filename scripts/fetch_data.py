@@ -120,9 +120,23 @@ def nse_index_row(cfg: dict, session: date) -> dict:
             "prev_close": close - float(r["Points Change"]), "volume": float(r["Volume"])}
 
 
-def fetch_history(picks: dict, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict[str, str]]:
-    """Returns ({ticker: cleaned daily OHLCV}, {ticker: 'Yahoo' or 'NSE'}) for every picked
-    stock plus the benchmark. The second dict says where the session-day price came from."""
+def official_benchmark_session(cfg: dict, session: date) -> dict | None:
+    """The benchmark's official session move from NSE. Yahoo's index history sometimes skips a
+    day, which would make a move computed from Yahoo span two sessions, so the site always uses
+    NSE's figure. Returns None (and the site shows no move) if NSE's file can't be read."""
+    try:
+        row = nse_index_row(cfg, session)
+    except Exception as exc:  # noqa: BLE001
+        print(f"  ! could not read NSE's index file for {session} ({exc}); the Nifty 50's session move will be left blank")
+        return None
+    return {"close": row["close"], "prev_close": round(row["prev_close"], 2),
+            "pct_change": round((row["close"] / row["prev_close"] - 1) * 100, 4)}
+
+
+def fetch_history(picks: dict, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict[str, str], dict | None]:
+    """Returns ({ticker: cleaned daily OHLCV}, {ticker: 'Yahoo' or 'NSE'}, benchmark session move)
+    for every picked stock plus the benchmark. The second dict says where the session-day price
+    came from; the third is NSE's official session move for the benchmark (or None)."""
     benchmark, years = cfg["history"]["benchmark"], cfg["history"]["years"]
     session = date.fromisoformat(picks["session_date"])
     stocks = picks["gainers"] + picks["losers"]
@@ -188,7 +202,19 @@ def fetch_history(picks: dict, cfg: dict) -> tuple[dict[str, pd.DataFrame], dict
         print(pd.DataFrame(summary).to_string(index=False))
     if problems:
         raise RuntimeError("price history failed:\n  - " + "\n  - ".join(problems))
-    return history, sources
+
+    bench_session = official_benchmark_session(cfg, session)
+    if bench_session:
+        yahoo_close = float(history[benchmark]["Close"].iloc[-1])
+        if abs(yahoo_close / bench_session["close"] - 1) > MATCH_TOLERANCE:
+            raise RuntimeError(f"{benchmark}: Yahoo's session close {yahoo_close:,.2f} differs from NSE's "
+                               f"{bench_session['close']:,.2f}")
+        prev_yahoo = float(history[benchmark]["Close"].iloc[-2])
+        if abs(prev_yahoo / bench_session["prev_close"] - 1) > MATCH_TOLERANCE:
+            print(f"  note: Yahoo's {benchmark} history skips the session before {session} "
+                  f"(its previous close {prev_yahoo:,.2f} vs NSE's {bench_session['prev_close']:,.2f}); "
+                  f"the session move uses NSE's official figure")
+    return history, sources, bench_session
 
 
 def main() -> int:
