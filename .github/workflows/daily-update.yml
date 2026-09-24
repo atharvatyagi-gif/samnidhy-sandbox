@@ -1,0 +1,84 @@
+# Samnidhy Sandbox daily update.
+# Runs on GitHub's servers every weekday morning (your computer can be off):
+#   1. picks the last NSE session's top gainers/losers and recomputes everything (scripts/update.py)
+#   2. puts the data - or, if step 1 failed, the "Data not updated" notice - into the page
+#   3. saves the day's data in this repository (so past sessions are kept)
+#   4. publishes the site to GitHub Pages
+# If step 1 fails, the last good day stays on the site and this run is marked as failed,
+# so GitHub emails you. No API keys or secrets are needed for this data.
+name: Daily update
+
+on:
+  schedule:
+    # Times are UTC. 02:00 UTC = 07:30 IST, Monday to Friday (Monday's run picks Friday's session).
+    - cron: "0 2 * * 1-5"
+    # Backup run at 09:00 IST, in case GitHub started the first run late or Yahoo was slow to publish.
+    - cron: "30 3 * * 1-5"
+  workflow_dispatch: # adds a "Run workflow" button on the Actions tab
+
+permissions:
+  contents: write   # save the day's data in the repository
+  pages: write      # publish the website
+  id-token: write   # required by GitHub Pages publishing
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Fetch the last session's movers and recompute everything
+        id: update
+        continue-on-error: true
+        run: python scripts/update.py
+
+      - name: Put the data (or the "Data not updated" notice) into the page
+        run: |
+          python scripts/embed_data.py
+          python scripts/build_site.py
+
+      - name: Save the day's data in the repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data dashboard.html
+          if git diff --cached --quiet; then
+            echo "Nothing new to save."
+          else
+            session=$(python -c "import json; print(json.load(open('data/status.json')).get('session_date'))")
+            git commit -m "Daily update: session ${session} ($(date -u +%Y-%m-%d\ %H:%M) UTC)"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Publish to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Report a failed data update
+        if: steps.update.outcome == 'failure'
+        run: |
+          echo "::error::The data update failed. The site kept the last good day and shows a 'Data not updated' notice. Open the step 'Fetch the last session's movers' above to see why."
+          exit 1

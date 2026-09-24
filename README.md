@@ -1,183 +1,182 @@
-# Understanding the Indian Stock Market — Interactive Dashboard
+# Samnidhy Sandbox
 
-An interactive, single-file dashboard that teaches complete beginners how the stock market works,
-using real data on five NSE-listed companies and the Nifty 50 index.
+An interactive website that teaches beginners how the stock market works, using the **top
+gainers and top losers of the last NSE trading session**. The site picks new stocks and
+refreshes itself automatically every weekday morning. It was built for Samnidhy, a student
+committee at TAPMI.
 
-Open `dashboard.html` by double-clicking it. You don't need a server, an install or a build step,
-and it works offline (see [Offline behaviour](#offline-behaviour)).
+**Live site:** https://atharvatyagi-gif.github.io/samnidhy-sandbox/
+
+> Educational analysis only. Not investment advice. All figures are historical; past
+> performance does not predict future results.
 
 ---
 
 ## What it teaches
 
+Every lesson runs on the session's picked stocks. By default these are the 3 top gainers and the
+3 top losers, and each is labelled "Top Gainer #1–3" or "Top Loser #1–3" with its session move.
+
 | Lesson | Idea | What you can do |
 |---|---|---|
-| **1. How a price is set** | A price is just the last trade between a buyer and a seller. The bid-ask spread is what liquidity providers earn. | Place buy/sell orders against a live order book for RELIANCE and watch the price and spread move. |
-| **2. What a company is worth** | Market cap measures size. P/E measures how expensive a share is relative to profit. | Compare all five on both. See which are pricier or cheaper than the group median. Drag an earnings-growth slider to see implied prices 3 years out. |
-| **3. Risk and return** | Combining stocks that don't move together lowers risk below the average of the parts (diversification). | Allocate a portfolio with sliders or presets and watch its risk drop on the scatter plot. Click the correlation heatmap to build pairs. Compare each stock's volatility, max drawdown and beta. |
-| **4. The power of compounding** | Returns earned on earlier returns make wealth grow faster over time. | Run a SIP calculator whose return defaults to the real Nifty 50 figure. Compare what you put in with what it becomes, and see the cost of starting 5 years later. |
-| **5. Five years in the market** | Averages hide the journey. The same five years produced very different outcomes, and a stock can rise a long way and then give most of it back. | Watch an animated race of ₹1,00,000 invested in each stock and the Nifty 50, using real weekly prices. Play, pause, change the speed or drag the timeline, with a live leaderboard. |
-| **6. Test yourself** | Recap. | Answer six quiz questions with instant feedback and a score. Every answer is calculated live from the data, so it stays correct after a refresh. |
+| **1. How a price is set** | A price is just the last trade. The bid-ask spread pays the people who are always ready to trade. | Trade against a simulated order book that starts at each stock's real closing price. |
+| **2. What a company is worth** | Market cap measures size. P/E measures how expensive a share is relative to profit. | Compare the stocks, and see which look pricier or cheaper than the group median. Drag an earnings-growth slider. |
+| **3. Risk and return** | Combining stocks that don't move together lowers risk (diversification). | Build portfolios with sliders or presets, including "gainers only" and "losers only". Explore correlations and each stock's volatility, drawdown and beta. |
+| **4. The power of compounding** | Returns on earlier returns make wealth grow faster over time. | Use a SIP calculator whose default return is the Nifty 50's real 5-year return, or try each stock's own past return. |
+| **5. The longer story** | One day's move says little on its own. | Watch an animated race of ₹1,00,000 in each stock and the Nifty 50, through real weekly prices. |
+| **6. Test yourself** | Recap. | Answer a quiz whose answers are calculated from the day's data. |
+| **Past sessions** | | Open any earlier day's page, exactly as it was. |
 
-Every chart has a plain-English caption, and every term is defined in the same lesson that uses it.
-
-The page also has a landing section that includes a ticker tape, a self-drawing Nifty 50 chart and
-count-up statistics, all built from the real data. Scrolling triggers reveal and parallax effects.
-All animation is switched off automatically for anyone whose operating system asks for reduced
-motion.
+The top of every page shows **"Data for trading session: …"** and **"Last updated: … IST"**.
+If the latest update failed, or the last success is more than 4 days old, an amber
+**"Data not updated"** warning appears. The site then keeps showing the last good day and never
+substitutes other stocks.
 
 ---
 
-## Data
+## Where the data comes from
 
-- **Source:** Yahoo Finance, via the [`yfinance`](https://pypi.org/project/yfinance/) library,
-  using NSE tickers. The NSE and BSE websites are not scraped.
-- **Tickers:** `RELIANCE.NS`, `TCS.NS`, `HDFCBANK.NS`, `ITC.NS`, `INFY.NS`, and `^NSEI` (the Nifty
-  50, used as the benchmark).
-- **Date range in the current build:** daily prices from **15 Sep 2021 to 22 Sep 2026** (the Nifty
-  50 series ends on 21 Sep 2026). Statistics based on returns cover **16 Sep 2021 to 22 Sep 2026**.
-  The data was generated on **23 Sep 2026 at 23:43 UTC**. The exact dates are stored in
-  `data/data.json` and shown in the dashboard's footer.
-- **Adjustments:** prices are fetched with `auto_adjust=True`. yfinance then uses Yahoo's adjusted
-  prices, which account for splits, bonus issues **and dividends**. Stock returns are therefore
-  close to total returns. The Nifty 50 (`^NSEI`) is a *price* index and excludes dividends, so
-  comparisons between the stocks and the index slightly favour the stocks. The dashboard states
-  this wherever the two are compared, and the SIP's default Nifty return is conservative for the
-  same reason.
-- **Company fundamentals:** trailing P/E, market cap, sector and name come from yfinance's `.info`
-  and describe the companies *at the time of the fetch*. If a field is missing, the script stores
-  `null` and never estimates it. In the current build, no fields are missing.
+| Data | Source | Notes |
+|---|---|---|
+| Which stocks are picked, and their session move | NSE's official end-of-day file ("bhavcopy") on `nsearchives.nseindia.com` | The move is close price vs previous close. The session date is read **from inside the file**, never worked out from the calendar. This matters because NSE serves copies of the previous file for some holidays and weekends. |
+| Stocks that can be picked | NIFTY 500 list from `niftyindices.com` | A saved copy in `data/universe/` is used if the download fails. |
+| Nifty 50's session move | NSE's official index-closing file | Yahoo's index history sometimes skips a day. |
+| Price history (up to 5 years), P/E, market cap | Yahoo Finance via `yfinance` | See the notes below. |
+
+No API keys are needed.
+
+Notes on the Yahoo Finance data:
+- **Adjusted prices.** Prices are adjusted for splits, bonus issues and dividends
+  (`auto_adjust=True`). The Nifty 50 is a *price* index, so it excludes dividends.
+- **Holiday rows removed.** Yahoo adds fake rows for market holidays, with a flat price and zero
+  volume. These are removed.
+- **Session-day check.** Each stock's session-day close must match NSE's official close.
+- **When Yahoo is late.** If Yahoo hasn't published the session yet, NSE's official prices are
+  used for that day. This only happens when Yahoo's latest close matches NSE's "previous close",
+  which proves no day is missing in between.
+- **Missing figures.** A missing P/E or market cap is shown as "n/a" and never estimated.
+
+---
+
+## Settings (`config.toml`)
+
+Every setting is in one file. Change a number, save, and the next update uses it.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `gainers_count` / `losers_count` | 3 / 3 | How many of each to pick. |
+| `universe_name` / `universe_url` | NIFTY 500 | Only stocks in this index are considered. |
+| `series` | `["EQ"]` | Only normal equity shares. |
+| `min_price` | 50 | The closing price must be above ₹50. |
+| `min_turnover_crore` | 10 | At least ₹10 crore must have traded in the session. |
+| `min_history_years` | 1 | Stocks with less price history are skipped as "too new to analyse", and the next-ranked stock takes their place. The site names the skipped stock. `0` turns this off. |
+| `max_abs_move_pct` | 30 | Bigger moves are skipped, because they're almost always a split or bonus issue. |
+| `exclude_prefixes` / `exclude_symbols` | `DUMMY…` / none | Placeholder symbols, and any stock you want to block. |
+| `years`, `benchmark` | 5, `^NSEI` | How much history to use, and the market comparison. |
+
+---
+
+## How the automatic update works
+
+`.github/workflows/daily-update.yml` runs on GitHub's servers at **07:30 IST, Monday to Friday**,
+with a backup run at 09:00 IST. Each run does the following:
+
+1. **Update the data:** `python scripts/update.py`
+   - Picks the stocks, downloads and checks their history, and computes every figure.
+   - Saves the day **only if every step worked**.
+   - Otherwise it records the error in `data/status.json` and changes nothing else.
+2. **Build the site:** `python scripts/embed_data.py` and `python scripts/build_site.py`
+   - Puts the data, or the "Data not updated" warning, into the page.
+   - Builds `site/`, which has the latest page and one page per past session.
+3. **Save the day:** commits `data/` and `dashboard.html` to this repository. The day's picks are
+   saved as `data/picks/<date>.json` and its full analysis as `data/archive/<date>.json`.
+4. **Publish:** puts `site/` on GitHub Pages.
+
+If step 1 fails, the run is marked as failed and GitHub emails the account owner. You can also
+start a run any time: open the **Actions** tab, click **Daily update**, then **Run workflow**.
+
+GitHub pauses scheduled workflows in public repositories after 60 days with no activity. The
+daily commits count as activity, so this shouldn't happen. If it ever does, the Actions tab shows
+an **Enable workflow** button.
+
+### Running it on your own computer
+
+You need Python 3.11 or newer.
+
+```bash
+pip install -r requirements.txt
+python scripts/update.py        # pick the stocks and compute everything
+python scripts/embed_data.py    # refresh dashboard.html
+python scripts/build_site.py    # build site/ (open site/index.html in a browser)
+```
+
+Useful extras:
+- `python scripts/pick_movers.py` previews the picks without saving anything.
+- `python scripts/update.py --as-of 2026-09-18` rebuilds the last session on or before that date,
+  which is useful for filling in past days.
+
+---
+
+## Formulas
+
+*P<sub>t</sub>* is the adjusted close on day *t*. There are 252 trading days per year.
+
+All comparisons between stocks use one **analysis period**: the dates on which every picked stock
+and the Nifty 50 have a price, up to 5 years. The site shows this period and explains it whenever
+it's shorter than 5 years.
+
+| Figure | Formula |
+|---|---|
+| Session move | NSE close ÷ NSE previous close − 1 |
+| Daily return | *P<sub>t</sub>* / *P<sub>t−1</sub>* − 1 |
+| Annualised return | (*P*<sub>end</sub> / *P*<sub>start</sub>)<sup>1/years</sup> − 1, where years = calendar days ÷ 365.25 |
+| Annualised volatility | standard deviation of daily returns (sample) × √252 |
+| Maximum drawdown | min over *t* of ( *P<sub>t</sub>* / max<sub>s≤t</sub> *P<sub>s</sub>* − 1 ) |
+| Beta | Cov(stock, Nifty 50) ÷ Var(Nifty 50), using daily returns |
+| Correlation / covariance | Pearson correlation of daily returns; covariance × 252 |
+| Portfolio return | Σ *w<sub>i</sub>* *R<sub>i</sub>* |
+| **Portfolio volatility** | **√(*w*ᵀ Σ *w*)**, using the covariance matrix Σ, not an average of the individual volatilities |
+| Implied EPS / implied price | price ÷ P/E; price × (1 + *g*)³, where *g* is the growth-rate slider and the P/E is assumed constant |
+| **SIP value** | **FV = *P* × [((1 + *i*)<sup>*n*</sup> − 1) / *i*] × (1 + *i*)**, compounded monthly |
+| Race value | ₹1,00,000 × weekly close ÷ the close in the first week of the analysis period |
+
+For the SIP: *i* is the annual return ÷ 12, and *n* is the number of months. Each instalment is
+invested at the start of its month. At a 0% return, the formula becomes FV = *P* × *n*. The
+default return is the Nifty 50's annualised return over its last 5 years.
+
+### Parts that are simulated or illustrative, not market data
+
+- **The lesson 1 order book.** It starts at the stock's real close, but the bid and ask
+  quantities are random. Price steps are simplified; real NSE steps are as small as 1–5 paise.
+- **The P/E worked example** (₹10 of earnings at a ₹200 share price).
+- **Slider defaults and presets.** These are user inputs.
+- **The quiz's wrong answers.** They are principled alternatives, such as simple interest
+  instead of compounding.
+- **Decoration.** The ticker animation, glow effects, word bands and confetti show no data.
 
 ---
 
 ## Project structure
 
 ```
-dashboard.html            the deliverable: one self-contained file (CSS, JS and data inline)
-requirements.txt          pinned Python dependencies
-scripts/fetch_data.py     downloads raw daily prices   -> data/raw/*.csv
-scripts/process_data.py   computes every statistic     -> data/data.json
-scripts/embed_data.py     copies data.json into dashboard.html
-data/raw/                 one raw CSV per ticker (so the download needn't be repeated)
-data/data.json            processed statistics used by the dashboard
+config.toml                      all settings
+scripts/update.py                runs the whole daily update (pick -> history -> calculations -> save)
+scripts/pick_movers.py           picks the stocks from NSE's file
+scripts/fetch_data.py            downloads and checks price history
+scripts/process_data.py          computes every statistic
+scripts/embed_data.py            puts the data into dashboard.html
+scripts/build_site.py            builds the public site into site/
+dashboard.html                   the page (also works offline by double-clicking)
+data/data.json                   the latest analysis
+data/status.json                 did the last update work? when?
+data/picks/<date>.json           each day's picks (kept)
+data/archive/<date>.json         each day's full analysis (kept)
+.github/workflows/daily-update.yml   the scheduled job
 ```
 
----
+`site/` and `data/raw/` are rebuilt by every run, so they aren't stored in git.
 
-## Refreshing the data
+## Undoing the changes
 
-These steps need Python 3.11 or newer, because the pinned numpy 2.3.4 requires it. The current
-build was made with Python 3.14.
-
-```bash
-pip install -r requirements.txt
-
-python scripts/fetch_data.py     # 1. download 5 years of daily prices to data/raw/
-python scripts/process_data.py   # 2. compute statistics and write data/data.json
-python scripts/embed_data.py     # 3. embed data/data.json into dashboard.html
-```
-
-Notes:
-
-- `fetch_data.py` retries each ticker up to 4 times, waiting longer after each failure
-  (2s, 4s, 8s). If a ticker still fails, the script names it and exits with an error rather than
-  carrying on without it. At the end it prints a summary table for each ticker: date range, number
-  of rows, missing values, and first and last close.
-- If you run it during market hours, Yahoo may return today's unfinished trading session with no
-  prices. The script drops that row and says so.
-- **Step 3 is required.** The dashboard never loads `data.json` at runtime, because browsers block
-  that on `file://`. Its copy is embedded in the page, so the page shows new data only after
-  `embed_data.py` has run.
-
----
-
-## Formulas
-
-**Notation:** *P<sub>t</sub>* is the adjusted close on day *t*, *r<sub>t</sub>* is the daily
-return, and there are 252 trading days per year.
-
-### Per-stock metrics (`process_data.py`)
-
-| Metric | Formula |
-|---|---|
-| Daily return | *r<sub>t</sub>* = *P<sub>t</sub>* / *P<sub>t−1</sub>* − 1 |
-| Annualised return (CAGR) | (*P*<sub>end</sub> / *P*<sub>start</sub>)<sup>1/years</sup> − 1, where years = calendar days ÷ 365.25 |
-| Annualised volatility | std. dev. of daily returns (sample, ddof = 1) × √252 |
-| Maximum drawdown | min over *t* of ( *P<sub>t</sub>* / max<sub>s≤t</sub> *P<sub>s</sub>* − 1 ) |
-| Beta vs Nifty 50 | Cov(*r*<sub>stock</sub>, *r*<sub>Nifty</sub>) / Var(*r*<sub>Nifty</sub>), on dates both traded |
-| Latest close | last adjusted close in the raw data |
-| Trading days | number of daily prices in the raw data |
-| Weekly growth series | *P* at each week's last trading day ÷ *P* on the first day. The series starts at 1.0 on the first date, and its last point is the final trading date, so its final value equals *P*<sub>end</sub> / *P*<sub>start</sub>. No prices are filled or interpolated. This is also computed for the Nifty 50. |
-| Trailing P/E, market cap, sector | read directly from yfinance `.info`, or `null` if missing |
-
-### Across the five stocks
-
-| Metric | Formula |
-|---|---|
-| Correlation matrix | Pearson correlation of daily returns, on dates all five traded |
-| Covariance matrix (annualised) | covariance of daily returns × 252 |
-| Nifty 50 annualised return | same CAGR formula, applied to `^NSEI` |
-
-### Computed live in the dashboard
-
-| Figure | Formula |
-|---|---|
-| Bid-ask spread | best ask − best bid (also shown as % of the last traded price) |
-| Implied EPS | latest close ÷ trailing P/E |
-| Median P/E | middle value of the five trailing P/Es. "Pricier" or "Cheaper" is relative to this. |
-| Implied price in 3 years | latest close × (1 + *g*)³, where *g* is the growth-rate slider. This assumes the P/E multiple stays the same. |
-| Portfolio return | Σ *w<sub>i</sub>* · *R<sub>i</sub>*, where *w* is the weights and *R* is each stock's annualised return |
-| **Portfolio volatility** | **√( *w*ᵀ Σ *w* )**, using the annualised covariance matrix Σ, **not** a weighted average of the individual volatilities |
-| "No diversification" comparison | Σ *w<sub>i</sub>* · σ<sub>*i*</sub> (weighted average of individual volatilities). This is shown only to contrast with the line above. |
-| **SIP future value** | **FV = *P* × [ ((1 + *i*)<sup>*n*</sup> − 1) / *i* ] × (1 + *i*)**, compounded **monthly** |
-| SIP total invested | *P* × *n* |
-| SIP total gains | FV − total invested |
-| Race value (lesson 5) | ₹1,00,000 × weekly growth series |
-| Race "gave back" figure | 1 − final value ÷ peak value, for the stock with the largest peak-to-end fall |
-| Hero statistics | number of companies; the largest trading-day count; Σ market cap ÷ 10<sup>12</sup> (lakh crore); (end date − start date) ÷ 365.25 |
-| Quiz answers | highest trailing P/E; ask − bid; highest pairwise correlation; the equal-weight √(*w*ᵀ Σ *w*); the SIP FV above; lowest maximum drawdown |
-
-For the SIP: *P* is the monthly amount, *i* is the annual return ÷ 12, and *n* is the number of
-monthly instalments. Each instalment is invested at the start of its month (an annuity-due), which
-is the convention Indian SIP calculators use. At a 0% return, the formula becomes FV = *P* × *n*.
-The expected return defaults to the Nifty 50's annualised return over the data period, currently
-**5.95%**, and the dashboard labels it as that figure.
-
----
-
-## Parts of the dashboard that are not real market data
-
-Everything *measured* comes from `data/data.json`. The following parts are simulated, simplified,
-illustrative or user input.
-
-- **The order book in lesson 1 is simulated.** Yahoo Finance doesn't provide live order-book
-  depth. The book is centred on RELIANCE's real latest close, but the bid and ask quantities are
-  randomly generated each time it's reset. Prices move in steps of ₹1 to keep it readable (the real
-  NSE step is ₹0.05).
-- **The P/E worked example** (₹10 of earnings, ₹200 share price, P/E of 20) is the illustrative
-  example from the project brief. It isn't company data.
-- **Slider defaults and presets are user inputs, not data.** These include the growth rates
-  (−5% to 25%), SIP amounts, the 3-year horizon in lesson 2 and the 5-year delay comparison in
-  lesson 4. The one exception is the SIP's default return, which is the real Nifty 50 figure.
-- **The lesson 3 portfolio presets are chosen from the data.** The "most similar pair" and the
-  "least-correlated trio" are found by searching the correlation matrix, not hard-coded.
-- **The quiz's wrong options are principled alternatives, not random numbers.** For the SIP
-  question they are: the total deposited, the gain on its own, and simple interest (no
-  compounding).
-- **The confetti, aurora glow and scrolling word bands are decoration.** They don't show any data.
-
----
-
-## Offline behaviour
-
-The data, CSS and JavaScript are all inside `dashboard.html`. The only external file is Chart.js
-4.5.1, loaded from cdnjs and pinned to that exact version. If the CDN can't be reached, each chart
-is replaced by a table of the same numbers. Every other part of the page, including the order book,
-sliders, calculators and heatmap, keeps working.
-
----
-
-## Disclaimer
-
-This dashboard is for education only. All figures are **historical**: past returns, volatility
-and correlations don't predict future results. **Nothing here is investment advice.**
+The original 5-stock version is saved as the git tag `baseline-5-stocks`. To look at it, run
+`git switch --detach baseline-5-stocks`, and run `git switch main` to come back.
