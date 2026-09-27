@@ -1,7 +1,7 @@
 {
   "session_date": "2026-09-25",
   "source": {
-    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_25092026.csv",
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_27092026.csv",
     "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
     "universe_source": "downloaded"
   },
@@ -144,6 +144,6 @@
       "reason": "only 0.8 years of price history (minimum 1)"
     }
   ],
-  "fetched_at_utc": "2026-09-27T03:44:10+00:00",
-  "fetched_at_ist": "27 Sep 2026, 09:14 AM IST"
+  "fetched_at_utc": "2026-09-27T13:37:25+00:00",
+  "fetched_at_ist": "27 Sep 2026, 07:07 PM IST"
 }
