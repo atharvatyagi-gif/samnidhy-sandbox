@@ -415,6 +415,7 @@
   nav.section-nav a.active .n { color: var(--accent); }
   nav.section-nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+  .section-nav a.adv-link { color: var(--accent); border: 1px solid rgba(34,197,94,0.4); }
   .menu-toggle {
     display: none;
     margin-left: auto;
@@ -1426,6 +1427,7 @@
       <a href="#section-5" data-section="section-5"><span class="n">5</span>The Race</a>
       <a href="#section-6" data-section="section-6"><span class="n">6</span>Quiz</a>
       <a href="#past" data-section="past"><span class="n">&#8634;</span>Past days</a>
+      <a href="advanced.html" class="adv-link" id="adv-link"><span class="n">&#9670;</span>Advanced</a>
     </nav>
   </div>
 </header>
@@ -4607,6 +4609,11 @@
   const STATUS = JSON.parse(document.getElementById('dashboard-status').textContent || '{}');
   const SESSIONS = JSON.parse(document.getElementById('dashboard-sessions').textContent || '[]');
   const META = JSON.parse(document.getElementById('dashboard-meta').textContent || '{}');
+  // The Advanced page sits next to the home page (index.html on the website, dashboard.html locally).
+  (function () {
+    const a = document.getElementById('adv-link');
+    if (a && META.home) a.href = META.home.replace(/(index|dashboard)\.html$/, 'advanced.html');
+  })();
   const STOCKS = DASHBOARD_DATA.stocks;
   const STOCK_ORDER = DASHBOARD_DATA.order; // top gainers #1.., then top losers #1..
   const BENCH_TICKER = DASHBOARD_DATA.benchmark.ticker;

@@ -22,6 +22,15 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 HTML_PATH = ROOT / "dashboard.html"
 BLOCK_IDS = ("dashboard-data", "dashboard-status", "dashboard-sessions", "dashboard-meta")
+ADVANCED_PATH = ROOT / "advanced.html"
+SCREENER = DATA / "screener"
+
+
+def advanced_blocks() -> dict:
+    """Data for the Advanced page: the daily screen and the latest live prices/technicals.
+    A missing file becomes an empty block, and the page then says the data is not available."""
+    return {name: (read_json(SCREENER / f) if (SCREENER / f).exists() else {})
+            for name, f in (("screener-data", "latest.json"), ("live-data", "live.json"))}
 
 
 def read_json(path: Path):
@@ -66,6 +75,8 @@ def main() -> None:
     }
     HTML_PATH.write_text(embed(HTML_PATH.read_text(encoding="utf-8"), blocks), encoding="utf-8")
     print(f"Embedded session {data['session_date']} (last update ok: {status.get('ok')}) into {HTML_PATH.name}")
+    ADVANCED_PATH.write_text(embed(ADVANCED_PATH.read_text(encoding="utf-8"), advanced_blocks()), encoding="utf-8")
+    print(f"Embedded the screen and live prices into {ADVANCED_PATH.name}")
 
 
 if __name__ == "__main__":

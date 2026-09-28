@@ -1,0 +1,59 @@
+# Samnidhy Sandbox - live prices for the Advanced page.
+# Every 15 minutes while the NSE market is open (Mon-Fri, 9:15 AM - 3:30 PM IST), on GitHub's servers:
+#   1. fetches delayed prices + technicals for the stocks the daily screen picked (scripts/live_technicals.py)
+#   2. rebuilds the site and publishes it
+# Live prices are not saved in the repository (that would add a commit every 15 minutes);
+# the daily update keeps the screen itself. If a run fails, the site keeps the last prices and the
+# Advanced page says how old they are.
+name: Live prices
+
+on:
+  schedule:
+    # Times are UTC (IST = UTC + 5:30). 03:45 UTC = 9:15 IST ... 10:00 UTC = 15:30 IST.
+    - cron: "45 3 * * 1-5"
+    - cron: "*/15 4-9 * * 1-5"
+    - cron: "0 10 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: site-publish
+  cancel-in-progress: false
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Fetch delayed prices and technicals for the screened stocks
+        run: python scripts/live_technicals.py
+
+      - name: Rebuild the site
+        run: python scripts/build_site.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Publish to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
