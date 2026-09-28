@@ -14,6 +14,9 @@ on:
     - cron: "*/15 4-9 * * 1-5"
     - cron: "0 10 * * 1-5"
   workflow_dispatch:
+  push: # a change to the live-price code runs it straight away
+    branches: [main]
+    paths: [".github/workflows/live-prices.yml", "scripts/live_technicals.py"]
 
 permissions:
   contents: read
@@ -43,6 +46,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Fetch delayed prices and technicals for the screened stocks
+        id: live
+        continue-on-error: true   # still publish, so the page shows why prices are unavailable
         run: python scripts/live_technicals.py
 
       - name: Rebuild the site
@@ -57,3 +62,9 @@ jobs:
       - name: Publish to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
+
+      - name: Report failed live prices
+        if: steps.live.outcome == 'failure'
+        run: |
+          echo "::error::Live prices could not be fetched; see the step above. The page says prices are unavailable."
+          exit 1

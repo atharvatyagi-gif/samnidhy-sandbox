@@ -122,12 +122,12 @@ def analyse(p):
             break
         except Exception as exc:
             if attempt == 2:
-                return {"symbol": p["symbol"], "error": f"download failed ({type(exc).__name__})"}
+                return {"symbol": p["symbol"], "error": f"download failed ({type(exc).__name__}: {str(exc)[:160]})"}
             time.sleep(3 * (attempt + 1))
     daily = daily.dropna(subset=["Close"])
     intra = intra.dropna(subset=["Close"])
     if len(daily) < 60 or intra.empty:
-        return {"symbol": p["symbol"], "error": "not enough price data"}
+        return {"symbol": p["symbol"], "error": f"not enough price data (daily rows {len(daily)}, 5-min rows {len(intra)})"}
     daily.index = daily.index.tz_convert(IST) if daily.index.tz else daily.index.tz_localize(IST)
     intra.index = intra.index.tz_convert(IST)
     session_day = intra.index[-1].date()
@@ -196,6 +196,16 @@ def main():
         rows = list(ex.map(analyse, picks))
     ok = [r for r in rows if "error" not in r]
     if not ok:
+        # Publish the reason (no prices are ever invented); the page shows "Prices unavailable".
+        now = datetime.now(IST)
+        DIR.mkdir(parents=True, exist_ok=True)
+        (DIR / "live.json").write_text(json.dumps({
+            "error": "no live prices could be fetched",
+            "generated_utc": now.astimezone(timezone.utc).isoformat(timespec="seconds"),
+            "generated_ist": now.strftime("%d %b %Y, %I:%M %p IST"),
+            "stocks": {r["symbol"]: r for r in rows}}, allow_nan=False), encoding="utf-8")
+        for r in rows:
+            print(f"  {r['symbol']}: {r['error']}")
         raise RuntimeError("no live prices could be fetched")
     now = datetime.now(IST)
     session = max(r["session_date"] for r in ok)
