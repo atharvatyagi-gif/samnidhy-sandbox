@@ -21,7 +21,8 @@ from embed_data import ADVANCED_PATH, DATA, HTML_PATH, SCREENER, advanced_blocks
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 STATIC = ["index.html", "landing.css", "landing.js", "auth.html", "auth-check.js", "config.js",
-          "expert-terminal.html", "terminal.css", "terminal.js"]
+          "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js"]
+TERMINAL = ROOT / "data" / "terminal"
 
 
 def main() -> None:
@@ -56,6 +57,14 @@ def main() -> None:
     # The B-Lab Cohort: landing page, Expert access and the terminal are static files, copied as they are.
     for name in STATIC:
         shutil.copyfile(ROOT / name, SITE / name)
+    # all-NSE data for the terminal: t/universe.json, t/quotes.json, t/fund.json, t/h/*.json, t/i/*.json
+    (SITE / "t").mkdir()
+    for name in ("universe.json", "quotes.json", "fund.json"):
+        if (TERMINAL / name).exists():
+            shutil.copyfile(TERMINAL / name, SITE / "t" / name)
+    for sub, dst in (("hist", "h"), ("intra", "i")):
+        if (TERMINAL / sub).exists():
+            shutil.copytree(TERMINAL / sub, SITE / "t" / dst)
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
         (SITE / "screener.json").write_text((SCREENER / "latest.json").read_text(encoding="utf-8"), encoding="utf-8")
 

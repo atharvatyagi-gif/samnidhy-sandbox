@@ -71,6 +71,33 @@ jobs:
           sleep 45   # let Yahoo's rate limit reset after the screen's ~350 requests
           python scripts/live_technicals.py
 
+      # ---- Expert terminal: every NSE stock (NSE daily files, cached between runs) ----
+      - name: Restore the terminal's NSE data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/terminal
+          key: terminal-${{ github.run_id }}
+          restore-keys: terminal-
+
+      - name: All NSE stocks from NSE's end-of-day files
+        continue-on-error: true
+        run: python scripts/nse_eod.py
+
+      - name: NIFTY 500 fundamentals for the terminal
+        continue-on-error: true
+        run: python scripts/terminal_fund.py
+
+      - name: Delayed prices for all main-board stocks
+        continue-on-error: true
+        run: python scripts/terminal_live.py
+
+      - name: Save the terminal's NSE data cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/terminal
+          key: terminal-${{ github.run_id }}
+
       - name: Put the data (or the "Data not updated" notice) into the page
         run: |
           python scripts/embed_data.py

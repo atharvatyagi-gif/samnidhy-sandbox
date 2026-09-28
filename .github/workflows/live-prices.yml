@@ -30,7 +30,7 @@ concurrency:
 jobs:
   live:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -49,6 +49,19 @@ jobs:
         id: live
         continue-on-error: true   # still publish, so the page shows why prices are unavailable
         run: python scripts/live_technicals.py
+
+      - name: Restore the terminal's NSE data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/terminal
+          key: terminal-${{ github.run_id }}
+          restore-keys: terminal-
+
+      - name: Delayed prices for all main-board stocks (terminal)
+        continue-on-error: true
+        run: |
+          [ -f data/terminal/universe.json ] || python scripts/nse_eod.py
+          python scripts/terminal_live.py
 
       - name: Rebuild the site
         run: python scripts/build_site.py

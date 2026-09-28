@@ -1,22 +1,46 @@
 // The B-Lab Cohort: Firestore security rules.
 // Paste into Firebase console > Firestore Database > Rules, then Publish.
-// Server-side version of the site's domain rule: only signed-in @tapmi.edu.in users can create or read
-// their own ExpertUsers document, and only with role "expert".
+// 1) Replace ADMIN_EMAIL_HERE with the email of the admin account that uploads the student allow-list.
+// 2) Registration is accepted only for signed-in @tapmi.edu.in users whose roll number + date of birth
+//    key is on the allow-list, and each allow-list key can be registered once.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
     function isTapmi() {
-      return request.auth != null && request.auth.token.email.lower().matches('.*@tapmi[.]edu[.]in$');
+      return signedIn() && request.auth.token.email.lower().matches('.*@tapmi[.]edu[.]in$');
     }
+    function isAdmin() {
+      return signedIn() && request.auth.token.email.lower() in ['admin_email_here'];   // <-- your admin email, lower case
+    }
+
+    // Hashed student keys. Nobody can list or read them from the website; only the admin can add them.
+    match /AllowedStudents/{key} {
+      allow read: if false;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Records which account used which student key (one account per student).
+    match /Claims/{key} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isTapmi()
+                    && exists(/databases/$(database)/documents/AllowedStudents/$(key))
+                    && request.resource.data.keys().hasOnly(['uid'])
+                    && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
     match /ExpertUsers/{userId} {
       allow read: if isTapmi() && request.auth.uid == userId;
       allow create: if isTapmi() && request.auth.uid == userId
-                    && request.resource.data.keys().hasOnly(['email', 'timestamp', 'role'])
+                    && request.resource.data.keys().hasOnly(['email', 'timestamp', 'role', 'student_key'])
                     && request.resource.data.email == request.auth.token.email
                     && request.resource.data.role == 'expert'
-                    && request.resource.data.timestamp == request.time;
+                    && request.resource.data.timestamp == request.time
+                    && getAfter(/databases/$(database)/documents/Claims/$(request.resource.data.student_key)).data.uid == request.auth.uid;
       allow update, delete: if false;
     }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -1,11 +1,12 @@
 /* The B-Lab Cohort: shared Firebase setup + the Expert access guard.
-   Used by auth.html (sign-in page) and expert-terminal.html (protected page).
+   Used by auth.html (sign-in page), admin-allowlist.html (local admin tool) and expert-terminal.html.
 
    On a protected page, import it with:   <script type="module" src="auth-check.js" data-guard></script>
-   The page stays hidden until a signed-in @tapmi.edu.in user is confirmed; otherwise the visitor is sent
-   to auth.html immediately. When access is confirmed it fires a "expert-ready" event with the user. */
+   The page stays hidden until a signed-in @tapmi.edu.in user with a completed registration
+   (an ExpertUsers document) is confirmed; otherwise the visitor is sent to auth.html immediately.
+   When access is confirmed it fires an "expert-ready" event with the user. */
 
-import { firebaseConfig, ALLOWED_DOMAIN, FIREBASE_VERSION, isConfigured } from "./config.js";
+import { firebaseConfig, ALLOWED_DOMAIN, ALLOWLIST_SALT, USERS_COLLECTION, FIREBASE_VERSION, isConfigured } from "./config.js";
 
 const CDN = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
 
@@ -15,6 +16,13 @@ export const DOMAIN_ERROR = "Only TAPMI email addresses (@tapmi.edu.in) are auth
 
 export function isTapmiEmail(email) {
   return TAPMI_EMAIL.test(String(email || "").trim());
+}
+
+// Same key as scripts/student_allowlist.py: SHA-256("blab-v1|<ROLL>|<YYYY-MM-DD>")
+export async function studentKey(roll, dobIso) {
+  const r = String(roll || "").replace(/\s+/g, "").toUpperCase();
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${ALLOWLIST_SALT}|${r}|${dobIso}`));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 let cache = null;
@@ -41,6 +49,11 @@ if (isGuarded) {
     fb.authMod.onAuthStateChanged(fb.auth, async user => {
       if (!user) { deny("signin"); return; }
       if (!isTapmiEmail(user.email)) { await fb.authMod.signOut(fb.auth); deny("domain"); return; }
+      // a completed registration (checked against the student list) is required, not just an account
+      try {
+        const snap = await fb.dbMod.getDoc(fb.dbMod.doc(fb.db, USERS_COLLECTION, user.uid));
+        if (!snap.exists()) { await fb.authMod.signOut(fb.auth); deny("notregistered"); return; }
+      } catch (e) { await fb.authMod.signOut(fb.auth); deny("notregistered"); return; }
       window.expertUser = user;
       document.documentElement.style.visibility = "";
       document.documentElement.classList.remove("locked");      // the page's own pre-paint lock

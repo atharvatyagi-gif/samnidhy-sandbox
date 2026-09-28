@@ -17,3 +17,10 @@ video_assets/
 
 # live prices change every 15 minutes; they are fetched fresh on GitHub, not stored
 data/screener/live.json
+
+# Private student data: never commit or publish
+*.xlsx
+*.xls
+private/
+# terminal data caches (rebuilt from NSE files; persisted by the Actions cache)
+data/terminal/

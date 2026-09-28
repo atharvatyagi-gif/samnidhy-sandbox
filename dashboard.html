@@ -4609,6 +4609,12 @@
   const STATUS = JSON.parse(document.getElementById('dashboard-status').textContent || '{}');
   const SESSIONS = JSON.parse(document.getElementById('dashboard-sessions').textContent || '[]');
   const META = JSON.parse(document.getElementById('dashboard-meta').textContent || '{}');
+  // Reloading takes the visitor back to the home (landing) page, on the website only.
+  (function () {
+    const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    if (/^https?:/.test(location.protocol) && nav && nav.type === 'reload' && META.home)
+      location.replace(META.home.replace(/(sandbox|dashboard)\.html$/, 'index.html'));
+  })();
   // The Advanced page sits next to this page (sandbox.html on the website, dashboard.html locally).
   (function () {
     const a = document.getElementById('adv-link');

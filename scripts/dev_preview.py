@@ -1,8 +1,9 @@
 """
 Developer preview of the Expert terminal WITHOUT signing in (local only, never published).
 
-Builds the site, adds expert-dev.html (the terminal with a fake developer user instead of the
-Firebase sign-in guard), serves site/ on http://127.0.0.1:8765 and opens it in your browser.
+Builds the site, adds two local-only pages, serves site/ on http://127.0.0.1:8765 and opens the preview:
+  expert-dev.html        the real expert-terminal.html with a fake developer user instead of the sign-in guard
+  admin-allowlist.html   the admin tool that uploads the hashed student allow-list to Firestore
 Press Ctrl+C to stop.
 
   python scripts/dev_preview.py
@@ -20,7 +21,20 @@ SITE = ROOT / "site"
 PORT = 8765
 
 subprocess.run([sys.executable, str(ROOT / "scripts" / "build_site.py")], check=True)
-shutil.copyfile(ROOT / "expert-dev.html", SITE / "expert-dev.html")
+page = (ROOT / "expert-terminal.html").read_text(encoding="utf-8")
+guard = '<script type="module" src="auth-check.js" data-guard></script>'
+assert guard in page, "expert-terminal.html no longer has the auth guard line"
+page = page.replace(guard, """<script type="module">
+  // DEVELOPER PREVIEW: fake signed-in user, no Firebase. Local only, never published.
+  window.expertUser = { email: "developer.preview@tapmi.edu.in" };
+  window.__expertSignOut = async () => {};
+  document.documentElement.classList.remove("locked");
+</script>""")
+page = page.replace('<script src="reload-home.js"></script>', "")
+page = page.replace("<title>B-LAB TERMINAL", "<title>DEV PREVIEW · B-LAB TERMINAL")
+page = page.replace("<!--TERMINAL-BODY-START-->", '<div style="position:fixed;right:0;bottom:22px;z-index:99;background:#e0a060;color:#061a10;font:700 11px Consolas,monospace;padding:2px 8px">DEV PREVIEW · NO SIGN-IN · NOT PUBLISHED</div>')
+(SITE / "expert-dev.html").write_text(page, encoding="utf-8")
+shutil.copyfile(ROOT / "admin-allowlist.html", SITE / "admin-allowlist.html")
 url = f"http://127.0.0.1:{PORT}/expert-dev.html"
 print(f"Developer preview: {url}   (Ctrl+C to stop)")
 handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(SITE))

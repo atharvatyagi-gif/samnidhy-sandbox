@@ -206,14 +206,29 @@ then open `advanced.html`. Educational analysis only. Not investment advice.
 
 ## The B-Lab Cohort: (landing page, Expert access, terminal)
 
-Flow: `index.html` (scroll landing page, GSAP) → `advanced.html` → **Expert Mode** → `auth.html` → `expert-terminal.html`.
-The daily movers dashboard now lives at `sandbox.html` on the website (built from `dashboard.html`).
+Flow: `index.html` (scroll landing page) → **Enter the Cohort** → `sandbox.html` (main page, daily movers) → **◆ Advanced**
+→ **Expert Mode** → `auth.html` → `expert-terminal.html`. Reloading any page on the website returns to the home page.
 
-- `index.html`, `landing.css`, `landing.js`: cinematic scroll page (GSAP 3.15 + ScrollTrigger from cdnjs). Works without JS / with reduced motion.
-- `auth.html`, `auth-check.js`, `config.js`: Firebase email + password sign-in. Registration only for addresses ending exactly in
-  `@tapmi.edu.in`; each new user gets an `ExpertUsers/<uid>` document `{ email, timestamp, role: "expert" }`.
-  **Setup:** create a Firebase project → Authentication → enable Email/Password → Firestore Database → create → paste the web-app
-  config into `config.js` → paste `firestore.rules` into Firestore → Rules → Publish → add your Pages domain under Authentication →
-  Settings → Authorized domains.
-- `expert-terminal.html`, `terminal.css`, `terminal.js`: guarded terminal (WEI, DES, GP, TOP, QR panels + command line), real data only:
-  `site/live.json` (prices, world indices, headlines) and `site/screener.json` (today's screen), refreshed by the live-prices workflow.
+### Expert access (Firebase, email + password, TAPMI students only)
+Registering needs a `@tapmi.edu.in` email, the student's **roll number + date of birth** (checked against the TAPMI student
+list) and a **new** B-Lab password. Each student can register once; the terminal opens only for completed registrations.
+The student list itself never goes online: `scripts/student_allowlist.py` turns it into one-way SHA-256 keys.
+
+Setup (once):
+1. Firebase console: create a project → Authentication → enable **Email/Password** → create a Firestore database.
+2. Paste the web-app config into `config.js` (lines 7–12).
+3. `firestore.rules`: replace `admin_email_here` with your admin email (lower case) → paste into Firestore → Rules → Publish.
+4. Authentication → Users → **Add user** with that admin email and a password.
+5. Authentication → Settings → Authorized domains: add `atharvatyagi-gif.github.io`.
+6. On your computer: `pip install openpyxl`, then
+   `python scripts/student_allowlist.py "Student List for ID Card- Batch 2026-29.xlsx"` → `private/allowlist_keys.json`.
+7. `python scripts/dev_preview.py` → open `http://127.0.0.1:8765/admin-allowlist.html`, sign in as the admin, upload the file.
+The Excel file, `private/` and the admin page are never committed or published.
+
+### Expert terminal: every NSE stock
+- `scripts/nse_eod.py` (daily): NSE's official bhavcopies for ~1 year → all ~3,500 NSE stocks, SME boards and ETFs
+  (`data/terminal/`, kept in the GitHub Actions cache, not in git).
+- `scripts/terminal_live.py` (every 15 min in market hours): delayed 5-minute prices from Yahoo Finance for ~2,950
+  main-board stocks; prices that disagree with NSE's own close are rejected. SME stocks show NSE end-of-day prices.
+- `scripts/terminal_fund.py` (daily): fundamentals for the NIFTY 500.
+- Developer preview without signing in (local only): `python scripts/dev_preview.py` → `expert-dev.html`.

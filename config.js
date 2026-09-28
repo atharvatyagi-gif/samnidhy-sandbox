@@ -15,8 +15,14 @@ export const firebaseConfig = {
 // Only these email addresses may register or sign in.
 export const ALLOWED_DOMAIN = "tapmi.edu.in";
 
-// Firestore collection that gets one document per registered expert.
-export const USERS_COLLECTION = "ExpertUsers";
+// Registration also requires the student's roll number + date of birth to match the TAPMI student list
+// (uploaded as one-way keys with admin-allowlist.html; the list itself is never online).
+export const ALLOWLIST_SALT = "blab-v1";              // must match scripts/student_allowlist.py
+
+// Firestore collections.
+export const USERS_COLLECTION = "ExpertUsers";        // one document per registered expert
+export const STUDENTS_COLLECTION = "AllowedStudents"; // hashed allow-list keys (unreadable to users)
+export const CLAIMS_COLLECTION = "Claims";            // one per student key: each student registers once
 
 // Firebase JS SDK version loaded from Google's CDN.
 export const FIREBASE_VERSION = "12.19.0";

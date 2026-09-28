@@ -10,6 +10,9 @@
 <script>
   // Animations are opt-in: without JS (or with reduced motion) every section is simply visible.
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion');
+  // A reload always starts from the top of the home page.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
 </script>
 </head>
 <body>
