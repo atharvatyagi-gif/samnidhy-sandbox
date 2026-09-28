@@ -180,3 +180,20 @@ data/archive/<date>.json         each day's full analysis (kept)
 
 The original 5-stock version is saved as the git tag `baseline-5-stocks`. To look at it, run
 `git switch --detach baseline-5-stocks`, and run `git switch main` to come back.
+
+## Advanced page (stock screener + live technicals)
+
+`advanced.html` (on the website: `/advanced.html`, linked as **◆ Advanced** in the menu) is a second page:
+
+1. **Daily screen** (`scripts/screener.py`, settings in `[screener]` of `config.toml`), run by the daily update:
+   NIFTY 500 → drop banks/NBFCs/insurers/power utilities → price ≥ ₹50 and ≥ ₹10 Cr traded a day
+   → complete annual-report data → **Piotroski F-Score** ≥ 6 → best 10 by **Greenblatt's Magic Formula**
+   (return on capital + earnings yield). Saved to `data/screener/latest.json` and `data/screener/history/<date>.json`.
+   A stock with any missing number is left out, never estimated.
+2. **Live prices and technicals** (`scripts/live_technicals.py`), run every 15 minutes during market hours by
+   `.github/workflows/live-prices.yml`: delayed price (Yahoo Finance), Heikin-Ashi candles (daily and 5-minute),
+   RSI (14), Supertrend (10, 3) and Fibonacci retracement of the 6-month swing. Written to `data/screener/live.json`
+   (not stored in git) and published as `site/live.json`; an open page picks up new prices every 2 minutes.
+
+Run locally: `python scripts/screener.py`, `python scripts/live_technicals.py`, `python scripts/embed_data.py`,
+then open `advanced.html`. Educational analysis only. Not investment advice.
