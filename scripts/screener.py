@@ -187,6 +187,10 @@ def fundamentals(t):
         "recommendation_mean": info.get("recommendationMean"),
         "target_mean": info.get("targetMeanPrice"), "target_high": info.get("targetHighPrice"),
         "target_low": info.get("targetLowPrice"),
+        "eps": info.get("trailingEps"), "shares_out": info.get("sharesOutstanding"),
+        "employees": info.get("fullTimeEmployees"), "website": info.get("website"),
+        "city": info.get("city"), "beta": info.get("beta"),
+        "summary": (info.get("longBusinessSummary") or "")[:1200] or None,
     }
 
 
@@ -253,6 +257,8 @@ def run():
             "recommendation_mean": clean(r["recommendation_mean"]),
             "target_mean": clean(r["target_mean"]), "target_high": clean(r["target_high"]),
             "target_low": clean(r["target_low"]),
+            "eps": clean(r["eps"]), "shares_out": clean(r["shares_out"]), "employees": clean(r["employees"]),
+            "website": r["website"], "city": r["city"], "beta": clean(r["beta"]), "summary": r["summary"],
         })
     def dist(key):
         return sorted(round(v[key], 5) for v in liq.values() if key in v)

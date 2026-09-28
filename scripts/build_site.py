@@ -1,7 +1,8 @@
 """
 Builds the public website into site/:
 
-  site/index.html          the latest session (same as dashboard.html)
+  site/index.html          The B-Lab Cohort: landing page (index.html + landing.css/js)
+  site/sandbox.html        the daily movers dashboard, latest session (same as dashboard.html)
   site/days/<date>.html    one page per saved session, from data/archive/<date>.json
   site/advanced.html       the Advanced page (daily screen + live technicals)
   site/live.json           latest live prices, polled by the Advanced page between rebuilds
@@ -19,6 +20,8 @@ from embed_data import ADVANCED_PATH, DATA, HTML_PATH, SCREENER, advanced_blocks
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
+STATIC = ["index.html", "landing.css", "landing.js", "auth.html", "auth-check.js", "config.js",
+          "expert-terminal.html", "terminal.css", "terminal.js"]
 
 
 def main() -> None:
@@ -30,11 +33,11 @@ def main() -> None:
         shutil.rmtree(SITE)
     (SITE / "days").mkdir(parents=True)
 
-    (SITE / "index.html").write_text(embed(template, {
+    (SITE / "sandbox.html").write_text(embed(template, {
         "dashboard-data": read_json(DATA / "data.json"),
         "dashboard-status": status,
         "dashboard-sessions": sessions,
-        "dashboard-meta": {"view": "latest", "days_prefix": "days/", "home": "index.html"},
+        "dashboard-meta": {"view": "latest", "days_prefix": "days/", "home": "sandbox.html"},
     }), encoding="utf-8")
 
     archive = sorted((DATA / "archive").glob("????-??-??.json"))
@@ -43,15 +46,21 @@ def main() -> None:
             "dashboard-data": read_json(f),
             "dashboard-status": status,
             "dashboard-sessions": sessions,
-            "dashboard-meta": {"view": "archive", "days_prefix": "", "home": "../index.html"},
+            "dashboard-meta": {"view": "archive", "days_prefix": "", "home": "../sandbox.html"},
         }), encoding="utf-8")
 
     (SITE / "advanced.html").write_text(embed(ADVANCED_PATH.read_text(encoding="utf-8"), advanced_blocks()), encoding="utf-8")
     if (SCREENER / "live.json").exists():
         (SITE / "live.json").write_text((SCREENER / "live.json").read_text(encoding="utf-8"), encoding="utf-8")
 
+    # The B-Lab Cohort: landing page, Expert access and the terminal are static files, copied as they are.
+    for name in STATIC:
+        shutil.copyfile(ROOT / name, SITE / name)
+    if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
+        (SITE / "screener.json").write_text((SCREENER / "latest.json").read_text(encoding="utf-8"), encoding="utf-8")
+
     (SITE / ".nojekyll").write_text("", encoding="utf-8")  # tell GitHub Pages to serve files as-is
-    print(f"Built site/index.html and {len(archive)} past-session page(s) in site/days/")
+    print(f"Built site/ (landing, sandbox, advanced, expert access) and {len(archive)} past-session page(s) in site/days/")
 
 
 if __name__ == "__main__":

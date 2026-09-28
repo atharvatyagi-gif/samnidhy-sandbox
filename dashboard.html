@@ -4609,10 +4609,10 @@
   const STATUS = JSON.parse(document.getElementById('dashboard-status').textContent || '{}');
   const SESSIONS = JSON.parse(document.getElementById('dashboard-sessions').textContent || '[]');
   const META = JSON.parse(document.getElementById('dashboard-meta').textContent || '{}');
-  // The Advanced page sits next to the home page (index.html on the website, dashboard.html locally).
+  // The Advanced page sits next to this page (sandbox.html on the website, dashboard.html locally).
   (function () {
     const a = document.getElementById('adv-link');
-    if (a && META.home) a.href = META.home.replace(/(index|dashboard)\.html$/, 'advanced.html');
+    if (a && META.home) a.href = META.home.replace(/(index|dashboard|sandbox)\.html$/, 'advanced.html');
   })();
   const STOCKS = DASHBOARD_DATA.stocks;
   const STOCK_ORDER = DASHBOARD_DATA.order; // top gainers #1.., then top losers #1..

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The B-Lab Cohort:</title>
+<meta name="description" content="The B-Lab Cohort: a TAPMI student lab for markets. A daily NIFTY 500 screen, research-backed signals, and an expert terminal for TAPMI members. Educational analysis only.">
+<meta name="theme-color" content="#050505">
+<link rel="stylesheet" href="landing.css">
+<script>
+  // Animations are opt-in: without JS (or with reduced motion) every section is simply visible.
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion');
+</script>
+</head>
+<body>
+
+<nav class="lnav" aria-label="Site">
+  <a class="lnav-brand" href="#top">B-Lab<span>Cohort:</span></a>
+  <div class="lnav-links">
+    <a href="sandbox.html">Sandbox</a>
+    <a href="advanced.html">Advanced</a>
+    <a href="auth.html">Expert access</a>
+  </div>
+</nav>
+
+<div class="progress" aria-hidden="true"><i id="progress-bar"></i></div>
+
+<main id="top">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero" id="hero">
+    <div class="layer layer-back" data-depth="0.15" aria-hidden="true">
+      <div class="grid-plane"></div>
+      <div class="orb orb-a"></div><div class="orb orb-b"></div>
+    </div>
+    <div class="layer layer-mid" data-depth="0.45" aria-hidden="true">
+      <div class="ticker-ghost">NIFTY 500 · SCREEN · SIGNAL · TERMINAL · NIFTY 500 · SCREEN · SIGNAL · TERMINAL ·</div>
+      <svg class="candles-ghost" viewBox="0 0 600 200" preserveAspectRatio="none">
+        <polyline points="0,150 40,138 80,146 120,120 160,128 200,96 240,104 280,82 320,90 360,64 400,72 440,50 480,58 520,34 560,42 600,20" />
+      </svg>
+    </div>
+    <div class="hero-content layer-front">
+      <p class="eyebrow hero-in">TAPMI · Student markets lab</p>
+      <h1 class="hero-title" aria-label="The B-Lab Cohort:">
+        <span class="t-stack" aria-hidden="true">
+          <span class="t-shadow">The B-Lab</span><span class="t-shadow s2">The B-Lab</span><span class="t-main">The B-Lab</span>
+        </span>
+        <span class="t-stack t-second" aria-hidden="true">
+          <span class="t-shadow">Cohort:</span><span class="t-shadow s2">Cohort:</span><span class="t-main grad">Cohort:</span>
+        </span>
+      </h1>
+      <p class="hero-sub hero-in">Where the market becomes a classroom.</p>
+      <p class="scroll-hint hero-in"><span></span>Scroll</p>
+    </div>
+  </section>
+
+  <!-- ================= STATEMENT (clip reveal) ================= -->
+  <section class="statement" id="statement">
+    <div class="statement-inner">
+      <p class="big-line"><span class="reveal-line">Five hundred stocks.</span></p>
+      <p class="big-line"><span class="reveal-line">Every single day.</span></p>
+      <p class="big-line dim"><span class="reveal-line">One question:</span></p>
+      <p class="big-line accent"><span class="reveal-line">which ones deserve a closer look?</span></p>
+    </div>
+  </section>
+
+  <!-- ================= SCALE-UP SCREEN ================= -->
+  <section class="showcase" id="showcase">
+    <div class="showcase-pin">
+      <div class="showcase-copy">
+        <p class="eyebrow">The Advanced page</p>
+        <h2>The whole index, <span class="grad">screened before breakfast.</span></h2>
+      </div>
+      <div class="device" id="device">
+        <div class="device-bar"><i></i><i></i><i></i><span>b-lab / advanced</span></div>
+        <div class="device-screen">
+          <div class="mini-funnel">
+            <div style="--w:100%"><b>500</b><span>NIFTY 500</span></div>
+            <div style="--w:76%"><b>382</b><span>Not a bank or utility</span></div>
+            <div style="--w:70%"><b>351</b><span>Liquid</span></div>
+            <div style="--w:39%"><b>196</b><span>F-Score 6+</span></div>
+            <div style="--w:6%" class="last"><b>10</b><span>Magic Formula top 10</span></div>
+          </div>
+          <div class="mini-chart" aria-hidden="true">
+            <svg viewBox="0 0 300 120" preserveAspectRatio="none">
+              <path class="mc-area" d="M0,100 L30,92 L60,96 L90,78 L120,84 L150,62 L180,70 L210,48 L240,56 L270,34 L300,40 L300,120 L0,120 Z"/>
+              <path class="mc-line" d="M0,100 L30,92 L60,96 L90,78 L120,84 L150,62 L180,70 L210,48 L240,56 L270,34 L300,40"/>
+              <path class="mc-avg" d="M0,104 C60,98 120,90 180,76 C220,66 260,58 300,52"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PILLARS (slide in from the sides) ================= -->
+  <section class="pillars" id="pillars">
+    <div class="pillar from-left">
+      <span class="p-num">01</span>
+      <h3>Screen</h3>
+      <p>Two published, back-tested rules, the Piotroski F-Score and Greenblatt's Magic Formula, narrow the NIFTY 500 to ten companies every day.</p>
+    </div>
+    <div class="pillar from-right">
+      <span class="p-num">02</span>
+      <h3>Signal</h3>
+      <p>Trend, momentum, 52-week highs and volatility: only price signals that have held up in decades of research, ranked against the whole index.</p>
+    </div>
+    <div class="pillar from-left">
+      <span class="p-num">03</span>
+      <h3>Context</h3>
+      <p>FII and DII flows, India VIX, crude, the rupee and world markets: the weather every stock trades in, refreshed through the day.</p>
+    </div>
+    <div class="pillar from-right">
+      <span class="p-num">04</span>
+      <h3>Terminal</h3>
+      <p>For TAPMI members: a dense, keyboard-driven expert terminal with world indices, security descriptions, charts, news and the tape.</p>
+    </div>
+  </section>
+
+  <!-- ================= NUMBERS ================= -->
+  <section class="numbers" id="numbers">
+    <div class="num-card"><b data-count="500">500</b><span>stocks screened daily</span></div>
+    <div class="num-card"><b data-count="10">10</b><span>survive the screen</span></div>
+    <div class="num-card"><b data-count="15">15</b><span>minutes between price refreshes</span></div>
+    <div class="num-card"><b data-count="0">0</b><span>invented numbers</span></div>
+  </section>
+
+  <!-- ================= FINAL CTA (pinned) ================= -->
+  <section class="finale" id="finale">
+    <div class="finale-pin">
+      <div class="finale-glow" aria-hidden="true"></div>
+      <p class="eyebrow">Ready?</p>
+      <h2 class="finale-title">Step inside the lab.</h2>
+      <a class="cta" id="enter" href="advanced.html"><span>Enter the Cohort</span><i aria-hidden="true">&rarr;</i></a>
+      <p class="finale-note">Educational analysis only. Not investment advice.</p>
+    </div>
+  </section>
+
+</main>
+
+<div class="curtain" id="curtain" aria-hidden="true"></div>
+
+<footer class="lfoot">
+  <span>The B-Lab Cohort: · TAPMI</span>
+  <span><a href="sandbox.html">Daily movers sandbox</a> · <a href="advanced.html">Advanced</a> · <a href="auth.html">Expert access</a></span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js"></script>
+<script src="landing.js"></script>
+</body>
+</html>

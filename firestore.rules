@@ -1,0 +1,24 @@
+// The B-Lab Cohort: Firestore security rules.
+// Paste into Firebase console > Firestore Database > Rules, then Publish.
+// Server-side version of the site's domain rule: only signed-in @tapmi.edu.in users can create or read
+// their own ExpertUsers document, and only with role "expert".
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isTapmi() {
+      return request.auth != null && request.auth.token.email.lower().matches('.*@tapmi[.]edu[.]in$');
+    }
+    match /ExpertUsers/{userId} {
+      allow read: if isTapmi() && request.auth.uid == userId;
+      allow create: if isTapmi() && request.auth.uid == userId
+                    && request.resource.data.keys().hasOnly(['email', 'timestamp', 'role'])
+                    && request.resource.data.email == request.auth.token.email
+                    && request.resource.data.role == 'expert'
+                    && request.resource.data.timestamp == request.time;
+      allow update, delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

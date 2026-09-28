@@ -203,3 +203,17 @@ The original 5-stock version is saved as the git tag `baseline-5-stocks`. To loo
 
 Run locally: `python scripts/screener.py`, `python scripts/institutional.py`, `python scripts/live_technicals.py`, `python scripts/embed_data.py`,
 then open `advanced.html`. Educational analysis only. Not investment advice.
+
+## The B-Lab Cohort: (landing page, Expert access, terminal)
+
+Flow: `index.html` (scroll landing page, GSAP) → `advanced.html` → **Expert Mode** → `auth.html` → `expert-terminal.html`.
+The daily movers dashboard now lives at `sandbox.html` on the website (built from `dashboard.html`).
+
+- `index.html`, `landing.css`, `landing.js`: cinematic scroll page (GSAP 3.15 + ScrollTrigger from cdnjs). Works without JS / with reduced motion.
+- `auth.html`, `auth-check.js`, `config.js`: Firebase email + password sign-in. Registration only for addresses ending exactly in
+  `@tapmi.edu.in`; each new user gets an `ExpertUsers/<uid>` document `{ email, timestamp, role: "expert" }`.
+  **Setup:** create a Firebase project → Authentication → enable Email/Password → Firestore Database → create → paste the web-app
+  config into `config.js` → paste `firestore.rules` into Firestore → Rules → Publish → add your Pages domain under Authentication →
+  Settings → Authorized domains.
+- `expert-terminal.html`, `terminal.css`, `terminal.js`: guarded terminal (WEI, DES, GP, TOP, QR panels + command line), real data only:
+  `site/live.json` (prices, world indices, headlines) and `site/screener.json` (today's screen), refreshed by the live-prices workflow.

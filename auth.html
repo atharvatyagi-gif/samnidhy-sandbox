@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expert Access · The B-Lab Cohort:</title>
+<meta name="description" content="Sign in or register for Expert Access to The B-Lab Cohort: terminal. TAPMI email addresses only.">
+<meta name="theme-color" content="#050505">
+<meta name="robots" content="noindex">
+<style>
+  :root { --bg: #050505; --ink: #f5f5f7; --ink-2: #a1a1a6; --ink-3: #6e6e73; --green: #22c55e; --lime: #a3e635; --beige: #e9dcc0;
+          --line: rgba(255,255,255,0.12); --err: #ffb4a2; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); display: grid; place-items: center; padding: 70px 18px 40px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  body::before { content: ""; position: fixed; inset: 0; z-index: -1;
+    background: radial-gradient(700px 420px at 80% 0%, rgba(21,128,61,0.35), transparent 70%), radial-gradient(600px 400px at 0% 100%, rgba(168,150,111,0.2), transparent 70%); }
+  .top { position: fixed; top: 0; left: 0; right: 0; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px;
+    font-size: 0.82rem; border-bottom: 1px solid var(--line); background: rgba(5,5,5,0.7); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .top a { color: var(--ink-2); text-decoration: none; } .top a:hover { color: var(--ink); }
+  .top b { color: var(--ink); } .top b span { color: var(--beige); }
+  .card { width: min(440px, 100%); border-radius: 28px; padding: 34px 30px 28px; background: rgba(22,22,22,0.72); border: 1px solid var(--line);
+    backdrop-filter: blur(30px) saturate(160%); -webkit-backdrop-filter: blur(30px) saturate(160%); box-shadow: 0 40px 120px -30px rgba(34,197,94,0.35); }
+  .eyebrow { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--beige); margin: 0 0 10px; }
+  h1 { margin: 0 0 6px; font-size: 1.9rem; letter-spacing: -0.03em; }
+  .lead { margin: 0 0 22px; color: var(--ink-2); font-size: 0.95rem; }
+  .tabs { position: relative; display: grid; grid-template-columns: 1fr 1fr; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px; margin-bottom: 22px; }
+  .tabs button { position: relative; z-index: 1; border: 0; background: none; color: var(--ink-2); font: inherit; font-weight: 600; font-size: 0.92rem; padding: 9px; cursor: pointer; border-radius: 9px; }
+  .tabs button[aria-selected="true"] { color: #041008; }
+  .tabs .pill { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 9px; background: linear-gradient(100deg, var(--green), var(--beige)); transition: transform 0.35s cubic-bezier(.2,.8,.2,1); }
+  .tabs[data-tab="register"] .pill { transform: translateX(100%); }
+  label { display: block; font-size: 0.8rem; color: var(--ink-2); margin: 14px 0 6px; }
+  input { width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: rgba(0,0,0,0.45); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  input:focus { border-color: rgba(233,220,192,0.55); box-shadow: 0 0 0 4px rgba(233,220,192,0.1); }
+  input[aria-invalid="true"] { border-color: #ff8a70; box-shadow: 0 0 0 4px rgba(255,138,112,0.15); }
+  .hint { font-size: 0.76rem; color: var(--ink-3); margin-top: 6px; }
+  .submit { margin-top: 22px; width: 100%; border: 0; border-radius: 14px; padding: 14px; font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; color: #041008;
+    background: linear-gradient(100deg, var(--green), var(--lime) 55%, var(--beige)); box-shadow: 0 14px 40px -12px rgba(34,197,94,0.7); transition: transform 0.2s, opacity 0.2s; }
+  .submit:hover { transform: translateY(-1px); } .submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .alert { display: none; margin-top: 18px; border-radius: 14px; padding: 14px 16px; font-size: 0.92rem; font-weight: 600; line-height: 1.4; }
+  .alert.show { display: block; animation: shake 0.4s; }
+  .alert.err { color: var(--err); background: rgba(255,90,60,0.12); border: 1px solid rgba(255,138,112,0.55); }
+  .alert.ok { color: #b7f7cd; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.45); animation: none; }
+  .alert.info { color: var(--beige); background: rgba(233,220,192,0.08); border: 1px solid rgba(233,220,192,0.35); animation: none; }
+  @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+  .foot { margin-top: 20px; font-size: 0.78rem; color: var(--ink-3); text-align: center; }
+  .foot a { color: var(--ink-2); }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a href="advanced.html">&larr; Advanced</a>
+  <b>B-Lab <span>Cohort:</span></b>
+  <a href="index.html">Home</a>
+</div>
+
+<main class="card">
+  <p class="eyebrow">Expert access</p>
+  <h1>The B-Lab Terminal</h1>
+  <p class="lead">For TAPMI members. Sign in with your <b>@tapmi.edu.in</b> email and a password.</p>
+
+  <div class="tabs" id="tabs" data-tab="login" role="tablist">
+    <span class="pill" aria-hidden="true"></span>
+    <button type="button" role="tab" id="tab-login" aria-selected="true" aria-controls="auth-form">Login</button>
+    <button type="button" role="tab" id="tab-register" aria-selected="false" aria-controls="auth-form">Register</button>
+  </div>
+
+  <form id="auth-form" novalidate>
+    <label for="email">TAPMI email</label>
+    <input id="email" type="email" autocomplete="username" placeholder="firstname.lastname@tapmi.edu.in" required>
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" minlength="8" required>
+    <div id="confirm-wrap" hidden>
+      <label for="confirm">Confirm password</label>
+      <input id="confirm" type="password" autocomplete="new-password" minlength="8">
+      <div class="hint">At least 8 characters.</div>
+    </div>
+    <button class="submit" id="submit" type="submit">Login</button>
+    <div class="alert" id="alert" role="alert" aria-live="assertive"></div>
+  </form>
+
+  <p class="foot">Educational analysis only. Not investment advice. · <a href="advanced.html">Back to the Advanced page</a></p>
+</main>
+
+<script type="module">
+  import { firebase, isTapmiEmail, DOMAIN_ERROR } from "./auth-check.js";
+  import { USERS_COLLECTION, isConfigured } from "./config.js";
+
+  const $ = id => document.getElementById(id);
+  const form = $("auth-form"), email = $("email"), pw = $("password"), confirm = $("confirm"), btn = $("submit"), alertBox = $("alert");
+  let mode = "login";
+
+  function show(kind, msg) { alertBox.className = "alert show " + kind; alertBox.textContent = msg; }
+  function clear() { alertBox.className = "alert"; alertBox.textContent = ""; email.removeAttribute("aria-invalid"); }
+
+  function setMode(m) {
+    mode = m;
+    $("tabs").dataset.tab = m;
+    $("tab-login").setAttribute("aria-selected", m === "login");
+    $("tab-register").setAttribute("aria-selected", m === "register");
+    $("confirm-wrap").hidden = m !== "register";
+    pw.autocomplete = m === "register" ? "new-password" : "current-password";
+    btn.textContent = m === "register" ? "Create expert account" : "Login";
+    clear();
+  }
+  $("tab-login").addEventListener("click", () => setMode("login"));
+  $("tab-register").addEventListener("click", () => setMode("register"));
+
+  // Why the visitor was sent here
+  const reason = new URLSearchParams(location.search).get("reason");
+  if (reason === "domain") show("err", DOMAIN_ERROR);
+  else if (reason === "signin") show("info", "Please sign in to open the Expert terminal.");
+
+  const NOT_READY = "Expert access isn't switched on yet: the site owner still needs to add the Firebase keys in config.js.";
+  if (!isConfigured() && (!reason || reason === "setup")) show("info", NOT_READY);
+
+  const friendly = code => ({
+    "auth/email-already-in-use": "An account with this email already exists. Use the Login tab.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/wrong-password": "Email or password is incorrect.",
+    "auth/user-not-found": "No account with this email. Use the Register tab.",
+    "auth/weak-password": "Password is too weak: use at least 8 characters.",
+    "auth/too-many-requests": "Too many attempts. Please wait a few minutes and try again.",
+    "auth/network-request-failed": "Network problem. Check your connection and try again.",
+  }[code] || "Something went wrong. Please try again.");
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    clear();
+    const addr = email.value.trim().toLowerCase();
+    // STRICT domain rule, checked before anything is sent anywhere
+    if (!isTapmiEmail(addr)) { email.setAttribute("aria-invalid", "true"); show("err", DOMAIN_ERROR); email.focus(); return; }
+    if (pw.value.length < 8) { show("err", "Password must be at least 8 characters."); return; }
+    if (mode === "register" && pw.value !== confirm.value) { show("err", "The two passwords don't match."); return; }
+    if (!isConfigured()) { show("info", NOT_READY); return; }
+    btn.disabled = true;
+    try {
+      const fb = await firebase();
+      const A = fb.authMod;
+      if (mode === "register") {
+        const cred = await A.createUserWithEmailAndPassword(fb.auth, addr, pw.value);
+        await registerExpert(fb, cred.user);
+        show("ok", "Account created. Opening the terminal…");
+      } else {
+        const cred = await A.signInWithEmailAndPassword(fb.auth, addr, pw.value);
+        if (!isTapmiEmail(cred.user.email)) { await A.signOut(fb.auth); show("err", DOMAIN_ERROR); btn.disabled = false; return; }
+        show("ok", "Signed in. Opening the terminal…");
+      }
+      setTimeout(() => location.replace("expert-terminal.html"), 500);
+    } catch (err) {
+      show("err", err.message === "not-configured" ? "Expert access isn't configured yet (config.js)." : friendly(err.code));
+      btn.disabled = false;
+    }
+  });
+
+  // Writes { email, timestamp, role: "expert" } to the ExpertUsers collection (one document per user id).
+  async function registerExpert(fb, user) {
+    const D = fb.dbMod;
+    await D.setDoc(D.doc(fb.db, USERS_COLLECTION, user.uid), {
+      email: user.email,
+      timestamp: D.serverTimestamp(),
+      role: "expert",
+    });
+  }
+
+  // Already signed in with a TAPMI account? Go straight to the terminal.
+  if (isConfigured()) {
+    firebase().then(fb => fb.authMod.onAuthStateChanged(fb.auth, u => {
+      if (u && isTapmiEmail(u.email) && !reason) location.replace("expert-terminal.html");
+    })).catch(() => {});
+  }
+</script>
+</body>
+</html>

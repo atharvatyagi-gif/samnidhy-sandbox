@@ -135,8 +135,8 @@ def analyse(p, ustats):
                       zip(tail.index, tail["Open"], tail["High"], tail["Low"], tail["Close"])],
             "sma50": [r2(x) for x in sma50.tail(CHART_DAYS)],
             "sma200": [r2(x) for x in sma200.tail(CHART_DAYS)],
-            "intraday": [[ts.strftime("%H:%M"), r2(o), r2(h), r2(l), r2(cl)] for ts, o, h, l, cl in
-                         zip(intra.index, intra["Open"], intra["High"], intra["Low"], intra["Close"])],
+            "intraday": [[ts.strftime("%H:%M"), r2(o), r2(h), r2(l), r2(cl), int(v) if v == v else None] for ts, o, h, l, cl, v in
+                         zip(intra.index, intra["Open"], intra["High"], intra["Low"], intra["Close"], intra["Volume"])],
         },
     }
 
@@ -170,6 +170,76 @@ def markets():
     return out
 
 
+INDICES = [  # World Equity Indices panel of the expert terminal: (Yahoo ticker, short code, name, region)
+    ("^GSPC", "SPX", "S&P 500", "Americas"), ("^NDX", "NDX", "Nasdaq 100", "Americas"),
+    ("^DJI", "INDU", "Dow Jones Industrials", "Americas"),
+    ("^FTSE", "UKX", "FTSE 100", "EMEA"), ("^GDAXI", "DAX", "DAX", "EMEA"), ("^FCHI", "CAC", "CAC 40", "EMEA"),
+    ("^N225", "NKY", "Nikkei 225", "Asia/Pacific"), ("^HSI", "HSI", "Hang Seng", "Asia/Pacific"),
+    ("^KS11", "KOSPI", "KOSPI", "Asia/Pacific"),
+    ("^NSEI", "NIFTY", "Nifty 50", "Asia/Pacific"), ("^BSESN", "SENSEX", "BSE Sensex", "Asia/Pacific"),
+    ("^NSEBANK", "NSEBANK", "Nifty Bank", "Asia/Pacific"),
+]
+
+
+def world_indices():
+    """Value, net/% change, time of last price (IST) and year-to-date % for each index. Missing -> error."""
+    tickers = [i[0] for i in INDICES]
+    daily = yf.download(tickers, period="14mo", interval="1d", group_by="ticker", auto_adjust=False, threads=True, progress=False)
+    intra = yf.download(tickers, period="5d", interval="15m", group_by="ticker", auto_adjust=False, threads=True, progress=False)
+    today = datetime.now(IST).date()
+    out = []
+    for tkr, code, name, region in INDICES:
+        row = {"ticker": tkr, "code": code, "name": name, "region": region}
+        try:
+            d = daily[tkr]["Close"].dropna()
+        except KeyError:
+            d = pd.Series(dtype=float)
+        if len(d) < 2:
+            row["error"] = "not available"
+            out.append(row)
+            continue
+        last, when, day = float(d.iloc[-1]), None, d.index[-1].date()
+        try:
+            i = intra[tkr]["Close"].dropna()
+            if len(i):
+                # dates are compared in the exchange's own timezone (a US Friday close is Saturday in IST)
+                last, day, when = float(i.iloc[-1]), i.index[-1].date(), i.index[-1].tz_convert(IST)
+        except KeyError:
+            pass
+        # previous close = last daily close before the latest price's own trading day
+        prior = d[[ix.date() < day for ix in d.index]]
+        prev = float(prior.iloc[-1]) if len(prior) else float(d.iloc[-2])
+        ye = d[[ix.year < day.year for ix in d.index]]
+        row.update({
+            "value": r2(last), "net": r2(last - prev), "pct": r2((last / prev - 1) * 100),
+            "time": (when.strftime("%H:%M") if when.date() == today else when.strftime("%d %b")) if when is not None else str(d.index[-1].date()),
+            "ytd": r2((last / float(ye.iloc[-1]) - 1) * 100) if len(ye) else None,
+        })
+        out.append(row)
+    return out
+
+
+def headlines(picks):
+    """Latest real headlines from Yahoo Finance for the screened stocks and the main indices."""
+    items = {}
+    for sym, t in [(p["symbol"], p["yahoo_ticker"]) for p in picks] + [("NIFTY", "^NSEI"), ("SPX", "^GSPC")]:
+        try:
+            news = yf.Ticker(t).news or []
+        except Exception:
+            continue
+        for n in news:
+            c = n.get("content") or {}
+            nid, title, when = c.get("id") or n.get("id"), c.get("title"), c.get("pubDate") or c.get("displayTime")
+            if not (nid and title and when):
+                continue
+            it = items.setdefault(nid, {"title": title, "time_utc": when,
+                                        "publisher": ((c.get("provider") or {}).get("displayName")),
+                                        "url": ((c.get("canonicalUrl") or {}).get("url")), "tickers": []})
+            if sym not in it["tickers"]:
+                it["tickers"].append(sym)
+    return sorted(items.values(), key=lambda x: x["time_utc"], reverse=True)[:60]
+
+
 def market_state(now_ist, session_day):
     open_t, close_t = now_ist.replace(hour=9, minute=15, second=0), now_ist.replace(hour=15, minute=30, second=0)
     return "open" if session_day == now_ist.date() and open_t <= now_ist <= close_t else "closed"
@@ -185,6 +255,14 @@ def main():
     except Exception as exc:
         weather = [{"ticker": m[0], "name": m[1], "group": m[2], "unit": m[3],
                     "error": f"not available ({type(exc).__name__})"} for m in MARKETS]
+    try:
+        wei = world_indices()
+    except Exception as exc:
+        wei = [{"ticker": i[0], "code": i[1], "name": i[2], "region": i[3], "error": f"not available ({type(exc).__name__})"} for i in INDICES]
+    try:
+        news = headlines(picks)
+    except Exception:
+        news = []
     ok = [r for r in rows if "error" not in r]
     now = datetime.now(IST)
     DIR.mkdir(parents=True, exist_ok=True)
@@ -194,7 +272,7 @@ def main():
             "error": "no live prices could be fetched",
             "generated_utc": now.astimezone(timezone.utc).isoformat(timespec="seconds"),
             "generated_ist": now.strftime("%d %b %Y, %I:%M %p IST"),
-            "markets": weather, "stocks": {r["symbol"]: r for r in rows}}, allow_nan=False), encoding="utf-8")
+            "markets": weather, "indices": wei, "news": news, "stocks": {r["symbol"]: r for r in rows}}, allow_nan=False), encoding="utf-8")
         for r in rows:
             print(f"  {r['symbol']}: {r['error']}")
         raise RuntimeError("no live prices could be fetched")
@@ -206,10 +284,14 @@ def main():
         "session_date": session,
         "last_bar_ist": max(r["last_bar_ist"] for r in ok if r["session_date"] == session),
         "markets": weather,
+        "indices": wei,
+        "news": news,
         "stocks": {r["symbol"]: r for r in rows},
     }
     (DIR / "live.json").write_text(json.dumps(out, separators=(",", ":"), allow_nan=False), encoding="utf-8")
-    print(f"market {out['market']}, session {session}, last bar {out['last_bar_ist']} IST")
+    print(f"market {out['market']}, session {session}, last bar {out['last_bar_ist']} IST; {len(news)} headlines")
+    for w in wei:
+        print(f"  {w['code']:<8} {w.get('value', w.get('error'))!s:>11} {w.get('pct', '')!s:>6}% {w.get('time', '')!s:>7} YTD {w.get('ytd', '')}")
     for m in weather:
         extra = f"  200-DMA {'above' if m['above_200'] else 'below'}" if "above_200" in m else ""
         print(f"  {m['name']:<22} {m.get('value', m.get('error'))!s:>12} {m.get('change_pct', '')!s:>7}%{extra}")
