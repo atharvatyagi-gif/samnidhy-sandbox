@@ -84,7 +84,7 @@ def analyse(p, ustats):
         try:
             tk = yf.Ticker(t)
             daily = tk.history(period="2y", interval="1d", auto_adjust=True)   # 2y so the 200-day line spans the chart
-            intra = tk.history(period="1d", interval="5m", auto_adjust=True)
+            intra = tk.history(period="5d", interval="5m", auto_adjust=True)   # 5d: always has the last session
             break
         except Exception as exc:
             if attempt == 2:
@@ -97,6 +97,7 @@ def analyse(p, ustats):
     daily.index = daily.index.tz_convert(IST) if daily.index.tz else daily.index.tz_localize(IST)
     intra.index = intra.index.tz_convert(IST)
     session_day = intra.index[-1].date()
+    intra = intra[intra.index.date == session_day]     # only the latest trading session's bars
     prev = daily[daily.index.date < session_day]
     prev_close = float(prev["Close"].iloc[-1])
     price = float(intra["Close"].iloc[-1])

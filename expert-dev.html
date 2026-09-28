@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" class="locked">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEV PREVIEW · B-LAB TERMINAL</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#061a10">
+<style>.locked { visibility: hidden; }</style>
+<!-- DEVELOPER PREVIEW: no sign-in. This file is never published (scripts/build_site.py does not copy it);
+     open it with:  python scripts/dev_preview.py  -->
+<script type="module">
+  const user = { email: "developer.preview@tapmi.edu.in" };
+  window.expertUser = user;
+  window.__expertSignOut = async () => {};
+  document.documentElement.classList.remove("locked");
+</script>
+<style>
+  .dev-flag { position: fixed; right: 0; bottom: 18px; z-index: 99; background: #d9a066; color: #061a10; font: 700 11px Consolas, monospace; padding: 2px 8px; }
+</style>
+<link rel="stylesheet" href="terminal.css">
+</head>
+<body>
+<div class="dev-flag">DEV PREVIEW · NO SIGN-IN · NOT PUBLISHED</div>
+<div class="term" id="term">
+
+  <!-- system bar -->
+  <header class="sys">
+    <a class="esc" href="advanced.html#signals" id="back">[&lt; ESC] BACK TO B-LAB</a>
+    <span class="sys-title">B-LAB TERMINAL <span class="dim">v1.0</span></span>
+    <span class="sys-mid"><span id="mkt" class="tag">MKT --</span> <span id="clock">--:--:-- IST</span></span>
+    <span class="sys-user">SYS_USER: <b id="sys-user">--</b> <button type="button" id="logout" class="lnk">[LOGOFF]</button></span>
+  </header>
+
+  <!-- command line -->
+  <div class="cli" id="cli">
+    <span class="prompt">&gt;</span>
+    <div class="cli-field">
+      <span id="cli-mirror"></span><span class="cursor" aria-hidden="true">█</span>
+      <input id="cli-input" type="text" autocomplete="off" spellcheck="false" aria-label="Command line: type a security and function, then press Enter"
+             aria-autocomplete="list" aria-controls="cli-suggest" aria-expanded="false">
+    </div>
+    <span class="cli-help dim">&lt;GO&gt;=ENTER · TAB=COMPLETE · HELP &lt;GO&gt;</span>
+    <ul class="suggest" id="cli-suggest" role="listbox" hidden></ul>
+  </div>
+
+  <!-- function strip -->
+  <nav class="fstrip" aria-label="Functions">
+    <button type="button" data-fn="WEI">1) WEI</button>
+    <button type="button" data-fn="DES">2) DES</button>
+    <button type="button" data-fn="GP">3) GP</button>
+    <button type="button" data-fn="TOP">4) TOP</button>
+    <button type="button" data-fn="QR">5) QR</button>
+    <span class="fsec" id="fsec">--</span>
+    <span class="fmsg" id="fmsg"></span>
+  </nav>
+
+  <!-- panels -->
+  <section class="panel p-wei" id="p-WEI" aria-label="World Equity Indices">
+    <div class="ph"><span>1) WEI</span><span>World Equity Indices</span><span class="ph-r" id="wei-asof"></span></div>
+    <div class="pb"><table class="grid" id="wei">
+      <thead><tr><th>Index</th><th class="r">Value</th><th class="r">Net Chg</th><th class="r">%Chg</th><th class="r">Time</th><th class="r">YTD%</th></tr></thead>
+      <tbody></tbody></table></div>
+  </section>
+
+  <section class="panel p-des" id="p-DES" aria-label="Security Description">
+    <div class="ph"><span>2) DES</span><span>Security Description</span><span class="ph-r" id="des-sec"></span></div>
+    <div class="pb" id="des"></div>
+  </section>
+
+  <section class="panel p-gp" id="p-GP" aria-label="Graph Price">
+    <div class="ph"><span>3) GP</span><span id="gp-title">Graph Price</span>
+      <span class="ph-r ranges" id="gp-ranges">
+        <button type="button" data-r="1D">1D</button><button type="button" data-r="3D" disabled title="Only today's intraday data is loaded">3D</button>
+        <button type="button" data-r="1M">1M</button><button type="button" data-r="6M">6M</button>
+        <button type="button" data-r="1Y">1Y</button><button type="button" data-r="5Y" disabled title="Only one year of daily data is loaded">5Y</button>
+      </span></div>
+    <div class="gp-legend" id="gp-legend"></div>
+    <div class="pb gp-body" id="gp"></div>
+  </section>
+
+  <section class="panel p-top" id="p-TOP" aria-label="Top News">
+    <div class="ph"><span>4) TOP</span><span>Top News</span><span class="ph-r dim">YAHOO FINANCE</span></div>
+    <div class="pb news-wrap"><ul class="news" id="news"></ul></div>
+  </section>
+
+  <section class="panel p-qr" id="p-QR" aria-label="Quote Recap">
+    <div class="ph"><span>5) QR</span><span>Quote Recap</span><span class="ph-r" id="qr-sec"></span></div>
+    <div class="pb qr-wrap">
+      <div class="qr-head"><span>Time</span><span class="r">Last</span><span class="r">Chg</span><span class="r">High</span><span class="r">Low</span><span class="r">Volume</span></div>
+      <div class="qr-view"><div class="qr-roll" id="qr"></div></div>
+    </div>
+  </section>
+
+  <!-- status bar -->
+  <footer class="status">
+    <span id="st-data">DATA --</span>
+    <span class="dim">PRICES DELAYED · SOURCES: YAHOO FINANCE, NSE · REAL DATA ONLY, NOTHING SIMULATED</span>
+    <span class="st-r">EDUCATIONAL ANALYSIS ONLY. NOT INVESTMENT ADVICE.</span>
+  </footer>
+</div>
+<script type="module" src="terminal.js"></script>
+</body>
+</html>

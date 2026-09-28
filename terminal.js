@@ -144,7 +144,8 @@ function renderGp() {
   let hiI = 0, loI = 0;
   bars.forEach((b, i) => { if (b[2] > bars[hiI][2]) hiI = i; if (b[3] < bars[loI][3]) loI = i; });
   const last = bars[bars.length - 1];
-  leg.innerHTML = `<span><i style="background:var(--up)"></i>Last Price <b class="up">${inr(L.price)}</b></span>
+  const sessTag = intraday ? `<span class="${LIVE.market === "open" ? "up" : "down"}">${LIVE.market === "open" ? "LIVE SESSION" : "SESSION CLOSED · LAST SESSION " + esc(L.session_date)}</span>` : "";
+  leg.innerHTML = `${sessTag}<span><i style="background:var(--up)"></i>Last Price <b class="up">${inr(L.price)}</b></span>
     <span class="dim">High on ${esc(bars[hiI][0])} <b style="color:var(--txt)">${inr(bars[hiI][2])}</b></span>
     <span class="dim">Low on ${esc(bars[loI][0])} <b style="color:var(--txt)">${inr(bars[loI][3])}</b></span>
     ${intraday ? "" : `<span><i style="background:#e8dcc3"></i>SMA(50) ${inr(s50[s50.length - 1])}</span><span><i style="background:#b5a682"></i>SMA(200) ${inr(s200[s200.length - 1])}</span>`}`;

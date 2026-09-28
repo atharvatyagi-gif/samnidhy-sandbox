@@ -30,7 +30,7 @@ a { color: inherit; }
 .lnav-links { display: flex; gap: 22px; }
 .lnav-links a { text-decoration: none; color: var(--ink-2); transition: color 0.2s; }
 .lnav-links a:hover { color: var(--ink); }
-@media (max-width: 520px) { .lnav-links { gap: 14px; } .lnav-links a:first-child { display: none; } }
+@media (max-width: 520px) { .lnav-links { gap: 14px; } .lnav-links a:nth-child(2) { display: none; } }
 .progress { position: fixed; top: 48px; left: 0; right: 0; height: 2px; z-index: 49; }
 .progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green), var(--beige)); }
 

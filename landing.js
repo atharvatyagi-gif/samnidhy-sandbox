@@ -15,7 +15,7 @@
   addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  // "Enter the Cohort": circular curtain wipe, then go to the Advanced page
+  // "Enter the Cohort": circular curtain wipe, then go to the main page (sandbox.html)
   if (enter) {
     enter.addEventListener("click", function (e) {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
