@@ -190,10 +190,16 @@ The original 5-stock version is saved as the git tag `baseline-5-stocks`. To loo
    → complete annual-report data → **Piotroski F-Score** ≥ 6 → best 10 by **Greenblatt's Magic Formula**
    (return on capital + earnings yield). Saved to `data/screener/latest.json` and `data/screener/history/<date>.json`.
    A stock with any missing number is left out, never estimated.
-2. **Live prices and technicals** (`scripts/live_technicals.py`), run every 15 minutes during market hours by
-   `.github/workflows/live-prices.yml`: delayed price (Yahoo Finance), Heikin-Ashi candles (daily and 5-minute),
-   RSI (14), Supertrend (10, 3) and Fibonacci retracement of the 6-month swing. Written to `data/screener/live.json`
-   (not stored in git) and published as `site/live.json`; an open page picks up new prices every 2 minutes.
+2. **Live prices, signals and market conditions** (`scripts/live_technicals.py`), run every 15 minutes during market
+   hours by `.github/workflows/live-prices.yml`: delayed price (Yahoo Finance) plus four research-backed price signals,
+   each ranked against the NIFTY 500: trend vs the 200-day average and the 50/200 cross (Brock, Lakonishok & LeBaron 1992;
+   Faber 2007), 12-1 month momentum (Jegadeesh & Titman 1993), nearness to the 52-week high (George & Hwang 2004) and
+   1-year volatility (Blitz & van Vliet 2007). Also Nifty 50, Bank Nifty, India VIX, USD/INR, Brent, gold, US 10-year
+   yield, S&P 500 and Nikkei. Written to `data/screener/live.json` (not stored in git) and published as `site/live.json`;
+   an open page picks up new prices every 2 minutes.
+3. **Institutions**: per stock, institutional and promoter holdings and analyst consensus/targets (Yahoo Finance, saved
+   with the screen); market-wide FII/DII net buying from NSE's daily FII/DII report (`scripts/institutional.py`), saved
+   day by day to `data/institutional/fii_dii.json` because NSE only shows the latest day.
 
-Run locally: `python scripts/screener.py`, `python scripts/live_technicals.py`, `python scripts/embed_data.py`,
+Run locally: `python scripts/screener.py`, `python scripts/institutional.py`, `python scripts/live_technicals.py`, `python scripts/embed_data.py`,
 then open `advanced.html`. Educational analysis only. Not investment advice.

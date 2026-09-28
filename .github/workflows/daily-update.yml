@@ -3,7 +3,8 @@
 #   1. picks the last NSE session's top gainers/losers and recomputes everything (scripts/update.py)
 #   2. puts the data - or, if step 1 failed, the "Data not updated" notice - into the page
 #   3. saves the day's data in this repository (so past sessions are kept)
-#   4. re-runs the stock screen for the Advanced page (scripts/screener.py) and fetches its prices
+#   4. re-runs the stock screen for the Advanced page (scripts/screener.py), saves NSE's FII/DII flows
+#      (scripts/institutional.py) and fetches prices, signals and market conditions
 #   5. publishes the site to GitHub Pages
 # If step 1 fails, the last good day stays on the site and this run is marked as failed,
 # so GitHub emails you. No API keys or secrets are needed for this data.
@@ -60,9 +61,15 @@ jobs:
         continue-on-error: true   # on failure the last good screen stays in data/screener/latest.json
         run: python scripts/screener.py
 
-      - name: Prices and technicals for the screened stocks
+      - name: FII / DII flows from NSE's daily report
+        continue-on-error: true   # if NSE can't be reached, the page keeps the days already saved
+        run: python scripts/institutional.py
+
+      - name: Prices, signals and market conditions for the screened stocks
         continue-on-error: true
-        run: python scripts/live_technicals.py
+        run: |
+          sleep 45   # let Yahoo's rate limit reset after the screen's ~350 requests
+          python scripts/live_technicals.py
 
       - name: Put the data (or the "Data not updated" notice) into the page
         run: |

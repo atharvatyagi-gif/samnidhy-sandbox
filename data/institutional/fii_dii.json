@@ -1,0 +1,19 @@
+{
+ "days": [
+  {
+   "date": "2026-09-25",
+   "dii": {
+    "buy_cr": 14035.77,
+    "sell_cr": 11197.6,
+    "net_cr": 2838.17
+   },
+   "fii": {
+    "buy_cr": 12327.36,
+    "sell_cr": 16021.29,
+    "net_cr": -3693.93
+   }
+  }
+ ],
+ "source": "NSE FII/DII report (provisional, cash market, Rs crore)",
+ "updated_ist": "28 Sep 2026, 03:17 PM IST"
+}

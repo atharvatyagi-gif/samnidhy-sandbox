@@ -26,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import yfinance as yf
 
@@ -65,21 +66,31 @@ def first(df, rows, col=0):
     return None
 
 
-def liquidity(tickers, cfg):
-    """Last price and median daily traded value (rupees crore) over ~3 months."""
-    data = yf.download(tickers, period="3mo", interval="1d", group_by="ticker", auto_adjust=False,
+def price_study(tickers):
+    """One bulk download (~14 months) for every universe stock. Returns, per stock, liquidity and the
+    research-backed price signals, used for the liquidity filter, for ranking the picks against the
+    whole index, and for market breadth."""
+    data = yf.download(tickers, period="14mo", interval="1d", group_by="ticker", auto_adjust=True,
                        threads=True, progress=False)
     out = {}
     for t in tickers:
         try:
             d = data[t].dropna(subset=["Close"])
-            d = d[d["Volume"] > 0]
-            if len(d) < 40:
-                continue
-            out[t] = {"price": float(d["Close"].iloc[-1]),
-                      "turnover_cr": float((d["Close"] * d["Volume"]).median() / 1e7)}
         except KeyError:
             continue
+        d = d[d["Volume"] > 0]
+        if len(d) < 40:
+            continue
+        c = d["Close"]
+        last = float(c.iloc[-1])
+        row = {"price": last, "turnover_cr": float((c.tail(63) * d["Volume"].tail(63)).median() / 1e7)}
+        if len(c) >= 200:
+            row["above_200dma"] = bool(last > c.tail(200).mean())
+        if len(c) >= 253:
+            row["momentum_12_1"] = float(c.iloc[-22] / c.iloc[-253] - 1)
+            row["high_52w_ratio"] = float(last / d["High"].tail(252).max())
+            row["vol_1y"] = float(np.log(c).diff().tail(252).std() * math.sqrt(252))
+        out[t] = row
     return out
 
 
@@ -171,6 +182,11 @@ def fundamentals(t):
         "pe": info.get("trailingPE"), "pb": info.get("priceToBook"),
         "roe": info.get("returnOnEquity"), "debt_to_equity": info.get("debtToEquity"),
         "dividend_yield": info.get("dividendYield"),
+        "held_institutions": info.get("heldPercentInstitutions"), "held_insiders": info.get("heldPercentInsiders"),
+        "analysts": info.get("numberOfAnalystOpinions"), "recommendation": info.get("recommendationKey"),
+        "recommendation_mean": info.get("recommendationMean"),
+        "target_mean": info.get("targetMeanPrice"), "target_high": info.get("targetHighPrice"),
+        "target_low": info.get("targetLowPrice"),
     }
 
 
@@ -185,10 +201,11 @@ def run():
     names = dict(zip(keep["Symbol"] + ".NS", keep["Company Name"]))
     industry = dict(zip(keep["Symbol"] + ".NS", keep["Industry"]))
 
-    print(f"Liquidity check for {len(keep)} stocks...")
-    liq = liquidity(list(names), cfg)
-    liquid = [t for t, v in liq.items()
-              if v["price"] >= sc["min_price"] and v["turnover_cr"] >= sc["min_avg_turnover_crore"]]
+    all_t = list(uni["Symbol"] + ".NS")
+    print(f"Price study for {len(all_t)} stocks...")
+    liq = price_study(all_t)
+    liquid = [t for t, v in liq.items() if t in names
+              and v["price"] >= sc["min_price"] and v["turnover_cr"] >= sc["min_avg_turnover_crore"]]
     funnel.append({"step": f"Price above Rs {sc['min_price']} and trades Rs {sc['min_avg_turnover_crore']} Cr+ a day",
                    "count": len(liquid)})
 
@@ -230,9 +247,24 @@ def run():
             "ev_cr": round(r["ev"] / 1e7, 1), "market_cap_cr": round(r["market_cap"] / 1e7, 1),
             "pe": clean(r["pe"]), "pb": clean(r["pb"]), "roe": clean(r["roe"]),
             "debt_to_equity": clean(r["debt_to_equity"]), "dividend_yield": clean(r["dividend_yield"]),
+            "held_institutions": clean(r["held_institutions"]), "held_insiders": clean(r["held_insiders"]),
+            "analysts": int(r["analysts"]) if clean(r["analysts"]) else None,
+            "recommendation": r["recommendation"] if r["recommendation"] not in (None, "none") else None,
+            "recommendation_mean": clean(r["recommendation_mean"]),
+            "target_mean": clean(r["target_mean"]), "target_high": clean(r["target_high"]),
+            "target_low": clean(r["target_low"]),
         })
+    def dist(key):
+        return sorted(round(v[key], 5) for v in liq.values() if key in v)
+    trend = [v["above_200dma"] for v in liq.values() if "above_200dma" in v]
+    universe_stats = {
+        "breadth_above_200dma": round(sum(trend) / len(trend), 4) if trend else None,
+        "breadth_count": len(trend),
+        "momentum_12_1": dist("momentum_12_1"), "high_52w_ratio": dist("high_52w_ratio"), "vol_1y": dist("vol_1y"),
+    }
     now = datetime.now(timezone.utc)
     return {
+        "universe_stats": universe_stats,
         "generated_utc": now.isoformat(timespec="seconds"),
         "generated_ist": now.astimezone(IST).strftime("%d %b %Y, %I:%M %p IST"),
         "universe_source": uni_source,

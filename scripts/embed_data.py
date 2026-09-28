@@ -29,8 +29,9 @@ SCREENER = DATA / "screener"
 def advanced_blocks() -> dict:
     """Data for the Advanced page: the daily screen and the latest live prices/technicals.
     A missing file becomes an empty block, and the page then says the data is not available."""
-    return {name: (read_json(SCREENER / f) if (SCREENER / f).exists() else {})
-            for name, f in (("screener-data", "latest.json"), ("live-data", "live.json"))}
+    files = (("screener-data", SCREENER / "latest.json"), ("live-data", SCREENER / "live.json"),
+             ("institutional-data", DATA / "institutional" / "fii_dii.json"))
+    return {name: (read_json(f) if f.exists() else {}) for name, f in files}
 
 
 def read_json(path: Path):

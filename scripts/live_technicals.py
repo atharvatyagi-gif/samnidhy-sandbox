@@ -1,19 +1,26 @@
 """
-Live prices and technicals for the screened stocks (data/screener/latest.json).
-Run every 15 minutes during market hours; also fine to run when the market is closed
-(it then shows the last session and says so).
+Live prices, research-backed price signals and market conditions for the Advanced page.
+Run every 15 minutes during market hours (and by the daily update); when the market is closed it
+shows the last session and says so.
 
-For each stock:
-  - live price (Yahoo Finance, a few minutes delayed), change vs the previous close, today's 5-minute candles
-  - Heikin-Ashi candles (daily, last 6 months, and today's 5-minute)
-  - RSI (14, Wilder) on daily closes and on today's 5-minute closes
-  - Supertrend (ATR 10, multiplier 3) on daily candles
-  - Fibonacci retracement between the 6-month swing high and low
+Per screened stock (data/screener/latest.json):
+  - delayed live price (Yahoo Finance), change vs the previous close, today's 5-minute candles
+  - Trend: price vs the 200-day moving average, and the 50/200-day crossover
+      (Brock, Lakonishok & LeBaron 1992; Faber 2007)
+  - Momentum 12-1: return from 12 months ago to 1 month ago, ranked against the NIFTY 500
+      (Jegadeesh & Titman 1993)
+  - Nearness to the 52-week high (George & Hwang 2004)
+  - 1-year volatility, ranked against the NIFTY 500 (low-volatility effect: Blitz & van Vliet 2007;
+      Baker, Bradley & Wurgler 2011)
+Market conditions: Nifty 50 / Bank Nifty (with the 200-day trend), India VIX, USD/INR, Brent crude,
+gold, US 10-year yield, S&P 500, Nikkei 225.
 
   python scripts/live_technicals.py      saves data/screener/live.json
 """
 
+import bisect
 import json
+import math
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -29,95 +36,54 @@ from pick_movers import ROOT  # noqa: E402
 
 DIR = ROOT / "data" / "screener"
 IST = timezone(timedelta(hours=5, minutes=30))
-FIB = [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0]
-SWING_DAYS = 126            # about 6 months of trading days
+CHART_DAYS = 252            # one trading year on the chart
+
+MARKETS = [  # (Yahoo ticker, name, group, unit)
+    ("^NSEI", "Nifty 50", "India", "pts"),
+    ("^NSEBANK", "Bank Nifty", "India", "pts"),
+    ("^INDIAVIX", "India VIX", "India", "pts"),
+    ("INR=X", "US dollar in rupees", "Currency & commodities", "Rs"),
+    ("BZ=F", "Brent crude", "Currency & commodities", "$/bbl"),
+    ("GC=F", "Gold", "Currency & commodities", "$/oz"),
+    ("^TNX", "US 10-year yield", "World", "%"),
+    ("^GSPC", "S&P 500 (US)", "World", "pts"),
+    ("^N225", "Nikkei 225 (Japan)", "World", "pts"),
+]
 
 
-# ---------------------------------------------------------------- indicators
-def heikin_ashi(df):
-    """HA close = average of O,H,L,C; HA open = midpoint of the previous HA candle."""
-    ha_c = (df["Open"] + df["High"] + df["Low"] + df["Close"]) / 4
-    ha_o = np.empty(len(df))
-    ha_o[0] = (df["Open"].iloc[0] + df["Close"].iloc[0]) / 2
-    for i in range(1, len(df)):
-        ha_o[i] = (ha_o[i - 1] + ha_c.iloc[i - 1]) / 2
-    ha_o = pd.Series(ha_o, index=df.index)
-    ha_h = pd.concat([df["High"], ha_o, ha_c], axis=1).max(axis=1)
-    ha_l = pd.concat([df["Low"], ha_o, ha_c], axis=1).min(axis=1)
-    return pd.DataFrame({"o": ha_o, "h": ha_h, "l": ha_l, "c": ha_c})
+def r2(x, d=2):
+    if x is None:
+        return None
+    try:
+        x = float(x)
+    except (TypeError, ValueError):
+        return None
+    return None if math.isnan(x) or math.isinf(x) else round(x, d)
 
 
-def rsi(close, n=14):
-    """Wilder's RSI: 100 - 100 / (1 + average gain / average loss)."""
-    d = close.diff()
-    gain = d.clip(lower=0).ewm(alpha=1 / n, adjust=False, min_periods=n).mean()
-    loss = (-d.clip(upper=0)).ewm(alpha=1 / n, adjust=False, min_periods=n).mean()
-    rs = gain / loss
-    out = 100 - 100 / (1 + rs)
-    return out.where(loss != 0, 100.0).where(~gain.isna())
+def percentile(sorted_vals, v):
+    """Share of NIFTY 500 stocks with a value at or below v (0-100)."""
+    if not sorted_vals or v is None:
+        return None
+    return round(100 * bisect.bisect_right(sorted_vals, v) / len(sorted_vals), 1)
 
 
-def supertrend(df, n=10, mult=3.0):
-    """Classic Supertrend: bands at (high+low)/2 +/- mult x ATR(n); the line flips when price crosses it."""
-    h, l, c = df["High"], df["Low"], df["Close"]
-    tr = pd.concat([h - l, (h - c.shift()).abs(), (l - c.shift()).abs()], axis=1).max(axis=1)
-    atr = tr.ewm(alpha=1 / n, adjust=False, min_periods=n).mean()
-    mid = (h + l) / 2
-    ub, lb = (mid + mult * atr).values, (mid - mult * atr).values
-    fu, fl = ub.copy(), lb.copy()
-    line = np.full(len(df), np.nan)
-    up = np.ones(len(df), dtype=bool)
-    cv = c.values
-    for i in range(1, len(df)):
-        if np.isnan(atr.iloc[i]):
-            continue
-        fu[i] = ub[i] if (ub[i] < fu[i - 1] or cv[i - 1] > fu[i - 1] or np.isnan(fu[i - 1])) else fu[i - 1]
-        fl[i] = lb[i] if (lb[i] > fl[i - 1] or cv[i - 1] < fl[i - 1] or np.isnan(fl[i - 1])) else fl[i - 1]
-        if np.isnan(line[i - 1]):
-            up[i] = cv[i] >= fl[i]
-        elif up[i - 1]:
-            up[i] = cv[i] >= fl[i]
-        else:
-            up[i] = cv[i] > fu[i]
-        line[i] = fl[i] if up[i] else fu[i]
-    return pd.Series(line, index=df.index), pd.Series(up, index=df.index), atr
-
-
-def fibonacci(df, price):
-    """Retracement levels between the swing high and low of the last ~6 months."""
-    d = df.tail(SWING_DAYS)
-    hi_t, lo_t = d["High"].idxmax(), d["Low"].idxmin()
-    hi, lo = float(d.loc[hi_t, "High"]), float(d.loc[lo_t, "Low"])
-    uptrend = lo_t < hi_t                      # low came first -> the move was up; retrace down from the high
-    levels = []
-    for f in FIB:
-        lv = hi - (hi - lo) * f if uptrend else lo + (hi - lo) * f
-        levels.append({"ratio": f, "price": round(lv, 2)})
-    ordered = sorted(levels, key=lambda x: x["price"])
-    below = max((x for x in ordered if x["price"] <= price), key=lambda x: x["price"], default=None)
-    above = min((x for x in ordered if x["price"] > price), key=lambda x: x["price"], default=None)
-    return {"swing_high": round(hi, 2), "swing_high_date": str(hi_t.date()),
-            "swing_low": round(lo, 2), "swing_low_date": str(lo_t.date()),
-            "direction": "up" if uptrend else "down", "levels": levels,
-            "support": below, "resistance": above}
-
-
-def r2(x):
-    return None if x is None or pd.isna(x) else round(float(x), 2)
-
-
-def candles(df, ts_fmt):
-    return [[ts.strftime(ts_fmt), r2(o), r2(h), r2(l), r2(c)] for ts, o, h, l, c in
-            zip(df.index, df["o"], df["h"], df["l"], df["c"])]
+def since(flags):
+    """Date the latest run of equal True/False values began."""
+    last = flags.iloc[-1]
+    for i in range(len(flags) - 1, -1, -1):
+        if flags.iloc[i] != last:
+            return str(flags.index[i + 1].date())
+    return str(flags.index[0].date())
 
 
 # ---------------------------------------------------------------- per stock
-def analyse(p):
+def analyse(p, ustats):
     t = p["yahoo_ticker"]
     for attempt in range(3):
         try:
             tk = yf.Ticker(t)
-            daily = tk.history(period="1y", interval="1d", auto_adjust=True)
+            daily = tk.history(period="2y", interval="1d", auto_adjust=True)   # 2y so the 200-day line spans the chart
             intra = tk.history(period="1d", interval="5m", auto_adjust=True)
             break
         except Exception as exc:
@@ -126,35 +92,32 @@ def analyse(p):
             time.sleep(3 * (attempt + 1))
     daily = daily.dropna(subset=["Close"])
     intra = intra.dropna(subset=["Close"])
-    if len(daily) < 60 or intra.empty:
+    if len(daily) < 210 or intra.empty:
         return {"symbol": p["symbol"], "error": f"not enough price data (daily rows {len(daily)}, 5-min rows {len(intra)})"}
     daily.index = daily.index.tz_convert(IST) if daily.index.tz else daily.index.tz_localize(IST)
     intra.index = intra.index.tz_convert(IST)
     session_day = intra.index[-1].date()
-    # the daily table may or may not already contain today's candle; keep only days before the session
     prev = daily[daily.index.date < session_day]
     prev_close = float(prev["Close"].iloc[-1])
     price = float(intra["Close"].iloc[-1])
-    # today's candle built from the 5-minute bars, so daily indicators include the live price
+    # today's candle is built from the 5-minute bars, so every signal includes the live price
     today = pd.DataFrame({"Open": [intra["Open"].iloc[0]], "High": [intra["High"].max()],
                           "Low": [intra["Low"].min()], "Close": [price], "Volume": [intra["Volume"].sum()]},
                          index=[pd.Timestamp(session_day, tz=IST)])
     d = pd.concat([prev[["Open", "High", "Low", "Close", "Volume"]], today])
-
-    ha_d = heikin_ashi(d).tail(SWING_DAYS)
-    ha_i = heikin_ashi(intra)
-    rsi_d = rsi(d["Close"])
-    rsi_i = rsi(intra["Close"])
-    st_line, st_up, atr = supertrend(d)
-    fib = fibonacci(d, price)
-    last_ha = ha_d.iloc[-1]
-    ha_run = 0                                   # how many HA candles in a row share today's colour
-    for o, c in zip(ha_d["o"][::-1], ha_d["c"][::-1]):
-        if (c >= o) == (last_ha["c"] >= last_ha["o"]):
-            ha_run += 1
-        else:
-            break
-    tail = d.tail(SWING_DAYS)
+    c = d["Close"]
+    sma50, sma200 = c.rolling(50).mean(), c.rolling(200).mean()
+    above = (c > sma200)[sma200.notna()]
+    golden = (sma50 > sma200)[sma200.notna()]
+    trend = {"sma50": r2(sma50.iloc[-1]), "sma200": r2(sma200.iloc[-1]),
+             "above_200": bool(above.iloc[-1]), "since": since(above),
+             "gap_pct": r2((price / sma200.iloc[-1] - 1) * 100),
+             "golden_cross": bool(golden.iloc[-1]), "cross_since": since(golden)}
+    mom = float(c.iloc[-22] / c.iloc[-253] - 1) if len(c) >= 253 else None
+    hi52, lo52 = float(d["High"].tail(252).max()), float(d["Low"].tail(252).min())
+    hi_ratio = price / hi52
+    vol = float(np.log(c).diff().tail(252).std() * math.sqrt(252))
+    tail = d.tail(CHART_DAYS)
     return {
         "symbol": p["symbol"],
         "price": r2(price), "prev_close": r2(prev_close),
@@ -162,52 +125,79 @@ def analyse(p):
         "day_open": r2(intra["Open"].iloc[0]), "day_high": r2(intra["High"].max()), "day_low": r2(intra["Low"].min()),
         "volume": int(intra["Volume"].sum()),
         "session_date": str(session_day), "last_bar_ist": intra.index[-1].strftime("%H:%M"),
-        "rsi_daily": r2(rsi_d.iloc[-1]), "rsi_5m": r2(rsi_i.iloc[-1]) if len(intra) > 15 else None,
-        "supertrend": {"value": r2(st_line.iloc[-1]), "trend": "up" if st_up.iloc[-1] else "down",
-                       "atr": r2(atr.iloc[-1]),
-                       "since": str(next((ts.date() for ts, u in zip(st_up.index[::-1], st_up[::-1]) if u != st_up.iloc[-1]), d.index[0].date()))},
-        "heikin_ashi": {"colour": "green" if last_ha["c"] >= last_ha["o"] else "red", "run": ha_run,
-                        "no_lower_wick": bool(abs(min(last_ha["o"], last_ha["c"]) - last_ha["l"]) < 1e-9),
-                        "no_upper_wick": bool(abs(last_ha["h"] - max(last_ha["o"], last_ha["c"])) < 1e-9)},
-        "fibonacci": fib,
+        "trend": trend,
+        "momentum": {"value": r2(mom, 4), "percentile": percentile(ustats.get("momentum_12_1"), mom)},
+        "high52": {"high": r2(hi52), "low": r2(lo52), "ratio": r2(hi_ratio, 4),
+                   "percentile": percentile(ustats.get("high_52w_ratio"), hi_ratio)},
+        "volatility": {"value": r2(vol, 4), "percentile": percentile(ustats.get("vol_1y"), vol)},
         "series": {
-            "dates": [ts.strftime("%Y-%m-%d") for ts in tail.index],
-            "close": [r2(x) for x in tail["Close"]],
-            "supertrend": [r2(x) for x in st_line.tail(SWING_DAYS)],
-            "supertrend_up": [bool(x) for x in st_up.tail(SWING_DAYS)],
-            "rsi": [r2(x) for x in rsi_d.tail(SWING_DAYS)],
-            "ha_daily": candles(ha_d, "%Y-%m-%d"),
-            "ha_5m": candles(ha_i, "%H:%M"),
-            "rsi_5m": [r2(x) for x in rsi_i],
+            "daily": [[ts.strftime("%Y-%m-%d"), r2(o), r2(h), r2(l), r2(cl)] for ts, o, h, l, cl in
+                      zip(tail.index, tail["Open"], tail["High"], tail["Low"], tail["Close"])],
+            "sma50": [r2(x) for x in sma50.tail(CHART_DAYS)],
+            "sma200": [r2(x) for x in sma200.tail(CHART_DAYS)],
+            "intraday": [[ts.strftime("%H:%M"), r2(o), r2(h), r2(l), r2(cl)] for ts, o, h, l, cl in
+                         zip(intra.index, intra["Open"], intra["High"], intra["Low"], intra["Close"])],
         },
     }
 
 
+# ---------------------------------------------------------------- market conditions
+def markets():
+    tickers = [m[0] for m in MARKETS]
+    data = yf.download(tickers, period="14mo", interval="1d", group_by="ticker", auto_adjust=False,
+                       threads=True, progress=False)
+    out = []
+    for tkr, name, group, unit in MARKETS:
+        row = {"ticker": tkr, "name": name, "group": group, "unit": unit}
+        try:
+            s = data[tkr]["Close"].dropna()
+        except KeyError:
+            s = pd.Series(dtype=float)
+        if len(s) < 2:
+            row["error"] = "not available"
+            out.append(row)
+            continue
+        row.update({"value": r2(s.iloc[-1]), "prev": r2(s.iloc[-2]),
+                    "change_pct": r2((s.iloc[-1] / s.iloc[-2] - 1) * 100),
+                    "as_of": str(s.index[-1].date()), "spark": [r2(x) for x in s.tail(60)]})
+        if len(s) >= 200:
+            sma = s.rolling(200).mean()
+            row["sma200"] = r2(sma.iloc[-1])
+            row["above_200"] = bool(s.iloc[-1] > sma.iloc[-1])
+        if len(s) >= 253:
+            row["change_1y_pct"] = r2((s.iloc[-1] / s.iloc[-253] - 1) * 100)
+        out.append(row)
+    return out
+
+
 def market_state(now_ist, session_day):
     open_t, close_t = now_ist.replace(hour=9, minute=15, second=0), now_ist.replace(hour=15, minute=30, second=0)
-    if session_day == now_ist.date() and open_t <= now_ist <= close_t:
-        return "open"
-    return "closed"
+    return "open" if session_day == now_ist.date() and open_t <= now_ist <= close_t else "closed"
 
 
 def main():
-    picks = json.loads((DIR / "latest.json").read_text(encoding="utf-8"))["picks"]
+    screen = json.loads((DIR / "latest.json").read_text(encoding="utf-8"))
+    picks, ustats = screen["picks"], screen.get("universe_stats", {})
     with ThreadPoolExecutor(max_workers=5) as ex:
-        rows = list(ex.map(analyse, picks))
+        rows = list(ex.map(lambda p: analyse(p, ustats), picks))
+    try:
+        weather = markets()
+    except Exception as exc:
+        weather = [{"ticker": m[0], "name": m[1], "group": m[2], "unit": m[3],
+                    "error": f"not available ({type(exc).__name__})"} for m in MARKETS]
     ok = [r for r in rows if "error" not in r]
+    now = datetime.now(IST)
+    DIR.mkdir(parents=True, exist_ok=True)
     if not ok:
         # Publish the reason (no prices are ever invented); the page shows "Prices unavailable".
-        now = datetime.now(IST)
-        DIR.mkdir(parents=True, exist_ok=True)
         (DIR / "live.json").write_text(json.dumps({
             "error": "no live prices could be fetched",
             "generated_utc": now.astimezone(timezone.utc).isoformat(timespec="seconds"),
             "generated_ist": now.strftime("%d %b %Y, %I:%M %p IST"),
-            "stocks": {r["symbol"]: r for r in rows}}, allow_nan=False), encoding="utf-8")
+            "markets": weather, "stocks": {r["symbol"]: r for r in rows}}, allow_nan=False), encoding="utf-8")
         for r in rows:
             print(f"  {r['symbol']}: {r['error']}")
         raise RuntimeError("no live prices could be fetched")
-    now = datetime.now(IST)
     session = max(r["session_date"] for r in ok)
     out = {
         "generated_ist": now.strftime("%d %b %Y, %I:%M %p IST"),
@@ -215,21 +205,23 @@ def main():
         "market": market_state(now, datetime.fromisoformat(session).date()),
         "session_date": session,
         "last_bar_ist": max(r["last_bar_ist"] for r in ok if r["session_date"] == session),
+        "markets": weather,
         "stocks": {r["symbol"]: r for r in rows},
     }
-    DIR.mkdir(parents=True, exist_ok=True)
     (DIR / "live.json").write_text(json.dumps(out, separators=(",", ":"), allow_nan=False), encoding="utf-8")
     print(f"market {out['market']}, session {session}, last bar {out['last_bar_ist']} IST")
-    print(f"{'Stock':<11} {'Price':>9} {'Chg%':>6} {'RSI d':>6} {'RSI 5m':>6}  {'Supertrend':<16} {'HA':<10} Fib zone")
+    for m in weather:
+        extra = f"  200-DMA {'above' if m['above_200'] else 'below'}" if "above_200" in m else ""
+        print(f"  {m['name']:<22} {m.get('value', m.get('error'))!s:>12} {m.get('change_pct', '')!s:>7}%{extra}")
+    print(f"{'Stock':<11} {'Price':>9} {'Chg%':>6}  {'vs200DMA':>8} {'50/200':>7}  {'Mom12-1':>8} {'pctl':>5}  {'52wH':>6} {'pctl':>5}  {'Vol':>6} {'pctl':>5}")
     for r in rows:
         if "error" in r:
             print(f"{r['symbol']:<11} ERROR {r['error']}")
             continue
-        st, ha, fb = r["supertrend"], r["heikin_ashi"], r["fibonacci"]
-        zone = (f"{fb['support']['ratio'] * 100:.1f}%-{fb['resistance']['ratio'] * 100:.1f}%"
-                if fb["support"] and fb["resistance"] else "outside swing")
-        print(f"{r['symbol']:<11} {r['price']:>9.2f} {r['change_pct']:>+6.2f} {r['rsi_daily']:>6.1f} "
-              f"{(r['rsi_5m'] or float('nan')):>6.1f}  {st['trend']:>4} @ {st['value']:<9.2f} {ha['colour']:>5} x{ha['run']:<3} {zone} ({fb['direction']})")
+        tr, mo, hi, vo = r["trend"], r["momentum"], r["high52"], r["volatility"]
+        print(f"{r['symbol']:<11} {r['price']:>9.2f} {r['change_pct']:>+6.2f}  {tr['gap_pct']:>+7.1f}% {('golden' if tr['golden_cross'] else 'death'):>7}  "
+              f"{(mo['value'] or 0) * 100:>+7.1f}% {mo['percentile'] or 0:>5.0f}  {hi['ratio'] * 100:>5.1f}% {hi['percentile'] or 0:>5.0f}  "
+              f"{vo['value'] * 100:>5.1f}% {vo['percentile'] or 0:>5.0f}")
     return 0
 
 
