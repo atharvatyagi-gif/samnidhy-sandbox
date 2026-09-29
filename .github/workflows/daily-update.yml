@@ -29,17 +29,14 @@ permissions:
   pages: write      # publish the website
   id-token: write   # required by GitHub Pages publishing
 
-concurrency:
-  group: site-publish   # shared with the live-prices workflow, so two publishes never overlap
-  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    concurrency:                # collecting data never blocks a publish; only the short publish job queues
+      group: daily-data
+      cancel-in-progress: false
     timeout-minutes: 45
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -131,10 +128,6 @@ jobs:
         with:
           path: site
 
-      - name: Publish to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v4
-
       - name: Report a failed data update
         if: steps.update.outcome == 'failure' || steps.screen.outcome == 'failure'
         run: |
@@ -145,3 +138,18 @@ jobs:
             echo "::error::The stock screen failed. The Advanced page kept the last good screen. Open the step 'Re-run the stock screen' above to see why."
           fi
           exit 1
+
+  publish:                      # a few seconds; the only part that waits its turn for GitHub Pages
+    needs: update
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: site-publish
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Publish to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

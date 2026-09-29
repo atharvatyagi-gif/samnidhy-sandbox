@@ -29,17 +29,14 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: site-publish
-  cancel-in-progress: false
 
 jobs:
   live:
     runs-on: ubuntu-latest
+    concurrency:                # collecting data never blocks a publish; only the short publish job queues
+      group: live-data
+      cancel-in-progress: false
     timeout-minutes: 20
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -90,12 +87,23 @@ jobs:
         with:
           path: site
 
-      - name: Publish to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v4
-
       - name: Report failed live prices
         if: steps.live.outcome == 'failure'
         run: |
           echo "::error::Live prices could not be fetched; see the step above. The page says prices are unavailable."
           exit 1
+
+  publish:                      # a few seconds; the only part that waits its turn for GitHub Pages
+    needs: live
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: site-publish
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Publish to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
