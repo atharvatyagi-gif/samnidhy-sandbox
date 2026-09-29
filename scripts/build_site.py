@@ -13,6 +13,8 @@ site/ is a build output: it is not stored in git; GitHub Actions rebuilds and pu
   python scripts/build_site.py
 """
 
+import hashlib
+import re
 import shutil
 from pathlib import Path
 
@@ -23,6 +25,27 @@ SITE = ROOT / "site"
 STATIC = ["index.html", "landing.css", "landing.js", "auth.html", "auth-check.js", "config.js",
           "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js"]
 TERMINAL = ROOT / "data" / "terminal"
+# Scripts/styles that pages load. Browsers keep these for a while (GitHub Pages: 10 min, some longer), so an
+# update could mix a new page with an old script. Every reference gets ?v=<hash of the file>, which changes
+# only when the file does. Leaves first: auth-check.js imports config.js, so its own hash covers that version.
+ASSETS = ["config.js", "reload-home.js", "landing.css", "landing.js", "terminal.css", "terminal.js", "auth-check.js"]
+
+
+def version_assets() -> None:
+    names = "|".join(re.escape(a) for a in ASSETS)
+    ref = re.compile(r'((?:src|href)="(?:\.\./)?|from "\./)(' + names + r')(?=")')
+    ver = {}
+    def stamp(path: Path) -> None:
+        text = path.read_text(encoding="utf-8")
+        new = ref.sub(lambda m: f"{m.group(1)}{m.group(2)}?v={ver[m.group(2)]}" if m.group(2) in ver else m.group(0), text)
+        if new != text:
+            path.write_text(new, encoding="utf-8")
+    for a in ASSETS:
+        if (SITE / a).exists():
+            stamp(SITE / a)
+            ver[a] = hashlib.sha256((SITE / a).read_bytes()).hexdigest()[:10]
+    for page in list(SITE.glob("*.html")) + list((SITE / "days").glob("*.html")):
+        stamp(page)
 
 
 def main() -> None:
@@ -70,6 +93,7 @@ def main() -> None:
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
         (SITE / "screener.json").write_text((SCREENER / "latest.json").read_text(encoding="utf-8"), encoding="utf-8")
 
+    version_assets()
     (SITE / ".nojekyll").write_text("", encoding="utf-8")  # tell GitHub Pages to serve files as-is
     print(f"Built site/ (landing, sandbox, advanced, expert access) and {len(archive)} past-session page(s) in site/days/")
 

@@ -87,7 +87,7 @@
     <div id="student-wrap">
       <div class="row2">
         <div><label for="roll">TAPMI roll no.</label>
-          <input id="roll" type="text" autocomplete="off" placeholder="e.g. 26B01" maxlength="8"></div>
+          <input id="roll" type="text" autocomplete="off" placeholder="e.g. 26U01" maxlength="8"></div>
         <div><label for="dob">Date of birth</label>
           <input id="dob" type="date" autocomplete="bday"></div>
       </div>
@@ -164,7 +164,7 @@
     if (!isTapmiEmail(addr)) { email.setAttribute("aria-invalid", "true"); show("err", DOMAIN_ERROR); email.focus(); return; }
     if (mode === "register") {
       const r = roll.value.replace(/\s+/g, "").toUpperCase();
-      if (!/^[0-9]{2}[A-Z][0-9]{2}$/.test(r)) { roll.setAttribute("aria-invalid", "true"); show("err", "Enter your TAPMI roll number, e.g. 26B01."); roll.focus(); return; }
+      if (!/^[0-9]{2}[A-Z][0-9]{2}$/.test(r)) { roll.setAttribute("aria-invalid", "true"); show("err", "Enter your TAPMI roll number, e.g. 26U01."); roll.focus(); return; }
       if (!dob.value) { dob.setAttribute("aria-invalid", "true"); show("err", "Enter your date of birth."); dob.focus(); return; }
     }
     if (pw.value.length < 8) { show("err", "Password must be at least 8 characters."); return; }
