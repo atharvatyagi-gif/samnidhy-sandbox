@@ -215,15 +215,15 @@ list) and a **new** B-Lab password. Each student can register once; the terminal
 The student list itself never goes online: `scripts/student_allowlist.py` turns it into one-way SHA-256 keys.
 
 Setup (once):
-1. Firebase console: create a project → Authentication → enable **Email/Password** → create a Firestore database.
-2. Paste the web-app config into `config.js` (lines 7–12).
-3. `firestore.rules`: replace `admin_email_here` with your admin email (lower case) → paste into Firestore → Rules → Publish.
-4. Authentication → Users → **Add user** with that admin email and a password.
-5. Authentication → Settings → Authorized domains: add `atharvatyagi-gif.github.io`.
-6. On your computer: `pip install openpyxl`, then
-   `python scripts/student_allowlist.py "Student List for ID Card- Batch 2026-29.xlsx"` → `private/allowlist_keys.json`.
-7. `python scripts/dev_preview.py` → open `http://127.0.0.1:8765/admin-allowlist.html`, sign in as the admin, upload the file.
-The Excel file, `private/` and the admin page are never committed or published.
+1. Firebase console: create a project → add a **Web app** → copy its config into `config.js` (lines 7–12).
+2. Authentication → Get started → enable **Email/Password**.
+3. Firestore Database → Create database (production mode).
+4. On your computer: `pip install openpyxl`, then
+   `python scripts/student_allowlist.py "Student List for ID Card- Batch 2026-29.xlsx"`. It writes
+   `private/firestore.rules`: the rules with the students' one-way keys filled in.
+5. Firestore → Rules: paste `private/firestore.rules` → Publish. (Repeat 4–5 when the student list changes.)
+6. Authentication → Settings → Authorized domains: add `atharvatyagi-gif.github.io`.
+The Excel file and `private/` are never committed or published; `firestore.rules` in git is only the template.
 
 ### Expert terminal: every NSE stock
 - `scripts/nse_eod.py` (daily): NSE's official bhavcopies for ~1 year → all ~3,500 NSE stocks, SME boards and ETFs

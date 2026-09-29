@@ -4,7 +4,9 @@ Stock screener: picks the stocks for the "Stock Screener" section, once a day.
 Funnel (every step is counted and shown on the site):
   1. Universe: NIFTY 500 (same official list as the daily movers).
   2. Drop industries the Magic Formula is not meant for (banks/NBFCs/insurers, power utilities).
-  3. Liquidity: price and average daily traded value over the last 3 months (from Yahoo prices).
+  3. Liquidity: price and average daily traded value over the last 3 months (from Yahoo prices),
+     and at least one year of price history so every technical signal on the Advanced page can be
+     calculated (200-day average, 12-1 momentum, 52-week high, volatility).
   4. Fundamentals from the last two annual reports (Yahoo Finance):
        - Piotroski F-Score (Piotroski, 2000): 9 yes/no health checks. Keep scores >= min_fscore.
        - Greenblatt Magic Formula (The Little Book That Beats the Market, 2005):
@@ -12,6 +14,10 @@ Funnel (every step is counted and shown on the site):
            earnings yield    = EBIT / enterprise value
          rank each, add the two ranks, lowest total wins.
   5. The best `count` stocks by Magic Formula rank.
+
+Every stock that passes step 4 is also saved to data/screener/candidates.json, so that
+scripts/screener_live.py can re-rank them on live prices every 15 minutes in market hours
+(earnings yield moves with the share price; the annual-report numbers do not).
 
 A stock with a missing number is never guessed: it is left out and the reason is counted.
 
@@ -194,6 +200,23 @@ def fundamentals(t):
     }
 
 
+def rank(candidates, count):
+    """Magic Formula: rank return on capital and earnings yield (higher = better), add the two ranks,
+    lowest total wins (ties: higher return on capital). Returns the best `count`, numbered."""
+    df = pd.DataFrame({"i": range(len(candidates)), "roc": [c["roc"] for c in candidates],
+                       "earnings_yield": [c["earnings_yield"] for c in candidates]})
+    df["rank_roc"] = df["roc"].rank(ascending=False, method="min")
+    df["rank_ey"] = df["earnings_yield"].rank(ascending=False, method="min")
+    df["magic_score"] = df["rank_roc"] + df["rank_ey"]
+    df = df.sort_values(["magic_score", "roc"], ascending=[True, False]).reset_index(drop=True)
+    out = []
+    for i, c in enumerate(df.head(count).to_dict("records")):
+        rec = dict(candidates[int(c["i"])])        # the original record: missing values stay None, never NaN
+        rec.update(magic_rank=i + 1, rank_roc=int(c["rank_roc"]), rank_ey=int(c["rank_ey"]), of=len(df))
+        out.append(rec)
+    return out
+
+
 def run():
     cfg = load_config()
     sc = cfg["screener"]
@@ -212,6 +235,8 @@ def run():
               and v["price"] >= sc["min_price"] and v["turnover_cr"] >= sc["min_avg_turnover_crore"]]
     funnel.append({"step": f"Price above Rs {sc['min_price']} and trades Rs {sc['min_avg_turnover_crore']} Cr+ a day",
                    "count": len(liquid)})
+    liquid = [t for t in liquid if "momentum_12_1" in liq[t]]
+    funnel.append({"step": "1 year+ of price history, so the technicals can be calculated", "count": len(liquid)})
 
     print(f"Fundamentals for {len(liquid)} stocks...")
     with ThreadPoolExecutor(max_workers=6) as ex:
@@ -227,24 +252,13 @@ def run():
     if len(healthy) < sc["count"]:
         raise RuntimeError(f"only {len(healthy)} stocks passed the screen (need {sc['count']})")
 
-    df = pd.DataFrame(healthy)
-    df["rank_roc"] = df["roc"].rank(ascending=False, method="min")
-    df["rank_ey"] = df["earnings_yield"].rank(ascending=False, method="min")
-    df["magic_score"] = df["rank_roc"] + df["rank_ey"]
-    df = df.sort_values(["magic_score", "roc"], ascending=[True, False]).reset_index(drop=True)
-    df["magic_rank"] = df.index + 1
-    top = df.head(sc["count"])
-    funnel.append({"step": f"Best {sc['count']} by Magic Formula rank", "count": len(top)})
-
-    picks = []
-    for _, r in top.iterrows():
+    candidates = []
+    for r in healthy:
         t = r["ticker"]
-        picks.append({
+        candidates.append({
             "symbol": t.removesuffix(".NS"), "yahoo_ticker": t, "name": names.get(t) or r["name"],
             "industry": industry.get(t), "sector": r["sector"], "fy_end": r["fy_end"],
             "price": round(liq[t]["price"], 2), "avg_turnover_cr": round(liq[t]["turnover_cr"], 1),
-            "magic_rank": int(r["magic_rank"]), "rank_roc": int(r["rank_roc"]), "rank_ey": int(r["rank_ey"]),
-            "of": len(df),
             "roc": round(r["roc"], 4), "earnings_yield": round(r["earnings_yield"], 4),
             "fscore": int(r["fscore"]), "fscore_known": int(r["fscore_known"]), "checks": r["checks"],
             "ebit_cr": round(r["ebit"] / 1e7, 1), "capital_cr": round(r["capital"] / 1e7, 1),
@@ -260,6 +274,8 @@ def run():
             "eps": clean(r["eps"]), "shares_out": clean(r["shares_out"]), "employees": clean(r["employees"]),
             "website": r["website"], "city": r["city"], "beta": clean(r["beta"]), "summary": r["summary"],
         })
+    picks = rank(candidates, sc["count"])
+    funnel.append({"step": f"Best {sc['count']} by Magic Formula rank", "count": len(picks)})
     def dist(key):
         return sorted(round(v[key], 5) for v in liq.values() if key in v)
     trend = [v["above_200dma"] for v in liq.values() if "above_200dma" in v]
@@ -269,10 +285,12 @@ def run():
         "momentum_12_1": dist("momentum_12_1"), "high_52w_ratio": dist("high_52w_ratio"), "vol_1y": dist("vol_1y"),
     }
     now = datetime.now(timezone.utc)
-    return {
+    return candidates, {
         "universe_stats": universe_stats,
         "generated_utc": now.isoformat(timespec="seconds"),
         "generated_ist": now.astimezone(IST).strftime("%d %b %Y, %I:%M %p IST"),
+        "screened_ist": now.astimezone(IST).strftime("%d %b %Y, %I:%M %p IST"),
+        "ranked_on": "closing prices",
         "universe_source": uni_source,
         "rules": {"min_fscore": sc["min_fscore"], "count": sc["count"],
                   "exclude_industries": sc["exclude_industries"]},
@@ -284,8 +302,10 @@ def run():
 
 def main():
     t0 = time.time()
-    res = run()
+    candidates, res = run()
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    (OUT_DIR / "candidates.json").write_text(json.dumps({"generated_utc": res["generated_utc"], "count": res["rules"]["count"],
+                                                         "stocks": candidates}, default=str, allow_nan=False), encoding="utf-8")
     (OUT_DIR / "latest.json").write_text(json.dumps(res, indent=1, default=str, allow_nan=False), encoding="utf-8")
     day = datetime.now(IST).strftime("%Y-%m-%d")
     (OUT_DIR / "history").mkdir(exist_ok=True)

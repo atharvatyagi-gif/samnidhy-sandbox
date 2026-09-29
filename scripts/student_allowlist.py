@@ -4,10 +4,12 @@ computer only; the Excel file and the output never go to GitHub or the website.
 
 Each student becomes one key:  SHA-256("blab-v1|<ROLL NO>|<YYYY-MM-DD date of birth>")
 No names, IDs or dates are stored, only these one-way keys. When someone registers, they type their
-roll number and date of birth; the page computes the same key and Firebase checks it exists.
+roll number and date of birth; the page computes the same key and Firebase's rules check it is on the list.
 
   python scripts/student_allowlist.py "Student List for ID Card- Batch 2026-29.xlsx"
-    -> private/allowlist_keys.json   (upload it with admin-allowlist.html, see the README)
+    -> private/allowlist_keys.json   (the keys)
+    -> private/firestore.rules       (firestore.rules with the keys filled in: paste it into
+                                      Firebase console > Firestore Database > Rules > Publish)
 """
 
 import hashlib
@@ -62,6 +64,14 @@ def main():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({"salt": SALT, "count": len(keys), "keys": sorted(set(keys))}, indent=1), encoding="utf-8")
     print(f"{len(set(keys))} students -> {OUT.relative_to(ROOT)} ({bad} rows skipped: unreadable roll number or date)")
+    rules = (ROOT / "firestore.rules").read_text(encoding="utf-8")
+    assert rules.count("/*STUDENT_KEYS*/") == 1, "firestore.rules template has no /*STUDENT_KEYS*/ marker"
+    listed = ",\n        ".join(f"'{k}'" for k in sorted(set(keys)))
+    rules = rules.replace("/*STUDENT_KEYS*/", "\n        " + listed + "\n      ")
+    rules = rules.replace("// This file is the TEMPLATE (no student data). Do not paste it as it is.",
+                          "// PRIVATE: generated with the student keys. Never commit or publish this file.")
+    (OUT.parent / "firestore.rules").write_text(rules, encoding="utf-8")
+    print(f"Rules with the student keys -> private/firestore.rules (paste into Firebase > Firestore > Rules)")
     return 0
 
 

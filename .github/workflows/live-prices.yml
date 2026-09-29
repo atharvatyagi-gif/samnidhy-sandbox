@@ -1,7 +1,9 @@
 # Samnidhy Sandbox - live prices for the Advanced page.
 # Every 15 minutes while the NSE market is open (Mon-Fri, 9:15 AM - 3:30 PM IST), on GitHub's servers:
-#   1. fetches delayed prices + technicals for the stocks the daily screen picked (scripts/live_technicals.py)
-#   2. rebuilds the site and publishes it
+#   1. delayed prices for every main-board NSE stock (scripts/terminal_live.py, for the Expert terminal)
+#   2. re-ranks the NIFTY 500 screen's survivors on those live prices -> new top 10 (scripts/screener_live.py)
+#   3. delayed prices + technicals for that top 10 (scripts/live_technicals.py)
+#   4. rebuilds the site and publishes it (the Advanced page picks the changes up by itself)
 # Live prices are not saved in the repository (that would add a commit every 15 minutes);
 # the daily update keeps the screen itself. If a run fails, the site keeps the last prices and the
 # Advanced page says how old they are.
@@ -16,7 +18,7 @@ on:
   workflow_dispatch:
   push: # a change to the live-price code runs it straight away
     branches: [main]
-    paths: [".github/workflows/live-prices.yml", "scripts/live_technicals.py"]
+    paths: [".github/workflows/live-prices.yml", "scripts/live_technicals.py", "scripts/screener_live.py"]
 
 permissions:
   contents: read
@@ -30,7 +32,7 @@ concurrency:
 jobs:
   live:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -45,11 +47,6 @@ jobs:
       - name: Install Python packages
         run: pip install -r requirements.txt
 
-      - name: Fetch delayed prices and technicals for the screened stocks
-        id: live
-        continue-on-error: true   # still publish, so the page shows why prices are unavailable
-        run: python scripts/live_technicals.py
-
       - name: Restore the terminal's NSE data cache
         uses: actions/cache/restore@v4
         with:
@@ -62,6 +59,19 @@ jobs:
         run: |
           [ -f data/terminal/universe.json ] || python scripts/nse_eod.py
           python scripts/terminal_live.py
+
+      - name: Re-rank the NIFTY 500 screen on live prices (top 10)
+        continue-on-error: true   # on failure the last screen stays
+        run: python scripts/screener_live.py
+
+      - name: Fetch delayed prices and technicals for the screened stocks
+        id: live
+        continue-on-error: true   # still publish, so the page shows why prices are unavailable
+        run: python scripts/live_technicals.py
+
+      - name: Put the new screen into the Advanced page
+        continue-on-error: true
+        run: python scripts/embed_data.py
 
       - name: Rebuild the site
         run: python scripts/build_site.py

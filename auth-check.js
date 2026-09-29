@@ -1,5 +1,5 @@
 /* The B-Lab Cohort: shared Firebase setup + the Expert access guard.
-   Used by auth.html (sign-in page), admin-allowlist.html (local admin tool) and expert-terminal.html.
+   Used by auth.html (sign-in page) and expert-terminal.html.
 
    On a protected page, import it with:   <script type="module" src="auth-check.js" data-guard></script>
    The page stays hidden until a signed-in @tapmi.edu.in user with a completed registration

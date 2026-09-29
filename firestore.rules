@@ -1,8 +1,11 @@
 // The B-Lab Cohort: Firestore security rules.
-// Paste into Firebase console > Firestore Database > Rules, then Publish.
-// 1) Replace ADMIN_EMAIL_HERE with the email of the admin account that uploads the student allow-list.
-// 2) Registration is accepted only for signed-in @tapmi.edu.in users whose roll number + date of birth
-//    key is on the allow-list, and each allow-list key can be registered once.
+// This file is the TEMPLATE (no student data). Do not paste it as it is.
+// Run  python scripts/student_allowlist.py  on your own computer: it writes private/firestore.rules,
+// which is this file with the student keys filled in. Paste THAT file into
+// Firebase console > Firestore Database > Rules, then Publish.
+// Registration is accepted only for signed-in @tapmi.edu.in users whose roll number + date of birth key
+// is on the student list, and each key can be registered once. The rules are visible only to the
+// Firebase project's owners; the website never sees the list.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -10,21 +13,16 @@ service cloud.firestore {
     function isTapmi() {
       return signedIn() && request.auth.token.email.lower().matches('.*@tapmi[.]edu[.]in$');
     }
-    function isAdmin() {
-      return signedIn() && request.auth.token.email.lower() in ['admin_email_here'];   // <-- your admin email, lower case
-    }
-
-    // Hashed student keys. Nobody can list or read them from the website; only the admin can add them.
-    match /AllowedStudents/{key} {
-      allow read: if false;
-      allow create, update, delete: if isAdmin();
+    // One-way keys, SHA-256("blab-v1|ROLL|YYYY-MM-DD"), one per student on the TAPMI list.
+    function isStudentKey(k) {
+      return k in [/*STUDENT_KEYS*/];
     }
 
     // Records which account used which student key (one account per student).
     match /Claims/{key} {
       allow read: if signedIn() && resource.data.uid == request.auth.uid;
       allow create: if isTapmi()
-                    && exists(/databases/$(database)/documents/AllowedStudents/$(key))
+                    && isStudentKey(key)
                     && request.resource.data.keys().hasOnly(['uid'])
                     && request.resource.data.uid == request.auth.uid;
       allow update, delete: if false;
