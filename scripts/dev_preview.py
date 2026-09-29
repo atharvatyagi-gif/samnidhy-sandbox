@@ -25,7 +25,7 @@ guard = '<script type="module" src="auth-check.js" data-guard></script>'
 assert guard in page, "expert-terminal.html no longer has the auth guard line"
 page = page.replace(guard, """<script type="module">
   // DEVELOPER PREVIEW: fake signed-in user, no Firebase. Local only, never published.
-  window.expertUser = { email: "developer.preview@tapmi.edu.in" };
+  window.expertUser = { email: "developer.preview@learner.manipal.edu" };
   window.__expertSignOut = async () => {};
   document.documentElement.classList.remove("locked");
 </script>""")

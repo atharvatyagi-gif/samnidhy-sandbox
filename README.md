@@ -210,7 +210,7 @@ Flow: `index.html` (scroll landing page) → **Enter the Cohort** → `sandbox.h
 → **Expert Mode** → `auth.html` → `expert-terminal.html`. Reloading any page on the website returns to the home page.
 
 ### Expert access (Firebase, email + password, TAPMI students only)
-Registering needs a `@tapmi.edu.in` email, the student's **roll number + date of birth** (checked against the TAPMI student
+Registering needs a `@learner.manipal.edu` email, the student's **roll number + date of birth** (checked against the TAPMI student
 list) and a **new** B-Lab password. Each student can register once; the terminal opens only for completed registrations.
 The student list itself never goes online: `scripts/student_allowlist.py` turns it into one-way SHA-256 keys.
 

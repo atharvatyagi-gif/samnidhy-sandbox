@@ -2,7 +2,7 @@
    Used by auth.html (sign-in page) and expert-terminal.html.
 
    On a protected page, import it with:   <script type="module" src="auth-check.js" data-guard></script>
-   The page stays hidden until a signed-in @tapmi.edu.in user with a completed registration
+   The page stays hidden until a signed-in @learner.manipal.edu user with a completed registration
    (an ExpertUsers document) is confirmed; otherwise the visitor is sent to auth.html immediately.
    When access is confirmed it fires an "expert-ready" event with the user. */
 
@@ -10,9 +10,9 @@ import { firebaseConfig, ALLOWED_DOMAIN, ALLOWLIST_SALT, USERS_COLLECTION, FIREB
 
 const CDN = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
 
-// Exactly <something>@tapmi.edu.in, nothing after it (case-insensitive).
+// Exactly <something>@learner.manipal.edu, nothing after it (case-insensitive).
 export const TAPMI_EMAIL = new RegExp(`^[A-Za-z0-9._%+-]+@${ALLOWED_DOMAIN.replace(/\./g, "\\.")}$`, "i");
-export const DOMAIN_ERROR = "Only TAPMI email addresses (@tapmi.edu.in) are authorized for Expert Access to The B-Lab Cohort:.";
+export const DOMAIN_ERROR = "Only Manipal learner email addresses (@learner.manipal.edu) are authorized for Expert Access to The B-Lab Cohort:.";
 
 export function isTapmiEmail(email) {
   return TAPMI_EMAIL.test(String(email || "").trim());

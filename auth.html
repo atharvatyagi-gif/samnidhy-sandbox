@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Expert Access · The B-Lab Cohort:</title>
-<meta name="description" content="Sign in or register for Expert Access to The B-Lab Cohort: terminal. TAPMI email addresses only.">
+<meta name="description" content="Sign in or register for Expert Access to The B-Lab Cohort: terminal. Manipal learner email addresses (@learner.manipal.edu) only.">
 <meta name="theme-color" content="#050505">
 <meta name="robots" content="noindex">
 <script src="reload-home.js"></script>
@@ -76,14 +76,14 @@
   </div>
 
   <div class="how" id="how">
-    <div><b>1</b><span>Your <b>TAPMI email is required</b>: it's your B-Lab username.</span></div>
+    <div><b>1</b><span>Your <b>@learner.manipal.edu email is required</b>: it's your B-Lab username.</span></div>
     <div><b>2</b><span>You do <b>not</b> use your TAPMI / Outlook password here.</span></div>
     <div><b>3</b><span>Create a <b>new password</b> just for B-Lab, and use it to log in.</span></div>
   </div>
 
   <form id="auth-form" novalidate>
-    <label for="email">TAPMI email</label>
-    <input id="email" type="email" autocomplete="username" placeholder="firstname.lastname@tapmi.edu.in" required>
+    <label for="email">Manipal learner email</label>
+    <input id="email" type="email" autocomplete="username" placeholder="yourname@learner.manipal.edu" required>
     <div id="student-wrap">
       <div class="row2">
         <div><label for="roll">TAPMI roll no.</label>
@@ -98,7 +98,7 @@
     <div id="confirm-wrap">
       <label for="confirm">Confirm password</label>
       <input id="confirm" type="password" autocomplete="new-password" minlength="8">
-      <div class="hint">At least 8 characters. <b>Don't reuse your TAPMI email password</b>: B-Lab never asks for it.</div>
+      <div class="hint">At least 8 characters. <b>Don't reuse your Manipal / Outlook email password</b>: B-Lab never asks for it.</div>
     </div>
     <button class="submit" id="submit" type="submit">Register</button>
     <div class="alert" id="alert" role="alert" aria-live="assertive"></div>
@@ -172,7 +172,7 @@
       if (pw.value !== confirm.value) { show("err", "The two passwords don't match."); return; }
       const local = addr.split("@")[0];
       if (pw.value.toLowerCase().includes(local) || /tapmi/i.test(pw.value)) {
-        show("err", "Choose a new password that doesn't contain your email name or 'tapmi' (and isn't your TAPMI email password).");
+        show("err", "Choose a new password that doesn't contain your email name or 'tapmi' (and isn't your Manipal / Outlook email password).");
         return;
       }
     }

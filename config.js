@@ -14,7 +14,7 @@ export const firebaseConfig = {
 };
 
 // Only these email addresses may register or sign in.
-export const ALLOWED_DOMAIN = "tapmi.edu.in";
+export const ALLOWED_DOMAIN = "learner.manipal.edu";   // TAPMI students' Manipal learner accounts
 
 // Registration also requires the student's roll number + date of birth to match the TAPMI student list
 // (as one-way keys inside the Firestore rules, see scripts/student_allowlist.py; the list itself is never online).
