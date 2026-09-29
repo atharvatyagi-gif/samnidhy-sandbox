@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-09-29T18:46:42+00:00",
+  "generated_on": "2026-09-29T20:52:45+00:00",
   "session_date": "2026-09-29",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,7 +40,7 @@
         "turnover_crore": 1240.44
       },
       "latest_close": 2402.0,
-      "trailing_pe": 64.224594,
+      "trailing_pe": 64.104614,
       "market_cap": 349650059264,
       "history": {
         "first_date": "2021-09-22",
@@ -49,7 +49,7 @@
         "session_price_from": "NSE"
       },
       "annualised_return": 0.689158,
-      "total_return": 11.849876,
+      "total_return": 11.849874,
       "annualised_volatility": 0.453889,
       "max_drawdown": -0.591121,
       "beta": 1.2054
@@ -69,7 +69,7 @@
         "turnover_crore": 1036.91
       },
       "latest_close": 288.0,
-      "trailing_pe": 293.87753,
+      "trailing_pe": 285.14853,
       "market_cap": 387262283776,
       "history": {
         "first_date": "2021-09-22",
@@ -78,7 +78,7 @@
         "session_price_from": "NSE"
       },
       "annualised_return": 1.736278,
-      "total_return": 133.663119,
+      "total_return": 133.663089,
       "annualised_volatility": 0.495014,
       "max_drawdown": -0.579248,
       "beta": 0.6857
@@ -98,7 +98,7 @@
         "turnover_crore": 579.34
       },
       "latest_close": 777.35,
-      "trailing_pe": 91.99408,
+      "trailing_pe": 88.234955,
       "market_cap": 243860013056,
       "history": {
         "first_date": "2021-09-22",
@@ -107,7 +107,7 @@
         "session_price_from": "NSE"
       },
       "annualised_return": 0.891577,
-      "total_return": 21.300221,
+      "total_return": 21.300219,
       "annualised_volatility": 0.49052,
       "max_drawdown": -0.356244,
       "beta": 1.0352
@@ -1679,7 +1679,7 @@
         776.21,
         732.65,
         734.39,
-        751.58,
+        751.59,
         820.45,
         766.65,
         769.84,
@@ -1849,7 +1849,7 @@
         2368.81,
         2269.57,
         2278.4,
-        2271.56,
+        2271.55,
         2295.84,
         2411.14,
         2214.35,
