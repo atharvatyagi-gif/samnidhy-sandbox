@@ -1,5 +1,5 @@
 // The B-Lab Cohort: Firestore security rules.
-// This file is the TEMPLATE (no student data). Do not paste it as it is.
+// TEMPLATE ONLY (no student data): pasting this into Firebase refuses EVERY student. Do not paste it.
 // Run  python scripts/student_allowlist.py  on your own computer: it writes private/firestore.rules,
 // which is this file with the student keys filled in. Paste THAT file into
 // Firebase console > Firestore Database > Rules, then Publish.

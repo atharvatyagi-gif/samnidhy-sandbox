@@ -223,7 +223,7 @@ Setup (once):
    `private/firestore.rules`: the rules with the students' one-way keys filled in.
 5. Firestore → Rules: paste `private/firestore.rules` → Publish. (Repeat 4–5 when the student list changes.)
 6. Authentication → Settings → Authorized domains: add `atharvatyagi-gif.github.io`.
-The Excel file and `private/` are never committed or published; `firestore.rules` in git is only the template.
+The Excel file and `private/` are never committed or published; `firestore.rules.template` in git is only the template (its student list is empty).
 
 ### Expert terminal: every NSE stock
 - `scripts/nse_eod.py` (daily): NSE's official bhavcopies for ~1 year → all ~3,500 NSE stocks, SME boards and ETFs

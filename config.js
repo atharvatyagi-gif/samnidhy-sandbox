@@ -1,7 +1,7 @@
 /* The B-Lab Cohort: Firebase settings.
    Paste the values from Firebase console > Project settings > General > "Your apps" > Web app (SDK config).
    These web keys are designed to be public; access is controlled by Firebase Auth and the Firestore rules
-   in firestore.rules. Never put private/service-account keys here. */
+   in firestore.rules.template. Never put private/service-account keys here. */
 
 export const firebaseConfig = {
   apiKey: "AIzaSyCDQZRybNdoTyOPk7fuYbcUDVVlTKV6jq4",

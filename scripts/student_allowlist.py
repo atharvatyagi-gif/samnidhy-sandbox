@@ -8,7 +8,7 @@ roll number and date of birth; the page computes the same key and Firebase's rul
 
   python scripts/student_allowlist.py "Student List for ID Card- Batch 2026-29.xlsx"
     -> private/allowlist_keys.json   (the keys)
-    -> private/firestore.rules       (firestore.rules with the keys filled in: paste it into
+    -> private/firestore.rules       (firestore.rules.template with the keys filled in: paste it into
                                       Firebase console > Firestore Database > Rules > Publish)
 """
 
@@ -64,12 +64,12 @@ def main():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({"salt": SALT, "count": len(keys), "keys": sorted(set(keys))}, indent=1), encoding="utf-8")
     print(f"{len(set(keys))} students -> {OUT.relative_to(ROOT)} ({bad} rows skipped: unreadable roll number or date)")
-    rules = (ROOT / "firestore.rules").read_text(encoding="utf-8")
-    assert rules.count("/*STUDENT_KEYS*/") == 1, "firestore.rules template has no /*STUDENT_KEYS*/ marker"
+    rules = (ROOT / "firestore.rules.template").read_text(encoding="utf-8")
+    assert rules.count("/*STUDENT_KEYS*/") == 1, "firestore.rules.template has no /*STUDENT_KEYS*/ marker"
     listed = ",\n        ".join(f"'{k}'" for k in sorted(set(keys)))
     rules = rules.replace("/*STUDENT_KEYS*/", "\n        " + listed + "\n      ")
-    rules = rules.replace("// This file is the TEMPLATE (no student data). Do not paste it as it is.",
-                          "// PRIVATE: generated with the student keys. Never commit or publish this file.")
+    rules = rules.replace("// TEMPLATE ONLY (no student data): pasting this into Firebase refuses EVERY student. Do not paste it.",
+                          "// PASTE THIS FILE into Firebase > Firestore > Rules. PRIVATE: contains the student keys; never commit or publish it.")
     (OUT.parent / "firestore.rules").write_text(rules, encoding="utf-8")
     print(f"Rules with the student keys -> private/firestore.rules (paste into Firebase > Firestore > Rules)")
     return 0
