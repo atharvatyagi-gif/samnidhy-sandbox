@@ -4,35 +4,25 @@
    t/h/<k>.json     1 year of NSE daily candles (on demand)           t/i/<k>.json    intraday {d: 5-min latest session, w: 15-min 5 sessions}
    t/fund.json      NIFTY 500 fundamentals                            live.json       world indices, markets, headlines
    screener.json    today's B-Lab screen                              institutional.json  NSE FII/DII history
+   t/d/<key>.json   5 years of split-adjusted daily candles (chart; loaded per stock)
+   news.json        financial news wire
    Nothing is simulated: values change only when fresh data arrives. */
+
+import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
+import { technicals, recommend } from "./chart-indicators.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const IST = "Asia/Kolkata";
 const POLL_MS = 60000;
-const COL = { up: "#00e060", upFill: "rgba(0,224,96,0.9)", down: "#e0a060", ink: "#e8dcc3", ink3: "#83795f", card: "#061a10", acc: "#00e060" };  // dark chart workspace (old terminal palette)
+// (chart colours live in chart-engine.js)
+const COL_UNUSED = { up: "#00e060", upFill: "rgba(0,224,96,0.9)", down: "#e0a060", ink: "#e8dcc3", ink3: "#83795f", card: "#061a10", acc: "#00e060" };  // dark chart workspace (old terminal palette)
 const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
 const S = { uni: null, map: new Map(), quotes: {}, qmeta: {}, fund: null, live: {}, screen: {}, inst: {}, hist: {}, intra: {}, prevWei: {}, news: {} };
 let sec = null, iv = "D", rg = "1Y", ct = LS.get("blab-ct", "candle"), scaleMode = "auto", view = "brief", side = "details";
 let movMode = "gain", board = "All", sector = "", movSort = null, movLimit = 50, movQuery = "", heatSel = null, newsFilter = "all";
-let tool = "cross", magnet = LS.get("blab-magnet", false), hideDraw = false, pending = null;
-
-/* ---------------- indicators ---------------- */
-const INDS = [
-  { id: "vol", name: "Volume", group: "Main", color: "#83795f", def: true },
-  { id: "sma20", name: "SMA 20", group: "Moving averages", color: "#e8dcc3", def: true },
-  { id: "sma50", name: "SMA 50", group: "Moving averages", color: "#b5a682", def: true },
-  { id: "sma200", name: "SMA 200", group: "Moving averages", color: "#6fae7f" },
-  { id: "ema20", name: "EMA 20", group: "Moving averages", color: "#4fd1c5" },
-  { id: "bb", name: "Bollinger Bands (20, 2)", group: "Bands", color: "#a78bfa" },
-  { id: "vwap", name: "VWAP (intraday)", group: "Bands", color: "#f0c674" },
-  { id: "rsi", name: "RSI (14)", group: "Oscillators · own pane", color: "#4fd1c5" },
-  { id: "macd", name: "MACD (12, 26, 9)", group: "Oscillators · own pane", color: "#e8dcc3" },
-];
-let inds = new Set(LS.get("blab-inds", INDS.filter(i => i.def).map(i => i.id)));
-
 /* ---------------- formatting ---------------- */
 const inr = (v, d = 2) => v == null || isNaN(v) ? "--" : Number(v).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
 const us = (v, d = 2) => v == null ? "--" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -90,7 +80,7 @@ async function boot() {
   const hp = new URLSearchParams(location.hash.slice(1));
   sec = hp.get("s") && S.map.has(hp.get("s")) ? hp.get("s") : (loadWatch()[0] || "RELIANCE");
   $("#search-ph").textContent = `Search ${S.uni.count.toLocaleString("en-IN")} NSE stocks, or press / to jump`;
-  fillSectorSelect(); buildIndMenu(); renderAll();
+  fillSectorSelect(); updIndCount(); buildTypeMenu(); renderAll();
   go(hp.get("v") || (hp.get("s") ? "terminal" : "brief"), true);
   openSec(sec);
   getJSON("t/fund.json", false).then(f => { S.fund = f.stocks || {}; renderDetails(); }).catch(() => { S.fund = {}; renderDetails(); });
@@ -122,7 +112,7 @@ function go(v, quiet) {
   $(".desk").classList.toggle("on-terminal", v === "terminal");       // dark chart workspace: regime strip folds away
   $$("#tabs [data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === v && !b.dataset.side));
   history.replaceState(null, "", `#v=${v}${sec ? "&s=" + encodeURIComponent(sec) : ""}`);
-  if (v === "terminal") requestAnimationFrame(() => { if (chart) chart.timeScale().applyOptions({}); else drawChart(); });
+  if (v === "terminal") requestAnimationFrame(() => { if (!eng.chart) drawChart(); });
   if (!quiet) $("#v-" + v).scrollTop = 0;
 }
 document.addEventListener("click", e => {
@@ -208,29 +198,58 @@ function renderBrief() {
   $$("#brief-cards [data-open]").forEach(bt => bt.onclick = () => { openSec(bt.dataset.open); go("terminal"); });
 }
 
-/* ================= CHART ================= */
-let chart = null, sMain = null, extra = {}, bars = [], drawSeries = [], priceLines = [], measureSeries = null, measureShown = false;
-const LC = () => window.LightweightCharts;
+/* ================= CHART (chart-engine.js: TradingView-style engine on Lightweight Charts) ================= */
+// Daily history: t/d/<key>.json = 5 years, split-adjusted (Yahoo, checked against NSE's close) for main-board
+// stocks, ETFs and the NIFTY / BANK NIFTY / SENSEX indices; SME stocks fall back to NSE's own 1-year files.
+const dkey = s => [...s].map(c => /[A-Za-z0-9]/.test(c) ? c : "_" + c.charCodeAt(0).toString(16)).join("");
+S.daily = {};
+async function loadDaily(sym) {
+  if (S.daily[sym] !== undefined) return S.daily[sym];
+  try { S.daily[sym] = (await getJSON(`t/d/${dkey(sym)}.json`, false)).d; } catch (e) { S.daily[sym] = null; }
+  return S.daily[sym];
+}
+const dailyOf = sym => S.daily[sym] || histOf(sym);
+// Older years (before the 5-year file) live on the repository's "history" branch; fetched when you scroll back.
+const ARCHIVE = "https://raw.githubusercontent.com/atharvatyagi-gif/samnidhy-sandbox/history/";
+S.arch = {};
+async function loadArchive(sym) {
+  if (S.arch[sym] !== undefined) return S.arch[sym] === "loading" ? null : S.arch[sym];
+  const cur = S.daily[sym]; if (!cur || !cur.length) return null;
+  S.arch[sym] = "loading";
+  try {
+    const r = await fetch(ARCHIVE + dkey(sym) + ".json"); if (!r.ok) throw new Error(r.status);
+    const d = (await r.json()).d, first = cur[0][0], ov = d.find(x => x[0] === first);
+    const k = ov && ov[4] ? cur[0][4] / ov[4] : 1;              // a split since the archive was made: rescale the old part
+    const old = d.filter(x => x[0] < first).map(x => [x[0], +(x[1] * k).toFixed(2), +(x[2] * k).toFixed(2), +(x[3] * k).toFixed(2), +(x[4] * k).toFixed(2), Math.round(x[5] / k)]);
+    S.daily[sym] = old.concat(cur); S.arch[sym] = old;
+    S.tech[sym] = undefined; S.rec[sym] = undefined;
+    return old;
+  } catch (e) { S.arch[sym] = null; return null; }
+}
+const INDEXES = [["^NSEI", "NIFTY 50"], ["^NSEBANK", "BANK NIFTY"], ["^BSESN", "SENSEX"]];
 function showMsg(t) { const m = $("#chart-msg"); m.textContent = t || ""; m.classList.toggle("show", !!t); }
 const ts = (dateStr, hhmm) => { const [y, m, d] = dateStr.split("-").map(Number), [hh, mm] = hhmm.split(":").map(Number); return Date.UTC(y, m - 1, d, hh, mm) / 1000; };
 function candlesFor(sym, interval) {
-  const x = q(sym);
+  const x = S.map.has(sym) ? q(sym) : null;
   if (["5m", "15m", "1h"].includes(interval)) {
     const it = intraOf(sym); if (!it) return [];
-    if (interval === "5m") { const day = (S.quotes[sym] || {}).d || S.qmeta.session_date; return (it.d || []).map(r => ({ time: ts(day, r[0]), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], lbl: day + " " + r[0] })); }
-    const w = (it.w || []).map(r => { const [d, t] = r[0].split(" "); return { time: ts(d, t), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], lbl: r[0], d, t }; });
+    if (interval === "5m") { const day = (S.quotes[sym] || {}).d || S.qmeta.session_date; return (it.d || []).map(r => ({ time: ts(day, r[0]), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], lbl: day + " " + r[0], day })); }
+    const w = (it.w || []).map(r => { const [d, t] = r[0].split(" "); return { time: ts(d, t), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], lbl: r[0], d, t, day: d }; });
     if (interval === "15m") return w;
     const out = [];
     for (const b of w) {
       const [hh, mm] = b.t.split(":").map(Number), k = Math.floor(((hh * 60 + mm) - 555) / 60), start = 555 + k * 60;
       const hm = String(Math.floor(start / 60)).padStart(2, "0") + ":" + String(start % 60).padStart(2, "0"), key = b.d + " " + hm, last = out[out.length - 1];
       if (last && last.lbl === key) { last.h = Math.max(last.h, b.h); last.l = Math.min(last.l, b.l); last.c = b.c; last.v += b.v; }
-      else out.push({ time: ts(b.d, hm), o: b.o, h: b.h, l: b.l, c: b.c, v: b.v, lbl: key });
+      else out.push({ time: ts(b.d, hm), o: b.o, h: b.h, l: b.l, c: b.c, v: b.v, lbl: key, day: b.d });
     }
     return out;
   }
-  const d = histOf(sym).map(r => ({ time: r[0], o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], lbl: r[0] }));
-  if (x && x.live && x.o != null && (!d.length || x.d > d[d.length - 1].time)) d.push({ time: x.d, o: x.o, h: x.h, l: x.l, c: x.p, v: x.v, lbl: x.d + " (live)" });
+  const d = dailyOf(sym).map(r => ({ time: r[0], o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], lbl: r[0], day: r[0] }));
+  if (x && x.live && x.o != null) {                         // today's candle from the delayed live price
+    const live = { time: x.d, o: x.o, h: x.h, l: x.l, c: x.p, v: x.v, lbl: x.d + " (live)", day: x.d }, last = d[d.length - 1];
+    if (!last || x.d > last.time) d.push(live); else if (last.time === x.d) d[d.length - 1] = live;
+  }
   if (interval === "D") return d;
   const out = [];
   for (const b of d) {
@@ -240,123 +259,64 @@ function candlesFor(sym, interval) {
     else key = b.time.slice(0, 7);
     const last = out[out.length - 1];
     if (last && last.key === key) { last.h = Math.max(last.h, b.h); last.l = Math.min(last.l, b.l); last.c = b.c; last.v += b.v; }
-    else out.push({ key, time: b.time, o: b.o, h: b.h, l: b.l, c: b.c, v: b.v, lbl: interval === "W" ? "Week of " + b.time : b.time.slice(0, 7) });
+    else out.push({ key, time: b.time, o: b.o, h: b.h, l: b.l, c: b.c, v: b.v, lbl: interval === "W" ? "Week of " + b.time : b.time.slice(0, 7), day: b.time });
   }
   return out;
 }
-const smaA = (c, n) => c.map((_, i) => i < n - 1 ? null : c.slice(i - n + 1, i + 1).reduce((a, b) => a + b, 0) / n);
-function emaA(c, n) { const k = 2 / (n + 1), o = []; let e = null; c.forEach((v, i) => { if (i < n - 1) { o.push(null); return; } e = e == null ? c.slice(0, n).reduce((a, b) => a + b, 0) / n : v * k + e * (1 - k); o.push(e); }); return o; }
-function rsiA(c, n = 14) {
-  const o = []; let g = 0, l = 0;
-  c.forEach((v, i) => {
-    if (!i) { o.push(null); return; }
-    const d = v - c[i - 1];
-    if (i <= n) { g += Math.max(d, 0); l += Math.max(-d, 0); if (i === n) { g /= n; l /= n; o.push(l ? 100 - 100 / (1 + g / l) : 100); } else o.push(null); }
-    else { g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; o.push(l ? 100 - 100 / (1 + g / l) : 100); }
-  });
-  return o;
-}
-function bbA(c, n = 20, k = 2) { const m = smaA(c, n); return c.map((_, i) => { if (m[i] == null) return null; const s = c.slice(i - n + 1, i + 1), sd = Math.sqrt(s.reduce((a, b) => a + (b - m[i]) ** 2, 0) / n); return [m[i] + k * sd, m[i], m[i] - k * sd]; }); }
-function vwapA(b) { const o = []; let pv = 0, vv = 0, day = null; b.forEach(x => { const d = String(x.lbl).slice(0, 10); if (d !== day) { pv = 0; vv = 0; day = d; } pv += (x.h + x.l + x.c) / 3 * (x.v || 0); vv += x.v || 0; o.push(vv ? pv / vv : null); }); return o; }
-function macdA(c) {
-  const e12 = emaA(c, 12), e26 = emaA(c, 26), m = c.map((_, i) => e12[i] != null && e26[i] != null ? e12[i] - e26[i] : null);
-  const first = m.findIndex(v => v != null), sig = Array(c.length).fill(null);
-  if (first >= 0) emaA(m.slice(first), 9).forEach((v, j) => sig[first + j] = v);
-  return m.map((v, i) => [v, sig[i], v != null && sig[i] != null ? v - sig[i] : null]);
+
+let cmp = [];                                              // [{sym, label, color}]
+const CMP_COLORS = ["#6fa8ff", "#f0a0ff", "#f0c674", "#ff6b6b"];
+const eng = new ChartEngine($("#chart"), {
+  toast, message: showMsg,
+  defaultRange: () => applyRange(),
+  nearStart: () => {                                        // scrolled back to the start: fetch the older years
+    if (["5m", "15m", "1h"].includes(iv) || !S.daily[sec] || S.arch[sec] !== undefined) return;
+    const sym = sec, before = eng.bars.length, r = eng.chart.timeScale().getVisibleLogicalRange();
+    showMsg(""); toast(`Loading ${sym}'s older history…`);
+    loadArchive(sym).then(old => {
+      if (sym !== sec) return;
+      if (!old || !old.length) { toast(`No older history for ${sym}: the chart already starts at its first available day`); return; }
+      drawChart(); const added = eng.bars.length - before;
+      if (r) eng.chart.timeScale().setVisibleLogicalRange({ from: r.from + added, to: r.to + added });
+      toast(`History loaded back to ${old[0][0]}`);
+    });
+  },
+  toolChanged: t => $$("#tools [data-tool]").forEach(b => b.classList.toggle("on", b.dataset.tool === t)),
+  indsChanged: () => updIndCount(),
+  compareChanged: list => { cmp = cmp.filter(c => list.some(l => l.sym === c.sym)); },
+});
+window.blabChart = eng;                                   // handy for checks from the browser console
+function updIndCount() { const n = eng.inds.length; $("#ind-cnt").textContent = n ? `(${n})` : ""; }
+function compareSeries(bars) {
+  const intraday = typeof bars[0].time === "number";
+  return cmp.map(c => ({ ...c, bars: intraday && c.sym.startsWith("^") ? [] : candlesFor(c.sym, iv) })).filter(c => c.bars.length);
 }
 function drawChart(keepRange) {
-  if (view !== "terminal" && !chart) return;                   // draw when the terminal is visible
-  const L = LC();
-  if (!L) { showMsg("The chart library could not load. Check your connection and reload."); return; }
-  const prevRange = keepRange && chart ? chart.timeScale().getVisibleLogicalRange() : null;
-  if (chart) { chart.remove(); chart = null; }
-  extra = {}; drawSeries = []; priceLines = []; measureSeries = null; $("#measure").hidden = true; measureShown = false;
-  bars = sec ? candlesFor(sec, iv) : [];
+  if (view !== "terminal" && !eng.chart) return;
+  const bars = sec ? candlesFor(sec, iv) : [];
   $$("#iv-grp button").forEach(b => b.classList.toggle("on", b.dataset.iv === iv));
+  $("#tb-sym").textContent = sec || "—";
+  const s = S.map.get(sec);
   if (!bars.length) {
-    const s = S.map.get(sec);
     showMsg(["5m", "15m", "1h"].includes(iv) ? `No intraday data for ${sec}${s && s.board === "SME" ? " (SME stocks have NSE end-of-day data only)" : ""}. Switch to D.` : "No price history available.");
-    legend(); return;
+    eng.load({ sym: sec, iv, bars: [], intraday: false }); return;
   }
   showMsg("");
   const intraday = typeof bars[0].time === "number";
-  chart = L.createChart($("#chart"), {
-    autoSize: true,
-    layout: { background: { type: "solid", color: COL.card }, textColor: COL.ink3, fontFamily: "'IBM Plex Mono', Consolas, monospace", fontSize: 11, attributionLogo: false,
-      panes: { separatorColor: "rgba(181,166,130,0.22)", separatorHoverColor: "rgba(181,166,130,0.45)", enableResize: true } },
-    grid: { vertLines: { color: "rgba(181,166,130,0.07)" }, horzLines: { color: "rgba(181,166,130,0.07)" } },
-    rightPriceScale: { borderColor: "rgba(181,166,130,0.25)", scaleMargins: { top: 0.14, bottom: inds.has("vol") ? 0.2 : 0.06 }, mode: { auto: 0, log: 1, pct: 2 }[scaleMode] },
-    timeScale: { borderColor: "rgba(181,166,130,0.25)", timeVisible: intraday, secondsVisible: false, rightOffset: 6, barSpacing: intraday ? 7 : 6 },
-    crosshair: { mode: magnet ? 1 : 0, vertLine: { color: "rgba(181,166,130,0.45)", style: 3, labelBackgroundColor: "#11352a" }, horzLine: { color: "rgba(181,166,130,0.45)", style: 3, labelBackgroundColor: "#11352a" } },
-    localization: { priceFormatter: p => inr(p, dp(Math.abs(p))) },
-  });
-  try { L.createTextWatermark(chart.panes()[0], { horzAlign: "center", vertAlign: "center", lines: [{ text: sec, color: "rgba(181,166,130,0.07)", fontSize: 64, fontStyle: "bold" }, { text: `${iv} · NSE`, color: "rgba(232,220,195,0.06)", fontSize: 16 }] }); } catch (e) {}
-  if (ct === "candle") sMain = chart.addSeries(L.CandlestickSeries, { upColor: COL.upFill, downColor: COL.down, borderUpColor: COL.up, borderDownColor: COL.down, wickUpColor: COL.up, wickDownColor: COL.down, priceLineColor: COL.ink, priceLineStyle: 2 });
-  else if (ct === "bars") sMain = chart.addSeries(L.BarSeries, { upColor: COL.up, downColor: COL.down, thinBars: false, priceLineColor: COL.ink });
-  else if (ct === "line") sMain = chart.addSeries(L.LineSeries, { color: COL.acc, lineWidth: 2, priceLineColor: COL.ink });
-  else sMain = chart.addSeries(L.AreaSeries, { lineColor: COL.acc, topColor: "rgba(0,224,96,0.22)", bottomColor: "rgba(0,224,96,0.02)", lineWidth: 2, priceLineColor: COL.ink });
-  sMain.setData(bars.map(b => ["candle", "bars"].includes(ct) ? { time: b.time, open: b.o, high: b.h, low: b.l, close: b.c } : { time: b.time, value: b.c }));
-  const c = bars.map(b => b.c), colorOf = id => INDS.find(i => i.id === id).color;
-  const line = (vals, color, pane = 0, w = 1.5, more = {}) => {
-    const s = chart.addSeries(L.LineSeries, { color, lineWidth: w, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, ...more }, pane);
-    s.setData(vals.map((v, i) => v == null ? { time: bars[i].time } : { time: bars[i].time, value: +v.toFixed(2) })); return s;
-  };
-  if (inds.has("vol")) {
-    extra.vol = chart.addSeries(L.HistogramSeries, { priceFormat: { type: "volume" }, priceScaleId: "vol", lastValueVisible: false, priceLineVisible: false });
-    chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
-    extra.vol.setData(bars.map(b => ({ time: b.time, value: b.v || 0, color: b.c >= b.o ? "rgba(0,224,96,0.25)" : "rgba(224,160,96,0.28)" })));
-  }
-  for (const [id, n] of [["sma20", 20], ["sma50", 50], ["sma200", 200]]) if (inds.has(id)) { const v = smaA(c, n); extra[id] = [line(v, colorOf(id)), v]; }
-  if (inds.has("ema20")) { const v = emaA(c, 20); extra.ema20 = [line(v, colorOf("ema20")), v]; }
-  if (inds.has("bb")) { const b = bbA(c), col = colorOf("bb"); extra.bb = [[line(b.map(x => x && x[0]), col, 0, 1), line(b.map(x => x && x[1]), col, 0, 1, { lineStyle: 2 }), line(b.map(x => x && x[2]), col, 0, 1)], b]; }
-  if (inds.has("vwap") && intraday) { const v = vwapA(bars); extra.vwap = [line(v, colorOf("vwap"), 0, 1.6), v]; }
-  let pane = 1;
-  if (inds.has("rsi")) {
-    const r = rsiA(c), s = line(r, colorOf("rsi"), pane, 1.5);
-    s.createPriceLine({ price: 70, color: "rgba(224,160,96,0.55)", lineStyle: 2, axisLabelVisible: false });
-    s.createPriceLine({ price: 30, color: "rgba(0,224,96,0.5)", lineStyle: 2, axisLabelVisible: false });
-    extra.rsi = [s, r]; pane++;
-  }
-  if (inds.has("macd")) {
-    const m = macdA(c), h = chart.addSeries(L.HistogramSeries, { priceLineVisible: false, lastValueVisible: false }, pane);
-    h.setData(m.map((x, i) => x[2] == null ? { time: bars[i].time } : { time: bars[i].time, value: +x[2].toFixed(3), color: x[2] >= 0 ? "rgba(0,224,96,0.45)" : "rgba(224,160,96,0.45)" }));
-    extra.macd = [[h, line(m.map(x => x[0]), "#e8dcc3", pane, 1.3), line(m.map(x => x[1]), "#e0a060", pane, 1.3)], m]; pane++;
-  }
-  const sizePanes = () => { try { chart && chart.panes().forEach((p, i) => { if (p.setStretchFactor) p.setStretchFactor(i === 0 ? 4 : 1); else if (i > 0) p.setHeight(120); }); } catch (e) {} };
-  sizePanes(); requestAnimationFrame(sizePanes);
-  applyDrawings();
-  chart.subscribeCrosshairMove(p => legend(p));
-  if (prevRange) chart.timeScale().setVisibleLogicalRange(prevRange); else applyRange();
-  legend();
+  eng.load({ sym: sec, name: s ? s.n : sec, iv, bars, intraday, keepRange, compare: compareSeries(bars) });
+  $("#src-note").textContent = intraday ? "Yahoo Finance, delayed" : S.daily[sec] ? `${bars.length.toLocaleString("en-IN")} bars since ${bars[0].day.slice(0, 4)} · split-adjusted${S.arch[sec] === undefined ? " · scroll back for more" : ""}` : "NSE end-of-day (1 year)";
+  updIndCount();
 }
 function applyRange() {
-  if (!chart || !bars.length) return;
-  const n = bars.length; let from = 0;
-  if (iv === "D") {
-    if (rg === "YTD") { const y = new Date().getFullYear() + "-01-01"; const i = bars.findIndex(b => String(b.time) >= y); from = i < 0 ? 0 : i; }
-    else { const d = { "1M": 22, "3M": 64, "6M": 127 }[rg]; if (d) from = Math.max(0, n - d); }
-  }
-  chart.timeScale().setVisibleLogicalRange({ from: from - 0.5, to: n + 5 });
-}
-function legend(p) {
-  const s = S.map.get(sec), x = q(sec); if (!s) return;
-  let i = bars.length - 1;
-  if (p && p.time != null) { const j = bars.findIndex(b => b.time === p.time); if (j >= 0) i = j; }
-  const b = bars[i], prev = i > 0 ? bars[i - 1].c : (x && x.pc), ch = b && prev ? b.c - prev : null, chp = b && prev ? ch / prev * 100 : null;
-  let html = `<div class="lg-main"><b>${esc(sec)} · ${esc(iv)} · NSE</b>`;
-  if (b) html += `<span>O <b class="${ud(ch)}">${inr(b.o)}</b> H <b class="${ud(ch)}">${inr(b.h)}</b> L <b class="${ud(ch)}">${inr(b.l)}</b> C <b class="${ud(ch)}">${inr(b.c)}</b> <b class="${ud(ch)}">${sg(ch)} (${sg(chp)}%)</b>${b.v != null ? ` · Vol <b>${big(b.v)}</b>` : ""} · <span class="mut">${esc(b.lbl)}</span></span>`;
-  html += `</div><div class="lg-ind">`;
-  for (const d of INDS) {
-    if (d.id === "vol" || !extra[d.id]) continue;
-    const e = extra[d.id][1][i];
-    let v = "--";
-    if (d.id === "bb") v = e ? `${inr(e[0])} ${inr(e[1])} ${inr(e[2])}` : "--";
-    else if (d.id === "rsi") v = e != null ? e.toFixed(1) : "--";
-    else if (d.id === "macd") v = e && e[0] != null ? `${e[0].toFixed(2)} ${e[1] != null ? e[1].toFixed(2) : "--"} ${e[2] != null ? e[2].toFixed(2) : ""}` : "--";
-    else v = e != null ? inr(e) : "--";
-    html += `<span style="color:${d.color}">■ ${esc(d.name)} <b>${v}</b></span>`;
-  }
-  $("#legend").innerHTML = html + "</div>";
+  const b = eng.bars; if (!b.length) return;
+  if (typeof b[0].time === "number") { eng.showBars(0); return; }
+  const lastD = new Date(b[b.length - 1].time + "T00:00:00Z");
+  const back = { "1M": [0, 1], "3M": [0, 3], "6M": [0, 6], "1Y": [1, 0], "5Y": [5, 0] }[rg];
+  let cut = null;
+  if (rg === "YTD") cut = `${lastD.getUTCFullYear()}-01-01`;
+  else if (back) { const d = new Date(lastD); d.setUTCFullYear(d.getUTCFullYear() - back[0]); d.setUTCMonth(d.getUTCMonth() - back[1]); cut = d.toISOString().slice(0, 10); }
+  const i = cut ? b.findIndex(x => x.time >= cut) : 0;
+  eng.showBars(Math.max(0, i));
 }
 function renderHead() {
   const s = S.map.get(sec), x = q(sec); if (!s || !x) return;
@@ -374,109 +334,80 @@ function renderHead() {
 function syncRange() { $$("#rg-grp button").forEach(b => b.classList.toggle("on", b.dataset.rg === rg)); }
 $$("#iv-grp button").forEach(b => b.onclick = () => {
   if (b.disabled) return;
-  iv = b.dataset.iv; rg = { "5m": "1D", "15m": "5D", "1h": "5D" }[iv] || (["1D", "5D"].includes(rg) ? "1Y" : rg);
+  iv = b.dataset.iv;
+  rg = { "5m": "1D", "15m": "5D", "1h": "5D" }[iv] || (["1D", "5D"].includes(rg) ? (iv === "D" ? "1Y" : "5Y") : rg);
   syncRange(); drawChart();
 });
 $$("#rg-grp button").forEach(b => b.onclick = () => {
   if (b.disabled) return;
   rg = b.dataset.rg; syncRange();
-  const want = rg === "1D" ? "5m" : rg === "5D" ? "15m" : "D";
+  const want = rg === "1D" ? "5m" : rg === "5D" ? "15m" : rg === "5Y" ? (iv === "M" ? "M" : "W") : rg === "ALL" ? (["5m", "15m", "1h"].includes(iv) ? "D" : iv) : (["5m", "15m", "1h"].includes(iv) ? "D" : iv);
+  if (rg === "ALL" && S.daily[sec] && S.arch[sec] === undefined) { const sym = sec; toast("Loading the full history…"); loadArchive(sym).then(() => { if (sym !== sec) return; iv = want; drawChart(); }); return; }
   if (want !== iv) { iv = want; drawChart(); } else applyRange();
 });
-$$("#ct-grp button").forEach(b => { b.classList.toggle("on", b.dataset.ct === ct); b.onclick = () => { ct = b.dataset.ct; LS.set("blab-ct", ct); $$("#ct-grp button").forEach(x => x.classList.toggle("on", x === b)); drawChart(true); }; });
-$$("#sc-grp button").forEach(b => b.onclick = () => { scaleMode = b.dataset.sc; $$("#sc-grp button").forEach(x => x.classList.toggle("on", x === b)); chart?.priceScale("right").applyOptions({ mode: { auto: 0, log: 1, pct: 2 }[scaleMode] }); });
+$("#tb-sym").onclick = () => openSearch();
+function buildTypeMenu() {
+  $("#ct-menu").innerHTML = CHART_TYPES.map(([k, n]) => `<button data-ct="${k}" class="${eng.type === k ? "on" : ""}">${esc(n)}</button>`).join("");
+  $("#ct-btn").textContent = (CHART_TYPES.find(t => t[0] === eng.type) || CHART_TYPES[0])[1] + " ▾";
+}
+$("#ct-btn").onclick = e => { e.stopPropagation(); const m = $("#ct-menu"); buildTypeMenu(); m.hidden = !m.hidden; $("#ct-btn").setAttribute("aria-expanded", String(!m.hidden)); };
+$("#ct-menu").onclick = e => { const b = e.target.closest("[data-ct]"); if (!b) return; eng.setType(b.dataset.ct); buildTypeMenu(); $("#ct-menu").hidden = true; };
+document.addEventListener("click", e => { if (!e.target.closest("#ct-dd")) $("#ct-menu").hidden = true; });
+$("#ind-open").onclick = () => eng.openIndicators();
+$$("#sc-grp button").forEach(b => b.onclick = () => { if (cmp.length) { toast("Comparing: the scale stays in %"); return; } $$("#sc-grp button").forEach(x => x.classList.toggle("on", x === b)); eng.setScale(b.dataset.sc); });
 $("#snap").onclick = () => {
-  if (!chart) { toast("Open a chart first"); return; }
+  const cv = eng.snapshot(); if (!cv) { toast("Open a chart first"); return; }
   const a = document.createElement("a");
-  a.href = chart.takeScreenshot().toDataURL("image/png"); a.download = `${sec}_${iv}_${new Date().toISOString().slice(0, 10)}.png`;
+  a.href = cv.toDataURL("image/png"); a.download = `${sec}_${iv}_${new Date().toISOString().slice(0, 10)}.png`;
   document.body.appendChild(a); a.click(); a.remove(); toast("Chart image saved");
 };
+$("#fs").onclick = () => { const on = $(".term").classList.toggle("focus"); $("#fs").classList.toggle("on", on); $("#fs").textContent = on ? "⛶ Exit focus" : "⛶ Focus"; };
+$("#goto").onchange = e => { if (!e.target.value) return; if (["5m", "15m", "1h"].includes(iv)) { iv = "D"; rg = "ALL"; syncRange(); drawChart(); } eng.goTo(e.target.value); };
 $("#wl-toggle").onclick = () => toggleWatch(sec);
-function buildIndMenu() {
-  let html = "", g = null;
-  for (const d of INDS) {
-    if (d.group !== g) { g = d.group; html += `<h6>${esc(g)}</h6>`; }
-    html += `<label><input type="checkbox" data-ind="${d.id}" ${inds.has(d.id) ? "checked" : ""}><i style="background:${d.color}"></i><span>${esc(d.name)}</span>${d.id === "vwap" ? "<small>5m · 15m · 1h</small>" : ""}</label>`;
-  }
-  $("#ind-menu").innerHTML = html;
-  $("#ind-cnt").textContent = inds.size ? `(${inds.size})` : "";
-  $$("#ind-menu input").forEach(i => i.onchange = () => { i.checked ? inds.add(i.dataset.ind) : inds.delete(i.dataset.ind); LS.set("blab-inds", [...inds]); $("#ind-cnt").textContent = inds.size ? `(${inds.size})` : ""; drawChart(true); });
-}
-$("#ind-btn").onclick = e => { e.stopPropagation(); const m = $("#ind-menu"); m.hidden = !m.hidden; $("#ind-btn").setAttribute("aria-expanded", String(!m.hidden)); };
-document.addEventListener("click", e => { if (!e.target.closest("#ind-dd")) $("#ind-menu").hidden = true; });
 
-/* ---- drawing tools (saved in this browser, per stock) ---- */
-const DKEY = "blab-draw";
-const drawingsOf = sym => (LS.get(DKEY, {})[sym] || []);
-function saveDrawings(sym, list) { const all = LS.get(DKEY, {}); all[sym] = list; LS.set(DKEY, all); }
-function clearMeasure() { if (measureSeries && chart) { try { chart.removeSeries(measureSeries); } catch (e) {} } measureSeries = null; $("#measure").hidden = true; measureShown = false; }
-function setTool(t) {
-  tool = t; pending = null;
-  $$("#tools [data-tool]").forEach(b => b.classList.toggle("on", b.dataset.tool === t));
-  $(".stage").classList.toggle("tool-active", t !== "cross");
-  const hint = { trend: "Trend line: click the first point", hline: "Horizontal line: click a price", measure: "Measure: click the start point" }[t];
-  $("#tool-hint").hidden = !hint; $("#tool-hint").textContent = hint || "";
-}
-$$("#tools [data-tool]").forEach(b => b.onclick = () => { clearMeasure(); setTool(b.dataset.tool); });
-$("#magnet").classList.toggle("on", magnet);
+/* ---- compare ---- */
+$("#cmp-open").onclick = () => {
+  const m = document.createElement("div"); m.className = "eng-modal";
+  m.innerHTML = `<div class="eng-box" role="dialog" aria-label="Compare"><div class="eng-bh"><b>Compare ${esc(sec)} with…</b><button class="eng-x" aria-label="Close">×</button></div>
+    <div class="eng-bb"><div class="cmp-idx">${INDEXES.map(([k, n]) => `<button class="btn-line" data-c="${k}" data-n="${n}">${n}</button>`).join("")}</div>
+    <input class="eng-q" type="search" placeholder="…or type a stock (e.g. TCS, HDFC Bank)" aria-label="Compare with a stock"><div class="eng-list cmp-list"></div>
+    <p class="eng-note">Both lines are shown as % change from the first bar on screen. Remove a comparison with × in the chart legend.${cmp.length ? " Now comparing: " + cmp.map(c => esc(c.label)).join(", ") + "." : ""}</p></div></div>`;
+  const close = () => m.remove();
+  m.addEventListener("mousedown", e => { if (e.target === m) close(); });
+  m.querySelector(".eng-x").onclick = close;
+  m.addEventListener("keydown", e => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
+  const list = m.querySelector(".cmp-list"), input = m.querySelector(".eng-q");
+  input.oninput = () => {
+    const Q = input.value.trim().toUpperCase(); if (!Q) { list.innerHTML = ""; return; }
+    const hits = S.uni.stocks.filter(s => s.s !== sec && (s.s.startsWith(Q) || s.n.toUpperCase().split(/\s+/).some(w => w.startsWith(Q)))).sort((a, b) => (b.v || 0) * (b.c || 0) - (a.v || 0) * (a.c || 0)).slice(0, 8);
+    list.innerHTML = hits.map(s => `<button class="eng-ind" data-c="${esc(s.s)}" data-n="${esc(s.s)}"><span>${esc(s.s)}</span><small>${esc(s.n)}</small></button>`).join("") || '<p class="eng-empty">No match.</p>';
+  };
+  m.addEventListener("click", async e => {
+    const b = e.target.closest("[data-c]"); if (!b) return;
+    if (cmp.some(c => c.sym === b.dataset.c)) { toast("Already comparing " + b.dataset.n); return; }
+    if (cmp.length >= 4) { toast("Up to 4 comparisons"); return; }
+    await loadDaily(b.dataset.c); if (!b.dataset.c.startsWith("^")) { await loadHist(shard(b.dataset.c)).catch(() => null); await loadIntra(shard(b.dataset.c)).catch(() => null); }
+    if (!dailyOf(b.dataset.c).length) { toast("No price history for " + b.dataset.n); return; }
+    cmp.push({ sym: b.dataset.c, label: b.dataset.n, color: CMP_COLORS[cmp.length % CMP_COLORS.length] });
+    close(); $$("#sc-grp button").forEach(x => x.classList.toggle("on", x.dataset.sc === "pct")); drawChart(true); toast("Comparing with " + b.dataset.n);
+  });
+  document.body.appendChild(m); input.focus();
+};
+
+/* ---- drawing tools ---- */
+let stay = false;
+$$("#tools [data-tool]").forEach(b => b.onclick = () => eng.setTool(b.dataset.tool, stay));
+$("#magnet").classList.toggle("on", eng.magnet);
 $$("#tools [data-act]").forEach(b => b.onclick = () => {
   const a = b.dataset.act;
-  if (a === "magnet") { magnet = !magnet; LS.set("blab-magnet", magnet); b.classList.toggle("on", magnet); chart?.applyOptions({ crosshair: { mode: magnet ? 1 : 0 } }); toast(magnet ? "Magnet on: snaps to candle prices" : "Magnet off"); }
-  else if (a === "hide") { hideDraw = !hideDraw; b.classList.toggle("on", hideDraw); applyDrawings(); toast(hideDraw ? "Drawings hidden" : "Drawings shown"); }
-  else if (a === "clear") { const n = drawingsOf(sec).length; saveDrawings(sec, []); clearMeasure(); applyDrawings(); toast(n ? `Removed ${n} drawing${n > 1 ? "s" : ""} on ${sec}` : "No drawings on " + sec); }
-  else if (a === "fit") chart?.timeScale().fitContent();
-  else {
-    const r = chart?.timeScale().getVisibleLogicalRange(); if (!r) return;
-    const mid = (r.from + r.to) / 2, half = (r.to - r.from) / 2 * (a === "zoomin" ? 0.7 : 1.4);
-    chart.timeScale().setVisibleLogicalRange({ from: mid - half, to: mid + half });
-  }
+  if (a === "magnet") { eng.setMagnet(!eng.magnet); b.classList.toggle("on", eng.magnet); toast(eng.magnet ? "Magnet on: points snap to open/high/low/close" : "Magnet off"); }
+  else if (a === "stay") { stay = !stay; b.classList.toggle("on", stay); if (eng.tool !== "cursor") eng.setTool(eng.tool, stay); toast(stay ? "Stay in drawing mode: on" : "Stay in drawing mode: off"); }
+  else if (a === "hide") { const h = eng.toggleHidden(); b.classList.toggle("on", h); toast(h ? "Drawings hidden" : "Drawings shown"); }
+  else if (a === "undo") eng.undo();
+  else if (a === "clear") eng.clearDrawings();
+  else if (a === "fit") eng.fit();
+  else eng.zoom(a === "zoomin" ? 0.7 : 1.4);
 });
-function applyDrawings() {
-  if (!chart || !sMain) return;
-  drawSeries.forEach(s => { try { chart.removeSeries(s); } catch (e) {} }); drawSeries = [];
-  priceLines.forEach(l => { try { sMain.removePriceLine(l); } catch (e) {} }); priceLines = [];
-  if (hideDraw) return;
-  for (const d of drawingsOf(sec)) {
-    if (d.type === "h") priceLines.push(sMain.createPriceLine({ price: d.price, color: COL.acc, lineWidth: 1, lineStyle: 0, axisLabelVisible: true, title: "" }));
-    else if (d.type === "t" && d.iv === iv && d.a.time !== d.b.time) {
-      const s = chart.addSeries(LC().LineSeries, { color: COL.acc, lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
-      s.setData([d.a, d.b].sort((m, n) => (m.time > n.time ? 1 : -1))); drawSeries.push(s);
-    }
-  }
-}
-function pointAt(p) {
-  if (!p || p.time == null || !p.point) return null;
-  let price = sMain.coordinateToPrice(p.point.y); if (price == null) return null;
-  if (magnet) { const b = bars.find(x => x.time === p.time); if (b) price = [b.o, b.h, b.l, b.c].reduce((a, v) => Math.abs(v - price) < Math.abs(a - price) ? v : a, b.c); }
-  return { time: p.time, value: +price.toFixed(2) };
-}
-/* Drawing clicks are read from the raw mouse event: the chart library's own click event is skipped
-   when two clicks come close together, which made the second point of a line get lost. */
-$("#chart").addEventListener("click", e => {
-  if (tool === "cross" || !chart || !sMain) return;
-  const r = $("#chart").getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-  if (x > chart.timeScale().width() || y > chart.panes()[0].getHeight()) return;   // price axis or a lower pane
-  const time = chart.timeScale().coordinateToTime(x);
-  if (time == null) return;
-  onChartClick({ time, point: { x, y } });
-});
-function onChartClick(p) {
-  if (tool === "cross") return;
-  const pt = pointAt(p); if (!pt) return;
-  if (tool === "hline") { saveDrawings(sec, [...drawingsOf(sec), { type: "h", price: pt.value }]); applyDrawings(); setTool("cross"); toast(`Horizontal line at ₹${inr(pt.value)}`); return; }
-  if (!pending) { pending = pt; $("#tool-hint").textContent = tool === "trend" ? "Trend line: click the second point" : "Measure: click the end point"; return; }
-  if (tool === "trend") { saveDrawings(sec, [...drawingsOf(sec), { type: "t", iv, a: pending, b: pt }]); applyDrawings(); setTool("cross"); toast("Trend line saved"); return; }
-  const a = pending, b = pt, ia = bars.findIndex(x => x.time === a.time), ib = bars.findIndex(x => x.time === b.time);
-  const d = b.value - a.value, pc = d / a.value * 100, n = Math.abs(ib - ia);
-  clearMeasure();
-  measureSeries = chart.addSeries(LC().LineSeries, { color: d >= 0 ? COL.up : COL.down, lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
-  if (a.time !== b.time) measureSeries.setData([a, b].sort((m, k) => (m.time > k.time ? 1 : -1)));
-  const box = $("#measure"), x = chart.timeScale().timeToCoordinate(b.time), y = sMain.priceToCoordinate(b.value);
-  box.innerHTML = `${sg(d)} (${sg(pc)}%)<br>${n} bar${n === 1 ? "" : "s"} · ${esc(iv)}`;
-  box.style.left = Math.max(0, Math.min((x ?? 0) + 14, $("#chart").clientWidth - 160)) + "px"; box.style.top = Math.max(0, (y ?? 0) - 20) + "px";
-  box.style.color = box.style.borderColor = d >= 0 ? COL.up : COL.down; box.hidden = false; measureShown = true;
-  setTool("cross");
-}
 
 /* ================= RAIL: watchlist, details, prints ================= */
 function setSide(v) {
@@ -512,13 +443,40 @@ function renderWatch() {
 }
 const REC = { strong_buy: "Strong buy", buy: "Buy", hold: "Hold", underperform: "Underperform", sell: "Sell" };
 function perfFrom(sym) {
-  const h = histOf(sym), x = q(sym); if (!h.length || !x) return null;
-  const closes = h.map(r => r[4]);
-  if (!(x.live && x.d > h[h.length - 1][0])) closes.pop();
-  const back = n => closes.length >= n ? closes[closes.length - n] : null;
-  const y = new Date().getFullYear() + "-01-01", before = h.filter(r => r[0] < y), ytd = before.length ? before[before.length - 1][4] : null;
+  const x = q(sym); if (!x) return null;
+  const h = dailyOf(sym).filter(r => r[0] < x.d); if (!h.length) return null;          // history before today
+  const back = n => h.length >= n ? h[h.length - n][4] : null;
+  const y = x.d.slice(0, 4) + "-01-01", before = h.filter(r => r[0] < y), ytd = before.length ? before[before.length - 1][4] : null;
   const f = b => b ? (x.p / b - 1) * 100 : null;
-  return [["1W", f(back(5))], ["1M", f(back(21))], ["3M", f(back(63))], ["6M", f(back(126))], ["YTD", f(ytd)], ["1Y", f(h[0][4])]];
+  return [["1W", f(back(5))], ["1M", f(back(21))], ["3M", f(back(63))], ["6M", f(back(126))], ["YTD", f(ytd)], ["1Y", f(back(250))], ["3Y", f(back(745))], ["5Y", f(back(1240))]];
+}
+S.tech = {}; S.rec = {};
+const dailyBars = sym => dailyOf(sym).map(r => ({ time: r[0], o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], day: r[0] }));
+const pctS = v => v == null ? "--" : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + "%";
+function analysisHtml(sym) {
+  if (S.daily[sym] === undefined) return `<div class="sec-t">Technicals &amp; recommended indicators</div><p class="note">Loading ${esc(sym)}'s price history…</p>`;
+  const bars = dailyBars(sym);
+  const T = S.tech[sym] !== undefined ? S.tech[sym] : (S.tech[sym] = technicals(bars));
+  const R = S.rec[sym] !== undefined ? S.rec[sym] : (S.rec[sym] = recommend(bars));
+  eng.recommended = R ? R.top.map(r => ({ name: r.name, add: r.add })) : [];
+  const gauge = (lbl, sc) => `<div class="tg"><div class="tg-top"><span class="mut">${lbl}</span><b class="${sc.score > 0.1 ? "up" : sc.score < -0.1 ? "down" : ""}">${sc.label}</b></div>
+    <div class="tg-bar"><i style="left:calc(${((sc.score + 1) / 2 * 100).toFixed(1)}% - 2px)"></i></div><div class="tg-n">${sc.sell} sell · ${sc.neutral} neutral · ${sc.buy} buy</div></div>`;
+  let h = `<div class="sec-t">Technicals · daily</div>`;
+  h += T ? gauge("Summary", T.all) + `<div class="tg2">${gauge("Moving averages", T.ma)}${gauge("Oscillators", T.osc)}</div>
+    <details class="tg-rows"><summary>All ${T.rows.length} signals</summary><table class="prints"><tbody>${T.rows.map(r => `<tr><td>${esc(r.name)}</td><td class="num">${inr(r.value)}</td><td class="${r.sig > 0 ? "up" : r.sig < 0 ? "down" : "mut"}">${r.sig > 0 ? "Buy" : r.sig < 0 ? "Sell" : "Neutral"}</td></tr>`).join("")}</tbody></table></details>
+    <p class="note">Counts simple rules (price vs 12 moving averages; RSI, Stochastic, CCI, ADX, Momentum, MACD, Williams %R), the way TradingView's Technicals gauge does. Not advice.</p>`
+    : `<p class="note">Needs at least 60 days of history.</p>`;
+  h += `<div class="sec-t">Recommended indicators for ${esc(sym)}</div>`;
+  if (!R) h += `<p class="note">Needs about 1.6 years of daily history to test indicators on this stock.</p>`;
+  else if (!R.top.length) h += `<p class="note">None of the ${R.list.length} indicator rules tested held up on ${esc(sym)}: none made money after costs in both the earlier years and the recent test period. For this stock, no indicator has had a reliable edge.</p>`;
+  else h += R.top.map((r, k) => `<div class="rec"><div class="rec-h"><b>${k + 1}. ${esc(r.name)}</b></div>
+      <div class="rec-t"><span class="tag">${esc(r.family)}</span>${r.now ? '<span class="tag acc">rule says: in</span>' : '<span class="tag">rule says: out</span>'}</div>
+      <div class="rec-s">Unseen test period: <b class="${ud(r.te.ret)}">${pctS(r.te.ret)}</b> vs buy &amp; hold <b class="${ud(R.buyHold.te.ret)}">${pctS(R.buyHold.te.ret)}</b><br>
+        Whole period: ${pctS(r.all.ret)} (buy &amp; hold ${pctS(R.buyHold.all.ret)}) · worst drop ${pctS(r.all.dd)} · ${r.all.trades} trades${r.all.win != null ? ` · ${Math.round(r.all.win * 100)}% profitable` : ""} · in the market ${Math.round(r.all.exposure * 100)}% of days</div>
+      <button class="btn-line sm" data-rec="${k}">+ Add to chart</button></div>`).join("")
+    + `<p class="note">How it works: each indicator is turned into its usual buy/sell rule and tested on ${esc(sym)}'s own daily prices from ${esc(R.from)} to ${esc(R.to)} (acted on the next day, 0.1% cost per trade).
+      Rules are ranked on the first 70% of that history and checked on the last 30% (from ${esc(R.testFrom)}), which the ranking never saw. ${R.style ? `On this stock, <b>${esc(R.style.toLowerCase())}</b> rules have worked best.` : ""} Past results are not a forecast. Educational only, not advice.</p>`;
+  return h;
 }
 function rangeBar(lbl, lo, hi, v) {
   if (lo == null || hi == null || hi <= lo) return "";
@@ -530,7 +488,7 @@ function renderDetails() {
   const s = S.map.get(sec), x = q(sec); if (!s || !x || side !== "details") return;
   const f = S.fund ? (S.fund[sec] || null) : undefined, pick = (S.screen.picks || []).find(p => p.symbol === sec);
   const stat = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`, perf = perfFrom(sec);
-  let html = `<div class="sec-t">Ranges</div>${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}
+  let html = `<div class="sec-t">Ranges</div>${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}${analysisHtml(sec)}
     <div class="sec-t">Key stats</div><div class="stats">${stat("Open", inr(x.o))}${stat("Prev close", inr(x.pc))}${stat("Volume", big(x.v))}${stat("Avg vol 20D", big(s.avgv20))}
       ${stat("Value", x.v != null ? cr(x.v * x.p / 1e7) : "--")}${stat("Delivery", s.deliv == null ? "--" : s.deliv.toFixed(1) + "%")}
       ${f ? stat("Market cap", f.mcap ? cr(f.mcap / 1e7) : "--") + stat("P/E", f.pe ? f.pe.toFixed(1) : "--") + stat("EPS", f.eps != null ? "₹" + inr(f.eps) : "--") + stat("Div yield", f.dy != null ? f.dy.toFixed(2) + "%" : "--")
@@ -551,6 +509,7 @@ function renderDetails() {
       <p class="note">${s.etf ? `${esc(sec)} is an exchange-traded fund, not a company.` : `Company fundamentals are loaded for NIFTY 500 companies; ${esc(sec)} is outside it.`} Only NSE's official trading data is shown. Nothing is estimated.</p>`;
   $("#details").innerHTML = html;
   const more = $("#more"); if (more) more.onclick = () => { descOpen = !descOpen; renderDetails(); };
+  $$("#details [data-rec]").forEach(bt => bt.onclick = () => { const r = eng.recommended[+bt.dataset.rec]; if (!r) return; r.add.forEach(([id, p]) => eng.addIndicator(id, p)); go("terminal"); });
 }
 function renderPrints() {
   const it = intraOf(sec), rows = it ? (it.d || []) : [];
@@ -715,17 +674,17 @@ $("#news-q").oninput = e => { newsQuery = e.target.value; renderNews(); };
 /* ================= open a security ================= */
 async function openSec(sym) {
   if (!S.map.has(sym)) return;
-  sec = sym; pending = null; clearMeasure(); descOpen = false;
+  sec = sym; eng.cancel(); descOpen = false;
   history.replaceState(null, "", `#v=${view}&s=${encodeURIComponent(sym)}`);
   $$("#watch .wl-row").forEach(r => r.classList.toggle("sel", r.dataset.s === sym));
   renderHead(); renderDetails();
   const k = shard(sym);
-  await Promise.all([loadHist(k).catch(() => null), loadIntra(k).catch(() => null)]);
+  await Promise.all([loadHist(k).catch(() => null), loadIntra(k).catch(() => null), loadDaily(sym)]);
   if (sym !== sec) return;
   const hasIntra = !!(intraOf(sym) && (intraOf(sym).d || []).length);
   $$('#iv-grp [data-iv="5m"], #iv-grp [data-iv="15m"], #iv-grp [data-iv="1h"], #rg-grp [data-rg="1D"], #rg-grp [data-rg="5D"]').forEach(b => { b.disabled = !hasIntra; b.title = hasIntra ? "" : "No intraday data for this stock (SME stocks: NSE end-of-day only)"; });
   if (!hasIntra && ["5m", "15m", "1h"].includes(iv)) { iv = "D"; rg = "1Y"; syncRange(); }
-  if (view === "terminal") drawChart(); else if (chart) { chart.remove(); chart = null; }
+  if (view === "terminal") drawChart(); else eng.load({ sym, iv, bars: [], intraday: false });
   renderDetails(); if (side === "prints") renderPrints();
 }
 
@@ -823,13 +782,15 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     if (!$("#search").hidden) { closeSearch(); return; }
     if (!$("#onboard").hidden) { $("#ob-skip").click(); return; }
-    if (tool !== "cross" || pending) { setTool("cross"); return; }
-    if (measureShown) { clearMeasure(); return; }
-    if (!$("#ind-menu").hidden) { $("#ind-menu").hidden = true; return; }
+    if (document.querySelector(".eng-modal")) return;
+    if (eng.cancel()) return;
+    if (!$("#ct-menu").hidden) { $("#ct-menu").hidden = true; return; }
     if (typing) { document.activeElement.blur(); return; }
     location.href = "advanced.html#signals"; return;
   }
-  if (e.altKey && !typing) { const t = { t: "trend", h: "hline", m: "measure", c: "cross" }[e.key.toLowerCase()]; if (t) { go("terminal"); clearMeasure(); setTool(t); e.preventDefault(); } return; }
+  if (e.altKey && !typing) { const t = { t: "trend", h: "hline", v: "vline", f: "fib", r: "rect", m: "range", c: "cursor" }[e.key.toLowerCase()]; if (t) { go("terminal"); eng.setTool(t, stay); e.preventDefault(); } return; }
+  if (!typing && view === "terminal" && (e.key === "Delete" || e.key === "Backspace") && eng.deleteSelected()) { e.preventDefault(); return; }
+  if (!typing && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && view === "terminal") { e.preventDefault(); eng.undo(); return; }
   if (typing || e.ctrlKey || e.metaKey || !$("#onboard").hidden) return;
   if (e.key === "/") { e.preventDefault(); openSearch(); return; }
   if (e.key.length === 1 && /[a-z0-9]/i.test(e.key)) { e.preventDefault(); openSearch(e.key); }

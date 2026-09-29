@@ -17,23 +17,27 @@ service cloud.firestore {
     function isStudentKey(k) {
       return k in [/*STUDENT_KEYS*/];
     }
+    // One-way keys, SHA-256("blab-guest|CODE"), one per guest invite code (people outside TAPMI; any email).
+    function isGuestKey(k) {
+      return k in [/*GUEST_KEYS*/];
+    }
 
     // Records which account used which student key (one account per student).
     match /Claims/{key} {
       allow read: if signedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isTapmi()
-                    && isStudentKey(key)
+      allow create: if ((isTapmi() && isStudentKey(key)) || (signedIn() && isGuestKey(key)))
                     && request.resource.data.keys().hasOnly(['uid'])
                     && request.resource.data.uid == request.auth.uid;
       allow update, delete: if false;
     }
 
     match /ExpertUsers/{userId} {
-      allow read: if isTapmi() && request.auth.uid == userId;
-      allow create: if isTapmi() && request.auth.uid == userId
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId
                     && request.resource.data.keys().hasOnly(['email', 'timestamp', 'role', 'student_key'])
                     && request.resource.data.email == request.auth.token.email
-                    && request.resource.data.role == 'expert'
+                    && ((request.resource.data.role == 'expert' && isTapmi() && isStudentKey(request.resource.data.student_key))
+                        || (request.resource.data.role == 'guest' && isGuestKey(request.resource.data.student_key)))
                     && request.resource.data.timestamp == request.time
                     && getAfter(/databases/$(database)/documents/Claims/$(request.resource.data.student_key)).data.uid == request.auth.uid;
       allow update, delete: if false;

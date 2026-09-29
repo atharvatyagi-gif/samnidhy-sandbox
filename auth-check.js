@@ -18,6 +18,13 @@ export function isTapmiEmail(email) {
   return TAPMI_EMAIL.test(String(email || "").trim());
 }
 
+// Guest invite code (people outside TAPMI): same key as scripts/student_allowlist.py, SHA-256("blab-guest|<CODE>")
+export async function guestKey(code) {
+  const c = String(code || "").replace(/\s+/g, "").toUpperCase();
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`blab-guest|${c}`));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 // Same key as scripts/student_allowlist.py: SHA-256("blab-v1|<ROLL>|<YYYY-MM-DD>")
 export async function studentKey(roll, dobIso) {
   const r = String(roll || "").replace(/\s+/g, "").toUpperCase();
@@ -48,7 +55,8 @@ if (isGuarded) {
     try { fb = await firebase(); } catch (e) { deny(e.message === "not-configured" ? "setup" : "offline"); return; }
     fb.authMod.onAuthStateChanged(fb.auth, async user => {
       if (!user) { deny("signin"); return; }
-      if (!isTapmiEmail(user.email)) { await fb.authMod.signOut(fb.auth); deny("domain"); return; }
+      // students register with their learner email, guests with an invite code; either way the Firestore
+      // rules only allow an ExpertUsers record for a valid student key or guest code, so that record is the check
       // a completed registration (checked against the student list) is required, not just an account
       try {
         const snap = await fb.dbMod.getDoc(fb.dbMod.doc(fb.db, USERS_COLLECTION, user.uid));

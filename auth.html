@@ -28,6 +28,9 @@
   .tabs { position: relative; display: grid; grid-template-columns: 1fr 1fr; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px; margin-bottom: 22px; }
   .tabs button { position: relative; z-index: 1; border: 0; background: none; color: var(--ink-2); font: inherit; font-weight: 600; font-size: 0.92rem; padding: 9px; cursor: pointer; border-radius: 9px; }
   .tabs button[aria-selected="true"] { color: #041008; }
+  .who { display: flex; gap: 6px; margin: -6px 0 16px; }
+  .who button { flex: 1; height: 34px; border-radius: 9px; border: 1px solid rgba(232,220,195,0.18); background: transparent; color: inherit; font: inherit; font-size: 13px; opacity: 0.7; cursor: pointer; }
+  .who button.on { opacity: 1; border-color: var(--green); color: var(--green); background: rgba(46,204,113,0.08); }
   .tabs .pill { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 9px; background: linear-gradient(100deg, var(--green), var(--beige)); transition: transform 0.35s cubic-bezier(.2,.8,.2,1); }
   .tabs[data-tab="register"] .pill { transform: translateX(100%); }
   label { display: block; font-size: 0.8rem; color: var(--ink-2); margin: 14px 0 6px; }
@@ -67,12 +70,16 @@
 <main class="card">
   <p class="eyebrow">Expert access</p>
   <h1>The B-Lab Terminal</h1>
-  <p class="lead">For TAPMI students. <b>First time? Register first</b>, then log in.</p>
+  <p class="lead">For TAPMI students, and guests with an invite code. <b>First time? Register first</b>, then log in.</p>
 
   <div class="tabs" id="tabs" data-tab="register" role="tablist">
     <span class="pill" aria-hidden="true"></span>
     <button type="button" role="tab" id="tab-login" aria-selected="false" aria-controls="auth-form">Login</button>
     <button type="button" role="tab" id="tab-register" aria-selected="true" aria-controls="auth-form">Register</button>
+  </div>
+
+  <div class="who" id="who" role="group" aria-label="Who is registering">
+    <button type="button" data-who="student" class="on">TAPMI student</button><button type="button" data-who="guest">Guest (invite code)</button>
   </div>
 
   <div class="how" id="how">
@@ -82,8 +89,13 @@
   </div>
 
   <form id="auth-form" novalidate>
-    <label for="email">Manipal learner email</label>
+    <label for="email" id="email-label">Manipal learner email</label>
     <input id="email" type="email" autocomplete="username" placeholder="yourname@learner.manipal.edu" required>
+    <div id="guest-wrap" hidden>
+      <label for="code">Invite code</label>
+      <input id="code" type="text" autocomplete="off" placeholder="BLAB-XXXX-XXXX" maxlength="20" spellcheck="false">
+      <div class="hint">Guests: ask the B-Lab team for an invite code. Each code creates one account; use any email you own.</div>
+    </div>
     <div id="student-wrap">
       <div class="row2">
         <div><label for="roll">TAPMI roll no.</label>
@@ -108,13 +120,24 @@
 </main>
 
 <script type="module">
-  import { firebase, isTapmiEmail, DOMAIN_ERROR, studentKey } from "./auth-check.js";
+  import { firebase, isTapmiEmail, DOMAIN_ERROR, studentKey, guestKey } from "./auth-check.js";
   import { USERS_COLLECTION, CLAIMS_COLLECTION, isConfigured } from "./config.js";
 
   const $ = id => document.getElementById(id);
   const form = $("auth-form"), email = $("email"), pw = $("password"), confirm = $("confirm"),
         roll = $("roll"), dob = $("dob"), btn = $("submit"), alertBox = $("alert");
-  let mode = "register";
+  let mode = "register", who = "student";
+  const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  function setWho(w) {
+    who = w;
+    document.querySelectorAll("#who button").forEach(b => b.classList.toggle("on", b.dataset.who === w));
+    const g = w === "guest" && mode === "register";
+    $("guest-wrap").hidden = !g; $("student-wrap").hidden = g || mode !== "register"; $("how").hidden = g || mode !== "register";
+    $("email-label").textContent = mode === "login" ? "Email" : g ? "Your email (any)" : "Manipal learner email";
+    email.placeholder = mode === "login" ? "your B-Lab email" : g ? "you@example.com" : "yourname@learner.manipal.edu";
+    clear();
+  }
+  document.querySelectorAll("#who button").forEach(b => b.onclick = () => setWho(b.dataset.who));
   const REGISTERED_FLAG = "blab-registered";
 
   function show(kind, msg) { alertBox.className = "alert show " + kind; alertBox.textContent = msg; }
@@ -129,7 +152,8 @@
     $("pw-label").textContent = m === "register" ? "Create a new B-Lab password" : "B-Lab password";
     pw.autocomplete = m === "register" ? "new-password" : "current-password";
     btn.textContent = m === "register" ? "Register" : "Login";
-    clear();
+    $("who").hidden = m !== "register";
+    setWho(who);
   }
   $("tab-login").addEventListener("click", () => setMode("login"));
   $("tab-register").addEventListener("click", () => setMode("register"));
@@ -153,16 +177,19 @@
     "auth/weak-password": "Password is too weak: use at least 8 characters.",
     "auth/too-many-requests": "Too many attempts. Please wait a few minutes and try again.",
     "auth/network-request-failed": "Network problem. Check your connection and try again.",
-    "permission-denied": "These details don't match the TAPMI student list, or this student is already registered.",
+    "permission-denied": "These details don't match the TAPMI student list or a valid invite code, or they have already been used to register.",
   }[code] || "Something went wrong. Please try again.");
 
   form.addEventListener("submit", async e => {
     e.preventDefault();
     clear();
     const addr = email.value.trim().toLowerCase();
-    // STRICT domain rule, checked before anything is sent anywhere
-    if (!isTapmiEmail(addr)) { email.setAttribute("aria-invalid", "true"); show("err", DOMAIN_ERROR); email.focus(); return; }
-    if (mode === "register") {
+    const guest = mode === "register" && who === "guest";
+    // STRICT domain rule for student registration, checked before anything is sent anywhere
+    if (mode === "register" && !guest && !isTapmiEmail(addr)) { email.setAttribute("aria-invalid", "true"); show("err", DOMAIN_ERROR); email.focus(); return; }
+    if (!EMAIL_OK.test(addr)) { email.setAttribute("aria-invalid", "true"); show("err", "Enter a valid email address."); email.focus(); return; }
+    if (guest && !/^BLAB-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test($("code").value.replace(/\s+/g, "").toUpperCase())) { show("err", "Enter your invite code, e.g. BLAB-AB12-CD34."); $("code").focus(); return; }
+    if (mode === "register" && !guest) {
       const r = roll.value.replace(/\s+/g, "").toUpperCase();
       if (!/^[0-9]{2}[A-Z][0-9]{2}$/.test(r)) { roll.setAttribute("aria-invalid", "true"); show("err", "Enter your TAPMI roll number, e.g. 26U01."); roll.focus(); return; }
       if (!dob.value) { dob.setAttribute("aria-invalid", "true"); show("err", "Enter your date of birth."); dob.focus(); return; }
@@ -171,7 +198,7 @@
     if (mode === "register") {
       if (pw.value !== confirm.value) { show("err", "The two passwords don't match."); return; }
       const local = addr.split("@")[0];
-      if (pw.value.toLowerCase().includes(local) || /tapmi/i.test(pw.value)) {
+      if (pw.value.toLowerCase().includes(local) || (!guest && /tapmi/i.test(pw.value))) {
         show("err", "Choose a new password that doesn't contain your email name or 'tapmi' (and isn't your Manipal / Outlook email password).");
         return;
       }
@@ -182,10 +209,10 @@
       const fb = await firebase();
       const A = fb.authMod;
       if (mode === "register") {
-        const key = await studentKey(roll.value, dob.value);
+        const key = guest ? await guestKey($("code").value) : await studentKey(roll.value, dob.value);
         const cred = await A.createUserWithEmailAndPassword(fb.auth, addr, pw.value);
         try {
-          await registerExpert(fb, cred.user, key);
+          await registerExpert(fb, cred.user, key, guest ? "guest" : "expert");
         } catch (err) {
           await cred.user.delete().catch(() => A.signOut(fb.auth));   // undo, so they can try again
           throw err;
@@ -194,7 +221,6 @@
         show("ok", "Registered. Opening the terminal…");
       } else {
         const cred = await A.signInWithEmailAndPassword(fb.auth, addr, pw.value);
-        if (!isTapmiEmail(cred.user.email)) { await A.signOut(fb.auth); show("err", DOMAIN_ERROR); btn.disabled = false; return; }
         show("ok", "Signed in. Opening the terminal…");
       }
       setTimeout(() => location.replace("expert-terminal.html"), 500);
@@ -206,12 +232,12 @@
 
   // One atomic write: Claims/<key> (this student is taken) + ExpertUsers/<uid> { email, timestamp, role: "expert" }.
   // Firestore rules reject it unless the key is on the student allow-list and not already claimed.
-  async function registerExpert(fb, user, key) {
+  async function registerExpert(fb, user, key, role) {
     const D = fb.dbMod;
     const b = D.writeBatch(fb.db);
     b.set(D.doc(fb.db, CLAIMS_COLLECTION, key), { uid: user.uid });
     b.set(D.doc(fb.db, USERS_COLLECTION, user.uid), {
-      email: user.email, timestamp: D.serverTimestamp(), role: "expert", student_key: key,
+      email: user.email, timestamp: D.serverTimestamp(), role, student_key: key,
     });
     await b.commit();
   }
@@ -219,7 +245,7 @@
   // Already signed in and registered? Go straight to the terminal (the terminal re-checks everything).
   if (isConfigured() && !reason) {
     firebase().then(fb => fb.authMod.onAuthStateChanged(fb.auth, u => {
-      if (u && isTapmiEmail(u.email) && mode === "login") location.replace("expert-terminal.html");
+      if (u && mode === "login") location.replace("expert-terminal.html");
     })).catch(() => {});
   }
 </script>

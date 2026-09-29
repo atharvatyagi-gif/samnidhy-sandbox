@@ -23,12 +23,13 @@ from embed_data import ADVANCED_PATH, DATA, HTML_PATH, SCREENER, advanced_blocks
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 STATIC = ["index.html", "landing.css", "landing.js", "auth.html", "auth-check.js", "config.js",
-          "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js"]
+          "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js",
+          "chart-engine.js", "chart-indicators.js", "mode-dock.js"]
 TERMINAL = ROOT / "data" / "terminal"
 # Scripts/styles that pages load. Browsers keep these for a while (GitHub Pages: 10 min, some longer), so an
 # update could mix a new page with an old script. Every reference gets ?v=<hash of the file>, which changes
 # only when the file does. Leaves first: auth-check.js imports config.js, so its own hash covers that version.
-ASSETS = ["config.js", "reload-home.js", "landing.css", "landing.js", "terminal.css", "terminal.js", "auth-check.js"]
+ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "terminal.js", "auth-check.js"]
 
 
 def version_assets() -> None:
@@ -71,7 +72,7 @@ def main() -> None:
             "dashboard-status": status,
             "dashboard-sessions": sessions,
             "dashboard-meta": {"view": "archive", "days_prefix": "", "home": "../sandbox.html"},
-        }), encoding="utf-8")
+        }).replace('src="mode-dock.js"', 'src="../mode-dock.js"'), encoding="utf-8")
 
     (SITE / "advanced.html").write_text(embed(ADVANCED_PATH.read_text(encoding="utf-8"), advanced_blocks()), encoding="utf-8")
     if (SCREENER / "live.json").exists():
@@ -85,9 +86,9 @@ def main() -> None:
     for name in ("universe.json", "quotes.json", "fund.json"):
         if (TERMINAL / name).exists():
             shutil.copyfile(TERMINAL / name, SITE / "t" / name)
-    for sub, dst in (("hist", "h"), ("intra", "i")):
+    for sub, dst in (("hist", "h"), ("intra", "i"), ("daily", "d")):
         if (TERMINAL / sub).exists():
-            shutil.copytree(TERMINAL / sub, SITE / "t" / dst)
+            shutil.copytree(TERMINAL / sub, SITE / "t" / dst, ignore=shutil.ignore_patterns("_meta.json"))
     if (DATA / "institutional" / "fii_dii.json").exists():   # the Advanced page refreshes FII/DII from this
         shutil.copyfile(DATA / "institutional" / "fii_dii.json", SITE / "institutional.json")
     if (DATA / "news" / "wire.json").exists():   # the terminal's News tab (scripts/news_wire.py)

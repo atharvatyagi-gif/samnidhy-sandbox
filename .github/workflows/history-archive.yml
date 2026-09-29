@@ -1,0 +1,60 @@
+# Samnidhy Sandbox - full price history for the Expert terminal chart (everything before the last 5 years).
+# Runs once a month on GitHub's servers (and when this file or the script changes). The result is published to
+# the "history" branch, replacing it each time (no old copies pile up). The chart fetches a stock's older
+# years from there only when someone scrolls back past 5 years, so the website itself stays small.
+name: History archive
+
+on:
+  schedule:
+    - cron: "30 20 1 * *"      # 1st of every month, 02:00 IST
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/history-archive.yml", "scripts/terminal_archive.py"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: history-archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Restore the terminal's NSE data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/terminal
+          key: terminal-${{ github.run_id }}
+          restore-keys: terminal-
+
+      - name: Make sure the stock list and 5-year files exist
+        run: |
+          [ -f data/terminal/universe.json ] || python scripts/nse_eod.py
+          [ -d data/terminal/daily ] || python scripts/terminal_hist.py
+
+      - name: Download the full history
+        run: python scripts/terminal_archive.py
+
+      - name: Publish to the history branch
+        run: |
+          cd data/terminal/archive
+          git init -q -b history
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Price history before the last 5 years ($(date -u +%Y-%m-%d))"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" history:history

@@ -68,6 +68,18 @@ def main():
     assert rules.count("/*STUDENT_KEYS*/") == 1, "firestore.rules.template has no /*STUDENT_KEYS*/ marker"
     listed = ",\n        ".join(f"'{k}'" for k in sorted(set(keys)))
     rules = rules.replace("/*STUDENT_KEYS*/", "\n        " + listed + "\n      ")
+    # guest invite codes (people outside TAPMI): made once, kept in private/guest_codes.txt, never published
+    codes_file = OUT.parent / "guest_codes.txt"
+    if not codes_file.exists():
+        import secrets
+        alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        part = lambda: "".join(secrets.choice(alphabet) for _ in range(4))
+        codes = [f"BLAB-{part()}-{part()}" for _ in range(10)]
+        codes_file.write_text("B-Lab guest invite codes (one account each; keep private)\n" + "\n".join(codes) + "\n", encoding="utf-8")
+    codes = [c.strip() for c in codes_file.read_text(encoding="utf-8").splitlines()[1:] if c.strip()]
+    gkeys = [hashlib.sha256(f"blab-guest|{c.upper()}".encode()).hexdigest() for c in codes]
+    rules = rules.replace("/*GUEST_KEYS*/", "\n        " + ",\n        ".join(f"'{k}'" for k in gkeys) + "\n      ")
+    print(f"{len(codes)} guest invite codes -> private/guest_codes.txt")
     rules = rules.replace("// TEMPLATE ONLY (no student data): pasting this into Firebase refuses EVERY student. Do not paste it.",
                           "// PASTE THIS FILE into Firebase > Firestore > Rules. PRIVATE: contains the student keys; never commit or publish it.")
     (OUT.parent / "firestore.rules").write_text(rules, encoding="utf-8")

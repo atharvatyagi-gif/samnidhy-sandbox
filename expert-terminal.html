@@ -80,14 +80,24 @@
     <section class="view" id="v-terminal">
       <div class="term">
         <nav class="tools" id="tools" aria-label="Drawing tools">
-          <button data-tool="cross" class="on" title="Crosshair (Alt+C)">&#10010;</button>
-          <button data-tool="trend" title="Trend line (Alt+T): click two points">&#9585;</button>
-          <button data-tool="hline" title="Horizontal line (Alt+H): click a price">&#8212;</button>
-          <button data-tool="measure" title="Measure (Alt+M): click two points">&#8645;</button>
+          <button data-tool="cursor" class="on" title="Cursor (Alt+C)"><svg viewBox="0 0 20 20"><path d="M10 3v14M3 10h14" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          <button data-tool="trend" title="Trend line (Alt+T)"><svg viewBox="0 0 20 20"><path d="M4 16 16 4" stroke="currentColor" stroke-width="1.6"/><circle cx="4" cy="16" r="1.8" fill="currentColor"/><circle cx="16" cy="4" r="1.8" fill="currentColor"/></svg></button>
+          <button data-tool="ray" title="Ray"><svg viewBox="0 0 20 20"><path d="M4 16 19 1" stroke="currentColor" stroke-width="1.6"/><circle cx="4" cy="16" r="1.8" fill="currentColor"/><circle cx="10" cy="10" r="1.8" fill="currentColor"/></svg></button>
+          <button data-tool="ext" title="Extended line"><svg viewBox="0 0 20 20"><path d="M1 19 19 1" stroke="currentColor" stroke-width="1.6"/><circle cx="7" cy="13" r="1.8" fill="currentColor"/><circle cx="13" cy="7" r="1.8" fill="currentColor"/></svg></button>
+          <button data-tool="hline" title="Horizontal line (Alt+H)"><svg viewBox="0 0 20 20"><path d="M1 10h18" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="1.8" fill="currentColor"/></svg></button>
+          <button data-tool="hray" title="Horizontal ray"><svg viewBox="0 0 20 20"><path d="M6 10h13" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="10" r="1.8" fill="currentColor"/></svg></button>
+          <button data-tool="vline" title="Vertical line (Alt+V)"><svg viewBox="0 0 20 20"><path d="M10 1v18" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="10" r="1.8" fill="currentColor"/></svg></button>
           <span class="t-sep"></span>
-          <button data-act="magnet" id="magnet" title="Magnet: snap to candle prices">&#10696;</button>
-          <button data-act="hide" id="hide-draw" title="Hide / show drawings">&#9673;</button>
-          <button data-act="clear" title="Remove all drawings on this stock">&#10007;</button>
+          <button data-tool="fib" title="Fib retracement (Alt+F)"><svg viewBox="0 0 20 20"><path d="M2 3h16M2 8h16M2 12h16M2 17h16" stroke="currentColor" stroke-width="1.3"/></svg></button>
+          <button data-tool="rect" title="Rectangle (Alt+R)"><svg viewBox="0 0 20 20"><rect x="3" y="5" width="14" height="10" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          <button data-tool="range" title="Price range: measure change and bars (Alt+M)"><svg viewBox="0 0 20 20"><path d="M10 2v16M6 6l4-4 4 4M6 14l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+          <button data-tool="text" title="Text note"><svg viewBox="0 0 20 20"><path d="M4 4h12M10 4v13" stroke="currentColor" stroke-width="1.8"/></svg></button>
+          <span class="t-sep"></span>
+          <button data-act="magnet" id="magnet" title="Magnet: snap to open/high/low/close"><svg viewBox="0 0 20 20"><path d="M5 3v7a5 5 0 0 0 10 0V3h-3v7a2 2 0 0 1-4 0V3z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+          <button data-act="stay" id="stay" title="Stay in drawing mode"><svg viewBox="0 0 20 20"><path d="M6 9V6a4 4 0 0 1 8 0v3M4 9h12v8H4z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+          <button data-act="hide" id="hide-draw" title="Hide / show drawings"><svg viewBox="0 0 20 20"><path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.2" fill="currentColor"/></svg></button>
+          <button data-act="undo" title="Undo (Ctrl+Z)"><svg viewBox="0 0 20 20"><path d="M7 5 3 9l4 4M3 9h9a5 5 0 0 1 0 10H9" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+          <button data-act="clear" title="Remove all drawings on this stock"><svg viewBox="0 0 20 20"><path d="M4 6h12M8 6V3h4v3M6 6l1 11h6l1-11" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
           <span class="t-sep"></span>
           <button data-act="zoomin" title="Zoom in">+</button>
           <button data-act="zoomout" title="Zoom out">&minus;</button>
@@ -97,34 +107,35 @@
         <div class="chartcard">
           <div class="cc-head" id="cc-head"></div>
           <div class="cc-bar">
+            <button class="tb-sym" id="tb-sym" title="Change symbol (/)">—</button>
             <div class="seg" id="iv-grp" role="group" aria-label="Interval">
               <button data-iv="5m">5m</button><button data-iv="15m">15m</button><button data-iv="1h">1h</button>
               <button data-iv="D" class="on">D</button><button data-iv="W">W</button><button data-iv="M">M</button>
             </div>
-            <div class="seg" id="ct-grp" role="group" aria-label="Chart type">
-              <button data-ct="candle" class="on">Candles</button><button data-ct="bars">Bars</button><button data-ct="line">Line</button><button data-ct="area">Area</button>
+            <div class="dd" id="ct-dd">
+              <button class="btn-line sm" id="ct-btn" aria-haspopup="true" aria-expanded="false">Candles ▾</button>
+              <div class="dd-menu" id="ct-menu" hidden></div>
             </div>
-            <div class="dd" id="ind-dd">
-              <button class="btn-line sm" id="ind-btn" aria-haspopup="true" aria-expanded="false">ƒx Indicators <b id="ind-cnt"></b></button>
-              <div class="dd-menu" id="ind-menu" hidden></div>
-            </div>
+            <button class="btn-line sm" id="ind-open" title="Add indicators">ƒx Indicators <b id="ind-cnt"></b></button>
+            <button class="btn-line sm" id="cmp-open" title="Compare with NIFTY, BANK NIFTY, SENSEX or another stock">⊕ Compare</button>
+            <span class="grow"></span>
             <button class="btn-line sm" id="snap" title="Save the chart as an image">Snapshot</button>
+            <button class="btn-line sm" id="fs" title="Focus: hide the side panel (F)">⛶ Focus</button>
             <button class="btn-line sm" id="wl-toggle" title="Add or remove this stock from your watchlist">+ Watchlist</button>
           </div>
           <div class="stage">
-            <div class="legend" id="legend"></div>
             <div class="chart" id="chart"></div>
-            <div class="measure" id="measure" hidden></div>
             <div class="chart-msg" id="chart-msg"></div>
-            <div class="hint" id="tool-hint" hidden></div>
           </div>
           <div class="cc-foot">
             <div class="seg flat" id="rg-grp">
               <button data-rg="1D">1D</button><button data-rg="5D">5D</button><button data-rg="1M">1M</button><button data-rg="3M">3M</button>
-              <button data-rg="6M">6M</button><button data-rg="YTD">YTD</button><button data-rg="1Y" class="on">1Y</button>
+              <button data-rg="6M">6M</button><button data-rg="YTD">YTD</button><button data-rg="1Y" class="on">1Y</button><button data-rg="5Y">5Y</button><button data-rg="ALL">All</button>
             </div>
+            <label class="goto" title="Go to a date"><span>Go to</span><input type="date" id="goto"></label>
             <span class="grow"></span>
-            <span class="mut">IST (UTC+5:30)</span>
+            <span class="mut" id="src-note"></span>
+            <span class="mut">IST</span>
             <div class="seg flat" id="sc-grp"><button data-sc="pct" title="Percentage scale">%</button><button data-sc="log" title="Log scale">log</button><button data-sc="auto" class="on" title="Auto scale">auto</button></div>
           </div>
         </div>
