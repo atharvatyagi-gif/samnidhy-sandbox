@@ -38,7 +38,7 @@ export async function firebase() {
 }
 
 /* ---------------- guard (only on pages that include data-guard) ---------------- */
-const isGuarded = !!document.querySelector('script[src$="auth-check.js"][data-guard]');
+const isGuarded = !!document.querySelector('script[src*="auth-check.js"][data-guard]');
 
 if (isGuarded) {
   document.documentElement.style.visibility = "hidden";          // nothing shows before the check
