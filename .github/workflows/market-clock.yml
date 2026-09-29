@@ -1,0 +1,52 @@
+# Samnidhy Sandbox - market clock.
+# GitHub often delays or drops frequent scheduled runs, so instead of relying on a 15-minute schedule, this job
+# starts once each trading morning, stays running through market hours, and directly triggers the
+# "Live prices" workflow every 15 minutes (directly triggered runs start within seconds).
+# Several start times are scheduled for safety; extra copies wait in the queue and exit if the market has closed.
+name: Market clock
+
+on:
+  schedule:
+    - cron: "30 3 * * 1-5"          # 09:00 IST
+    - cron: "0 4-9 * * 1-5"         # hourly back-ups if a start was dropped
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/market-clock.yml"]
+
+permissions:
+  actions: write                    # to trigger the Live prices / Daily update workflows
+  contents: read
+
+concurrency:
+  group: market-clock
+  cancel-in-progress: false
+
+jobs:
+  clock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Trigger price updates every 15 minutes until the close
+        run: |
+          start_ts=$(date +%s)
+          mins() { local t; t=$(TZ=Asia/Kolkata date +%H:%M); echo $((10#${t%:*} * 60 + 10#${t#*:})); }
+          open=$((9 * 60 + 15)); close=$((15 * 60 + 40))
+          if [ "$(TZ=Asia/Kolkata date +%u)" -gt 5 ]; then echo "Weekend."; exit 0; fi
+          m=$(mins)
+          if [ "$m" -ge "$close" ]; then echo "Market already closed ($(TZ=Asia/Kolkata date +%H:%M) IST)."; exit 0; fi
+          # morning: make sure the daily screen/movers update has run even if its own schedule was dropped
+          if [ "$m" -lt $((10 * 60 + 30)) ]; then gh workflow run daily-update.yml --ref main || true; fi
+          if [ "$m" -lt "$open" ]; then echo "Waiting for 09:15 IST"; sleep $(( (open - m) * 60 )); fi
+          while :; do
+            m=$(mins)
+            [ "$m" -ge "$close" ] && { echo "Market closed, done."; exit 0; }
+            echo "$(TZ=Asia/Kolkata date +%H:%M) IST: triggering Live prices"
+            gh workflow run live-prices.yml --ref main || echo "trigger failed, will retry next round"
+            # stop cleanly before GitHub's 6-hour job limit; a queued copy of this workflow takes over
+            [ $(( $(date +%s) - start_ts )) -gt $(( 330 * 60 )) ] && { echo "Handing over to the next clock run."; exit 0; }
+            sleep 900
+          done
