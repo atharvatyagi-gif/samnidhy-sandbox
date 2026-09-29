@@ -14,7 +14,7 @@ const POLL_MS = 60000;
 const COL = { up: "#00e060", upFill: "rgba(0,224,96,0.9)", down: "#e0a060", ink: "#e8dcc3", ink3: "#83795f", card: "#061a10", acc: "#00e060" };  // dark chart workspace (old terminal palette)
 const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
-const S = { uni: null, map: new Map(), quotes: {}, qmeta: {}, fund: null, live: {}, screen: {}, inst: {}, hist: {}, intra: {}, prevWei: {} };
+const S = { uni: null, map: new Map(), quotes: {}, qmeta: {}, fund: null, live: {}, screen: {}, inst: {}, hist: {}, intra: {}, prevWei: {}, news: {} };
 let sec = null, iv = "D", rg = "1Y", ct = LS.get("blab-ct", "candle"), scaleMode = "auto", view = "brief", side = "details";
 let movMode = "gain", board = "All", sector = "", movSort = null, movLimit = 50, movQuery = "", heatSel = null, newsFilter = "all";
 let tool = "cross", magnet = LS.get("blab-magnet", false), hideDraw = false, pending = null;
@@ -80,6 +80,7 @@ async function boot() {
   try {
     const [uni, quotes, live, screen, inst] = await Promise.all([getJSON("t/universe.json"), getJSON("t/quotes.json").catch(() => ({})),
       getJSON("live.json").catch(() => ({})), getJSON("screener.json").catch(() => ({})), getJSON("institutional.json").catch(() => ({}))]);
+    S.news = await getJSON("news.json").catch(() => ({}));
     S.uni = uni; uni.stocks.forEach(s => S.map.set(s.s, s));
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
   } catch (e) {
@@ -100,6 +101,9 @@ async function boot() {
 function renderAll() { renderMast(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); }
 async function poll() {
   try {
+    const news = await getJSON("news.json").catch(() => null);
+    if (news && news.generated_utc !== S.news.generated_utc) { S.news = news; renderNews(); }
+    else renderNews();                                   // ages move on even when the wire hasn't changed
     const [quotes, live, inst] = await Promise.all([getJSON("t/quotes.json"), getJSON("live.json"), getJSON("institutional.json").catch(() => S.inst)]);
     const changed = quotes.generated_utc !== S.qmeta.generated_utc || live.generated_utc !== S.live.generated_utc;
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.inst = inst;
@@ -649,26 +653,64 @@ function renderWorld() {
     <div class="flow"><span class="mut">${dt(d.date, { day: "numeric", month: "short" })} DII</span>${bar(d.dii.net_cr, "var(--gold)")}<b class="${ud(d.dii.net_cr)}" style="text-align:right">${crS(d.dii.net_cr)}</b></div>`).join("");
 }
 
-/* ================= NEWS ================= */
-function newsTime(iso) {
-  const d = new Date(iso), same = d.toLocaleDateString("en-CA", { timeZone: IST }) === new Date().toLocaleDateString("en-CA", { timeZone: IST });
-  return same ? d.toLocaleTimeString("en-GB", { timeZone: IST, hour: "2-digit", minute: "2-digit", hour12: false }) + " IST" : d.toLocaleDateString("en-GB", { timeZone: IST, day: "numeric", month: "short" });
+/* ================= NEWS: brutalist.report-style financial wire ================= */
+// news.json (scripts/news_wire.py): India markets RSS (ET, Business Standard, Mint) + brutalist.report's
+// Business topic, WSJ, Quartz and Coindesk. live.json adds Yahoo headlines tagged with the screened stocks.
+let newsHours = 24, newsWatchOnly = false, newsQuery = "";
+const NEWS_STOP = new Set(["THE", "INDIA", "INDIAN", "BANK", "LIMITED", "LTD", "COMPANY", "CORPORATION", "INDUSTRIES", "FINANCE", "FINANCIAL", "NATIONAL", "GLOBAL", "INTERNATIONAL", "POWER", "CAPITAL", "SERVICES", "GROUP", "UNITED", "HOLDINGS", "NEW", "FIRST", "STATE", "GENERAL", "HOUSING", "MOTORS", "STEEL"]);
+function watchTerms() {                                   // symbol + distinctive first word of each watchlist company
+  const t = new Set();
+  for (const sym of loadWatch()) {
+    if (sym.length >= 3) t.add(sym);
+    const w = ((S.map.get(sym) || {}).n || "").toUpperCase().replace(/[^A-Z0-9& ]/g, " ").split(/\s+/).filter(Boolean)[0];
+    if (w && w.length >= 4 && !NEWS_STOP.has(w)) t.add(w);
+  }
+  return [...t];
+}
+const ageLabel = m => m == null ? "" : m < 60 ? `${m}m` : m < 1440 ? `${Math.floor(m / 60)}h` : `${Math.floor(m / 1440)}d`;
+function newsSources() {
+  const since = S.news.generated_utc ? Math.max(0, Math.round((Date.now() - new Date(S.news.generated_utc)) / 60000)) : 0;
+  const groups = (S.news.groups || []).map(g => ({ id: g.id, name: g.name, sources: g.sources.map(s => ({ ...s,
+    items: (s.items || []).map(i => ({ ...i, mins: i.age_min == null ? null : i.age_min + since })) })) }));
+  const yahoo = (S.live.news || []).map(n => ({ t: n.title, u: n.url, pub: n.publisher, tickers: (n.tickers || []).filter(t => S.map.has(t)),
+    mins: n.time_utc ? Math.max(0, Math.round((Date.now() - new Date(n.time_utc)) / 60000)) : null }));
+  if (yahoo.length) {
+    const india = groups.find(g => g.id === "india") || (groups.unshift({ id: "india", name: "India markets", sources: [] }), groups[0]);
+    india.sources.push({ name: "Yahoo Finance · B-Lab stocks", home: "https://finance.yahoo.com/", via: "Yahoo Finance", items: yahoo });
+  }
+  return groups;
 }
 function renderNews() {
-  const wl = loadWatch(), all = S.live.news || [];
-  const items = all.filter(n => {
-    const tk = n.tickers || [];
-    if (newsFilter === "watch") return tk.some(t => wl.includes(t));
-    if (newsFilter === "india") return tk.some(t => S.map.has(t) || t === "NIFTY");
-    if (newsFilter === "global") return tk.includes("SPX");
-    return true;
-  });
-  $("#news").innerHTML = items.length ? items.map(n => `<li><span class="t">${newsTime(n.time_utc)}</span><div>${n.url ? `<a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a>` : esc(n.title)}
-      <div class="meta"><span>${esc(n.publisher || "")}</span>${(n.tickers || []).map(t => S.map.has(t) ? `<button class="tk" data-open="${esc(t)}">${esc(t)}</button>` : `<span class="tag">${esc(t)}</span>`).join("")}</div></div></li>`).join("")
-    : `<li class="empty">${all.length ? "No headlines match this filter." : "No headlines available right now."}</li>`;
+  const groups = newsSources();
+  const terms = newsWatchOnly ? watchTerms() : [], Q = newsQuery.trim().toLowerCase();
+  const reEsc = t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = terms.length ? new RegExp(`\\b(${terms.map(reEsc).join("|")})\\b`, "i") : null;
+  const keep = i => (i.mins == null || i.mins <= newsHours * 60) && (!Q || i.t.toLowerCase().includes(Q))
+    && (!newsWatchOnly || (re && re.test(i.t)) || (i.tickers || []).some(t => loadWatch().includes(t)));
+  const mark = t => { let h = esc(t); if (Q) h = h.replace(new RegExp(reEsc(esc(Q)), "gi"), m => `<mark>${m}</mark>`); return h; };
+  let shown = 0, sources = 0, html = "";
+  for (const g of groups) {
+    if (newsFilter !== "all" && g.id !== newsFilter) continue;
+    const cols = g.sources.map(s => {
+      const items = s.items.filter(keep); shown += items.length; if (s.items.length) sources++;
+      if (!items.length && (Q || newsWatchOnly)) return "";          // filtering: hide sources with no match
+      return `<div><h3><a href="${esc(s.home)}" target="_blank" rel="noopener noreferrer">${esc(s.name)}</a><small>via ${esc(s.via)}${s.stale ? " · last good copy" : ""}</small></h3><ul>${
+        items.length ? items.map(i => `<li><a href="${esc(i.u)}" target="_blank" rel="noopener noreferrer">${mark(i.t)}</a> <span class="age">[${ageLabel(i.mins) || "–"}]</span>${
+          (i.tickers || []).map(t => `<button class="tk" data-open="${esc(t)}">${esc(t)}</button>`).join("")}</li>`).join("")
+        : `<li class="none">No new articles in the past ${newsHours}h.</li>`}</ul></div>`;
+    }).join("");
+    if (cols) html += (newsFilter === "all" ? `<div class="grp">${esc(g.name)}</div>` : "") + cols;
+  }
+  $("#news").innerHTML = html || `<div><ul><li class="none">${groups.length ? "No headlines match these filters." : "The news wire isn't available right now. Nothing is shown in its place."}</li></ul></div>`;
+  $("#news-meta").textContent = S.news.generated_ist
+    ? `${shown.toLocaleString("en-IN")} headlines · ${sources} sources · wire updated ${S.news.generated_ist.replace(/^.*?, /, "")} · links open the original articles`
+    : "Wire not loaded yet.";
   $$("#news [data-open]").forEach(b => b.onclick = () => { openSec(b.dataset.open); go("terminal"); });
 }
 $$("#news-filter button").forEach(b => b.onclick = () => { newsFilter = b.dataset.nf; $$("#news-filter button").forEach(x => x.classList.toggle("on", x === b)); renderNews(); });
+$$("#news-time button").forEach(b => b.onclick = () => { newsHours = +b.dataset.h; $$("#news-time button").forEach(x => x.classList.toggle("on", x === b)); renderNews(); });
+$("#news-watch").onclick = () => { newsWatchOnly = !newsWatchOnly; $("#news-watch").setAttribute("aria-pressed", String(newsWatchOnly)); renderNews(); };
+$("#news-q").oninput = e => { newsQuery = e.target.value; renderNews(); };
 
 /* ================= open a security ================= */
 async function openSec(sym) {

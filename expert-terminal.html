@@ -188,9 +188,16 @@
     <!-- ================= NEWS ================= -->
     <section class="view" id="v-news">
       <div class="page">
-        <div class="page-head"><p class="kick">— Live wire · Yahoo Finance</p><h2>Headlines, <span class="acc">with their sources.</span></h2></div>
-        <div class="controls"><div class="seg" id="news-filter"><button data-nf="all" class="on">All</button><button data-nf="watch">My watchlist</button><button data-nf="india">India</button><button data-nf="global">Global</button></div></div>
-        <ul class="wire" id="news"></ul>
+        <div class="page-head"><p class="kick">— Financial wire · India markets + <a href="https://brutalist.report/topic/business" target="_blank" rel="noopener noreferrer">brutalist.report</a></p><h2>All the money news, <span class="acc">one page.</span></h2></div>
+        <div class="controls">
+          <div class="seg" id="news-filter"><button data-nf="all" class="on">All</button><button data-nf="india">India</button><button data-nf="global">Global</button><button data-nf="crypto">Crypto</button></div>
+          <div class="seg" id="news-time"><button data-h="1">1h</button><button data-h="3">3h</button><button data-h="6">6h</button><button data-h="12">12h</button><button data-h="24" class="on">24h</button></div>
+          <button class="btn-line" id="news-watch" aria-pressed="false">Only my watchlist</button>
+          <input id="news-q" type="search" placeholder="Filter headlines (e.g. RBI, crude, Infosys)" aria-label="Filter headlines">
+          <a class="btn-line" href="https://brutalist.report/topic/business" target="_blank" rel="noopener noreferrer">Open brutalist.report ↗</a>
+        </div>
+        <p class="news-meta" id="news-meta"></p>
+        <div class="brutal-grid" id="news"></div>
       </div>
     </section>
   </main>

@@ -98,6 +98,10 @@ jobs:
           path: data/terminal
           key: terminal-${{ github.run_id }}
 
+      - name: Financial news wire (India markets RSS + brutalist.report)
+        continue-on-error: true
+        run: python scripts/news_wire.py
+
       - name: Put the data (or the "Data not updated" notice) into the page
         run: |
           python scripts/embed_data.py

@@ -15,11 +15,14 @@ on:
     - cron: "45 3 * * 1-5"
     - cron: "*/15 4-9 * * 1-5"
     - cron: "0 10 * * 1-5"
+    # outside market hours (and weekends): hourly, so the News tab's financial wire stays fresh
+    - cron: "40 10-23,0-2 * * *"
+    - cron: "40 3-9 * * 0,6"
   workflow_dispatch:
   push: # a change to the live-price code or to the site's own pages/scripts publishes straight away
     branches: [main]
     paths: [".github/workflows/live-prices.yml", "scripts/live_technicals.py", "scripts/screener_live.py",
-            "scripts/build_site.py", "*.html", "*.js", "*.css"]
+            "scripts/build_site.py", "scripts/news_wire.py", "*.html", "*.js", "*.css"]
 
 permissions:
   contents: read
@@ -69,6 +72,10 @@ jobs:
         id: live
         continue-on-error: true   # still publish, so the page shows why prices are unavailable
         run: python scripts/live_technicals.py
+
+      - name: Financial news wire (India markets RSS + brutalist.report)
+        continue-on-error: true
+        run: python scripts/news_wire.py
 
       - name: Put the new screen into the Advanced page
         continue-on-error: true

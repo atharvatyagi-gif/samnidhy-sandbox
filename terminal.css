@@ -362,3 +362,25 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 @media (min-width: 1001px) { .desk.on-terminal { grid-template-rows: 62px 40px 46px minmax(0, 1fr) 26px; } }
 @media (max-width: 1000px) { .rail-watch { flex: none; max-height: 45vh; } #v-terminal .term { padding: 0; } }
 #v-terminal .legend { background: rgba(6,26,16,0.78); border-color: var(--rule); }
+
+/* ---------- News: brutalist.report-style wire (plain source columns, plain links, age in brackets) ---------- */
+.news-meta { margin: 4px 0 12px; font: 11.5px var(--mono); color: var(--ink-3); }
+#news-q { flex: 1 1 220px; min-width: 0; }
+#news-watch[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.brutal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0;
+  border-top: 2px solid var(--ink); border-left: 1px solid var(--rule-2); background: var(--card); }
+.brutal-grid > div { padding: 12px 16px 16px; border-right: 1px solid var(--rule-2); border-bottom: 1px solid var(--rule-2); min-width: 0; }
+.brutal-grid h3 { margin: 0 0 8px; font: 700 13px var(--mono); letter-spacing: 0.04em; text-transform: uppercase; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.brutal-grid h3 a { color: var(--ink); text-decoration: none; } .brutal-grid h3 a:hover { text-decoration: underline; }
+.brutal-grid h3 small { font: 500 10px var(--mono); color: var(--ink-4); text-transform: none; letter-spacing: 0; }
+.brutal-grid ul { list-style: square; margin: 0; padding-left: 16px; }
+.brutal-grid li { margin: 0 0 7px; font: 14px/1.35 var(--sans); color: var(--ink-4); }
+.brutal-grid li a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule-2); text-underline-offset: 2px; }
+.brutal-grid li a:visited { color: var(--ink-3); }
+.brutal-grid li a:hover { color: var(--acc); text-decoration-color: var(--acc); }
+.brutal-grid .age { font: 11px var(--mono); color: var(--ink-3); white-space: nowrap; }
+.brutal-grid .tk { font: 600 10px var(--mono); padding: 0 5px; margin-left: 4px; border: 1px solid var(--acc-edge); color: var(--acc); border-radius: 2px; background: var(--acc-soft); }
+.brutal-grid .tk:hover { background: var(--acc); color: var(--paper); }
+.brutal-grid .none { list-style: none; margin-left: -16px; font-style: italic; }
+.brutal-grid .grp { grid-column: 1 / -1; padding: 8px 16px; background: var(--sunken); font: 700 11px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); }
+.brutal-grid mark { background: rgba(154,122,32,0.22); color: inherit; }

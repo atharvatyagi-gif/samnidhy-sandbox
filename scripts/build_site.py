@@ -90,6 +90,8 @@ def main() -> None:
             shutil.copytree(TERMINAL / sub, SITE / "t" / dst)
     if (DATA / "institutional" / "fii_dii.json").exists():   # the Advanced page refreshes FII/DII from this
         shutil.copyfile(DATA / "institutional" / "fii_dii.json", SITE / "institutional.json")
+    if (DATA / "news" / "wire.json").exists():   # the terminal's News tab (scripts/news_wire.py)
+        shutil.copyfile(DATA / "news" / "wire.json", SITE / "news.json")
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
         (SITE / "screener.json").write_text((SCREENER / "latest.json").read_text(encoding="utf-8"), encoding="utf-8")
 
