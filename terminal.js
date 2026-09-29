@@ -11,25 +11,25 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const IST = "Asia/Kolkata";
 const POLL_MS = 60000;
-const COL = { up: "#2f6f2e", upFill: "rgba(47,111,46,0.85)", down: "#a8452a", ink: "#10261b", ink3: "#5a6a5e", card: "#f7f3e8", acc: "#1d5c3a" };
+const COL = { up: "#00e060", upFill: "rgba(0,224,96,0.9)", down: "#e0a060", ink: "#e8dcc3", ink3: "#83795f", card: "#061a10", acc: "#00e060" };  // dark chart workspace (old terminal palette)
 const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
 const S = { uni: null, map: new Map(), quotes: {}, qmeta: {}, fund: null, live: {}, screen: {}, inst: {}, hist: {}, intra: {}, prevWei: {} };
-let sec = null, iv = "D", rg = "1Y", ct = LS.get("blab-ct", "candle"), scaleMode = "auto", view = "brief", side = "watch";
+let sec = null, iv = "D", rg = "1Y", ct = LS.get("blab-ct", "candle"), scaleMode = "auto", view = "brief", side = "details";
 let movMode = "gain", board = "All", sector = "", movSort = null, movLimit = 50, movQuery = "", heatSel = null, newsFilter = "all";
 let tool = "cross", magnet = LS.get("blab-magnet", false), hideDraw = false, pending = null;
 
 /* ---------------- indicators ---------------- */
 const INDS = [
-  { id: "vol", name: "Volume", group: "Main", color: "#8a9384", def: true },
-  { id: "sma20", name: "SMA 20", group: "Moving averages", color: "#10261b", def: true },
-  { id: "sma50", name: "SMA 50", group: "Moving averages", color: "#9a7a20", def: true },
-  { id: "sma200", name: "SMA 200", group: "Moving averages", color: "#5d5a22" },
-  { id: "ema20", name: "EMA 20", group: "Moving averages", color: "#0f5f63" },
-  { id: "bb", name: "Bollinger Bands (20, 2)", group: "Bands", color: "#6b5a8a" },
-  { id: "vwap", name: "VWAP (intraday)", group: "Bands", color: "#b27a20" },
-  { id: "rsi", name: "RSI (14)", group: "Oscillators · own pane", color: "#0f5f63" },
-  { id: "macd", name: "MACD (12, 26, 9)", group: "Oscillators · own pane", color: "#10261b" },
+  { id: "vol", name: "Volume", group: "Main", color: "#83795f", def: true },
+  { id: "sma20", name: "SMA 20", group: "Moving averages", color: "#e8dcc3", def: true },
+  { id: "sma50", name: "SMA 50", group: "Moving averages", color: "#b5a682", def: true },
+  { id: "sma200", name: "SMA 200", group: "Moving averages", color: "#6fae7f" },
+  { id: "ema20", name: "EMA 20", group: "Moving averages", color: "#4fd1c5" },
+  { id: "bb", name: "Bollinger Bands (20, 2)", group: "Bands", color: "#a78bfa" },
+  { id: "vwap", name: "VWAP (intraday)", group: "Bands", color: "#f0c674" },
+  { id: "rsi", name: "RSI (14)", group: "Oscillators · own pane", color: "#4fd1c5" },
+  { id: "macd", name: "MACD (12, 26, 9)", group: "Oscillators · own pane", color: "#e8dcc3" },
 ];
 let inds = new Set(LS.get("blab-inds", INDS.filter(i => i.def).map(i => i.id)));
 
@@ -115,6 +115,7 @@ function go(v, quiet) {
   if (!document.getElementById("v-" + v)) v = "brief";
   view = v;
   $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-" + v));
+  $(".desk").classList.toggle("on-terminal", v === "terminal");       // dark chart workspace: regime strip folds away
   $$("#tabs [data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === v && !b.dataset.side));
   history.replaceState(null, "", `#v=${v}${sec ? "&s=" + encodeURIComponent(sec) : ""}`);
   if (v === "terminal") requestAnimationFrame(() => { if (chart) chart.timeScale().applyOptions({}); else drawChart(); });
@@ -278,18 +279,18 @@ function drawChart(keepRange) {
   chart = L.createChart($("#chart"), {
     autoSize: true,
     layout: { background: { type: "solid", color: COL.card }, textColor: COL.ink3, fontFamily: "'IBM Plex Mono', Consolas, monospace", fontSize: 11, attributionLogo: false,
-      panes: { separatorColor: "rgba(16,38,27,0.18)", separatorHoverColor: "rgba(16,38,27,0.35)", enableResize: true } },
-    grid: { vertLines: { color: "rgba(16,38,27,0.06)" }, horzLines: { color: "rgba(16,38,27,0.06)" } },
-    rightPriceScale: { borderColor: "rgba(16,38,27,0.2)", scaleMargins: { top: 0.14, bottom: inds.has("vol") ? 0.2 : 0.06 }, mode: { auto: 0, log: 1, pct: 2 }[scaleMode] },
-    timeScale: { borderColor: "rgba(16,38,27,0.2)", timeVisible: intraday, secondsVisible: false, rightOffset: 6, barSpacing: intraday ? 7 : 6 },
-    crosshair: { mode: magnet ? 1 : 0, vertLine: { color: "rgba(16,38,27,0.35)", style: 3, labelBackgroundColor: COL.ink }, horzLine: { color: "rgba(16,38,27,0.35)", style: 3, labelBackgroundColor: COL.ink } },
+      panes: { separatorColor: "rgba(181,166,130,0.22)", separatorHoverColor: "rgba(181,166,130,0.45)", enableResize: true } },
+    grid: { vertLines: { color: "rgba(181,166,130,0.07)" }, horzLines: { color: "rgba(181,166,130,0.07)" } },
+    rightPriceScale: { borderColor: "rgba(181,166,130,0.25)", scaleMargins: { top: 0.14, bottom: inds.has("vol") ? 0.2 : 0.06 }, mode: { auto: 0, log: 1, pct: 2 }[scaleMode] },
+    timeScale: { borderColor: "rgba(181,166,130,0.25)", timeVisible: intraday, secondsVisible: false, rightOffset: 6, barSpacing: intraday ? 7 : 6 },
+    crosshair: { mode: magnet ? 1 : 0, vertLine: { color: "rgba(181,166,130,0.45)", style: 3, labelBackgroundColor: "#11352a" }, horzLine: { color: "rgba(181,166,130,0.45)", style: 3, labelBackgroundColor: "#11352a" } },
     localization: { priceFormatter: p => inr(p, dp(Math.abs(p))) },
   });
-  try { L.createTextWatermark(chart.panes()[0], { horzAlign: "center", vertAlign: "center", lines: [{ text: sec, color: "rgba(16,38,27,0.06)", fontSize: 64, fontStyle: "bold" }, { text: `${iv} · NSE`, color: "rgba(16,38,27,0.07)", fontSize: 16 }] }); } catch (e) {}
+  try { L.createTextWatermark(chart.panes()[0], { horzAlign: "center", vertAlign: "center", lines: [{ text: sec, color: "rgba(181,166,130,0.07)", fontSize: 64, fontStyle: "bold" }, { text: `${iv} · NSE`, color: "rgba(232,220,195,0.06)", fontSize: 16 }] }); } catch (e) {}
   if (ct === "candle") sMain = chart.addSeries(L.CandlestickSeries, { upColor: COL.upFill, downColor: COL.down, borderUpColor: COL.up, borderDownColor: COL.down, wickUpColor: COL.up, wickDownColor: COL.down, priceLineColor: COL.ink, priceLineStyle: 2 });
   else if (ct === "bars") sMain = chart.addSeries(L.BarSeries, { upColor: COL.up, downColor: COL.down, thinBars: false, priceLineColor: COL.ink });
   else if (ct === "line") sMain = chart.addSeries(L.LineSeries, { color: COL.acc, lineWidth: 2, priceLineColor: COL.ink });
-  else sMain = chart.addSeries(L.AreaSeries, { lineColor: COL.acc, topColor: "rgba(29,92,58,0.25)", bottomColor: "rgba(29,92,58,0.02)", lineWidth: 2, priceLineColor: COL.ink });
+  else sMain = chart.addSeries(L.AreaSeries, { lineColor: COL.acc, topColor: "rgba(0,224,96,0.22)", bottomColor: "rgba(0,224,96,0.02)", lineWidth: 2, priceLineColor: COL.ink });
   sMain.setData(bars.map(b => ["candle", "bars"].includes(ct) ? { time: b.time, open: b.o, high: b.h, low: b.l, close: b.c } : { time: b.time, value: b.c }));
   const c = bars.map(b => b.c), colorOf = id => INDS.find(i => i.id === id).color;
   const line = (vals, color, pane = 0, w = 1.5, more = {}) => {
@@ -299,7 +300,7 @@ function drawChart(keepRange) {
   if (inds.has("vol")) {
     extra.vol = chart.addSeries(L.HistogramSeries, { priceFormat: { type: "volume" }, priceScaleId: "vol", lastValueVisible: false, priceLineVisible: false });
     chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
-    extra.vol.setData(bars.map(b => ({ time: b.time, value: b.v || 0, color: b.c >= b.o ? "rgba(47,111,46,0.28)" : "rgba(168,69,42,0.3)" })));
+    extra.vol.setData(bars.map(b => ({ time: b.time, value: b.v || 0, color: b.c >= b.o ? "rgba(0,224,96,0.25)" : "rgba(224,160,96,0.28)" })));
   }
   for (const [id, n] of [["sma20", 20], ["sma50", 50], ["sma200", 200]]) if (inds.has(id)) { const v = smaA(c, n); extra[id] = [line(v, colorOf(id)), v]; }
   if (inds.has("ema20")) { const v = emaA(c, 20); extra.ema20 = [line(v, colorOf("ema20")), v]; }
@@ -308,14 +309,14 @@ function drawChart(keepRange) {
   let pane = 1;
   if (inds.has("rsi")) {
     const r = rsiA(c), s = line(r, colorOf("rsi"), pane, 1.5);
-    s.createPriceLine({ price: 70, color: "rgba(168,69,42,0.55)", lineStyle: 2, axisLabelVisible: false });
-    s.createPriceLine({ price: 30, color: "rgba(47,111,46,0.55)", lineStyle: 2, axisLabelVisible: false });
+    s.createPriceLine({ price: 70, color: "rgba(224,160,96,0.55)", lineStyle: 2, axisLabelVisible: false });
+    s.createPriceLine({ price: 30, color: "rgba(0,224,96,0.5)", lineStyle: 2, axisLabelVisible: false });
     extra.rsi = [s, r]; pane++;
   }
   if (inds.has("macd")) {
     const m = macdA(c), h = chart.addSeries(L.HistogramSeries, { priceLineVisible: false, lastValueVisible: false }, pane);
-    h.setData(m.map((x, i) => x[2] == null ? { time: bars[i].time } : { time: bars[i].time, value: +x[2].toFixed(3), color: x[2] >= 0 ? "rgba(47,111,46,0.5)" : "rgba(168,69,42,0.5)" }));
-    extra.macd = [[h, line(m.map(x => x[0]), "#10261b", pane, 1.3), line(m.map(x => x[1]), "#a8452a", pane, 1.3)], m]; pane++;
+    h.setData(m.map((x, i) => x[2] == null ? { time: bars[i].time } : { time: bars[i].time, value: +x[2].toFixed(3), color: x[2] >= 0 ? "rgba(0,224,96,0.45)" : "rgba(224,160,96,0.45)" }));
+    extra.macd = [[h, line(m.map(x => x[0]), "#e8dcc3", pane, 1.3), line(m.map(x => x[1]), "#e0a060", pane, 1.3)], m]; pane++;
   }
   const sizePanes = () => { try { chart && chart.panes().forEach((p, i) => { if (p.setStretchFactor) p.setStretchFactor(i === 0 ? 4 : 1); else if (i > 0) p.setHeight(120); }); } catch (e) {} };
   sizePanes(); requestAnimationFrame(sizePanes);
@@ -475,6 +476,9 @@ function onChartClick(p) {
 
 /* ================= RAIL: watchlist, details, prints ================= */
 function setSide(v) {
+  if (v === "watch") {                                   // the watchlist is always shown at the top of the rail
+    const h = $("#watch-h"); h.classList.remove("flash"); void h.offsetWidth; h.classList.add("flash"); return;
+  }
   side = v;
   $$("#rail-tabs button").forEach(b => b.classList.toggle("on", b.dataset.side === v));
   $$(".rail-view").forEach(el => el.hidden = el.dataset.side !== v);
@@ -686,7 +690,8 @@ async function openSec(sym) {
 /* ================= search ================= */
 const FUNCS = { BRIEF: "Brief", TERMINAL: "Terminal", MOVERS: "Movers", SECTORS: "Sectors", WORLD: "World", NEWS: "News", WATCHLIST: "Watchlist", SETUP: "Set up desk", BACK: "Back to B-Lab", LOGOFF: "Log off" };
 let qFilter = "all", qOpts = [], qAct = 0;
-function openSearch(initial = "") { $("#search").hidden = false; const i = $("#q"); i.value = initial; i.focus(); runSearch(); }
+let qAdd = false;                                       // search opened from "+ Add": the pick goes on the watchlist
+function openSearch(initial = "", add = false) { qAdd = add; $("#q").placeholder = add ? "Add a stock to your watchlist…" : "Symbol, company name, or a section (MOVERS, NEWS…)"; $("#search").hidden = false; const i = $("#q"); i.value = initial; i.focus(); runSearch(); }
 function closeSearch() { $("#search").hidden = true; }
 function runSearch() {
   const Q = $("#q").value.trim().toUpperCase(), words = Q.split(/\s+/).filter(Boolean), joined = words.join("");
@@ -715,7 +720,7 @@ function runSearch() {
 function paintQ() { $$("#q-list li[role=option]").forEach(li => li.setAttribute("aria-selected", String(+li.dataset.i === qAct))); $("#q-list li[aria-selected=true]")?.scrollIntoView({ block: "nearest" }); }
 function chooseQ(o) {
   closeSearch(); if (!o) return;
-  if (o.s) { openSec(o.s.s); go("terminal"); return; }
+  if (o.s) { if (qAdd && !loadWatch().includes(o.s.s)) toggleWatch(o.s.s); openSec(o.s.s); go("terminal"); return; }
   const f = o.fn;
   if (f === "BACK") location.href = "advanced.html#signals";
   else if (f === "LOGOFF") $("#logout").click();
@@ -733,6 +738,7 @@ $("#q-list").addEventListener("click", e => { const li = e.target.closest("li[ro
 $$("#q-tabs button").forEach(b => b.onclick = () => { qFilter = b.dataset.f; $$("#q-tabs button").forEach(x => x.classList.toggle("on", x === b)); runSearch(); $("#q").focus(); });
 $("#search").addEventListener("mousedown", e => { if (e.target.id === "search") closeSearch(); });
 $("#open-search").onclick = () => openSearch();
+$("#wl-add").onclick = () => openSearch("", true);
 
 /* ================= desk setup (first visit) ================= */
 const LANES = [

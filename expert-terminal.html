@@ -130,12 +130,13 @@
         </div>
 
         <aside class="rail">
-          <div class="rail-tabs" id="rail-tabs"><button data-side="watch" class="on">Watchlist</button><button data-side="details">Details</button><button data-side="prints">Prints</button></div>
-          <div class="rail-view" data-side="watch">
+          <div class="rail-h" id="watch-h"><span>Watchlist</span><button class="btn-line sm" id="wl-add" title="Add a stock to the watchlist">+ Add</button></div>
+          <div class="rail-watch">
             <div class="wl-cols"><span>Symbol</span><span>Last</span><span>Chg%</span></div>
             <div class="wl" id="watch"></div>
           </div>
-          <div class="rail-view" data-side="details" hidden><div class="details" id="details"></div></div>
+          <div class="rail-tabs" id="rail-tabs"><button data-side="details" class="on">Details</button><button data-side="prints">Prints</button></div>
+          <div class="rail-view" data-side="details"><div class="details" id="details"></div></div>
           <div class="rail-view" data-side="prints" hidden><div class="prints-wrap" id="prints"></div></div>
         </aside>
       </div>

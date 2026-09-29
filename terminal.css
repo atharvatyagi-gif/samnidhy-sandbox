@@ -317,3 +317,48 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
   .foot { flex-wrap: wrap; height: auto; padding: 6px 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .livechip.on i { animation: none; } }
+
+/* ======================================================================
+   TERMINAL TAB = the old B-LAB TERMINAL workspace inside the new desk.
+   The desk (masthead, tape, tabs, Brief/Movers/Sectors/World/News) stays beige paper;
+   the Terminal tab switches to the dark pine TradingView-style workspace by re-pointing
+   the colour tokens, so every component inside it follows automatically.
+   ====================================================================== */
+#v-terminal {
+  --paper: #061a10; --sunken: #081f14; --card: #061a10; --card-hover: #0c2a1b;
+  --ink: #e8dcc3; --ink-2: #bfb497; --ink-3: #a39679; --ink-4: #83795f;
+  --rule: rgba(181,166,130,0.16); --rule-2: rgba(181,166,130,0.3);
+  --acc: #00e060; --acc-soft: rgba(0,224,96,0.1); --acc-edge: rgba(0,224,96,0.45);
+  --up: #00e060; --up-soft: rgba(0,224,96,0.1); --down: #e0a060; --down-soft: rgba(224,160,96,0.12);
+  --gold: #f0c674;
+  background: #061a10; color: var(--ink);
+}
+#v-terminal .term { gap: 1px; padding: 0; background: var(--rule); }
+#v-terminal .tools, #v-terminal .chartcard, #v-terminal .rail { border: 0; border-radius: 0; background: var(--sunken); }
+#v-terminal .chartcard { background: var(--card); }
+#v-terminal .tools button.on { background: var(--acc); color: #061a10; }
+#v-terminal .seg button.on, #v-terminal .btn-ink { background: var(--acc); color: #061a10; border-color: var(--acc); }
+#v-terminal .cc-head { padding: 8px 14px 6px; background: var(--sunken); }
+#v-terminal .cc-head .sym { font-size: 18px; } #v-terminal .cc-head .px { font-size: 20px; }
+#v-terminal .cc-bar { padding: 6px 10px; }
+#v-terminal .tag { border-color: var(--rule-2); color: var(--ink-2); }
+#v-terminal .tag.acc { color: var(--acc); border-color: var(--acc-edge); }
+#v-terminal .ind-menu, #v-terminal .hint, #v-terminal .measure { background: #0c2a1b; color: var(--ink); border-color: var(--rule-2); }
+#v-terminal .chart-msg { background: rgba(6,26,16,0.92); color: var(--ink-2); }
+#v-terminal ::-webkit-scrollbar { width: 8px; height: 8px; } #v-terminal ::-webkit-scrollbar-thumb { background: #11352a; }
+/* rail: watchlist always on top (like the old terminal), Details / Prints below */
+.rail-h { flex: none; display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 10px 0 12px;
+  font: 600 11.5px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); border-bottom: 1px solid var(--rule-2); }
+.rail-h.flash { animation: wlflash 1.2s ease-out; }
+@keyframes wlflash { 0% { background: var(--acc-soft); box-shadow: inset 3px 0 0 var(--acc); } 100% { background: transparent; box-shadow: none; } }
+.rail-watch { flex: 0 0 38%; min-height: 120px; display: flex; flex-direction: column; border-bottom: 1px solid var(--rule-2); }
+#v-terminal .rail-tabs { background: var(--sunken); }
+#v-terminal .rail-tabs button.on { background: var(--card); }
+#v-terminal .wl-row { min-height: 30px; }
+#v-terminal .wl-row .s small { display: none; }
+#v-terminal .wl-row .s, #v-terminal .wl-row .p, #v-terminal .wl-row .c { font-size: 12.5px; }
+/* on the chart, the regime strip folds away so the chart gets the height (it stays on every other tab) */
+.desk.on-terminal .regime { display: none; }
+@media (min-width: 1001px) { .desk.on-terminal { grid-template-rows: 62px 40px 46px minmax(0, 1fr) 26px; } }
+@media (max-width: 1000px) { .rail-watch { flex: none; max-height: 45vh; } #v-terminal .term { padding: 0; } }
+#v-terminal .legend { background: rgba(6,26,16,0.78); border-color: var(--rule); }
