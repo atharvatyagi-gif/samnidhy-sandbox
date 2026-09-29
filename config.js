@@ -4,12 +4,13 @@
    in firestore.rules. Never put private/service-account keys here. */
 
 export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",                         // <-- paste apiKey
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",       // <-- paste authDomain
-  projectId: "YOUR_PROJECT_ID",                        // <-- paste projectId
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",        // <-- paste storageBucket
-  messagingSenderId: "YOUR_SENDER_ID",                 // <-- paste messagingSenderId
-  appId: "YOUR_APP_ID",                                // <-- paste appId
+  apiKey: "AIzaSyCDQZRybNdoTyOPk7fuYbcUDVVlTKV6jq4",
+  authDomain: "terminal-b-863a0.firebaseapp.com",
+  projectId: "terminal-b-863a0",
+  storageBucket: "terminal-b-863a0.firebasestorage.app",
+  messagingSenderId: "794201977216",
+  appId: "1:794201977216:web:a372bee1bdd0c96b19d165",
+  measurementId: "G-521BR7ELTW",
 };
 
 // Only these email addresses may register or sign in.
