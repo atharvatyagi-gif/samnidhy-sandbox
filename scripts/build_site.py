@@ -91,6 +91,10 @@ def main() -> None:
             shutil.copytree(TERMINAL / sub, SITE / "t" / dst, ignore=shutil.ignore_patterns("_meta.json"))
     if (DATA / "institutional" / "fii_dii.json").exists():   # the Advanced page refreshes FII/DII from this
         shutil.copyfile(DATA / "institutional" / "fii_dii.json", SITE / "institutional.json")
+    if (DATA / "predict" / "latest.json").exists():   # the terminal's Outlook tab (scripts/predict_model.py)
+        shutil.copyfile(DATA / "predict" / "latest.json", SITE / "predict.json")
+    if (DATA / "status.json").exists():   # the main page checks this to load a newer session by itself
+        shutil.copyfile(DATA / "status.json", SITE / "status.json")
     if (DATA / "news" / "wire.json").exists():   # the terminal's News tab (scripts/news_wire.py)
         shutil.copyfile(DATA / "news" / "wire.json", SITE / "news.json")
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file

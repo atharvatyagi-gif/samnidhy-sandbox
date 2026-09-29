@@ -73,7 +73,8 @@ async function boot() {
     const [uni, quotes, live, screen, inst] = await Promise.all([getJSON("t/universe.json"), getJSON("t/quotes.json").catch(() => ({})),
       getJSON("live.json").catch(() => ({})), getJSON("screener.json").catch(() => ({})), getJSON("institutional.json").catch(() => ({}))]);
     S.news = await getJSON("news.json").catch(() => ({}));
-    S.uni = uni; uni.stocks.forEach(s => S.map.set(s.s, s));
+    S.uni = uni; uni.stocks.forEach(s => S.map.set(s.s, s)); lastCheck = Date.now();
+    S.pred = await getJSON("predict.json").catch(() => null);
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
   } catch (e) {
     $("#st-data").textContent = "Data not available: the NSE stock list could not be loaded. Nothing is shown in its place.";
@@ -91,22 +92,45 @@ async function boot() {
   liveConnect();
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
 }
-function renderAll() { renderMast(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); }
+function renderAll() { renderMast(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); renderOutlook(); }
+/* Auto-update: every minute the desk checks every published file and redraws what changed, so it never needs a
+   reload. Prices (t/quotes.json, ~15 min), news (every 15-30 min), world/markets (live.json), FII/DII, the B-Lab
+   screen, the model outlook, and, when a new trading day is published, the whole stock list + end-of-day prices. */
+let lastCheck = null, checkOk = true;
 async function poll() {
   try {
-    const news = await getJSON("news.json").catch(() => null);
-    if (news && news.generated_utc !== S.news.generated_utc) { S.news = news; renderNews(); }
-    else renderNews();                                   // ages move on even when the wire hasn't changed
-    const [quotes, live, inst] = await Promise.all([getJSON("t/quotes.json"), getJSON("live.json"), getJSON("institutional.json").catch(() => S.inst)]);
-    const changed = quotes.generated_utc !== S.qmeta.generated_utc || live.generated_utc !== S.live.generated_utc;
+    const [quotes, live, inst, news, screen, uni, pred] = await Promise.all([getJSON("t/quotes.json"), getJSON("live.json"),
+      getJSON("institutional.json").catch(() => S.inst), getJSON("news.json").catch(() => null), getJSON("screener.json").catch(() => null),
+      getJSON("t/universe.json").catch(() => null), getJSON("predict.json").catch(() => null)]);
+    lastCheck = Date.now(); checkOk = true;
+    if (news && news.generated_utc !== S.news.generated_utc) S.news = news;
+    renderNews();                                            // ages move on even when the wire hasn't changed
+    let changed = quotes.generated_utc !== S.qmeta.generated_utc || live.generated_utc !== S.live.generated_utc;
+    if (screen && screen.generated_utc !== S.screen.generated_utc) { S.screen = screen; changed = true; }
+    if (pred && pred.generated_utc !== (S.pred || {}).generated_utc) { S.pred = pred; changed = true; }
+    if (uni && uni.session_date !== S.uni.session_date) {    // a new trading day: refresh everything that is per-day
+      S.uni = uni; S.map = new Map(uni.stocks.map(x => [x.s, x]));
+      S.hist = {}; S.intra = {}; S.daily = {}; S.arch = {}; S.tech = {}; S.rec = {};
+      fillSectorSelect();
+      getJSON("t/fund.json").then(f => { S.fund = f.stocks || {}; renderDetails(); }).catch(() => {});
+      changed = true;
+      await Promise.all([loadHist(shard(sec)).catch(() => null), loadDaily(sec)]);
+      toast("New trading day " + uni.session_date + " loaded");
+    }
     const rt = Object.fromEntries(Object.entries(S.quotes).filter(([, v]) => v.rt));
     S.quotes = { ...(quotes.quotes || {}), ...rt }; S.qmeta = quotes; S.live = live; S.inst = inst;
     if (!changed) return;
     await loadIntra(shard(sec), true).catch(() => null);
-    renderAll(); renderHead(); renderDetails(); if (side === "prints") renderPrints(); drawChart(true);
+    renderAll(); renderHead(); renderDetails(); if (side === "prints") renderPrints(); if (typeof renderOutlook === "function") renderOutlook(); drawChart(true);
     toast("Desk updated · prices as of " + (quotes.last_bar_ist || "") + " IST");
-  } catch (e) { /* keep showing the last values */ }
+  } catch (e) { checkOk = false; }
 }
+setInterval(() => {
+  const el = $("#st-auto"); if (!el) return;
+  const s = lastCheck ? Math.round((Date.now() - lastCheck) / 1000) : null;
+  el.textContent = !checkOk ? "● Auto-update: can't reach the site, retrying" : `● Auto-updating${LIVE.ok ? " · real-time feed on" : ""} · checked ${s == null ? "…" : s < 5 ? "just now" : s + "s ago"}`;
+  el.classList.toggle("bad", !checkOk);
+}, 1000);
 
 /* ================= navigation ================= */
 function go(v, quiet) {
@@ -603,7 +627,7 @@ function renderDetails() {
   const s = S.map.get(sec), x = q(sec); if (!s || !x || side !== "details") return;
   const f = S.fund ? (S.fund[sec] || null) : undefined, pick = (S.screen.picks || []).find(p => p.symbol === sec);
   const stat = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`, perf = perfFrom(sec);
-  let html = `<div class="sec-t">Ranges</div>${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}${analysisHtml(sec)}
+  let html = `<div class="sec-t">Ranges</div>${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}${outlookHtml(sec)}${analysisHtml(sec)}
     <div class="sec-t">Key stats</div><div class="stats">${stat("Open", inr(x.o))}${stat("Prev close", inr(x.pc))}${stat("Volume", big(x.v))}${stat("Avg vol 20D", big(s.avgv20))}
       ${stat("Value", x.v != null ? cr(x.v * x.p / 1e7) : "--")}${stat("Delivery", s.deliv == null ? "--" : s.deliv.toFixed(1) + "%")}
       ${f ? stat("Market cap", f.mcap ? cr(f.mcap / 1e7) : "--") + stat("P/E", f.pe ? f.pe.toFixed(1) : "--") + stat("EPS", f.eps != null ? "₹" + inr(f.eps) : "--") + stat("Div yield", f.dy != null ? f.dy.toFixed(2) + "%" : "--")
@@ -786,6 +810,78 @@ $$("#news-time button").forEach(b => b.onclick = () => { newsHours = +b.dataset.
 $("#news-watch").onclick = () => { newsWatchOnly = !newsWatchOnly; $("#news-watch").setAttribute("aria-pressed", String(newsWatchOnly)); renderNews(); };
 $("#news-q").oninput = e => { newsQuery = e.target.value; renderNews(); };
 
+/* ================= OUTLOOK (predict.json: scripts/predict_model.py) ================= */
+// Probability that each NIFTY 500 stock beats the NIFTY 50 over the next 20 trading days, from a LightGBM
+// ensemble tested walk-forward on years it never saw. Every accuracy number shown comes from those unseen years.
+let olMode = "top", olSector = "", olQuery = "";
+const pct0 = v => v == null ? "--" : Math.round(v * 100) + "%";
+const pct1 = v => v == null ? "--" : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + "%";
+function probBar(p) {
+  const w = Math.round(p * 100), cls = p >= 0.55 ? "up" : p <= 0.45 ? "down" : "flat";
+  return `<span class="pbar ${cls}"><i style="width:${w}%"></i><b>${w}%</b></span>`;
+}
+function driversHtml(d, n = 3) {
+  return (d || []).slice(0, n).map(([name, v]) => `<span class="drv ${v > 0 ? "up" : "down"}">${v > 0 ? "▲" : "▼"} ${esc(name)}</span>`).join(" ");
+}
+function renderOutlook() {
+  const P = S.pred;
+  if (!P || !P.stocks) {
+    $("#ol-lede").textContent = "The model hasn't been published yet. It runs every evening after the NSE close; nothing is shown in its place.";
+    $("#ol-card").innerHTML = ""; $("#ol-table tbody").innerHTML = ""; return;
+  }
+  const M = P.oos.metrics, L = P.live || {};
+  $("#ol-lede").innerHTML = `For each stock: the chance it does better than the NIFTY 50 over the next <b>${P.horizon_days} trading days</b>, as of the <b>${esc(dt(P.as_of, { day: "numeric", month: "short", year: "numeric" }))}</b> close.
+    50% = no edge. The model is right more often than a coin flip, but far from always: read the card below before using any number.`;
+  const yrs = (P.oos.years || []).map(y => `<tr><td>${y.year}</td><td class="num">${y.auc.toFixed(3)}</td><td class="num">${pct0(y.top_hit)}</td><td class="num ${ud(y.top_excess)}">${pct1(y.top_excess)}</td><td class="num ${ud(y.bottom_excess)}">${pct1(y.bottom_excess)}</td></tr>`).join("");
+  const cal = (P.oos.calibration || []).map(c => `<div class="cal-b" title="Predicted ${pct0(c.pred)} → actually ${pct0(c.actual)} (${c.n.toLocaleString("en-IN")} cases)"><i class="pr" style="height:${Math.round(c.pred * 100)}%"></i><i class="ac" style="height:${Math.round(c.actual * 100)}%"></i><span>${pct0(c.pred)}</span></div>`).join("");
+  $("#ol-card").innerHTML = `
+    <div class="ol-grid">
+      <div class="ol-stat"><b>${pct0(M.accuracy)}</b><span>right on unseen years<br><small>coin flip / base rate: ${pct0(M.base_rate)}</small></span></div>
+      <div class="ol-stat"><b>${M.auc.toFixed(3)}</b><span>AUC out of sample<br><small>0.500 = no skill</small></span></div>
+      <div class="ol-stat"><b>${pct0(M.top_decile_hit)}</b><span>top 10% beat NIFTY<br><small>bottom 10%: ${pct0(M.bottom_decile_hit)}</small></span></div>
+      <div class="ol-stat"><b class="${ud(M.top_decile_excess - M.bottom_decile_excess)}">${pct1(M.top_decile_excess - M.bottom_decile_excess)}</b><span>top vs bottom 10%<br><small>average 20-day excess return gap</small></span></div>
+      <div class="ol-stat"><b>${L.matured_days ? pct0(L.accuracy) : "—"}</b><span>live track record<br><small>${L.matured_days ? `${L.matured_days} days scored, ${(L.n || 0).toLocaleString("en-IN")} predictions` : "first results about a month after launch"}</small></span></div>
+    </div>
+    <details class="ol-more"><summary>How good is this model? (tested on ${esc(M.from)} → ${esc(M.to)}, ${M.n.toLocaleString("en-IN")} predictions it never saw)</summary>
+      <div class="ol-two">
+        <div><h6>By year (each year predicted by models trained only on earlier years)</h6>
+          <table class="tbl sm"><thead><tr><th>Year</th><th class="r">AUC</th><th class="r">Top 10% beat NIFTY</th><th class="r">Top 10% excess</th><th class="r">Bottom 10% excess</th></tr></thead><tbody>${yrs}</tbody></table></div>
+        <div><h6>Calibration: 10 equal groups from lowest to highest score. Predicted chance (dark) vs what actually happened (bright)</h6><div class="cal">${cal}</div>
+          <p class="note">When bars match, the percentages can be taken at face value. (This matching was fitted on these same test years; the live track record above is the check on new data.)${M.confident_accuracy != null ? ` When the model is confident (below 40% or above 60%, ${pct0(M.confident_share)} of cases) it was right ${pct0(M.confident_accuracy)} of the time.` : ""}</p></div>
+      </div>
+      <p class="note"><b>Method:</b> ${esc(P.model.type)}; ${P.model.inputs} inputs per stock per day (price trend, momentum, RSI, ADX, MACD, Bollinger, volatility, 52-week high/low, volume, beta to NIFTY, sector-relative returns, market breadth and regime).
+        Walk-forward: every year was predicted by models trained only on earlier data with a 25-day gap, so no future information leaks in. Today's model was trained on ${P.model.train_rows_final.toLocaleString("en-IN")} examples up to ${esc(P.model.train_to)}.
+        Most influential inputs: ${P.model.top_inputs.slice(0, 6).map(t => esc(t[0])).join(", ")}.</p>
+      <p class="note"><b>Limits:</b> markets are mostly noise over 20 days; a 55% chance still fails 45% of the time. Results before costs and taxes. Past accuracy does not guarantee future accuracy. Educational only, not investment advice.</p>
+    </details>`;
+  const secs = [...new Set(Object.keys(P.stocks).map(s => (S.map.get(s) || {}).ind).filter(Boolean))].sort();
+  const sel = $("#ol-sector"); if (sel.options.length <= 1) sel.innerHTML = `<option value="">All sectors</option>` + secs.map(x => `<option>${esc(x)}</option>`).join("");
+  let rows = Object.entries(P.stocks).map(([sym, v]) => ({ sym, ...v, st: S.map.get(sym) || { n: sym } }));
+  if (olSector) rows = rows.filter(r => r.st.ind === olSector);
+  const Q = olQuery.trim().toUpperCase(); if (Q) rows = rows.filter(r => r.sym.includes(Q) || (r.st.n || "").toUpperCase().includes(Q));
+  rows.sort((a, b) => olMode === "bottom" ? (a.s ?? a.p) - (b.s ?? b.p) : (b.s ?? b.p) - (a.s ?? a.p));
+  if (olMode !== "all") rows = rows.slice(0, 25);
+  $("#ol-table tbody").innerHTML = rows.map((r, i) => `<tr data-s="${esc(r.sym)}"><td class="mut">${i + 1}</td><td class="sym">${esc(r.sym)}</td><td class="co">${esc(r.st.n || "")}</td><td class="mut">${esc(r.st.ind || "")}</td>
+    <td class="num">${probBar(r.p)}</td><td class="num">${r.dec}/10</td><td class="num ${ud(r.er)}">${pct1(r.er)}</td><td>${driversHtml(r.drivers)}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">No stocks match.</td></tr>';
+  $$("#ol-table tbody tr[data-s]").forEach(tr => tr.onclick = () => { openSec(tr.dataset.s); go("terminal"); setSide("details"); });
+  $("#ol-foot").innerHTML = `* Past excess: what stocks in the same score decile actually did vs NIFTY, on average over 20 trading days, in the unseen test years. Not a forecast of this stock's return. Updated every evening after the NSE close (${esc(P.as_of)}).`;
+}
+$$("#ol-mode button").forEach(b => b.onclick = () => { olMode = b.dataset.om; $$("#ol-mode button").forEach(x => x.classList.toggle("on", x === b)); renderOutlook(); });
+$("#ol-sector").onchange = e => { olSector = e.target.value; renderOutlook(); };
+$("#ol-q").oninput = e => { olQuery = e.target.value; renderOutlook(); };
+function outlookHtml(sym) {
+  const P = S.pred, v = P && P.stocks ? P.stocks[sym] : null;
+  let h = `<div class="sec-t">Model outlook · next ${P ? P.horizon_days : 20} trading days</div>`;
+  if (!P || !P.stocks) return h + `<p class="note">The model hasn't been published yet.</p>`;
+  if (!v) return h + `<p class="note">${esc(sym)} is outside the NIFTY 500 (or lacks enough history), so the model doesn't cover it.</p>`;
+  const M = P.oos.metrics;
+  return h + `<div class="ol-mini"><div class="tg-top"><span class="mut">Chance it beats NIFTY 50</span><b class="${v.p >= 0.55 ? "up" : v.p <= 0.45 ? "down" : ""}">${pct0(v.p)}</b></div>
+      <div class="tg-bar"><i style="left:calc(${Math.round(v.p * 100)}% - 2px)"></i></div>
+      <div class="tg-n">Decile ${v.dec}/10 · stocks in this decile did ${pct1(v.er)} vs NIFTY on average (unseen years)</div>
+      <div class="ol-drv">${driversHtml(v.drivers, 5)}</div>
+      <p class="note">Model right ${pct0(M.accuracy)} of the time on unseen years (coin flip ${pct0(M.base_rate)}). As of ${esc(P.as_of)} close. <a href="#" data-go="outlook">How good is it? →</a></p></div>`;
+}
+
 /* ================= open a security ================= */
 async function openSec(sym) {
   if (!S.map.has(sym)) return;
@@ -804,7 +900,7 @@ async function openSec(sym) {
 }
 
 /* ================= search ================= */
-const FUNCS = { BRIEF: "Brief", TERMINAL: "Terminal", MOVERS: "Movers", SECTORS: "Sectors", WORLD: "World", NEWS: "News", WATCHLIST: "Watchlist", SETUP: "Set up desk", BACK: "Back to B-Lab", LOGOFF: "Log off" };
+const FUNCS = { BRIEF: "Brief", TERMINAL: "Terminal", MOVERS: "Movers", SECTORS: "Sectors", WORLD: "World", OUTLOOK: "Outlook", NEWS: "News", WATCHLIST: "Watchlist", SETUP: "Set up desk", BACK: "Back to B-Lab", LOGOFF: "Log off" };
 let qFilter = "all", qOpts = [], qAct = 0;
 let qAdd = false;                                       // search opened from "+ Add": the pick goes on the watchlist
 function openSearch(initial = "", add = false) { qAdd = add; $("#q").placeholder = add ? "Add a stock to your watchlist…" : "Symbol, company name, or a section (MOVERS, NEWS…)"; $("#search").hidden = false; const i = $("#q"); i.value = initial; i.focus(); runSearch(); }

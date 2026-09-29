@@ -6566,6 +6566,30 @@
 })();
 </script>
 
+<script>
+/* Auto-update: every 3 minutes, check whether a newer trading session has been published; if so, load it.
+   (Only on the latest-session page on the website; archive pages never change.) */
+(function () {
+  if (!/^https?:/.test(location.protocol)) return;
+  let meta = {}, status = {};
+  try { meta = JSON.parse(document.getElementById('dashboard-meta').textContent || '{}'); status = JSON.parse(document.getElementById('dashboard-status').textContent || '{}'); } catch (e) {}
+  if (meta.view !== 'latest') return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;left:18px;bottom:18px;z-index:9989;padding:7px 12px;border-radius:10px;background:rgba(6,23,14,0.88);color:#e9dcc0;font:12px "IBM Plex Mono",ui-monospace,Consolas,monospace;box-shadow:0 8px 24px rgba(0,0,0,0.35)';
+  document.body.appendChild(bar);
+  let checked = null;
+  const paint = () => { const s = checked ? Math.round((Date.now() - checked) / 1000) : null; bar.textContent = '● Auto-updating · session ' + (status.session_date || '–') + (s == null ? '' : ' · checked ' + (s < 5 ? 'just now' : s + 's ago')); };
+  async function check() {
+    try {
+      const r = await fetch('status.json?t=' + Date.now(), { cache: 'no-store' });
+      if (r.ok) { const n = await r.json(); checked = Date.now();
+        if (n.session_date && n.session_date !== status.session_date) { bar.textContent = '● New session ' + n.session_date + ' published: updating…'; location.replace(location.pathname + '?u=' + Date.now() + location.hash); return; } }
+    } catch (e) {}
+    paint();
+  }
+  check(); setInterval(check, 180000); setInterval(paint, 1000);
+})();
+</script>
 <script src="mode-dock.js"></script>
 </body>
 </html>

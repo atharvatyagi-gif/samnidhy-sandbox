@@ -54,6 +54,7 @@
     <button data-go="movers">Movers</button>
     <button data-go="sectors">Sectors</button>
     <button data-go="world">World</button>
+    <button data-go="outlook">Outlook</button>
     <button data-go="news">News</button>
     <span class="grow"></span>
     <button class="tab-side" data-go="terminal" data-side="watch">Watchlist <b id="wl-count">0</b></button>
@@ -197,6 +198,21 @@
     </section>
 
     <!-- ================= NEWS ================= -->
+    <section class="view" id="v-outlook">
+      <div class="page">
+        <div class="page-head"><p class="kick">— Model outlook · next 20 trading days · NIFTY 500</p><h2>Which stocks are likely to <span class="acc">beat the NIFTY.</span></h2></div>
+        <p class="lede" id="ol-lede">Loading the model…</p>
+        <div class="ol-card" id="ol-card"></div>
+        <div class="controls">
+          <div class="seg" id="ol-mode"><button data-om="top" class="on">Most likely to beat NIFTY</button><button data-om="bottom">Least likely</button><button data-om="all">All</button></div>
+          <select id="ol-sector" aria-label="Sector"><option value="">All sectors</option></select>
+          <input id="ol-q" type="search" placeholder="Filter by name or symbol" aria-label="Filter outlook">
+        </div>
+        <div class="tablecard"><table class="tbl" id="ol-table"><thead><tr><th>#</th><th>Symbol</th><th>Company</th><th>Sector</th><th class="r">Probability</th><th class="r">Decile</th><th class="r">Past excess*</th><th>Main reasons</th></tr></thead><tbody></tbody></table></div>
+        <p class="note" id="ol-foot"></p>
+      </div>
+    </section>
+
     <section class="view" id="v-news">
       <div class="page">
         <div class="page-head"><p class="kick">— Financial wire · India markets + <a href="https://brutalist.report/topic/business" target="_blank" rel="noopener noreferrer">brutalist.report</a></p><h2>All the money news, <span class="acc">one page.</span></h2></div>
@@ -214,6 +230,7 @@
   </main>
 
   <footer class="foot">
+    <span id="st-auto" class="st-auto">● Auto-updating</span>
     <span id="st-data">Loading…</span>
     <span class="mut" id="st-cover"></span>
     <span class="grow"></span>

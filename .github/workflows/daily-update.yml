@@ -36,7 +36,7 @@ jobs:
     concurrency:                # collecting data never blocks a publish; only the short publish job queues
       group: daily-data
       cancel-in-progress: false
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -98,6 +98,16 @@ jobs:
         with:
           path: data/terminal
           key: terminal-${{ github.run_id }}
+
+      - name: Older price history for the outlook model (history branch)
+        continue-on-error: true
+        run: |
+          mkdir -p data/terminal/archive
+          git fetch -q --depth=1 origin history && git archive FETCH_HEAD | tar -x -C data/terminal/archive
+
+      - name: Outlook model (retrained and walk-forward tested every day)
+        continue-on-error: true
+        run: python scripts/predict_model.py
 
       - name: Financial news wire (India markets RSS + brutalist.report)
         continue-on-error: true

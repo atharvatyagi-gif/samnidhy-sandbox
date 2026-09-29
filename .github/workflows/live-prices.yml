@@ -15,9 +15,9 @@ on:
     - cron: "45 3 * * 1-5"
     - cron: "*/15 4-9 * * 1-5"
     - cron: "0 10 * * 1-5"
-    # outside market hours (and weekends): hourly, so the News tab's financial wire stays fresh
-    - cron: "40 10-23,0-2 * * *"
-    - cron: "40 3-9 * * 0,6"
+    # outside market hours (and weekends): every 30 minutes, so the News tab's financial wire stays fresh
+    - cron: "10,40 10-23,0-2 * * *"
+    - cron: "10,40 3-9 * * 0,6"
   workflow_dispatch:
   push: # a change to the live-price code or to the site's own pages/scripts publishes straight away
     branches: [main]
