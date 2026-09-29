@@ -470,3 +470,4 @@ html, body { background: var(--paper); color: var(--ink); }
 .rec-s b.up { color: var(--up); } .rec-s b.down { color: var(--down); }
 .perf { grid-template-columns: repeat(4, 1fr) !important; }
 .lg-vals { display: inline-flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.livechip.rt i { background: #00ff66; box-shadow: 0 0 10px #00ff66; animation: pulse 1s infinite; } .livechip.rt b { color: #00ff66; }

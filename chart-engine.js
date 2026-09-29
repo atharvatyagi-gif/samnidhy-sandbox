@@ -152,6 +152,25 @@ export class ChartEngine {
     this.hooks.built?.(this);
   }
   refresh() { this.build(true); }
+  /* Real-time: update the last candle in place (or start a new one) without rebuilding the chart.
+     Indicators are recalculated when a new candle starts (and at most every 5 s for Heikin-Ashi). */
+  upsertBar(bar) {
+    if (!this.chart || !this.bars.length) return;
+    const b = this.bars, last = b[b.length - 1];
+    let fresh = false;
+    if (bar.time === last.time) b[b.length - 1] = { ...last, ...bar };
+    else if (String(bar.time) > String(last.time) && (typeof bar.time === typeof last.time)) { b.push(bar); fresh = true;
+      this.T.push(typeof bar.time === "number" ? bar.time : Date.UTC(+bar.time.slice(0, 4), +bar.time.slice(5, 7) - 1, +bar.time.slice(8, 10)) / 1000); }
+    else return;
+    if (fresh || this.type === "heikin" || this.future?.length) { clearTimeout(this.rt); this.rt = setTimeout(() => this.refresh(), fresh ? 50 : 5000); if (this.type === "heikin" || this.future?.length) return; }
+    const x = b[b.length - 1];
+    try {
+      this.main.update(["candle", "hollow", "bars"].includes(this.type) ? { time: x.time, open: x.o, high: x.h, low: x.l, close: x.c } : { time: x.time, value: x.c });
+      const vol = this.inds.find(i => i.id === "vol" && i.vis), vs = vol && this.out[vol.uid]?.series?.v;
+      if (vs) vs.update({ time: x.time, value: x.v || 0, color: x.c >= x.o ? "rgba(0,224,96,0.30)" : "rgba(224,160,96,0.32)" });
+    } catch (e) { this.refresh(); }
+    this.renderLegend();
+  }
   futureTimes(k) {                    // k empty bars after the last one, at this chart's spacing
     const b = this.bars, out = []; if (!k || !b.length) return out;
     const last = b[b.length - 1].time;

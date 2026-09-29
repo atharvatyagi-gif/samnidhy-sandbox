@@ -1,0 +1,6 @@
+smartapi-python>=1.4.8
+pyotp>=2.9
+websocket-client>=1.8
+logzero>=1.7
+requests>=2.31
+websockets>=13.1

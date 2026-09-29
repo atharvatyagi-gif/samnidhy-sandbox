@@ -10,6 +10,7 @@
 
 import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
 import { technicals, recommend } from "./chart-indicators.js";
+import { LIVE_RELAY_URL } from "./config.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -47,6 +48,7 @@ function q(sym) {
 
 /* ---------------- auth ---------------- */
 function onReady(user) {
+  S.user = user; if (S.uni) liveConnect();
   $("#sys-user").textContent = user.email;
   $("#av").textContent = (user.email || "?")[0].toUpperCase();
 }
@@ -86,6 +88,7 @@ async function boot() {
   getJSON("t/fund.json", false).then(f => { S.fund = f.stocks || {}; renderDetails(); }).catch(() => { S.fund = {}; renderDetails(); });
   if (!LS.get("blab-onboarded", false)) openOnboard();
   setInterval(poll, POLL_MS);
+  liveConnect();
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
 }
 function renderAll() { renderMast(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); }
@@ -96,7 +99,8 @@ async function poll() {
     else renderNews();                                   // ages move on even when the wire hasn't changed
     const [quotes, live, inst] = await Promise.all([getJSON("t/quotes.json"), getJSON("live.json"), getJSON("institutional.json").catch(() => S.inst)]);
     const changed = quotes.generated_utc !== S.qmeta.generated_utc || live.generated_utc !== S.live.generated_utc;
-    S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.inst = inst;
+    const rt = Object.fromEntries(Object.entries(S.quotes).filter(([, v]) => v.rt));
+    S.quotes = { ...(quotes.quotes || {}), ...rt }; S.qmeta = quotes; S.live = live; S.inst = inst;
     if (!changed) return;
     await loadIntra(shard(sec), true).catch(() => null);
     renderAll(); renderHead(); renderDetails(); if (side === "prints") renderPrints(); drawChart(true);
@@ -129,7 +133,8 @@ function breadthNow() {
 function renderMast() {
   const open = S.qmeta.market === "open", b = breadthNow();
   $("#livechip").classList.toggle("on", open);
-  $("#live-txt").textContent = open ? "LIVE · DELAYED" : "MARKET CLOSED";
+  $("#livechip").classList.toggle("rt", LIVE.ok);
+  $("#live-txt").textContent = LIVE.ok ? "REAL-TIME · NSE" : open ? "LIVE · DELAYED" : "MARKET CLOSED";
   $("#ms-stocks").textContent = S.uni.count.toLocaleString("en-IN");
   $("#ms-live").textContent = (S.qmeta.covered || 0).toLocaleString("en-IN");
   $("#ms-ad").textContent = `${b.a.toLocaleString("en-IN")} / ${b.d.toLocaleString("en-IN")}`;
@@ -141,7 +146,7 @@ const mk = t => (S.live.markets || []).find(m => m.ticker === t) || null;
 const ix = c => (S.live.indices || []).find(r => r.code === c && !r.error) || null;
 function renderTape() {
   const chips = [];
-  for (const c of ["NIFTY", "SENSEX", "NSEBANK"]) { const r = ix(c); if (r) chips.push([c === "NSEBANK" ? "BANK NIFTY" : c, us(r.value), r.pct]); }
+  for (const c of ["NIFTY", "SENSEX", "NSEBANK"]) { const L = S.idxLive?.[IDX_OF[c]], r = ix(c); if (L) chips.push([c === "NSEBANK" ? "BANK NIFTY" : c, us(L.p), L.pct]); else if (r) chips.push([c === "NSEBANK" ? "BANK NIFTY" : c, us(r.value), r.pct]); }
   for (const [t, name, fmt] of [["^INDIAVIX", "INDIA VIX", v => v.toFixed(2)], ["INR=X", "USD/INR", v => "₹" + v.toFixed(2)], ["BZ=F", "BRENT", v => "$" + v.toFixed(2)],
     ["GC=F", "GOLD", v => "$" + us(v, 0)], ["^TNX", "US10Y", v => v.toFixed(2) + "%"]]) { const m = mk(t); if (m && !m.error) chips.push([name, fmt(m.value), m.change_pct]); }
   for (const c of ["SPX", "NKY", "HSI", "DAX"]) { const r = ix(c); if (r) chips.push([c, us(r.value), r.pct]); }
@@ -201,6 +206,7 @@ function renderBrief() {
 /* ================= CHART (chart-engine.js: TradingView-style engine on Lightweight Charts) ================= */
 // Daily history: t/d/<key>.json = 5 years, split-adjusted (Yahoo, checked against NSE's close) for main-board
 // stocks, ETFs and the NIFTY / BANK NIFTY / SENSEX indices; SME stocks fall back to NSE's own 1-year files.
+const INTRA = ["1m", "5m", "15m", "1h"];
 const dkey = s => [...s].map(c => /[A-Za-z0-9]/.test(c) ? c : "_" + c.charCodeAt(0).toString(16)).join("");
 S.daily = {};
 async function loadDaily(sym) {
@@ -231,7 +237,8 @@ function showMsg(t) { const m = $("#chart-msg"); m.textContent = t || ""; m.clas
 const ts = (dateStr, hhmm) => { const [y, m, d] = dateStr.split("-").map(Number), [hh, mm] = hhmm.split(":").map(Number); return Date.UTC(y, m - 1, d, hh, mm) / 1000; };
 function candlesFor(sym, interval) {
   const x = S.map.has(sym) ? q(sym) : null;
-  if (["5m", "15m", "1h"].includes(interval)) {
+  if (["1m", "5m", "15m", "1h"].includes(interval)) {
+    const rt = S.rtc[sym + "|" + interval]; if (LIVE.ok && rt) return rt.bars;
     const it = intraOf(sym); if (!it) return [];
     if (interval === "5m") { const day = (S.quotes[sym] || {}).d || S.qmeta.session_date; return (it.d || []).map(r => ({ time: ts(day, r[0]), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], lbl: day + " " + r[0], day })); }
     const w = (it.w || []).map(r => { const [d, t] = r[0].split(" "); return { time: ts(d, t), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], lbl: r[0], d, t, day: d }; });
@@ -270,7 +277,7 @@ const eng = new ChartEngine($("#chart"), {
   toast, message: showMsg,
   defaultRange: () => applyRange(),
   nearStart: () => {                                        // scrolled back to the start: fetch the older years
-    if (["5m", "15m", "1h"].includes(iv) || !S.daily[sec] || S.arch[sec] !== undefined) return;
+    if (INTRA.includes(iv) || !S.daily[sec] || S.arch[sec] !== undefined) return;
     const sym = sec, before = eng.bars.length, r = eng.chart.timeScale().getVisibleLogicalRange();
     showMsg(""); toast(`Loading ${sym}'s older history…`);
     loadArchive(sym).then(old => {
@@ -293,23 +300,28 @@ function compareSeries(bars) {
 }
 function drawChart(keepRange) {
   if (view !== "terminal" && !eng.chart) return;
+  if (LIVE.ok && sec && ["1m", "5m", "15m", "1h"].includes(iv) && !S.rtc[sec + "|" + iv]) {
+    const sym = sec, want = iv; showMsg("Loading exchange candles…");
+    loadRtCandles(sym, want).then(() => { if (sym === sec && want === iv) { showMsg(""); drawChart(keepRange); } });
+    if (!intraOf(sec)) return;
+  }
   const bars = sec ? candlesFor(sec, iv) : [];
   $$("#iv-grp button").forEach(b => b.classList.toggle("on", b.dataset.iv === iv));
   $("#tb-sym").textContent = sec || "—";
   const s = S.map.get(sec);
   if (!bars.length) {
-    showMsg(["5m", "15m", "1h"].includes(iv) ? `No intraday data for ${sec}${s && s.board === "SME" ? " (SME stocks have NSE end-of-day data only)" : ""}. Switch to D.` : "No price history available.");
+    showMsg(INTRA.includes(iv) ? `No intraday data for ${sec}${s && s.board === "SME" ? " (SME stocks have NSE end-of-day data only)" : ""}. Switch to D.` : "No price history available.");
     eng.load({ sym: sec, iv, bars: [], intraday: false }); return;
   }
   showMsg("");
   const intraday = typeof bars[0].time === "number";
   eng.load({ sym: sec, name: s ? s.n : sec, iv, bars, intraday, keepRange, compare: compareSeries(bars) });
-  $("#src-note").textContent = intraday ? "Yahoo Finance, delayed" : S.daily[sec] ? `${bars.length.toLocaleString("en-IN")} bars since ${bars[0].day.slice(0, 4)} · split-adjusted${S.arch[sec] === undefined ? " · scroll back for more" : ""}` : "NSE end-of-day (1 year)";
+  $("#src-note").textContent = intraday ? (LIVE.ok && S.rtc[sec + "|" + iv] ? "NSE real-time · Angel One" : "Yahoo Finance, delayed") : S.daily[sec] ? `${bars.length.toLocaleString("en-IN")} bars since ${bars[0].day.slice(0, 4)} · split-adjusted${S.arch[sec] === undefined ? " · scroll back for more" : ""}` : "NSE end-of-day (1 year)";
   updIndCount();
 }
 function applyRange() {
   const b = eng.bars; if (!b.length) return;
-  if (typeof b[0].time === "number") { eng.showBars(0); return; }
+  if (typeof b[0].time === "number") { const lastDay = b[b.length - 1].day; eng.showBars(rg === "1D" ? Math.max(0, b.findIndex(x => x.day === lastDay)) : 0); return; }
   const lastD = new Date(b[b.length - 1].time + "T00:00:00Z");
   const back = { "1M": [0, 1], "3M": [0, 3], "6M": [0, 6], "1Y": [1, 0], "5Y": [5, 0] }[rg];
   let cut = null;
@@ -335,13 +347,13 @@ function syncRange() { $$("#rg-grp button").forEach(b => b.classList.toggle("on"
 $$("#iv-grp button").forEach(b => b.onclick = () => {
   if (b.disabled) return;
   iv = b.dataset.iv;
-  rg = { "5m": "1D", "15m": "5D", "1h": "5D" }[iv] || (["1D", "5D"].includes(rg) ? (iv === "D" ? "1Y" : "5Y") : rg);
+  rg = { "1m": "1D", "5m": "1D", "15m": "5D", "1h": "5D" }[iv] || (["1D", "5D"].includes(rg) ? (iv === "D" ? "1Y" : "5Y") : rg);
   syncRange(); drawChart();
 });
 $$("#rg-grp button").forEach(b => b.onclick = () => {
   if (b.disabled) return;
   rg = b.dataset.rg; syncRange();
-  const want = rg === "1D" ? "5m" : rg === "5D" ? "15m" : rg === "5Y" ? (iv === "M" ? "M" : "W") : rg === "ALL" ? (["5m", "15m", "1h"].includes(iv) ? "D" : iv) : (["5m", "15m", "1h"].includes(iv) ? "D" : iv);
+  const want = rg === "1D" ? "5m" : rg === "5D" ? "15m" : rg === "5Y" ? (iv === "M" ? "M" : "W") : rg === "ALL" ? (INTRA.includes(iv) ? "D" : iv) : (INTRA.includes(iv) ? "D" : iv);
   if (rg === "ALL" && S.daily[sec] && S.arch[sec] === undefined) { const sym = sec; toast("Loading the full history…"); loadArchive(sym).then(() => { if (sym !== sec) return; iv = want; drawChart(); }); return; }
   if (want !== iv) { iv = want; drawChart(); } else applyRange();
 });
@@ -362,7 +374,7 @@ $("#snap").onclick = () => {
   document.body.appendChild(a); a.click(); a.remove(); toast("Chart image saved");
 };
 $("#fs").onclick = () => { const on = $(".term").classList.toggle("focus"); $("#fs").classList.toggle("on", on); $("#fs").textContent = on ? "⛶ Exit focus" : "⛶ Focus"; };
-$("#goto").onchange = e => { if (!e.target.value) return; if (["5m", "15m", "1h"].includes(iv)) { iv = "D"; rg = "ALL"; syncRange(); drawChart(); } eng.goTo(e.target.value); };
+$("#goto").onchange = e => { if (!e.target.value) return; if (INTRA.includes(iv)) { iv = "D"; rg = "ALL"; syncRange(); drawChart(); } eng.goTo(e.target.value); };
 $("#wl-toggle").onclick = () => toggleWatch(sec);
 
 /* ---- compare ---- */
@@ -409,6 +421,109 @@ $$("#tools [data-act]").forEach(b => b.onclick = () => {
   else eng.zoom(a === "zoomin" ? 0.7 : 1.4);
 });
 
+/* ================= REAL-TIME (relay/relay.py: Angel One SmartAPI -> this page) ================= */
+// After sign-in the page opens a WebSocket to the relay, proves who it is with the Firebase ID token, and then
+// receives every price change: the stocks on screen every 250 ms, the rest of the market every 2 s. Candles for
+// 1m / 5m / 15m / 1h charts come from Angel One's exchange candles. Without a relay the page keeps the delayed prices.
+const LIVE = { ws: null, ok: false, tries: 0, id: 0, pend: new Map(), since: null };
+S.idxLive = {}; S.rtc = {};
+const IDX_OF = { NIFTY: "^NSEI", SENSEX: "^BSESN", NSEBANK: "^NSEBANK" };
+const todayIST = () => new Date().toLocaleDateString("en-CA", { timeZone: IST });
+function liveConnect() {
+  if (!LIVE_RELAY_URL || !S.user || typeof S.user.getIdToken !== "function" || LIVE.ws) return;
+  const open = async () => {
+    const tok = await S.user.getIdToken().catch(() => null);
+    if (!tok) { LIVE.ws = null; return; }
+    let ws;
+    try { ws = new WebSocket(LIVE_RELAY_URL); } catch (e) { LIVE.ws = null; return; }
+    LIVE.ws = ws;
+    ws.onopen = () => ws.send(JSON.stringify({ type: "auth", idToken: tok }));
+    ws.onmessage = e => { try { onLive(JSON.parse(e.data)); } catch (err) {} };
+    ws.onclose = () => {
+      const was = LIVE.ok; LIVE.ok = false; LIVE.ws = null; renderMast(); markIntraday();
+      if (was) toast("Real-time feed disconnected: reconnecting… (showing delayed prices meanwhile)");
+      setTimeout(liveConnect, Math.min(30000, 1500 * 2 ** LIVE.tries++));
+    };
+  };
+  open();
+}
+function onLive(m) {
+  if (m.type === "hello") {
+    LIVE.ok = !!m.ok;
+    if (m.ok) { LIVE.tries = 0; LIVE.since = new Date(); sendFocus(); toast("Real-time NSE prices connected"); markIntraday(); if (["5m", "15m", "1h", "1m"].includes(iv)) drawChart(true); }
+    else toast("Real-time feed: " + (m.reason || "not allowed"));
+    renderMast();
+  } else if (m.type === "snap" || m.type === "ticks") applyTicks(m.q);
+  else if (m.type === "candles") { const cb = LIVE.pend.get(m.id); if (cb) { LIVE.pend.delete(m.id); cb(m.bars); } }
+}
+function sendFocus() {
+  if (!LIVE.ok) return;
+  const syms = [...new Set([sec, ...loadWatch(), ...cmp.map(c => c.sym)].filter(Boolean))].slice(0, 50);
+  LIVE.ws.send(JSON.stringify({ type: "focus", syms }));
+}
+function liveCandles(sym, interval) {
+  return new Promise(res => {
+    if (!LIVE.ok) return res(null);
+    const id = ++LIVE.id; LIVE.pend.set(id, res);
+    LIVE.ws.send(JSON.stringify({ type: "candles", id, sym, iv: interval }));
+    setTimeout(() => { if (LIVE.pend.has(id)) { LIVE.pend.delete(id); res(null); } }, 15000);
+  });
+}
+function applyTicks(qmap) {
+  const day = todayIST();
+  let mine = null;
+  for (const [sym, r] of Object.entries(qmap)) {
+    const [p, o, h, l, pc, v, ms] = r;
+    if (sym.startsWith("^")) { S.idxLive[sym] = { p, pc, pct: pc ? (p / pc - 1) * 100 : null }; continue; }
+    const t = ms ? new Date(ms).toLocaleTimeString("en-GB", { timeZone: IST, hour12: false }) : "";
+    S.quotes[sym] = { p, chg: +(p - pc).toFixed(2), pct: pc ? +((p / pc - 1) * 100).toFixed(2) : null, o, h, l, v, t, d: day, rt: true };
+    if (sym === sec) mine = { p, o, h, l, v, ms };
+  }
+  if (mine) liveBar(mine);
+  scheduleLive();
+}
+function liveBar({ p, o, h, l, v, ms }) {                   // move the chart's last candle with the tick
+  if (!eng.bars.length) return;
+  const day = todayIST();
+  if (iv === "D") { eng.upsertBar({ time: day, o, h, l, c: p, v, lbl: day + " (real-time)", day }); return; }
+  if (iv === "W" || iv === "M") { const last = eng.bars[eng.bars.length - 1]; eng.upsertBar({ ...last, h: Math.max(last.h, p), l: Math.min(last.l, p), c: p }); return; }
+  const step = { "1m": 1, "5m": 5, "15m": 15, "1h": 60 }[iv]; if (!step || !ms) return;
+  const hm = new Date(ms).toLocaleTimeString("en-GB", { timeZone: IST, hour12: false }).slice(0, 5).split(":").map(Number);
+  const mins = hm[0] * 60 + hm[1]; if (mins < 555 || mins > 930) return;          // 09:15-15:30 only
+  const start = 555 + Math.floor((mins - 555) / step) * step, t = ts(day, `${String(Math.floor(start / 60)).padStart(2, "0")}:${String(start % 60).padStart(2, "0")}`);
+  const last = eng.bars[eng.bars.length - 1], dv = Math.max(0, v - (LIVE.dayVol || v));
+  LIVE.dayVol = v;
+  if (last.time === t) eng.upsertBar({ ...last, h: Math.max(last.h, p), l: Math.min(last.l, p), c: p, v: (last.v || 0) + dv });
+  else if (t > last.time) eng.upsertBar({ time: t, o: p, h: p, l: p, c: p, v: dv, lbl: day + " " + new Date(t * 1000).toISOString().slice(11, 16), day });
+}
+let liveTimer = null, liveSlow = 0;
+function scheduleLive() {
+  if (liveTimer) return;
+  liveTimer = setTimeout(() => {
+    liveTimer = null;
+    renderHead(); renderWatch();
+    if (Date.now() - liveSlow > 2000) {                    // the heavier panels at most every 2 s
+      liveSlow = Date.now();
+      renderMast(); renderTape();
+      if (view === "movers") renderMovers(); else if (view === "sectors") renderSectors(); else if (view === "brief") renderBrief();
+      if (side === "details") renderDetails();
+    }
+  }, 200);
+}
+function markIntraday() {                                   // 1m exists only with the real-time feed
+  const b = $('#iv-grp [data-iv="1m"]'); if (!b) return;
+  b.hidden = !LIVE.ok; if (!LIVE.ok && iv === "1m") { iv = "5m"; drawChart(); }
+}
+async function loadRtCandles(sym, interval) {               // Angel One's own candles -> chart bars
+  const key = sym + "|" + interval;
+  if (S.rtc[key] && Date.now() - S.rtc[key].at < 60000) return S.rtc[key].bars;
+  const rows = await liveCandles(sym, interval); if (!rows || !rows.length) return null;
+  const bars = rows.map(r => { const d = r[0].slice(0, 10), hm = r[0].slice(11, 16); return { time: ts(d, hm), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], lbl: `${d} ${hm}`, day: d }; });
+  S.rtc[key] = { at: Date.now(), bars };
+  LIVE.dayVol = (S.quotes[sym] || {}).v;
+  return bars;
+}
+
 /* ================= RAIL: watchlist, details, prints ================= */
 function setSide(v) {
   if (v === "watch") {                                   // the watchlist is always shown at the top of the rail
@@ -430,7 +545,7 @@ function toggleWatch(sym) {
   const w = loadWatch();
   if (w.includes(sym)) { LS.set("blab-watch", w.filter(s => s !== sym)); toast(sym + " removed from watchlist"); }
   else { LS.set("blab-watch", [sym, ...w].slice(0, 60)); toast(sym + " added to watchlist"); }
-  renderWatch(); renderHead(); renderMast(); renderMovers();
+  renderWatch(); renderHead(); renderMast(); renderMovers(); sendFocus();
 }
 function renderWatch() {
   const w = loadWatch();
@@ -674,7 +789,7 @@ $("#news-q").oninput = e => { newsQuery = e.target.value; renderNews(); };
 /* ================= open a security ================= */
 async function openSec(sym) {
   if (!S.map.has(sym)) return;
-  sec = sym; eng.cancel(); descOpen = false;
+  sec = sym; eng.cancel(); descOpen = false; LIVE.dayVol = null; sendFocus();
   history.replaceState(null, "", `#v=${view}&s=${encodeURIComponent(sym)}`);
   $$("#watch .wl-row").forEach(r => r.classList.toggle("sel", r.dataset.s === sym));
   renderHead(); renderDetails();
@@ -683,7 +798,7 @@ async function openSec(sym) {
   if (sym !== sec) return;
   const hasIntra = !!(intraOf(sym) && (intraOf(sym).d || []).length);
   $$('#iv-grp [data-iv="5m"], #iv-grp [data-iv="15m"], #iv-grp [data-iv="1h"], #rg-grp [data-rg="1D"], #rg-grp [data-rg="5D"]').forEach(b => { b.disabled = !hasIntra; b.title = hasIntra ? "" : "No intraday data for this stock (SME stocks: NSE end-of-day only)"; });
-  if (!hasIntra && ["5m", "15m", "1h"].includes(iv)) { iv = "D"; rg = "1Y"; syncRange(); }
+  if (!hasIntra && INTRA.includes(iv)) { iv = "D"; rg = "1Y"; syncRange(); }
   if (view === "terminal") drawChart(); else eng.load({ sym, iv, bars: [], intraday: false });
   renderDetails(); if (side === "prints") renderPrints();
 }

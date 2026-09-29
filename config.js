@@ -30,3 +30,7 @@ export const FIREBASE_VERSION = "12.19.0";
 export function isConfigured() {
   return !Object.values(firebaseConfig).some(v => /YOUR_/.test(String(v)));
 }
+
+// Real-time relay (relay/README.md): the wss:// address printed by relay/setup.sh on your server.
+// Empty = the terminal uses the delayed prices only.
+export const LIVE_RELAY_URL = "";
