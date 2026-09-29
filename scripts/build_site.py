@@ -65,6 +65,8 @@ def main() -> None:
     for sub, dst in (("hist", "h"), ("intra", "i")):
         if (TERMINAL / sub).exists():
             shutil.copytree(TERMINAL / sub, SITE / "t" / dst)
+    if (DATA / "institutional" / "fii_dii.json").exists():   # the Advanced page refreshes FII/DII from this
+        shutil.copyfile(DATA / "institutional" / "fii_dii.json", SITE / "institutional.json")
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
         (SITE / "screener.json").write_text((SCREENER / "latest.json").read_text(encoding="utf-8"), encoding="utf-8")
 

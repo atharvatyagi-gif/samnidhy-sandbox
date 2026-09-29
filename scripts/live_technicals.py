@@ -264,6 +264,11 @@ def main():
         news = headlines(picks)
     except Exception:
         news = []
+    if not news and (DIR / "live.json").exists():          # Yahoo sometimes returns none: keep the last real ones
+        try:
+            news = json.loads((DIR / "live.json").read_text(encoding="utf-8")).get("news", [])
+        except Exception:
+            news = []
     ok = [r for r in rows if "error" not in r]
     now = datetime.now(IST)
     DIR.mkdir(parents=True, exist_ok=True)

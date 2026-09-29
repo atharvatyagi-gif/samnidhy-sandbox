@@ -4,7 +4,8 @@ Run every 15 minutes in market hours (and by the daily update, when it captures 
 
 Reads data/terminal/universe.json (from nse_eod.py) and writes
   data/terminal/quotes.json        latest delayed price for each covered stock
-  data/terminal/intra/<k>.json     that session's 5-minute candles, grouped by the symbol's first character
+  data/terminal/intra/<k>.json     per stock {"d": latest session 5-min candles, "w": last 5 sessions 15-min candles},
+                                   grouped by the symbol's first character
 Stocks Yahoo does not carry (all SME stocks, some others) keep NSE's official end-of-day price and are
 marked as such in the terminal. Nothing is estimated.
 
@@ -79,13 +80,19 @@ def main():
         sym = t[:-3]
         d.index = d.index.tz_convert(IST)
         day = d.index[-1].date()
+        full = d                                          # up to 5 sessions, for the 5D / 15m / 1h views
         d = d[d.index.date == day]
         s = stocks[sym]
-        # previous close: NSE's close for the session before this one
-        if day.isoformat() > eod_date:
-            prev = s["c"]
-        elif day.isoformat() == eod_date:
+        # previous close: NSE's official close for the session before this one when NSE's file has it;
+        # otherwise (NSE's file not in yet) the previous session's last traded price from the same 5-min data
+        prior_days = sorted({x for x in full.index.date if x < day})
+        prev_day = prior_days[-1].isoformat() if prior_days else None
+        if day.isoformat() == eod_date:
             prev = s["pc"]
+        elif s["date"] == prev_day:
+            prev = s["c"]
+        elif prev_day and day.isoformat() > eod_date:
+            prev = float(full[full.index.date == prior_days[-1]]["Close"].iloc[-1])
         else:
             continue                                      # Yahoo is behind NSE's own file: keep NSE's EOD
         last = float(d["Close"].iloc[-1])
@@ -97,8 +104,14 @@ def main():
                        "pct": r2((last / prev - 1) * 100) if prev else None,
                        "o": r2(d["Open"].iloc[0]), "h": r2(d["High"].max()), "l": r2(d["Low"].min()),
                        "v": int(d["Volume"].sum()), "t": d.index[-1].strftime("%H:%M"), "d": day.isoformat()}
-        intra.setdefault(shard(sym), {})[sym] = [[ts.strftime("%H:%M"), r2(o), r2(h), r2(l), r2(c), int(v)] for ts, o, h, l, c, v in
-                                                 zip(d.index, d["Open"], d["High"], d["Low"], d["Close"], d["Volume"])]
+        w = full.resample("15min", label="left", closed="left").agg(
+            {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}).dropna(subset=["Close"])
+        intra.setdefault(shard(sym), {})[sym] = {
+            "d": [[ts.strftime("%H:%M"), r2(o), r2(h), r2(l), r2(c), int(v)] for ts, o, h, l, c, v in
+                  zip(d.index, d["Open"], d["High"], d["Low"], d["Close"], d["Volume"])],        # latest session, 5-min
+            "w": [[ts.strftime("%Y-%m-%d %H:%M"), r2(o), r2(h), r2(l), r2(c), int(v)] for ts, o, h, l, c, v in
+                  zip(w.index, w["Open"], w["High"], w["Low"], w["Close"], w["Volume"])],        # last 5 sessions, 15-min
+        }
         last_ts = max(last_ts or d.index[-1], d.index[-1])
     if not quotes:
         raise RuntimeError("no live prices could be fetched; the terminal keeps NSE's end-of-day prices")

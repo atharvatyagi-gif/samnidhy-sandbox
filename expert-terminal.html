@@ -15,91 +15,134 @@
 </head>
 <body>
 <!--TERMINAL-BODY-START-->
-<div class="term" id="term">
+<div class="app" id="app">
 
-  <header class="sys">
-    <a class="esc" href="advanced.html#signals" id="back" title="Esc">&lsaquo; ESC&nbsp; B-LAB</a>
-    <span class="brand">B-LAB<b>TERMINAL</b></span>
-    <div class="search" id="search">
-      <span class="s-ico">&gt;</span>
-      <input id="cli" type="text" autocomplete="off" spellcheck="false" placeholder="Search any NSE stock or type a function (DES, GP, MOV, MAP, WEI, TOP, HELP)…  press /"
-             aria-label="Search stocks or type a function" aria-autocomplete="list" aria-controls="suggest" aria-expanded="false">
-      <span class="cursor" aria-hidden="true">█</span>
-      <ul class="suggest" id="suggest" role="listbox" hidden></ul>
+  <!-- ============ top toolbar ============ -->
+  <header class="top">
+    <a class="esc" href="advanced.html#signals" title="Back to B-Lab (Esc)">&lsaquo; B-LAB</a>
+    <span class="logo">B-LAB<b>TERMINAL</b></span>
+    <button class="sym-pill" id="sym-pill" title="Search any NSE stock (/)">
+      <span class="sp-ico">&#9906;</span><b id="sp-sym">--</b><span id="sp-name" class="sp-name"></span>
+    </button>
+    <span class="sep"></span>
+    <div class="grp" id="iv-grp" role="group" aria-label="Interval">
+      <button data-iv="5m">5m</button><button data-iv="15m">15m</button><button data-iv="1h">1h</button>
+      <button data-iv="D" class="on">D</button><button data-iv="W">W</button><button data-iv="M">M</button>
     </div>
+    <span class="sep"></span>
+    <div class="grp" id="ct-grp" role="group" aria-label="Chart type">
+      <button data-ct="candle" class="on" title="Candles">&#9707; Candles</button><button data-ct="bars" title="OHLC bars">&#9474;&#8866; Bars</button>
+      <button data-ct="line" title="Line">&#8764; Line</button><button data-ct="area" title="Area">&#9650; Area</button>
+    </div>
+    <span class="sep"></span>
+    <div class="dd" id="ind-dd">
+      <button class="dd-btn" id="ind-btn" aria-haspopup="true" aria-expanded="false">&#402;x Indicators <span class="cnt" id="ind-cnt"></span></button>
+      <div class="dd-menu" id="ind-menu" hidden></div>
+    </div>
+    <button class="tb" id="snap" title="Save chart as image">&#9113; Snapshot</button>
+    <span class="grow"></span>
     <span class="mkt" id="mkt"><i></i><span>NSE --</span></span>
     <span class="clock" id="clock">--:--:--</span>
-    <span class="user">SYS_USER: <b id="sys-user">--</b><button type="button" id="logout" title="Sign out">LOGOFF</button></span>
+    <span class="user" title="Signed in"><span class="av" id="av">?</span><span id="sys-user">--</span></span>
+    <button class="tb warn" id="logout">Log off</button>
   </header>
 
-  <div class="tape" aria-label="World indices"><div class="tape-track" id="tape"></div></div>
+  <!-- ============ drawing tools ============ -->
+  <nav class="tools" id="tools" aria-label="Drawing tools">
+    <button data-tool="cross" class="on" title="Crosshair (C)">&#10010;</button>
+    <button data-tool="trend" title="Trend line (T): click two points">&#9585;</button>
+    <button data-tool="hline" title="Horizontal line (H): click a price">&#8212;</button>
+    <button data-tool="measure" title="Measure (M): click two points">&#8645;</button>
+    <span class="t-sep"></span>
+    <button data-act="magnet" id="magnet" title="Magnet: snap to candle prices">&#10696;</button>
+    <button data-act="hide" id="hide-draw" title="Hide / show drawings">&#9673;</button>
+    <button data-act="clear" title="Remove all drawings on this stock">&#10007;</button>
+    <span class="t-sep"></span>
+    <button data-act="zoomin" title="Zoom in">+</button>
+    <button data-act="zoomout" title="Zoom out">&minus;</button>
+    <button data-act="fit" title="Fit all data">&#8596;</button>
+  </nav>
 
-  <!-- LEFT: movers + breadth + watchlist -->
-  <aside class="col left">
-    <section class="panel" id="p-MOV">
-      <div class="ph"><span class="fn">MOV</span><span class="pt">NSE Movers</span>
-        <span class="seg sm" id="board-seg"><button data-b="All" class="on">ALL</button><button data-b="Main">MAIN</button><button data-b="SME">SME</button></span></div>
-      <div class="tabs" id="mov-tabs">
-        <button data-m="gain" class="on">Gainers</button><button data-m="lose">Losers</button><button data-m="val">Most active</button>
-        <button data-m="hi">52W high</button><button data-m="lo">52W low</button>
+  <!-- ============ chart ============ -->
+  <main class="stage">
+    <div class="legend" id="legend"></div>
+    <div class="chart" id="chart"></div>
+    <div class="measure" id="measure" hidden></div>
+    <div class="chart-msg" id="chart-msg"></div>
+    <div class="hint" id="tool-hint" hidden></div>
+    <footer class="range">
+      <div class="grp flat" id="rg-grp">
+        <button data-rg="1D">1D</button><button data-rg="5D">5D</button><button data-rg="1M">1M</button><button data-rg="3M">3M</button>
+        <button data-rg="6M">6M</button><button data-rg="YTD">YTD</button><button data-rg="1Y" class="on">1Y</button>
       </div>
-      <div class="pb list" id="movers"></div>
-    </section>
-    <section class="panel breadth-p">
-      <div class="ph"><span class="fn">BRD</span><span class="pt">Market breadth</span><span class="ph-r" id="brd-note"></span></div>
-      <div class="breadth" id="breadth"></div>
-    </section>
-    <section class="panel" id="p-WL">
-      <div class="ph"><span class="fn">WL</span><span class="pt">Watchlist</span><span class="ph-r"><button class="lnk" id="wl-add" title="Add the open stock">+ ADD</button></span></div>
-      <div class="pb list" id="watch"></div>
-    </section>
-  </aside>
-
-  <!-- CENTRE: security -->
-  <main class="col centre">
-    <section class="panel sec" id="p-GP">
-      <div class="sec-head" id="sec-head"></div>
-      <div class="sec-stats" id="sec-stats"></div>
-      <div class="chart-bar">
-        <span class="seg" id="range-seg">
-          <button data-r="1D">1D</button><button data-r="1M">1M</button><button data-r="3M">3M</button><button data-r="6M">6M</button><button data-r="1Y" class="on">1Y</button>
-        </span>
-        <span class="seg" id="type-seg"><button data-t="candle" class="on">Candles</button><button data-t="line">Line</button><button data-t="area">Area</button></span>
-        <span class="seg" id="ind-seg"><button data-i="sma20" class="on">SMA 20</button><button data-i="sma50" class="on">SMA 50</button><button data-i="vol" class="on">Volume</button></span>
-        <span class="legend" id="legend"></span>
-      </div>
-      <div class="chart" id="chart"><div class="chart-msg" id="chart-msg"></div></div>
-    </section>
-    <section class="panel detail" id="p-DES">
-      <div class="tabs" id="det-tabs">
-        <button data-d="DES" class="on">DES · Description</button><button data-d="FA">FA · Fundamentals</button>
-        <button data-d="PERF">PERF · Returns</button><button data-d="QR">QR · Intraday prints</button>
-      </div>
-      <div class="pb" id="detail"></div>
-    </section>
+      <span class="grow"></span>
+      <span class="dim" id="tz">IST (UTC+5:30)</span>
+      <div class="grp flat" id="sc-grp"><button data-sc="pct" title="Percentage scale">%</button><button data-sc="log" title="Logarithmic scale">log</button><button data-sc="auto" class="on" title="Auto scale">auto</button></div>
+    </footer>
   </main>
 
-  <!-- RIGHT: indices, sector map, news -->
-  <aside class="col right">
-    <section class="panel" id="p-WEI">
-      <div class="ph"><span class="fn">WEI</span><span class="pt">World equity indices</span><span class="ph-r" id="wei-asof"></span></div>
-      <div class="pb"><table class="grid" id="wei"><thead><tr><th>Index</th><th class="r">Last</th><th class="r">Chg</th><th class="r">%</th><th class="r">YTD</th></tr></thead><tbody></tbody></table></div>
-    </section>
-    <section class="panel" id="p-MAP">
-      <div class="ph"><span class="fn">MAP</span><span class="pt">Sectors · NIFTY 500, today</span></div>
-      <div class="pb heat" id="heat"></div>
-    </section>
-    <section class="panel" id="p-TOP">
-      <div class="ph"><span class="fn">TOP</span><span class="pt">Top news</span><span class="ph-r dim">YAHOO FINANCE</span></div>
-      <div class="pb"><ul class="news" id="news"></ul></div>
-    </section>
+  <!-- ============ right sidebar ============ -->
+  <aside class="side" id="side">
+    <div class="side-view" data-view="wl">
+      <div class="sv-head"><b>Watchlist</b><span class="grow"></span><button class="tb sm" id="wl-add" title="Add the open stock">+ Add</button></div>
+      <div class="wl-cols"><span>Symbol</span><span>Last</span><span>Chg</span><span>Chg%</span></div>
+      <div class="wl" id="watch"></div>
+      <div class="details" id="details"></div>
+    </div>
+    <div class="side-view" data-view="mov" hidden>
+      <div class="sv-head"><b>NSE movers</b><span class="grow"></span>
+        <div class="grp sm" id="board-grp"><button data-b="All" class="on">All</button><button data-b="Main">Main</button><button data-b="SME">SME</button></div></div>
+      <div class="subtabs" id="mov-tabs"><button data-m="gain" class="on">Gainers</button><button data-m="lose">Losers</button><button data-m="val">Most active</button><button data-m="hi">52W high</button><button data-m="lo">52W low</button></div>
+      <div class="sector-note" id="sector-note" hidden></div>
+      <div class="list" id="movers"></div>
+    </div>
+    <div class="side-view" data-view="map" hidden>
+      <div class="sv-head"><b>Market breadth</b><span class="grow"></span><span class="dim sm">all NSE stocks</span></div>
+      <div class="breadth" id="breadth"></div>
+      <div class="sv-head"><b>Sectors</b><span class="grow"></span><span class="dim sm">NIFTY 500 · today · click to filter movers</span></div>
+      <div class="heat" id="heat"></div>
+    </div>
+    <div class="side-view" data-view="wei" hidden>
+      <div class="sv-head"><b>World indices</b><span class="grow"></span><span class="dim sm" id="wei-asof"></span></div>
+      <div class="list"><table class="grid" id="wei"><thead><tr><th>Index</th><th class="r">Last</th><th class="r">Chg%</th><th class="r">YTD</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="side-view" data-view="news" hidden>
+      <div class="sv-head"><b>Top news</b><span class="grow"></span><span class="dim sm">Yahoo Finance</span></div>
+      <ul class="news list" id="news"></ul>
+    </div>
+    <div class="side-view" data-view="qr" hidden>
+      <div class="sv-head"><b>Intraday prints</b><span class="grow"></span><span class="dim sm" id="qr-sym"></span></div>
+      <div class="list" id="prints"></div>
+    </div>
   </aside>
 
+  <!-- ============ right icon rail ============ -->
+  <nav class="rail" id="rail" aria-label="Panels">
+    <button data-view="wl" class="on" title="Watchlist & details">&#9776;<span>List</span></button>
+    <button data-view="mov" title="NSE movers">&#8645;<span>Movers</span></button>
+    <button data-view="map" title="Sectors & breadth">&#9638;<span>Sectors</span></button>
+    <button data-view="wei" title="World indices">&#9737;<span>World</span></button>
+    <button data-view="news" title="News">&#9993;<span>News</span></button>
+    <button data-view="qr" title="Intraday prints">&#8801;<span>Prints</span></button>
+  </nav>
+
+  <!-- ============ status bar ============ -->
   <footer class="status">
-    <span id="st-data">LOADING…</span>
+    <span id="st-data">Loading…</span>
     <span class="dim" id="st-cover"></span>
-    <span class="st-r">REAL DATA ONLY · DELAYED · EDUCATIONAL ANALYSIS ONLY. NOT INVESTMENT ADVICE.</span>
+    <span class="grow"></span>
+    <span class="warnc">Real data only · delayed · educational analysis only, not investment advice</span>
   </footer>
+</div>
+
+<!-- symbol search (TradingView-style dialog) -->
+<div class="modal" id="search" hidden>
+  <div class="m-box" role="dialog" aria-label="Symbol search">
+    <div class="m-in"><span>&#9906;</span><input id="q" type="text" autocomplete="off" spellcheck="false" placeholder="Symbol, company name, or a command (HELP)"><kbd>Esc</kbd></div>
+    <div class="m-tabs" id="q-tabs"><button data-f="all" class="on">All</button><button data-f="Main">Main board</button><button data-f="SME">SME</button><button data-f="etf">ETFs</button><button data-f="n500">NIFTY 500</button></div>
+    <ul class="m-list" id="q-list" role="listbox"></ul>
+    <div class="m-foot" id="q-foot"></div>
+  </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <!--TERMINAL-BODY-END-->

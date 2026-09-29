@@ -48,6 +48,10 @@
   .foot a { color: var(--ink-2); }
   [hidden] { display: none !important; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .how { display: grid; gap: 8px; margin: -6px 0 18px; padding: 12px 14px; border-radius: 14px; background: rgba(233,220,192,0.06); border: 1px solid rgba(233,220,192,0.18); font-size: 0.86rem; color: var(--ink-2); }
+  .how div { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; }
+  .how div > b { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--beige); color: #0b0b0b; font-size: 0.72rem; }
+  .how span b { color: var(--ink); }
   input[type="date"] { color-scheme: dark; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -63,12 +67,18 @@
 <main class="card">
   <p class="eyebrow">Expert access</p>
   <h1>The B-Lab Terminal</h1>
-  <p class="lead">For TAPMI students. <b>First time? Register first</b> with your @tapmi.edu.in email, then log in.</p>
+  <p class="lead">For TAPMI students. <b>First time? Register first</b>, then log in.</p>
 
   <div class="tabs" id="tabs" data-tab="register" role="tablist">
     <span class="pill" aria-hidden="true"></span>
     <button type="button" role="tab" id="tab-login" aria-selected="false" aria-controls="auth-form">Login</button>
     <button type="button" role="tab" id="tab-register" aria-selected="true" aria-controls="auth-form">Register</button>
+  </div>
+
+  <div class="how" id="how">
+    <div><b>1</b><span>Your <b>TAPMI email is required</b>: it's your B-Lab username.</span></div>
+    <div><b>2</b><span>You do <b>not</b> use your TAPMI / Outlook password here.</span></div>
+    <div><b>3</b><span>Create a <b>new password</b> just for B-Lab, and use it to log in.</span></div>
   </div>
 
   <form id="auth-form" novalidate>
@@ -88,7 +98,7 @@
     <div id="confirm-wrap">
       <label for="confirm">Confirm password</label>
       <input id="confirm" type="password" autocomplete="new-password" minlength="8">
-      <div class="hint">At least 8 characters. <b>Use a different password from your TAPMI email password.</b></div>
+      <div class="hint">At least 8 characters. <b>Don't reuse your TAPMI email password</b>: B-Lab never asks for it.</div>
     </div>
     <button class="submit" id="submit" type="submit">Register</button>
     <div class="alert" id="alert" role="alert" aria-live="assertive"></div>
@@ -115,7 +125,7 @@
     $("tabs").dataset.tab = m;
     $("tab-login").setAttribute("aria-selected", m === "login");
     $("tab-register").setAttribute("aria-selected", m === "register");
-    $("confirm-wrap").hidden = $("student-wrap").hidden = m !== "register";
+    $("confirm-wrap").hidden = $("student-wrap").hidden = $("how").hidden = m !== "register";
     $("pw-label").textContent = m === "register" ? "Create a new B-Lab password" : "B-Lab password";
     pw.autocomplete = m === "register" ? "new-password" : "current-password";
     btn.textContent = m === "register" ? "Register" : "Login";
