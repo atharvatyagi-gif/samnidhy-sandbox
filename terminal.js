@@ -195,6 +195,7 @@ function go(v, quiet) {
   $$("#tabs [data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === v && !b.dataset.side));
   history.replaceState(null, "", `#v=${v}${sec ? "&s=" + encodeURIComponent(sec) : ""}`);
   if (v === "terminal") requestAnimationFrame(() => { if (!eng.chart) drawChart(); });
+  if (v === "globe") { const gm = ensureGlobeMap(); if (gm && S.globe) gm.update(S.globe); requestAnimationFrame(() => gm && gm.resize()); }
   if (!quiet) $("#v-" + v).scrollTop = 0;
 }
 document.addEventListener("click", e => {
@@ -1247,8 +1248,10 @@ function activityFlag(pts) {
 }
 function renderGlobe() {
   const G = S.globe;
-  const gm = ensureGlobeMap();
-  if (gm && G) gm.update(G);
+  // The Leaflet map sizes itself from its container when built; while the Globe tab is hidden that container is
+  // 0x0 (display:none), which leaves the map broken (one tile, pins bunched in a corner) until resize() runs.
+  // So it's only touched while the tab is actually visible - go() builds/updates/resizes it on switching in.
+  if (view === "globe") { const gm = ensureGlobeMap(); if (gm && G) gm.update(G); }
   renderGlobeCards();
   const el = $("#globe-events");
   if (el) el.innerHTML = G && (G.events || []).length ? G.events.map(n => `<li><span class="t">${esc(newsTimeAgo(n.seen_utc))}</span><div>${n.url ? `<a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a>` : esc(n.title || "")}

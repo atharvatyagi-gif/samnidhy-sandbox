@@ -141,6 +141,9 @@ export class GlobeMap {
     const cls = avg <= 0 ? "" : n >= avg * 1.5 ? "active" : n <= avg * 0.3 ? "quiet" : "";
     return `${cls}${this.sel === id ? " on" : ""}`.trim();
   }
+  resize() {                                                // Leaflet sizes itself from its container at construction time;
+    this.ready.then(() => { if (this.map) this.map.invalidateSize(); });   // if it was hidden (display:none) then, tiles come out wrong until this runs
+  }
   select(id) {                                              // one entry point for both the map and the cards (terminal.js)
     this.sel = this.sel === id ? null : id;
     for (const [pid, m] of this.markers) {
