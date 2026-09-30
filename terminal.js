@@ -256,6 +256,7 @@ function topBy(fn, filter = () => true) {
   for (const s of S.uni.stocks) { if (!filter(s)) continue; const x = q(s.s); if (!x || x.p == null) continue; const v = fn(s, x); if (v == null) continue; if (!best || v > best.v) best = { s, x, v }; }
   return best;
 }
+const bcard = (cls, lbl, ttl, sub, btn, attrs) => `<button class="bcard ${cls}" ${attrs}><span class="lbl">${esc(lbl)}</span><span class="ttl">${ttl}</span><span class="sub">${sub}</span><span class="go">${esc(btn)} →</span></button>`;
 function renderBrief() {
   const b = breadthNow(), c = climate(), vix = mk("^INDIAVIX");
   const liquid = s => s.board === "Main" && !s.etf && (s.avgv20 || 0) * (s.c || 0) > 5e7;     // avoids tiny illiquid spikes
@@ -269,16 +270,15 @@ function renderBrief() {
     [(S.screen.universe_stats || {}).breadth_above_200dma != null ? Math.round(S.screen.universe_stats.breadth_above_200dma * 100) + "%" : "--", "above 200-day avg"],
     [vix && vix.value != null ? vix.value.toFixed(1) : "--", "India VIX"],
   ].map(([v, l]) => `<div><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("");
-  const card = (cls, lbl, ttl, sub, btn, attrs) => `<button class="bcard ${cls}" ${attrs}><span class="lbl">${esc(lbl)}</span><span class="ttl">${ttl}</span><span class="sub">${sub}</span><span class="go">${esc(btn)} →</span></button>`;
   const cards = [];
-  cards.push(card(c.tone === "up" ? "pos" : c.tone === "down" ? "neg" : "neutral", "Market climate", `${esc(c.verdict)}: ${c.good} of ${c.n} conditions favourable`, c.f.map(x => esc(x.t)).join(" · ") || "Market data not available.", "Open world", 'data-go="world"'));
-  if (gain) cards.push(card("pos", "Biggest liquid gainer", `${esc(gain.s.s)} <span class="up">${sg(gain.x.pct)}%</span> at ₹${inr(gain.x.p)}`, esc(gain.s.n) + (gain.s.ind ? " · " + esc(gain.s.ind) : ""), "Open chart", `data-open="${esc(gain.s.s)}"`));
-  if (lose) cards.push(card("neg", "Biggest liquid loser", `${esc(lose.s.s)} <span class="down">${sg(lose.x.pct)}%</span> at ₹${inr(lose.x.p)}`, esc(lose.s.n) + (lose.s.ind ? " · " + esc(lose.s.ind) : ""), "Open chart", `data-open="${esc(lose.s.s)}"`));
-  if (act) cards.push(card("neutral", "Most traded (value)", `${esc(act.s.s)} · ₹${big(act.v)} traded`, `${esc(act.s.n)} · ${sg(act.x.pct)}% today`, "Open chart", `data-open="${esc(act.s.s)}"`));
-  if (lead) cards.push(card(lead.avg >= 0 ? "pos" : "neg", "Sectors · NIFTY 500", `${esc(lead.k)} leads (${sg(lead.avg)}%), ${esc(lag.k)} lags (${sg(lag.avg)}%)`, `${secs.filter(s2 => s2.avg > 0).length} of ${secs.length} sectors up on average today.`, "Open sectors", 'data-go="sectors"'));
-  if (fl) cards.push(card(fl.fii.net_cr >= 0 ? "pos" : "neg", "Institutional flows · NSE", `FII ${crS(fl.fii.net_cr)}, DII ${crS(fl.dii.net_cr)}`, `Cash market, provisional, ${dt(fl.date, { weekday: "short", day: "numeric", month: "short" })}.`, "Open world", 'data-go="world"'));
-  if (pick) { const x = q(pick.symbol); cards.push(card("pos", "B-Lab screen · rank #1", `${esc(pick.symbol)} · F-Score ${pick.fscore}/9`, `Return on capital ${pctF(pick.roc, 0)}, earnings yield ${pctF(pick.earnings_yield)}${x ? ` · ₹${inr(x.p)} (${sg(x.pct)}%)` : ""}`, "Open chart", `data-open="${esc(pick.symbol)}"`)); }
-  if (wl.length) cards.push(card(wl[0].x.pct >= 0 ? "pos" : "neg", "Your watchlist", `Best ${esc(wl[0].sym)} ${sg(wl[0].x.pct)}% · worst ${esc(wl[wl.length - 1].sym)} ${sg(wl[wl.length - 1].x.pct)}%`, `${wl.filter(r => r.x.pct > 0).length} of ${wl.length} up today.`, "Open watchlist", 'data-go="terminal" data-side="watch"'));
+  cards.push(bcard(c.tone === "up" ? "pos" : c.tone === "down" ? "neg" : "neutral", "Market climate", `${esc(c.verdict)}: ${c.good} of ${c.n} conditions favourable`, c.f.map(x => esc(x.t)).join(" · ") || "Market data not available.", "Open world", 'data-go="world"'));
+  if (gain) cards.push(bcard("pos", "Biggest liquid gainer", `${esc(gain.s.s)} <span class="up">${sg(gain.x.pct)}%</span> at ₹${inr(gain.x.p)}`, esc(gain.s.n) + (gain.s.ind ? " · " + esc(gain.s.ind) : ""), "Open chart", `data-open="${esc(gain.s.s)}"`));
+  if (lose) cards.push(bcard("neg", "Biggest liquid loser", `${esc(lose.s.s)} <span class="down">${sg(lose.x.pct)}%</span> at ₹${inr(lose.x.p)}`, esc(lose.s.n) + (lose.s.ind ? " · " + esc(lose.s.ind) : ""), "Open chart", `data-open="${esc(lose.s.s)}"`));
+  if (act) cards.push(bcard("neutral", "Most traded (value)", `${esc(act.s.s)} · ₹${big(act.v)} traded`, `${esc(act.s.n)} · ${sg(act.x.pct)}% today`, "Open chart", `data-open="${esc(act.s.s)}"`));
+  if (lead) cards.push(bcard(lead.avg >= 0 ? "pos" : "neg", "Sectors · NIFTY 500", `${esc(lead.k)} leads (${sg(lead.avg)}%), ${esc(lag.k)} lags (${sg(lag.avg)}%)`, `${secs.filter(s2 => s2.avg > 0).length} of ${secs.length} sectors up on average today.`, "Open sectors", 'data-go="sectors"'));
+  if (fl) cards.push(bcard(fl.fii.net_cr >= 0 ? "pos" : "neg", "Institutional flows · NSE", `FII ${crS(fl.fii.net_cr)}, DII ${crS(fl.dii.net_cr)}`, `Cash market, provisional, ${dt(fl.date, { weekday: "short", day: "numeric", month: "short" })}.`, "Open world", 'data-go="world"'));
+  if (pick) { const x = q(pick.symbol); cards.push(bcard("pos", "B-Lab screen · rank #1", `${esc(pick.symbol)} · F-Score ${pick.fscore}/9`, `Return on capital ${pctF(pick.roc, 0)}, earnings yield ${pctF(pick.earnings_yield)}${x ? ` · ₹${inr(x.p)} (${sg(x.pct)}%)` : ""}`, "Open chart", `data-open="${esc(pick.symbol)}"`)); }
+  if (wl.length) cards.push(bcard(wl[0].x.pct >= 0 ? "pos" : "neg", "Your watchlist", `Best ${esc(wl[0].sym)} ${sg(wl[0].x.pct)}% · worst ${esc(wl[wl.length - 1].sym)} ${sg(wl[wl.length - 1].x.pct)}%`, `${wl.filter(r => r.x.pct > 0).length} of ${wl.length} up today.`, "Open watchlist", 'data-go="terminal" data-side="watch"'));
   $("#brief-cards").innerHTML = cards.join("");
   $$("#brief-cards [data-open]").forEach(bt => bt.onclick = () => { openSec(bt.dataset.open); go("terminal"); });
 }
@@ -1246,12 +1246,51 @@ function activityFlag(pts) {
   const avg = counts.reduce((a, b) => a + b, 0) / (counts.length || 1);
   return n => avg <= 0 ? null : n >= avg * 1.5 ? "active" : n <= avg * 0.3 ? "quiet" : null;
 }
+// A Brief-tab-style summary strip for the Globe tab: scannable, click-to-jump insights computed from today's
+// real numbers (flight counts, real news counts, real sector moves) - never a forecast, just what's true right now.
+function renderGlobeBrief(G) {
+  const el = $("#globe-brief"); if (!el) return;
+  if (!G) { el.innerHTML = ""; return; }
+  const pts = G.chokepoints || [];
+  const withFlights = pts.filter(p => p.flights);
+  const cards = [];
+  if (withFlights.length) {
+    const busiest = withFlights.reduce((a, b) => (b.flights.count > a.flights.count ? b : a));
+    const quietest = withFlights.reduce((a, b) => (b.flights.count < a.flights.count ? b : a));
+    const totalFlights = withFlights.reduce((s, p) => s + p.flights.count, 0);
+    const flag = activityFlag(pts), nActive = withFlights.filter(p => flag(p.flights.count) === "active").length;
+    cards.push(bcard(nActive ? "pos" : "neutral", "Busiest right now", `${esc(busiest.name)} · ${busiest.flights.count} flight${busiest.flights.count === 1 ? "" : "s"}`,
+      `${totalFlights} live aircraft tracked across all 7 chokepoints right now.`, "Open on map", `data-choke="${esc(busiest.id)}"`));
+    if (quietest.id !== busiest.id) cards.push(bcard("neutral", "Quietest right now", `${esc(quietest.name)} · ${quietest.flights.count} flight${quietest.flights.count === 1 ? "" : "s"}`,
+      `${nActive} of 7 chokepoints busier than the group average.`, "Open on map", `data-choke="${esc(quietest.id)}"`));
+  }
+  const secs = sectorStats();
+  let bestSec = null;
+  for (const p of pts) for (const [name, why] of (CHOKE_SECTORS[p.id] || [])) {
+    const s = secs.find(x => x.k === name); if (!s) continue;
+    if (!bestSec || Math.abs(s.avg) > Math.abs(bestSec.avg)) bestSec = { ...s, why, choke: p };
+  }
+  if (bestSec) cards.push(bcard(bestSec.avg >= 0 ? "pos" : "neg", "Sector reacting most", `${esc(bestSec.k)} <span class="${ud(bestSec.avg)}">${sg(bestSec.avg)}%</span> today`,
+    `Linked to ${esc(bestSec.choke.name)}: ${esc(bestSec.why)}.`, "Open chokepoint", `data-choke="${esc(bestSec.choke.id)}"`));
+  const withNews = pts.filter(p => (p.news || []).length);
+  if (withNews.length) {
+    const mostNews = withNews.reduce((a, b) => (b.news.length > a.news.length ? b : a));
+    cards.push(bcard("neutral", "Most covered in the news", `${esc(mostNews.name)} · ${mostNews.news.length} real headline${mostNews.news.length === 1 ? "" : "s"}`,
+      esc((mostNews.news[0] || {}).title || ""), "Open chokepoint", `data-choke="${esc(mostNews.id)}"`));
+  }
+  const allNews = [...pts.flatMap(p => (p.news || []).map(n => ({ ...n, choke: p.name }))), ...(G.events || []).map(n => ({ ...n, choke: "World events" }))];
+  const fresh = allNews.filter(n => n.seen_utc).sort((a, b) => new Date(b.seen_utc) - new Date(a.seen_utc))[0];
+  if (fresh) cards.push(`<a class="bcard neutral" href="${esc(fresh.url)}" target="_blank" rel="noopener noreferrer"><span class="lbl">Freshest real headline</span><span class="ttl">${esc(fresh.title)}</span><span class="sub">${esc(fresh.source || "")} · ${esc(fresh.choke)} · ${esc(newsTimeAgo(fresh.seen_utc))}</span><span class="go">Read the article →</span></a>`);
+  el.innerHTML = cards.join("") || '<p class="empty">Not enough data yet for a brief - check back after the next hourly refresh.</p>';
+  $$("#globe-brief [data-choke]").forEach(bt => bt.onclick = () => { selectChoke(bt.dataset.choke); $("#globe-map").scrollIntoView({ behavior: "smooth", block: "center" }); });
+}
 function renderGlobe() {
   const G = S.globe;
   // The Leaflet map sizes itself from its container when built; while the Globe tab is hidden that container is
   // 0x0 (display:none), which leaves the map broken (one tile, pins bunched in a corner) until resize() runs.
   // So it's only touched while the tab is actually visible - go() builds/updates/resizes it on switching in.
   if (view === "globe") { const gm = ensureGlobeMap(); if (gm && G) gm.update(G); }
+  renderGlobeBrief(G);
   renderGlobeCards();
   const el = $("#globe-events");
   if (el) el.innerHTML = G && (G.events || []).length ? G.events.map(n => `<li><span class="t">${esc(newsTimeAgo(n.seen_utc))}</span><div>${n.url ? `<a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a>` : esc(n.title || "")}

@@ -600,6 +600,8 @@ html, body { background: var(--paper); color: var(--ink); }
 @media (max-width: 1800px) { .foot > #st-cover { display: none; } }
 
 /* ---------- Globe (globe-map.js: a real Leaflet pan/zoom map on Esri's free dark basemap) ---------- */
+#globe-brief { margin-bottom: 20px; }
+#globe-brief .empty { grid-column: 1 / -1; color: var(--ink-4); font: 13px var(--sans); }
 .globe-map { position: relative; border: 1px solid var(--rule-2); border-radius: var(--r); background: #04120b; overflow: hidden; margin-bottom: 16px; }
 .globe-wrap { position: relative; }
 .globe-leaflet { width: 100%; height: 480px; background: #04120b; }
