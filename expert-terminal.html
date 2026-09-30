@@ -57,6 +57,7 @@
     <button data-go="world">World</button>
     <button data-go="outlook">Outlook</button>
     <button data-go="news">News</button>
+    <button data-go="globe">Globe</button>
     <span class="grow"></span>
     <button class="tab-side" data-go="terminal" data-side="watch">Watchlist <b id="wl-count">0</b></button>
     <button class="tab-side" id="setup-btn" title="Choose the stocks on your watchlist">Set up desk</button>
@@ -230,6 +231,17 @@
         </div>
         <p class="news-meta" id="news-meta"></p>
         <div class="brutal-grid" id="news"></div>
+      </div>
+    </section>
+
+    <section class="view" id="v-globe">
+      <div class="page">
+        <div class="page-head"><p class="kick">— Real-time flights (OpenSky) · real news (GDELT) · 7 shipping &amp; oil chokepoints</p><h2>Where the world's <span class="acc">oil and trade move.</span></h2><p class="asof" data-asof="globe"></p></div>
+        <p class="lede">Live aircraft positions and real, freshly-published news around the 7 straits and canals that carry most of the world's oil and seaborne trade. There is no free source of live cargo-ship positions, so ships aren't drawn here — each chokepoint's card below has real news about it instead. Click a point on the map, or a card, for details.</p>
+        <div class="globe-map" id="globe-map"></div>
+        <div class="globe-cards" id="globe-cards"></div>
+        <div class="page-head" style="margin-top:28px"><h2 style="font-size:22px">World events, <span class="acc">as they're reported.</span></h2></div>
+        <ul class="wire" id="globe-events"></ul>
       </div>
     </section>
   </main>
