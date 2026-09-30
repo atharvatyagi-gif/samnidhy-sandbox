@@ -11,6 +11,7 @@
 import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
 import { technicals, recommend } from "./chart-indicators.js";
 import { LIVE_RELAY_URL } from "./config.js";
+import { GlobeMap } from "./globe-map.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -76,6 +77,7 @@ async function boot() {
     S.news = await getJSON("news.json").catch(() => ({}));
     S.uni = uni; uni.stocks.forEach(s => S.map.set(s.s, s)); lastCheck = Date.now();
     S.pred = await getJSON("predict.json").catch(() => null);
+    S.globe = await getJSON("globe.json").catch(() => null);
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
     S.nseLive = await getJSON("nse_live.json").catch(() => null);
     applyNseLive();
@@ -109,7 +111,7 @@ function applyNseLive() {
     S.quotes[sym] = { p: row.p, chg: row.chg, pct: row.pct, o: row.o, h: row.h, l: row.l, v: row.v, t: row.t ? row.t.slice(11, 19) : "live", d: todayIST(), nse: true, grp: row.grp };
   }
 }
-function renderAll() { renderAsOf(); renderMast(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); renderOutlook(); }
+function renderAll() { renderAsOf(); renderMast(); renderGlobe(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); renderOutlook(); }
 /* Auto-update: every minute the desk checks every published file and redraws what changed, so it never needs a
    reload. Prices (t/quotes.json, ~15 min), news (every 15-30 min), world/markets (live.json), FII/DII, the B-Lab
    screen, the model outlook, and, when a new trading day is published, the whole stock list + end-of-day prices. */
@@ -137,6 +139,7 @@ async function poll() {
     const rt = Object.fromEntries(Object.entries(S.quotes).filter(([, v]) => v.rt));
     S.quotes = { ...(quotes.quotes || {}), ...rt }; S.qmeta = quotes; S.live = live; S.inst = inst;
     getJSON("nse_live.json").then(nl => { if (nl && nl.generated_utc !== (S.nseLive || {}).generated_utc) { S.nseLive = nl; applyNseLive(); renderTape(); renderRegime(); if (["movers", "brief", "sectors"].includes(view)) renderAll(); renderHead(); } }).catch(() => {});
+    getJSON("globe.json").then(g => { if (g && g.generated_utc !== (S.globe || {}).generated_utc) { S.globe = g; renderGlobe(); renderAsOf(); } }).catch(() => {});
     if (!changed) return;
     await loadIntra(shard(sec), true).catch(() => null);
     renderAll(); renderHead(); renderDetails(); if (side === "prints") renderPrints(); if (typeof renderOutlook === "function") renderOutlook(); drawChart(true);
@@ -169,6 +172,8 @@ function renderAsOf() {
   $$('[data-asof="news"]').forEach(el => { const st = nm != null && nm > 75; el.innerHTML = S.news && S.news.generated_utc ? `${st ? "⚠ Late: " : ""}News wire updated <b>${esc(istUtc(S.news.generated_utc))}</b> (${esc(agoTxt(nm))}) · refreshed every 15 min in market hours, every 30 min otherwise` : "News wire: not available"; el.classList.toggle("stale", st); });
   const P = S.pred;
   $$('[data-asof="outlook"]').forEach(el => { el.innerHTML = P && P.as_of ? `Model as of the <b>${esc(dayLbl(P.as_of))}</b> close · published ${esc(istUtc(P.generated_utc))} · retrained after every NSE close` : "Model: not published yet"; });
+  const gm = minsAgo(S.globe && S.globe.generated_utc);
+  $$('[data-asof="globe"]').forEach(el => { const st = gm != null && gm > 90; el.innerHTML = S.globe && S.globe.generated_utc ? `${st ? "⚠ Late: " : ""}Flights &amp; news updated <b>${esc(istUtc(S.globe.generated_utc))}</b> (${esc(agoTxt(gm))}) · refreshed about every hour` : "Globe data: not published yet"; el.classList.toggle("stale", st); });
   const ms = $("#ms-asof");
   if (ms) { ms.textContent = RP.on ? `REPLAY ${rpClock(RP.k).slice(0, 5)}` : LIVE.ok ? "REAL-TIME" : q.session_date ? `${priceStale ? "⚠ " : ""}${dayLbl(q.session_date)} · ${q.last_bar_ist || ""} IST` : "--"; ms.classList.toggle("stale", priceStale);
     ms.title = priceStale ? `Prices were last published ${agoTxt(pm)}: the next update is late` : `Prices as of ${dayLbl(q.session_date)} ${q.last_bar_ist || ""} IST, published ${agoTxt(pm)}`; }
@@ -1211,6 +1216,52 @@ function outlookHtml(sym) {
       <div class="tg-n">Decile ${v.dec}/10 · stocks in this decile did ${pct1(v.er)} vs NIFTY on average (unseen years)</div>
       <div class="ol-drv">${driversHtml(v.drivers, 5)}</div>
       <p class="note">Model right ${pct0(M.accuracy)} of the time on unseen years (coin flip ${pct0(M.base_rate)}). As of ${esc(P.as_of)} close. <a href="#" data-go="outlook">How good is it? →</a></p></div>`;
+}
+
+/* ================= GLOBE (globe.json: scripts/globe_data.py) ================= */
+// Real live flight positions (OpenSky) near 7 shipping/oil chokepoints, real news about each (GDELT), and a
+// general world-events feed (GDELT). No live cargo-ship positions exist for free anywhere, so ships aren't
+// drawn; each chokepoint's real news stands in for that. "Why it matters" lines are static reference facts.
+let globeMap = null, globeSel = null;
+function ensureGlobeMap() {
+  if (globeMap) return globeMap;
+  const host = $("#globe-map"); if (!host) return null;
+  globeMap = new GlobeMap(host, { onSelect: id => { globeSel = id; renderGlobeCards(); } });
+  return globeMap;
+}
+function selectChoke(id) {                                // one entry point: the map and the cards both go through this
+  if (globeMap) globeMap.select(id);                       // GlobeMap owns the toggle and fires onSelect -> updates globeSel + cards
+  else { globeSel = globeSel === id ? null : id; renderGlobeCards(); }
+}
+function newsTimeAgo(iso) {
+  if (!iso) return "";
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+  return m < 60 ? `${m}m ago` : m < 1440 ? `${Math.floor(m / 60)}h ago` : `${Math.floor(m / 1440)}d ago`;
+}
+function renderGlobe() {
+  const G = S.globe;
+  const gm = ensureGlobeMap();
+  if (gm && G) gm.update(G);
+  renderGlobeCards();
+  const el = $("#globe-events");
+  if (el) el.innerHTML = G && (G.events || []).length ? G.events.map(n => `<li><span class="t">${esc(newsTimeAgo(n.seen_utc))}</span><div>${n.url ? `<a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a>` : esc(n.title || "")}
+      <div class="meta"><span>${esc(n.source || "")}</span>${n.country ? `<span class="tag">${esc(n.country)}</span>` : ""}</div></div></li>`).join("")
+    : `<li class="empty">${G ? "No world-events headlines matched right now." : "The globe data hasn't been published yet."}</li>`;
+}
+function renderGlobeCards() {
+  const el = $("#globe-cards"); if (!el) return;
+  const G = S.globe;
+  if (!G) { el.innerHTML = '<p class="empty">The globe data hasn\'t been published yet; it refreshes about every hour.</p>'; return; }
+  el.innerHTML = (G.chokepoints || []).map(p => {
+    const n = (p.flights && p.flights.count) || 0, news = p.news || [];
+    return `<div class="gc-card${globeSel === p.id ? " on" : ""}" data-id="${esc(p.id)}">
+      <h4>${esc(p.name)}<b>${n} flight${n === 1 ? "" : "s"} now</b></h4>
+      <p class="why">${esc(p.why)}</p>
+      ${news.length ? `<ul>${news.slice(0, 3).map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">${esc(a.title)}</a> <span class="src">· ${esc(a.source || "")} · ${esc(newsTimeAgo(a.seen_utc))}</span></li>`).join("")}</ul>`
+        : '<p class="none">No recent news matched this chokepoint.</p>'}
+    </div>`;
+  }).join("");
+  $$("#globe-cards .gc-card").forEach(c => c.onclick = () => selectChoke(c.dataset.id));
 }
 
 /* ================= open a security ================= */

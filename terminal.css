@@ -598,3 +598,32 @@ html, body { background: var(--paper); color: var(--ink); }
 .search-btn { min-width: 240px; }
 @media (max-width: 2000px) { .mstats > .ms-opt { display: none; } .foot > .warn { display: none; } }
 @media (max-width: 1800px) { .foot > #st-cover { display: none; } }
+
+/* ---------- Globe (globe-map.js) ---------- */
+.globe-map { position: relative; border: 1px solid var(--rule-2); border-radius: var(--r); background: #04120b; overflow: hidden; margin-bottom: 16px; }
+.globe-wrap { position: relative; }
+.globe-svg { display: block; width: 100%; height: auto; aspect-ratio: 960 / 500; }
+.globe-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; text-align: center; color: var(--ink-3); font: 12px var(--mono); background: rgba(4,18,11,0.85); }
+.globe-ocean { fill: #04120b; }
+.globe-grid { fill: none; stroke: rgba(181,166,130,0.06); stroke-width: 1; }
+.globe-country { fill: rgba(29,92,58,0.35); stroke: rgba(181,166,130,0.18); stroke-width: 0.5; }
+.globe-plane { fill: #ffb347; opacity: 0.85; }
+.globe-choke { cursor: pointer; }
+.globe-choke .hit { fill: transparent; }   /* a bigger invisible hit-target so the small dot is easy to click/tap */
+.globe-choke .ring { fill: none; stroke: var(--acc); stroke-width: 1.2; opacity: 0.55; animation: pulse 2.4s infinite; }
+.globe-choke .dot { fill: var(--acc); stroke: #04120b; stroke-width: 1.5; }
+.globe-choke text { font: 700 9px var(--mono); fill: var(--ink); paint-order: stroke; stroke: #04120b; stroke-width: 3px; letter-spacing: 0.02em; pointer-events: none; opacity: 0; transition: opacity .15s; }
+.globe-choke:hover text, .globe-choke.on text, .globe-choke:focus-visible text { opacity: 1; }
+.globe-choke.on .dot { fill: #ffb347; } .globe-choke.on .ring { stroke: #ffb347; }
+.globe-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.gc-card { padding: 12px 14px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--card); cursor: pointer; }
+.gc-card.on { border-color: var(--acc); background: var(--acc-soft); }
+.gc-card h4 { margin: 0 0 4px; font: 700 13px var(--sans); color: var(--ink); display: flex; justify-content: space-between; gap: 8px; }
+.gc-card h4 b { font: 600 11px var(--mono); color: var(--acc); white-space: nowrap; }
+.gc-card .why { margin: 0 0 8px; font: 12px/1.5 var(--sans); color: var(--ink-3); }
+.gc-card ul { list-style: none; margin: 0; padding: 0; }
+.gc-card li { margin: 0 0 5px; font: 12px/1.4 var(--sans); }
+.gc-card li a { color: var(--ink-2); text-decoration: none; } .gc-card li a:hover { color: var(--acc); text-decoration: underline; }
+.gc-card .src { font: 10.5px var(--mono); color: var(--ink-4); }
+.gc-card .none { color: var(--ink-4); font-style: italic; }
+@media (max-width: 700px) { .globe-cards { grid-template-columns: 1fr; } }

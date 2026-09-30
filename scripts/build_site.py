@@ -24,12 +24,12 @@ ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 STATIC = ["index.html", "landing.css", "landing.js", "auth.html", "auth-check.js", "config.js",
           "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js",
-          "chart-engine.js", "chart-indicators.js", "mode-dock.js"]
+          "chart-engine.js", "chart-indicators.js", "mode-dock.js", "globe-map.js"]
 TERMINAL = ROOT / "data" / "terminal"
 # Scripts/styles that pages load. Browsers keep these for a while (GitHub Pages: 10 min, some longer), so an
 # update could mix a new page with an old script. Every reference gets ?v=<hash of the file>, which changes
 # only when the file does. Leaves first: auth-check.js imports config.js, so its own hash covers that version.
-ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "terminal.js", "auth-check.js"]
+ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "terminal.js", "auth-check.js"]
 
 
 def version_assets() -> None:
@@ -95,6 +95,8 @@ def main() -> None:
         shutil.copyfile(DATA / "predict" / "latest.json", SITE / "predict.json")
     if (DATA / "nse_live" / "latest.json").exists():   # NSE's own live indices/movers (scripts/nse_live_poll.py)
         shutil.copyfile(DATA / "nse_live" / "latest.json", SITE / "nse_live.json")
+    if (DATA / "globe" / "latest.json").exists():   # live flights + real geopolitical news (scripts/globe_data.py)
+        shutil.copyfile(DATA / "globe" / "latest.json", SITE / "globe.json")
     if (DATA / "status.json").exists():   # the main page checks this to load a newer session by itself
         shutil.copyfile(DATA / "status.json", SITE / "status.json")
     if (DATA / "news" / "wire.json").exists():   # the terminal's News tab (scripts/news_wire.py)
