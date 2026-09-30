@@ -1238,6 +1238,13 @@ function newsTimeAgo(iso) {
   const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
   return m < 60 ? `${m}m ago` : m < 1440 ? `${Math.floor(m / 60)}h ago` : `${Math.floor(m / 1440)}d ago`;
 }
+// "Active"/"Quiet": each chokepoint's live flight count against this run's own average across all 7 - a same-run
+// comparison, not a historical trend (no baseline is stored). Not a claim about trade or oil activity, just aircraft.
+function activityFlag(pts) {
+  const counts = (pts || []).map(p => (p.flights && p.flights.count) || 0);
+  const avg = counts.reduce((a, b) => a + b, 0) / (counts.length || 1);
+  return n => avg <= 0 ? null : n >= avg * 1.5 ? "active" : n <= avg * 0.3 ? "quiet" : null;
+}
 function renderGlobe() {
   const G = S.globe;
   const gm = ensureGlobeMap();
@@ -1252,10 +1259,14 @@ function renderGlobeCards() {
   const el = $("#globe-cards"); if (!el) return;
   const G = S.globe;
   if (!G) { el.innerHTML = '<p class="empty">The globe data hasn\'t been published yet; it refreshes about every hour.</p>'; return; }
-  el.innerHTML = (G.chokepoints || []).map(p => {
+  const pts = G.chokepoints || [];
+  const flag = activityFlag(pts);
+  el.innerHTML = pts.map(p => {
     const n = (p.flights && p.flights.count) || 0, news = p.news || [];
+    const fl = flag(n);
+    const badge = fl ? `<span class="gc-act ${fl}" title="${fl === "active" ? "More aircraft over this chokepoint right now than most of the other 6" : "Fewer aircraft over this chokepoint right now than most of the other 6"}">${fl === "active" ? "Active" : "Quiet"}</span>` : "";
     return `<div class="gc-card${globeSel === p.id ? " on" : ""}" data-id="${esc(p.id)}">
-      <h4>${esc(p.name)}<b>${n} flight${n === 1 ? "" : "s"} now</b></h4>
+      <h4>${esc(p.name)}<span class="gc-r"><b>${n} flight${n === 1 ? "" : "s"} now</b>${badge}</span></h4>
       <p class="why">${esc(p.why)}</p>
       ${news.length ? `<ul>${news.slice(0, 3).map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">${esc(a.title)}</a> <span class="src">· ${esc(a.source || "")} · ${esc(newsTimeAgo(a.seen_utc))}</span></li>`).join("")}</ul>`
         : '<p class="none">No recent news matched this chokepoint.</p>'}

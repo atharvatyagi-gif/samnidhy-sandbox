@@ -615,11 +615,16 @@ html, body { background: var(--paper); color: var(--ink); }
 .globe-choke text { font: 700 9px var(--mono); fill: var(--ink); paint-order: stroke; stroke: #04120b; stroke-width: 3px; letter-spacing: 0.02em; pointer-events: none; opacity: 0; transition: opacity .15s; }
 .globe-choke:hover text, .globe-choke.on text, .globe-choke:focus-visible text { opacity: 1; }
 .globe-choke.on .dot { fill: #ffb347; } .globe-choke.on .ring { stroke: #ffb347; }
+.globe-choke.active .dot, .globe-choke.active .ring { stroke: var(--up); } .globe-choke.active .dot { fill: var(--up); }
+.globe-choke.quiet .dot, .globe-choke.quiet .ring { stroke: var(--ink-4); } .globe-choke.quiet .dot { fill: var(--ink-4); } .globe-choke.quiet .ring { animation: none; opacity: 0.3; }
 .globe-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 8px; }
 .gc-card { padding: 12px 14px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--card); cursor: pointer; }
 .gc-card.on { border-color: var(--acc); background: var(--acc-soft); }
 .gc-card h4 { margin: 0 0 4px; font: 700 13px var(--sans); color: var(--ink); display: flex; justify-content: space-between; gap: 8px; }
 .gc-card h4 b { font: 600 11px var(--mono); color: var(--acc); white-space: nowrap; }
+.gc-card h4 .gc-r { display: flex; align-items: center; gap: 6px; }
+.gc-act { font: 700 9.5px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: 9px; white-space: nowrap; }
+.gc-act.active { color: var(--up); background: var(--up-soft); } .gc-act.quiet { color: var(--ink-4); background: rgba(181,166,130,0.08); }
 .gc-card .why { margin: 0 0 8px; font: 12px/1.5 var(--sans); color: var(--ink-3); }
 .gc-card ul { list-style: none; margin: 0; padding: 0; }
 .gc-card li { margin: 0 0 5px; font: 12px/1.4 var(--sans); }

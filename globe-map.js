@@ -79,8 +79,11 @@ export class GlobeMap {
     for (const p of data.chokepoints || []) for (const f of (p.flights && p.flights.sample) || []) flights.push(f);
     fg.innerHTML = flights.map(f => { const [x, y] = project(f.lon, f.lat, W, H), r = ((f.heading || 0) - 90); return f.lat == null ? "" :
       `<path class="globe-plane" transform="translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${r.toFixed(0)})" d="M-3,0 L4,-2 L4,2 Z"><title>${esc(f.callsign || "flight")} · ${f.alt_m != null ? Math.round(f.alt_m) + " m" : ""}</title></path>`; }).join("");
-    cg.innerHTML = (data.chokepoints || []).map(p => { const [x, y] = project(p.lon, p.lat, W, H), n = (p.flights && p.flights.count) || 0;
-      return `<g class="globe-choke${this.sel === p.id ? " on" : ""}" data-id="${esc(p.id)}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})" tabindex="0" role="button" aria-label="${esc(p.name)}">
+    const pts = data.chokepoints || [];
+    const counts = pts.map(p => (p.flights && p.flights.count) || 0), avg = counts.reduce((a, b) => a + b, 0) / (counts.length || 1);
+    const flag = n => avg <= 0 ? "" : n >= avg * 1.5 ? " active" : n <= avg * 0.3 ? " quiet" : "";  // same-run comparison, see terminal.js activityFlag()
+    cg.innerHTML = pts.map(p => { const [x, y] = project(p.lon, p.lat, W, H), n = (p.flights && p.flights.count) || 0;
+      return `<g class="globe-choke${flag(n)}${this.sel === p.id ? " on" : ""}" data-id="${esc(p.id)}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})" tabindex="0" role="button" aria-label="${esc(p.name)}">
         <circle class="hit" r="14"/><circle class="ring" r="10"/><circle class="dot" r="4"/><text x="9" y="-8">${esc(p.name)}${n ? ` · ${n}` : ""}</text></g>`; }).join("");
     cg.querySelectorAll(".globe-choke").forEach(g => {
       g.onclick = g.onkeydown = e => { if (e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return; this.select(g.dataset.id); };
