@@ -44,6 +44,11 @@ INDEX_NAMES = ["NIFTY 50", "NIFTY BANK", "NIFTY NEXT 50", "NIFTY 500", "NIFTY MI
               "NIFTY AUTO", "NIFTY IT", "NIFTY FMCG", "NIFTY PHARMA", "NIFTY METAL", "NIFTY REALTY",
               "NIFTY ENERGY", "NIFTY FIN SERVICE", "NIFTY PSU BANK", "INDIA VIX"]
 MOVER_GROUPS = ["NIFTY", "BANKNIFTY", "NIFTYNEXT50", "SecGtr20", "SecLwr20", "FOSec"]
+# readable names for the NSE list a stock's live figure was picked up from (there is no industry-sector field
+# in NSE's live gainers/losers/most-active data; this is the closest real grouping it does carry)
+GROUP_LABEL = {"NIFTY": "NIFTY 50", "BANKNIFTY": "Bank Nifty", "NIFTYNEXT50": "Nifty Next 50",
+              "SecGtr20": "Price > ₹20", "SecLwr20": "Price ≤ ₹20", "FOSec": "F&O stocks",
+              "volume": "Most active (volume)", "value": "Most active (value)"}
 
 
 def session():
@@ -91,6 +96,16 @@ def market_status(s):
     return {"status": cap.get("marketStatus"), "message": cap.get("marketStatusMessage"), "trade_date": cap.get("tradeDate")}
 
 
+def add_group(out, sym, code):
+    """Record that `sym` appeared in NSE's `code` list (NIFTY / BANKNIFTY / ... / volume / value), in order,
+    without duplicates. This becomes the stock's "NSE group" column in the terminal."""
+    rec = out.setdefault(sym, {"grp": []})
+    label = GROUP_LABEL.get(code, code)
+    if label not in rec["grp"]:
+        rec["grp"].append(label)
+    return rec
+
+
 def movers(s):
     """Every symbol in NSE's own gainers + losers lists (all groups, deduplicated)."""
     out = {}
@@ -101,10 +116,11 @@ def movers(s):
                 sym = row.get("symbol")
                 if not sym:
                     continue
+                rec = add_group(out, sym, grp)
                 p, pc = num(row.get("ltp")), num(row.get("prev_price"))
-                out[sym] = {"p": p, "pc": pc, "chg": round(p - pc, 2) if p is not None and pc is not None else None,
-                            "pct": num(row.get("perChange")), "o": num(row.get("open_price")), "h": num(row.get("high_price")),
-                            "l": num(row.get("low_price")), "v": num(row.get("trade_quantity")), "src": "movers"}
+                rec.update({"p": p, "pc": pc, "chg": round(p - pc, 2) if p is not None and pc is not None else None,
+                           "pct": num(row.get("perChange")), "o": num(row.get("open_price")), "h": num(row.get("high_price")),
+                           "l": num(row.get("low_price")), "v": num(row.get("trade_quantity")), "src": "movers"})
     return out
 
 
@@ -117,9 +133,10 @@ def most_active(s):
             sym = row.get("symbol")
             if not sym:
                 continue
-            out[sym] = {"p": num(row.get("lastPrice")), "pc": num(row.get("previousClose")), "chg": num(row.get("change")),
+            rec = add_group(out, sym, kind)
+            rec.update({"p": num(row.get("lastPrice")), "pc": num(row.get("previousClose")), "chg": num(row.get("change")),
                        "pct": num(row.get("pChange")), "o": num(row.get("open")), "h": num(row.get("dayHigh")), "l": num(row.get("dayLow")),
-                       "v": num(row.get("totalTradedVolume")), "t": row.get("lastUpdateTime"), "src": "most_active"}
+                       "v": num(row.get("totalTradedVolume")), "t": row.get("lastUpdateTime"), "src": "most_active"})
     return out
 
 
@@ -138,7 +155,9 @@ def main():
                 elif sink == "mkt":
                     mkt = res
                 else:
-                    stocks.update(res)          # most-active's fresher per-row timestamp overwrites movers' rows for the same symbol
+                    for sym, rec in res.items():   # most-active's fresher price/timestamp wins, but group lists are kept from both passes
+                        prev_grp = stocks.get(sym, {}).get("grp", [])
+                        stocks[sym] = {**rec, "grp": prev_grp + [g for g in rec.get("grp", []) if g not in prev_grp]}
                 break
             except Exception as exc:
                 if attempt == 0:

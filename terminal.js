@@ -43,7 +43,7 @@ function q(sym) {
   const e = S.map.get(sym); if (!e) return null;
   if (typeof RP !== "undefined" && RP.on) return S.rq[sym] || null;
   const l = S.quotes[sym];
-  if (l && l.d >= e.date) return { live: true, p: l.p, chg: l.chg, pct: l.pct, o: l.o, h: l.h, l: l.l, v: l.v, t: l.t, d: l.d, pc: +(l.p - l.chg).toFixed(2), rt: l.rt, nse: l.nse };
+  if (l && l.d >= e.date) return { live: true, p: l.p, chg: l.chg, pct: l.pct, o: l.o, h: l.h, l: l.l, v: l.v, t: l.t, d: l.d, pc: +(l.p - l.chg).toFixed(2), rt: l.rt, nse: l.nse, grp: l.grp };
   return { live: false, p: e.c, chg: e.chg, pct: e.pct, o: e.o, h: e.h, l: e.l, v: e.v, t: "EOD", d: e.date, pc: e.pc };
 }
 
@@ -106,7 +106,7 @@ function applyNseLive() {
     if (!S.map.has(sym) || row.p == null) continue;
     const cur = S.quotes[sym];
     if (cur && cur.rt) continue;                              // a real-time tick for this stock always wins
-    S.quotes[sym] = { p: row.p, chg: row.chg, pct: row.pct, o: row.o, h: row.h, l: row.l, v: row.v, t: row.t ? row.t.slice(11, 19) : "live", d: todayIST(), nse: true };
+    S.quotes[sym] = { p: row.p, chg: row.chg, pct: row.pct, o: row.o, h: row.h, l: row.l, v: row.v, t: row.t ? row.t.slice(11, 19) : "live", d: todayIST(), nse: true, grp: row.grp };
   }
 }
 function renderAll() { renderAsOf(); renderMast(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); renderOutlook(); }
@@ -160,7 +160,7 @@ function renderAsOf() {
     ? `Prices: <b>real-time</b> (NSE via Angel One) · ${esc(dayLbl(new Date().toLocaleDateString("en-CA", { timeZone: IST })))}`
     : q.session_date ? `Prices: <b>${esc(dayLbl(q.session_date))} · ${esc(q.last_bar_ist || "")} IST</b> ${q.market === "open" ? "(market open · delayed about 15 min)" : "(market closed · last trading session)"} · published ${esc(agoTxt(pm))}`
       + (S.uni ? ` · NSE end-of-day files: ${esc(dayLbl(S.uni.session_date))}` : "")
-      + (S.nseLive && S.nseLive.stocks ? ` · <span title="nseindia.com's own public site data, unofficial and not a licensed feed">${Object.keys(S.nseLive.stocks).length} stocks tagged NSE run on NSE's own live numbers</span>` : "")
+      + (S.nseLive && S.nseLive.stocks ? ` · <span title="nseindia.com's own public site data, unofficial and not a licensed feed">${Object.keys(S.nseLive.stocks).length} stocks tagged NSE carry NSE's own live numbers</span>` : "")
       : "Prices: not available";
   $$('[data-asof="prices"]').forEach(el => { el.innerHTML = (priceStale ? `⚠ Update late: prices were last published ${esc(agoTxt(pm))}. ` : "") + prices; el.classList.toggle("stale", priceStale); });
   const wm = minsAgo(S.live.generated_utc);
@@ -1004,7 +1004,7 @@ function moverRows() {
   else if (movMode === "hi") rows = rows.filter(r => r.s.hi52 && r.x.h >= r.s.hi52 * 0.999).sort((a, b) => b.x.pct - a.x.pct);
   else rows = rows.filter(r => r.s.lo52 && r.x.l <= r.s.lo52 * 1.001).sort((a, b) => a.x.pct - b.x.pct);
   if (movSort) {
-    const [k, dir] = movSort, get = r => ({ s: r.s.s, n: r.s.n, p: r.x.p, chg: r.x.chg, pct: r.x.pct, v: r.x.v, val: r.val, deliv: r.s.deliv }[k]);
+    const [k, dir] = movSort, get = r => ({ s: r.s.s, n: r.s.n, p: r.x.p, chg: r.x.chg, pct: r.x.pct, v: r.x.v, val: r.val, deliv: r.s.deliv, grp: r.x.grp && r.x.grp[0] }[k]);
     rows.sort((a, b) => { const A = get(a), B = get(b); if (A == null) return 1; if (B == null) return -1; return (typeof A === "string" ? A.localeCompare(B) : A - B) * dir; });
   }
   return rows;
@@ -1013,11 +1013,12 @@ function renderMovers() {
   const rows = moverRows(), show = rows.slice(0, movLimit), wl = loadWatch();
   $("#mov-table tbody").innerHTML = show.length ? show.map(r => {
     const lo = r.s.lo52, hi = r.s.hi52, pos = lo != null && hi > lo ? Math.max(0, Math.min(100, (r.x.p - lo) / (hi - lo) * 100)) : null, on = wl.includes(r.s.s);
-    return `<tr data-s="${esc(r.s.s)}"><td class="sym">${esc(r.s.s)} ${r.s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${r.s.etf ? '<span class="tag">ETF</span>' : ""}${r.x.nse && !r.x.rt ? '<span class="tag acc" title="NSE\\u2019s own live number (unofficial)">NSE</span>' : ""}</td><td class="co">${esc(r.s.n)}</td>
+    return `<tr data-s="${esc(r.s.s)}"><td class="sym">${esc(r.s.s)} ${r.s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${r.s.etf ? '<span class="tag">ETF</span>' : ""}</td><td class="co">${esc(r.s.n)}</td>
       <td class="num">${inr(r.x.p)}</td><td class="num ${ud(r.x.chg)}">${sg(r.x.chg)}</td><td class="num ${ud(r.x.pct)}">${sg(r.x.pct)}%</td><td class="num">${big(r.x.v)}</td><td class="num">₹${big(r.val)}</td>
       <td class="num">${r.s.deliv == null ? "--" : r.s.deliv.toFixed(0) + "%"}</td><td>${pos == null ? "--" : `<div class="rng" title="₹${inr(lo)} – ₹${inr(hi)}"><i style="left:calc(${pos}% - 1px)"></i></div>`}</td>
+      <td class="mov-grp">${r.x.nse && r.x.grp && r.x.grp.length ? `<span class="tag acc" title="NSE's own live lists this price came from: ${esc(r.x.grp.join(", "))}">${esc(r.x.grp[0])}${r.x.grp.length > 1 ? ` +${r.x.grp.length - 1}` : ""}</span>` : '<span class="mut">–</span>'}</td>
       <td><button class="icon-btn ${on ? "on" : ""}" data-wl="${esc(r.s.s)}" title="${on ? "Remove from" : "Add to"} watchlist">${on ? "✓" : "+"}</button></td></tr>`;
-  }).join("") : '<tr><td colspan="10" class="empty">No stocks match these filters.</td></tr>';
+  }).join("") : '<tr><td colspan="11" class="empty">No stocks match these filters.</td></tr>';
   $("#mov-count").textContent = `Showing ${show.length.toLocaleString("en-IN")} of ${rows.length.toLocaleString("en-IN")} stocks`;
   $("#mov-more").hidden = rows.length <= movLimit;
   $$("#mov-table tbody tr[data-s]").forEach(tr => flash(tr.children[2], "m:" + tr.dataset.s, q(tr.dataset.s)?.p));
