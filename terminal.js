@@ -1255,19 +1255,35 @@ function renderGlobe() {
       <div class="meta"><span>${esc(n.source || "")}</span>${n.country ? `<span class="tag">${esc(n.country)}</span>` : ""}</div></div></li>`).join("")
     : `<li class="empty">${G ? "No world-events headlines matched right now." : "The globe data hasn't been published yet."}</li>`;
 }
+// Real NSE sector(s) each chokepoint is structurally exposed to (well-documented supply-chain facts, not a
+// forecast) - only mapped where the link is genuinely strong; left out where it would be a stretch (Malacca,
+// Panama carry broad general trade, not one identifiable NSE sector). Names must match S.uni.stocks[].ind exactly.
+const CHOKE_SECTORS = {
+  hormuz: [["Oil Gas & Consumable Fuels", "oil tankers from the Gulf transit here"]],
+  bab_el_mandeb: [["Oil Gas & Consumable Fuels", "Red Sea oil and gas route"]],
+  suez: [["Oil Gas & Consumable Fuels", "Mediterranean-Red Sea oil route"]],
+  taiwan: [["Automobile and Auto Components", "the auto industry's 2021-22 chip shortage traced back to Taiwan"], ["Consumer Durables", "electronics assembly depends on Taiwan-made chips"]],
+  bosphorus: [["Oil Gas & Consumable Fuels", "Black Sea oil route"]],
+};
 function renderGlobeCards() {
   const el = $("#globe-cards"); if (!el) return;
   const G = S.globe;
   if (!G) { el.innerHTML = '<p class="empty">The globe data hasn\'t been published yet; it refreshes about every hour.</p>'; return; }
   const pts = G.chokepoints || [];
   const flag = activityFlag(pts);
+  const secs = sectorStats();                                // real, live sector moves already computed for the Sectors tab
   el.innerHTML = pts.map(p => {
     const n = (p.flights && p.flights.count) || 0, news = p.news || [];
     const fl = flag(n);
     const badge = fl ? `<span class="gc-act ${fl}" title="${fl === "active" ? "More aircraft over this chokepoint right now than most of the other 6" : "Fewer aircraft over this chokepoint right now than most of the other 6"}">${fl === "active" ? "Active" : "Quiet"}</span>` : "";
+    const secTags = (CHOKE_SECTORS[p.id] || []).map(([name, why]) => {
+      const s = secs.find(x => x.k === name); if (!s) return "";
+      return `<span class="gc-sec ${ud(s.avg)}" title="${esc(name)}: ${esc(why)}">${esc(name)} ${sg(s.avg)}%</span>`;
+    }).filter(Boolean).join("");
     return `<div class="gc-card${globeSel === p.id ? " on" : ""}" data-id="${esc(p.id)}">
       <h4>${esc(p.name)}<span class="gc-r"><b>${n} flight${n === 1 ? "" : "s"} now</b>${badge}</span></h4>
       <p class="why">${esc(p.why)}</p>
+      ${secTags ? `<div class="gc-secs"><span class="lbl">Exposed NSE sectors, real move today</span>${secTags}</div>` : ""}
       ${news.length ? `<ul>${news.slice(0, 3).map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">${esc(a.title)}</a> <span class="src">· ${esc(a.source || "")} · ${esc(newsTimeAgo(a.seen_utc))}</span></li>`).join("")}</ul>`
         : '<p class="none">No recent news matched this chokepoint.</p>'}
     </div>`;
