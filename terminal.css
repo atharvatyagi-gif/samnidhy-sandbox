@@ -70,7 +70,7 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .clock { color: var(--ink); }
 .mast { overflow: hidden; } .search-btn { min-width: 170px; } .mstats { flex: none; } .acct { flex: none; }
 @media (max-width: 1700px) { .who #sys-user { display: none; } }
-@media (max-width: 1520px) { .mstats > span:nth-child(2), .mstats > span:nth-child(3) { display: none; } }
+@media (max-width: 1520px) { .mstats > .ms-opt { display: none; } }
 .acct { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .who { display: inline-flex; align-items: center; gap: 8px; font: 12px var(--mono); color: var(--ink-2); max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
 .av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--acc); color: var(--paper); font: 700 12px var(--mono); flex: none; }
@@ -495,3 +495,9 @@ html, body { background: var(--paper); color: var(--ink); }
 .ol-mini .ol-drv { margin: 8px 0 4px; }
 #ol-table td { vertical-align: middle; } #ol-table tbody tr { cursor: pointer; }
 @media (max-width: 1000px) { .ol-grid { grid-template-columns: repeat(2, 1fr); } .ol-two { grid-template-columns: 1fr; } }
+
+/* "as of" dates on every section + stale-data warning */
+.asof { margin: 6px 0 0; font: 12px var(--mono); color: var(--ink-3); }
+.asof b { color: var(--ink); font-weight: 600; }
+.asof.stale, .asof-m.stale { color: #ffb347; } .asof.stale b { color: #ffb347; }
+.asof-m { font: 600 11.5px var(--mono); color: var(--ink-2); letter-spacing: 0.02em; text-transform: none; white-space: nowrap; }

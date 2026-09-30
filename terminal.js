@@ -92,7 +92,7 @@ async function boot() {
   liveConnect();
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
 }
-function renderAll() { renderMast(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); renderOutlook(); }
+function renderAll() { renderAsOf(); renderMast(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); renderOutlook(); }
 /* Auto-update: every minute the desk checks every published file and redraws what changed, so it never needs a
    reload. Prices (t/quotes.json, ~15 min), news (every 15-30 min), world/markets (live.json), FII/DII, the B-Lab
    screen, the model outlook, and, when a new trading day is published, the whole stock list + end-of-day prices. */
@@ -125,6 +125,34 @@ async function poll() {
     toast("Desk updated · prices as of " + (quotes.last_bar_ist || "") + " IST");
   } catch (e) { checkOk = false; }
 }
+/* "As of" dates on every section, and a warning when an update is late */
+const dayLbl = iso => iso ? new Date(iso + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }) : "--";
+const minsAgo = utc => utc ? Math.max(0, Math.round((Date.now() - new Date(utc)) / 60000)) : null;
+const agoTxt = m => m == null ? "" : m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.floor(m / 60)} h ${m % 60} min ago` : `${Math.floor(m / 1440)} d ago`;
+const istUtc = utc => utc ? new Date(utc).toLocaleString("en-IN", { timeZone: IST, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) + " IST" : "--";
+function marketHoursNow() {
+  const n = new Date(new Date().toLocaleString("en-US", { timeZone: IST })), m = n.getHours() * 60 + n.getMinutes();
+  return n.getDay() >= 1 && n.getDay() <= 5 && m >= 555 && m <= 930;
+}
+function renderAsOf() {
+  const q = S.qmeta || {}, pm = minsAgo(q.generated_utc), open = marketHoursNow();
+  const priceStale = open && !LIVE.ok && pm != null && pm > 30;
+  const prices = LIVE.ok
+    ? `Prices: <b>real-time</b> (NSE via Angel One) · ${esc(dayLbl(new Date().toLocaleDateString("en-CA", { timeZone: IST })))}`
+    : q.session_date ? `Prices: <b>${esc(dayLbl(q.session_date))} · ${esc(q.last_bar_ist || "")} IST</b> ${q.market === "open" ? "(market open · delayed about 15 min)" : "(market closed · last trading session)"} · published ${esc(agoTxt(pm))}`
+      + (S.uni ? ` · NSE end-of-day files: ${esc(dayLbl(S.uni.session_date))}` : "") : "Prices: not available";
+  $$('[data-asof="prices"]').forEach(el => { el.innerHTML = (priceStale ? `⚠ Update late: prices were last published ${esc(agoTxt(pm))}. ` : "") + prices; el.classList.toggle("stale", priceStale); });
+  const wm = minsAgo(S.live.generated_utc);
+  $$('[data-asof="world"]').forEach(el => { const st = wm != null && wm > (open ? 40 : 90); el.innerHTML = `${st ? "⚠ Late: " : ""}Markets, indices &amp; FII/DII updated <b>${esc(istUtc(S.live.generated_utc))}</b> (${esc(agoTxt(wm))})${S.inst && S.inst.updated_ist ? ` · FII/DII report: ${esc(S.inst.updated_ist)}` : ""}`; el.classList.toggle("stale", st); });
+  const nm = minsAgo(S.news && S.news.generated_utc);
+  $$('[data-asof="news"]').forEach(el => { const st = nm != null && nm > 75; el.innerHTML = S.news && S.news.generated_utc ? `${st ? "⚠ Late: " : ""}News wire updated <b>${esc(istUtc(S.news.generated_utc))}</b> (${esc(agoTxt(nm))}) · refreshed every 15 min in market hours, every 30 min otherwise` : "News wire: not available"; el.classList.toggle("stale", st); });
+  const P = S.pred;
+  $$('[data-asof="outlook"]').forEach(el => { el.innerHTML = P && P.as_of ? `Model as of the <b>${esc(dayLbl(P.as_of))}</b> close · published ${esc(istUtc(P.generated_utc))} · retrained after every NSE close` : "Model: not published yet"; });
+  const ms = $("#ms-asof");
+  if (ms) { ms.textContent = LIVE.ok ? "REAL-TIME" : q.session_date ? `${priceStale ? "⚠ " : ""}${dayLbl(q.session_date)} · ${q.last_bar_ist || ""} IST` : "--"; ms.classList.toggle("stale", priceStale);
+    ms.title = priceStale ? `Prices were last published ${agoTxt(pm)}: the next update is late` : `Prices as of ${dayLbl(q.session_date)} ${q.last_bar_ist || ""} IST, published ${agoTxt(pm)}`; }
+}
+setInterval(renderAsOf, 5000);
 setInterval(() => {
   const el = $("#st-auto"); if (!el) return;
   const s = lastCheck ? Math.round((Date.now() - lastCheck) / 1000) : null;
@@ -357,7 +385,7 @@ function applyRange() {
 function renderHead() {
   const s = S.map.get(sec), x = q(sec); if (!s || !x) return;
   const open = S.qmeta.market === "open", pick = (S.screen.picks || []).find(p => p.symbol === sec);
-  const when = x.live ? (open ? `Delayed live · ${x.t} IST · market open` : `Last session ${dt(x.d, { weekday: "short", day: "numeric", month: "short" })} · last price ${x.t} IST`) : `NSE official end-of-day · ${x.d}`;
+  const when = x.live ? (open ? `${x.rt ? "Real-time" : "Delayed ~15 min"} · ${dayLbl(x.d)} ${x.t} IST · market open` : `Last session ${dt(x.d, { weekday: "short", day: "numeric", month: "short" })} · last price ${x.t} IST`) : `NSE official end-of-day · ${x.d}`;
   $("#cc-head").innerHTML = `<span class="sym">${esc(sec)}</span><span class="name">${esc(s.n)}</span><span class="px ${ud(x.chg)}">₹${inr(x.p)}</span><span class="chg ${ud(x.chg)}">${sg(x.chg)} (${sg(x.pct)}%)</span>
     <span class="when"><span class="tag">NSE</span><span class="tag">${esc(s.series)}</span>${s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${s.etf ? '<span class="tag">ETF</span>' : ""}${s.n500 ? '<span class="tag">NIFTY 500</span>' : ""}${pick ? `<span class="tag acc">B-Lab screen #${pick.magic_rank}</span>` : ""}<span>${esc(when)}</span></span>`;
   const inW = loadWatch().includes(sec);

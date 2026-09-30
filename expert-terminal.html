@@ -29,8 +29,9 @@
     <button class="search-btn" id="open-search" title="Search (/)"><span class="k">/</span><span class="ph" id="search-ph">Search NSE stocks, or press / to jump</span><kbd>/</kbd></button>
     <div class="mstats">
       <span class="livechip" id="livechip"><i></i><b id="live-txt">LIVE</b></span>
-      <span>STOCKS <b id="ms-stocks">--</b></span>
-      <span>LIVE PRICES <b id="ms-live">--</b></span>
+      <span class="asof-m" id="ms-asof" title="When the prices on this page were last updated">--</span>
+      <span class="ms-opt">STOCKS <b id="ms-stocks">--</b></span>
+      <span class="ms-opt">LIVE PRICES <b id="ms-live">--</b></span>
       <span>ADV / DEC <b id="ms-ad">--</b></span>
       <span class="clock" id="clock">--:--:-- IST</span>
     </div>
@@ -70,6 +71,7 @@
           <p class="kick">— From the desk · live</p>
           <h1>What happened <span class="acc">while you were away.</span></h1>
           <p class="lede">Pick the one you came for. Everything is real NSE data; nothing is estimated.</p>
+          <p class="asof" data-asof="prices"></p>
         </div>
         <div class="statstrip" id="brief-stats"></div>
         <div class="cards" id="brief-cards"></div>
@@ -157,7 +159,7 @@
     <!-- ================= MOVERS ================= -->
     <section class="view" id="v-movers">
       <div class="page">
-        <div class="page-head"><p class="kick">— NSE movers · all boards</p><h2>Where the money <span class="acc">moved today.</span></h2></div>
+        <div class="page-head"><p class="kick">— NSE movers · all boards</p><h2>Where the money <span class="acc">moved today.</span></h2><p class="asof" data-asof="prices"></p></div>
         <div class="controls">
           <div class="seg" id="mov-tabs"><button data-m="gain" class="on">Gainers</button><button data-m="lose">Losers</button><button data-m="val">Most active</button><button data-m="hi">52W high</button><button data-m="lo">52W low</button></div>
           <div class="seg" id="board-grp"><button data-b="All" class="on">All</button><button data-b="Main">Main board</button><button data-b="SME">SME</button><button data-b="ETF">ETFs</button></div>
@@ -174,7 +176,7 @@
     <!-- ================= SECTORS ================= -->
     <section class="view" id="v-sectors">
       <div class="page">
-        <div class="page-head"><p class="kick">— Sectors · NIFTY 500 · today</p><h2>Which parts of the market <span class="acc">are carrying it.</span></h2></div>
+        <div class="page-head"><p class="kick">— Sectors · NIFTY 500 · today</p><h2>Which parts of the market <span class="acc">are carrying it.</span></h2><p class="asof" data-asof="prices"></p></div>
         <div class="breadth" id="breadth"></div>
         <div class="sec-grid">
           <div class="heat" id="heat"></div>
@@ -186,7 +188,7 @@
     <!-- ================= WORLD ================= -->
     <section class="view" id="v-world">
       <div class="page">
-        <div class="page-head"><p class="kick">— World · macro · flows</p><h2>The weather <span class="acc">every stock trades in.</span></h2></div>
+        <div class="page-head"><p class="kick">— World · macro · flows</p><h2>The weather <span class="acc">every stock trades in.</span></h2><p class="asof" data-asof="world"></p></div>
         <div class="world-grid">
           <div class="tablecard"><div class="card-bar">World equity indices <span class="mut" id="wei-asof"></span></div><table class="tbl" id="wei"><thead><tr><th>Index</th><th class="r">Last</th><th class="r">Chg</th><th class="r">Chg %</th><th class="r">YTD</th><th class="r">As of</th></tr></thead><tbody></tbody></table></div>
           <div class="world-side">
@@ -200,7 +202,7 @@
     <!-- ================= NEWS ================= -->
     <section class="view" id="v-outlook">
       <div class="page">
-        <div class="page-head"><p class="kick">— Model outlook · next 20 trading days · NIFTY 500</p><h2>Which stocks are likely to <span class="acc">beat the NIFTY.</span></h2></div>
+        <div class="page-head"><p class="kick">— Model outlook · next 20 trading days · NIFTY 500</p><h2>Which stocks are likely to <span class="acc">beat the NIFTY.</span></h2><p class="asof" data-asof="outlook"></p></div>
         <p class="lede" id="ol-lede">Loading the model…</p>
         <div class="ol-card" id="ol-card"></div>
         <div class="controls">
@@ -215,7 +217,7 @@
 
     <section class="view" id="v-news">
       <div class="page">
-        <div class="page-head"><p class="kick">— Financial wire · India markets + <a href="https://brutalist.report/topic/business" target="_blank" rel="noopener noreferrer">brutalist.report</a></p><h2>All the money news, <span class="acc">one page.</span></h2></div>
+        <div class="page-head"><p class="kick">— Financial wire · India markets + <a href="https://brutalist.report/topic/business" target="_blank" rel="noopener noreferrer">brutalist.report</a></p><h2>All the money news, <span class="acc">one page.</span></h2><p class="asof" data-asof="news"></p></div>
         <div class="controls">
           <div class="seg" id="news-filter"><button data-nf="all" class="on">All</button><button data-nf="india">India</button><button data-nf="global">Global</button><button data-nf="crypto">Crypto</button></div>
           <div class="seg" id="news-time"><button data-h="1">1h</button><button data-h="3">3h</button><button data-h="6">6h</button><button data-h="12">12h</button><button data-h="24" class="on">24h</button></div>
