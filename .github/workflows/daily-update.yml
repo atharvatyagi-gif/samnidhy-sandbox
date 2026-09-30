@@ -129,6 +129,10 @@ jobs:
         continue-on-error: true
         run: python scripts/news_wire.py
 
+      - name: NSE's own live indices and movers (unofficial; supplements the delayed Yahoo prices)
+        continue-on-error: true
+        run: python scripts/nse_live_poll.py
+
       - name: Put the data (or the "Data not updated" notice) into the page
         run: |
           python scripts/embed_data.py

@@ -93,6 +93,8 @@ def main() -> None:
         shutil.copyfile(DATA / "institutional" / "fii_dii.json", SITE / "institutional.json")
     if (DATA / "predict" / "latest.json").exists():   # the terminal's Outlook tab (scripts/predict_model.py)
         shutil.copyfile(DATA / "predict" / "latest.json", SITE / "predict.json")
+    if (DATA / "nse_live" / "latest.json").exists():   # NSE's own live indices/movers (scripts/nse_live_poll.py)
+        shutil.copyfile(DATA / "nse_live" / "latest.json", SITE / "nse_live.json")
     if (DATA / "status.json").exists():   # the main page checks this to load a newer session by itself
         shutil.copyfile(DATA / "status.json", SITE / "status.json")
     if (DATA / "news" / "wire.json").exists():   # the terminal's News tab (scripts/news_wire.py)

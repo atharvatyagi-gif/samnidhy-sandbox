@@ -27,3 +27,6 @@ data/terminal/
 
 # financial news wire: refetched on every run, not stored
 data/news/
+
+# NSE's own live numbers (unofficial poll); refreshed every run, not stored
+data/nse_live/

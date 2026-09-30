@@ -43,7 +43,7 @@ function q(sym) {
   const e = S.map.get(sym); if (!e) return null;
   if (typeof RP !== "undefined" && RP.on) return S.rq[sym] || null;
   const l = S.quotes[sym];
-  if (l && l.d >= e.date) return { live: true, p: l.p, chg: l.chg, pct: l.pct, o: l.o, h: l.h, l: l.l, v: l.v, t: l.t, d: l.d, pc: +(l.p - l.chg).toFixed(2) };
+  if (l && l.d >= e.date) return { live: true, p: l.p, chg: l.chg, pct: l.pct, o: l.o, h: l.h, l: l.l, v: l.v, t: l.t, d: l.d, pc: +(l.p - l.chg).toFixed(2), rt: l.rt, nse: l.nse };
   return { live: false, p: e.c, chg: e.chg, pct: e.pct, o: e.o, h: e.h, l: e.l, v: e.v, t: "EOD", d: e.date, pc: e.pc };
 }
 
@@ -77,6 +77,8 @@ async function boot() {
     S.uni = uni; uni.stocks.forEach(s => S.map.set(s.s, s)); lastCheck = Date.now();
     S.pred = await getJSON("predict.json").catch(() => null);
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
+    S.nseLive = await getJSON("nse_live.json").catch(() => null);
+    applyNseLive();
   } catch (e) {
     $("#st-data").textContent = "Data not available: the NSE stock list could not be loaded. Nothing is shown in its place.";
     $("#brief-cards").innerHTML = '<div class="empty">Data not available.</div>'; return;
@@ -92,6 +94,20 @@ async function boot() {
   setInterval(poll, POLL_MS);
   liveConnect();
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+}
+const NSE_IDX = { "NIFTY 50": "^NSEI", "NIFTY BANK": "^NSEBANK" };
+function applyNseLive() {
+  const N = S.nseLive; if (!N) return;
+  for (const [name, sym] of Object.entries(NSE_IDX)) {
+    const row = N.indices && N.indices[name]; if (!row || row.last == null) continue;
+    if (!S.idxLive[sym] || !S.idxLive[sym].rt) S.idxLive[sym] = { p: row.last, pc: row.prev_close, pct: row.pct, nse: true };  // an Angel One tick (rt) always wins
+  }
+  for (const [sym, row] of Object.entries(N.stocks || {})) {
+    if (!S.map.has(sym) || row.p == null) continue;
+    const cur = S.quotes[sym];
+    if (cur && cur.rt) continue;                              // a real-time tick for this stock always wins
+    S.quotes[sym] = { p: row.p, chg: row.chg, pct: row.pct, o: row.o, h: row.h, l: row.l, v: row.v, t: row.t ? row.t.slice(11, 19) : "live", d: todayIST(), nse: true };
+  }
 }
 function renderAll() { renderAsOf(); renderMast(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); renderOutlook(); }
 /* Auto-update: every minute the desk checks every published file and redraws what changed, so it never needs a
@@ -120,6 +136,7 @@ async function poll() {
     }
     const rt = Object.fromEntries(Object.entries(S.quotes).filter(([, v]) => v.rt));
     S.quotes = { ...(quotes.quotes || {}), ...rt }; S.qmeta = quotes; S.live = live; S.inst = inst;
+    getJSON("nse_live.json").then(nl => { if (nl && nl.generated_utc !== (S.nseLive || {}).generated_utc) { S.nseLive = nl; applyNseLive(); renderTape(); renderRegime(); if (["movers", "brief", "sectors"].includes(view)) renderAll(); renderHead(); } }).catch(() => {});
     if (!changed) return;
     await loadIntra(shard(sec), true).catch(() => null);
     renderAll(); renderHead(); renderDetails(); if (side === "prints") renderPrints(); if (typeof renderOutlook === "function") renderOutlook(); drawChart(true);
@@ -142,7 +159,9 @@ function renderAsOf() {
     : LIVE.ok
     ? `Prices: <b>real-time</b> (NSE via Angel One) · ${esc(dayLbl(new Date().toLocaleDateString("en-CA", { timeZone: IST })))}`
     : q.session_date ? `Prices: <b>${esc(dayLbl(q.session_date))} · ${esc(q.last_bar_ist || "")} IST</b> ${q.market === "open" ? "(market open · delayed about 15 min)" : "(market closed · last trading session)"} · published ${esc(agoTxt(pm))}`
-      + (S.uni ? ` · NSE end-of-day files: ${esc(dayLbl(S.uni.session_date))}` : "") : "Prices: not available";
+      + (S.uni ? ` · NSE end-of-day files: ${esc(dayLbl(S.uni.session_date))}` : "")
+      + (S.nseLive && S.nseLive.stocks ? ` · <span title="nseindia.com's own public site data, unofficial and not a licensed feed">${Object.keys(S.nseLive.stocks).length} stocks tagged NSE run on NSE's own live numbers</span>` : "")
+      : "Prices: not available";
   $$('[data-asof="prices"]').forEach(el => { el.innerHTML = (priceStale ? `⚠ Update late: prices were last published ${esc(agoTxt(pm))}. ` : "") + prices; el.classList.toggle("stale", priceStale); });
   const wm = minsAgo(S.live.generated_utc);
   $$('[data-asof="world"]').forEach(el => { const st = wm != null && wm > (open ? 40 : 90); el.innerHTML = `${st ? "⚠ Late: " : ""}Markets, indices &amp; FII/DII updated <b>${esc(istUtc(S.live.generated_utc))}</b> (${esc(agoTxt(wm))})${S.inst && S.inst.updated_ist ? ` · FII/DII report: ${esc(S.inst.updated_ist)}` : ""}`; el.classList.toggle("stale", st); });
@@ -513,10 +532,10 @@ function applyRange() {
 function renderHead() {
   const s = S.map.get(sec), x = q(sec); if (!s || !x) return;
   const open = S.qmeta.market === "open", pick = (S.screen.picks || []).find(p => p.symbol === sec);
-  const when = x.replay ? `Replay · ${dayLbl(x.d)} ${x.t} IST · real 1-minute prices played back` : x.live ? (open ? `${x.rt ? "Real-time" : "Delayed ~15 min"} · ${dayLbl(x.d)} ${x.t} IST · market open` : `Last session ${dt(x.d, { weekday: "short", day: "numeric", month: "short" })} · last price ${x.t} IST`) : `NSE official end-of-day · ${x.d}`;
+  const when = x.replay ? `Replay · ${dayLbl(x.d)} ${x.t} IST · real 1-minute prices played back` : x.live ? (open ? `${x.rt ? "Real-time" : x.nse ? "NSE live (unofficial)" : "Delayed ~15 min"} · ${dayLbl(x.d)} ${x.t} IST · market open` : `Last session ${dt(x.d, { weekday: "short", day: "numeric", month: "short" })} · last price ${x.t} IST`) : `NSE official end-of-day · ${x.d}`;
   const d = S.dir[sec];
   $("#cc-head").innerHTML = `<span class="sym">${esc(sec)}</span><span class="name">${esc(s.n)}</span><span class="px ${ud(x.chg)}">${d ? `<i class="tick ${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"}</i>` : ""}₹${inr(x.p)}</span><span class="chg ${ud(x.chg)}">${sg(x.chg)} (${sg(x.pct)}%)</span>
-    <span class="when"><span class="tag">NSE</span><span class="tag">${esc(s.series)}</span>${s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${s.etf ? '<span class="tag">ETF</span>' : ""}${s.n500 ? '<span class="tag">NIFTY 500</span>' : ""}${pick ? `<span class="tag acc">B-Lab screen #${pick.magic_rank}</span>` : ""}<span>${esc(when)}</span></span>`;
+    <span class="when"><span class="tag">NSE</span><span class="tag">${esc(s.series)}</span>${s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${s.etf ? '<span class="tag">ETF</span>' : ""}${s.n500 ? '<span class="tag">NIFTY 500</span>' : ""}${pick ? `<span class="tag acc">B-Lab screen #${pick.magic_rank}</span>` : ""}${x.nse && !x.rt ? '<span class="tag acc" title="NSE\\u2019s own live number, from nseindia.com\\u2019s public site, unofficial and not a licensed feed">NSE live</span>' : ""}<span>${esc(when)}</span></span>`;
   const inW = loadWatch().includes(sec);
   $("#wl-toggle").innerHTML = inW ? '★ <span class="tx wide">On watchlist</span>' : '☆ <span class="tx wide">Watchlist</span>';
   $("#wl-toggle").title = inW ? "Remove from your watchlist" : "Add to your watchlist";
@@ -677,7 +696,7 @@ function applyTicks(qmap) {
   let mine = null;
   for (const [sym, r] of Object.entries(qmap)) {
     const [p, o, h, l, pc, v, ms] = r;
-    if (sym.startsWith("^")) { S.idxLive[sym] = { p, pc, pct: pc ? (p / pc - 1) * 100 : null }; continue; }
+    if (sym.startsWith("^")) { S.idxLive[sym] = { p, pc, pct: pc ? (p / pc - 1) * 100 : null, rt: true }; continue; }
     const t = ms ? new Date(ms).toLocaleTimeString("en-GB", { timeZone: IST, hour12: false }) : "";
     S.quotes[sym] = { p, chg: +(p - pc).toFixed(2), pct: pc ? +((p / pc - 1) * 100).toFixed(2) : null, o, h, l, v, t, d: day, rt: true };
     if (ms && (sym === sec || S.ticks[sym])) { const T = (S.ticks[sym] ||= []); if (!T.length || T[T.length - 1][0] <= ms) T.push([ms, p, v]); if (T.length > 30000) T.splice(0, 5000); feedRtc(sym, p, v, ms); }
@@ -994,7 +1013,7 @@ function renderMovers() {
   const rows = moverRows(), show = rows.slice(0, movLimit), wl = loadWatch();
   $("#mov-table tbody").innerHTML = show.length ? show.map(r => {
     const lo = r.s.lo52, hi = r.s.hi52, pos = lo != null && hi > lo ? Math.max(0, Math.min(100, (r.x.p - lo) / (hi - lo) * 100)) : null, on = wl.includes(r.s.s);
-    return `<tr data-s="${esc(r.s.s)}"><td class="sym">${esc(r.s.s)} ${r.s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${r.s.etf ? '<span class="tag">ETF</span>' : ""}</td><td class="co">${esc(r.s.n)}</td>
+    return `<tr data-s="${esc(r.s.s)}"><td class="sym">${esc(r.s.s)} ${r.s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${r.s.etf ? '<span class="tag">ETF</span>' : ""}${r.x.nse && !r.x.rt ? '<span class="tag acc" title="NSE\\u2019s own live number (unofficial)">NSE</span>' : ""}</td><td class="co">${esc(r.s.n)}</td>
       <td class="num">${inr(r.x.p)}</td><td class="num ${ud(r.x.chg)}">${sg(r.x.chg)}</td><td class="num ${ud(r.x.pct)}">${sg(r.x.pct)}%</td><td class="num">${big(r.x.v)}</td><td class="num">₹${big(r.val)}</td>
       <td class="num">${r.s.deliv == null ? "--" : r.s.deliv.toFixed(0) + "%"}</td><td>${pos == null ? "--" : `<div class="rng" title="₹${inr(lo)} – ₹${inr(hi)}"><i style="left:calc(${pos}% - 1px)"></i></div>`}</td>
       <td><button class="icon-btn ${on ? "on" : ""}" data-wl="${esc(r.s.s)}" title="${on ? "Remove from" : "Add to"} watchlist">${on ? "✓" : "+"}</button></td></tr>`;
