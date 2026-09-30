@@ -328,6 +328,7 @@ const CMP_COLORS = ["#6fa8ff", "#f0a0ff", "#f0c674", "#ff6b6b"];
 const eng = new ChartEngine($("#chart"), {
   toast, message: showMsg,
   defaultRange: () => applyRange(),
+  marketOpen: () => marketHoursNow(), realtime: () => LIVE.ok,
   nearStart: () => {                                        // scrolled back to the start: fetch the older years
     if (INTRA.includes(iv) || !S.daily[sec] || S.arch[sec] !== undefined) return;
     const sym = sec, before = eng.bars.length, r = eng.chart.timeScale().getVisibleLogicalRange();
@@ -386,11 +387,13 @@ function renderHead() {
   const s = S.map.get(sec), x = q(sec); if (!s || !x) return;
   const open = S.qmeta.market === "open", pick = (S.screen.picks || []).find(p => p.symbol === sec);
   const when = x.live ? (open ? `${x.rt ? "Real-time" : "Delayed ~15 min"} · ${dayLbl(x.d)} ${x.t} IST · market open` : `Last session ${dt(x.d, { weekday: "short", day: "numeric", month: "short" })} · last price ${x.t} IST`) : `NSE official end-of-day · ${x.d}`;
-  $("#cc-head").innerHTML = `<span class="sym">${esc(sec)}</span><span class="name">${esc(s.n)}</span><span class="px ${ud(x.chg)}">₹${inr(x.p)}</span><span class="chg ${ud(x.chg)}">${sg(x.chg)} (${sg(x.pct)}%)</span>
+  const d = S.dir[sec];
+  $("#cc-head").innerHTML = `<span class="sym">${esc(sec)}</span><span class="name">${esc(s.n)}</span><span class="px ${ud(x.chg)}">${d ? `<i class="tick ${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"}</i>` : ""}₹${inr(x.p)}</span><span class="chg ${ud(x.chg)}">${sg(x.chg)} (${sg(x.pct)}%)</span>
     <span class="when"><span class="tag">NSE</span><span class="tag">${esc(s.series)}</span>${s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${s.etf ? '<span class="tag">ETF</span>' : ""}${s.n500 ? '<span class="tag">NIFTY 500</span>' : ""}${pick ? `<span class="tag acc">B-Lab screen #${pick.magic_rank}</span>` : ""}<span>${esc(when)}</span></span>`;
   const inW = loadWatch().includes(sec);
   $("#wl-toggle").textContent = inW ? "✓ On watchlist" : "+ Watchlist";
   $("#wl-toggle").classList.toggle("on", inW);
+  flash($("#cc-head .px"), "h:" + sec, x.p);
   document.title = `${sec} ₹${inr(x.p)} · B-LAB DESK`;
 }
 
@@ -599,6 +602,16 @@ function toggleWatch(sym) {
   else { LS.set("blab-watch", [sym, ...w].slice(0, 60)); toast(sym + " added to watchlist"); }
   renderWatch(); renderHead(); renderMast(); renderMovers(); sendFocus();
 }
+/* TradingView-style price flashes: green when a price ticks up, red when it ticks down */
+S.shown = {}; S.dir = {};
+function flash(el, key, price) {
+  if (!el || price == null) return;
+  const prev = S.shown[key];
+  S.shown[key] = price;
+  if (prev == null || prev === price) return;
+  const up = price > prev; S.dir[key.split(":")[1]] = up ? 1 : -1;
+  el.classList.remove("fl-up", "fl-dn"); void el.offsetWidth; el.classList.add(up ? "fl-up" : "fl-dn");
+}
 function renderWatch() {
   const w = loadWatch();
   $("#wl-count").textContent = w.length;
@@ -606,7 +619,7 @@ function renderWatch() {
     return `<div class="wl-row ${sym === sec ? "sel" : ""}" data-s="${esc(sym)}"><span class="s">${esc(sym)}<small>${esc(s.n)}</small></span><span class="p">${inr(x?.p)}</span>
       <span class="c ${ud(x?.pct)}">${sg(x?.pct)}%</span><button class="x" data-rm="${esc(sym)}" title="Remove ${esc(sym)}">×</button></div>`; }).join("")
     : '<div class="empty">Your watchlist is empty. Open any stock and press + Watchlist, or use Set up desk.</div>';
-  $$("#watch .wl-row").forEach(r => r.onclick = e => { if (e.target.dataset.rm) { toggleWatch(e.target.dataset.rm); return; } openSec(r.dataset.s); });
+  $$("#watch .wl-row").forEach(r => { flash(r.querySelector(".p"), "w:" + r.dataset.s, q(r.dataset.s)?.p); r.onclick = e => { if (e.target.dataset.rm) { toggleWatch(e.target.dataset.rm); return; } openSec(r.dataset.s); }; });
 }
 const REC = { strong_buy: "Strong buy", buy: "Buy", hold: "Hold", underperform: "Underperform", sell: "Sell" };
 function perfFrom(sym) {
@@ -719,6 +732,7 @@ function renderMovers() {
   }).join("") : '<tr><td colspan="10" class="empty">No stocks match these filters.</td></tr>';
   $("#mov-count").textContent = `Showing ${show.length.toLocaleString("en-IN")} of ${rows.length.toLocaleString("en-IN")} stocks`;
   $("#mov-more").hidden = rows.length <= movLimit;
+  $$("#mov-table tbody tr[data-s]").forEach(tr => flash(tr.children[2], "m:" + tr.dataset.s, q(tr.dataset.s)?.p));
   $$("#mov-table tbody tr[data-s]").forEach(tr => tr.onclick = e => { const w = e.target.closest("[data-wl]"); if (w) { e.stopPropagation(); toggleWatch(w.dataset.wl); return; } openSec(tr.dataset.s); go("terminal"); });
   $$("#mov-table th[data-sort]").forEach(th => th.classList.toggle("sorted", movSort && movSort[0] === th.dataset.sort));
 }

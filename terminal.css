@@ -501,3 +501,9 @@ html, body { background: var(--paper); color: var(--ink); }
 .asof b { color: var(--ink); font-weight: 600; }
 .asof.stale, .asof-m.stale { color: #ffb347; } .asof.stale b { color: #ffb347; }
 .asof-m { font: 600 11.5px var(--mono); color: var(--ink-2); letter-spacing: 0.02em; text-transform: none; white-space: nowrap; }
+/* TradingView-style tick flashes */
+@keyframes flUp { 0% { background: rgba(0,224,96,0.55); color: #fff; } 100% { background: transparent; } }
+@keyframes flDn { 0% { background: rgba(255,90,70,0.55); color: #fff; } 100% { background: transparent; } }
+.fl-up { animation: flUp 0.9s ease-out; border-radius: 3px; } .fl-dn { animation: flDn 0.9s ease-out; border-radius: 3px; }
+.cc-head .px .tick { font-style: normal; font-size: 13px; margin-right: 4px; vertical-align: 3px; }
+.cc-head .px .tick.up { color: var(--up); } .cc-head .px .tick.down { color: var(--down); }

@@ -54,6 +54,7 @@ export class ChartEngine {
     this.compare = []; this.bars = []; this.T = []; this.sym = ""; this.iv = "D";
     this.wireMouse(); this.wireLegend();
     new ResizeObserver(() => this.placeLegends()).observe(host);
+    this.cdT = setInterval(() => this.tickCountdown(), 1000);
   }
 
   /* ================= data + build ================= */
@@ -152,6 +153,25 @@ export class ChartEngine {
     this.hooks.built?.(this);
   }
   refresh() { this.build(true); }
+  /* TradingView-style countdown to the current candle's close, shown next to the last price.
+     Intraday candles only with the real-time feed (delayed candles are already closed); daily = time to 15:30 IST. */
+  tickCountdown() {
+    const drop = () => { if (this.cdLine) { try { this.cdMain.removePriceLine(this.cdLine); } catch (e) {} this.cdLine = null; } };
+    if (!this.chart || !this.bars.length || !this.hooks.marketOpen?.()) return drop();
+    const step = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600 }[this.iv], nowIst = Date.now() / 1000 + 19800, close = Math.floor(nowIst / 86400) * 86400 + 930 * 60;
+    const last = this.bars[this.bars.length - 1];
+    let end;
+    if (step && typeof last.time === "number" && this.hooks.realtime?.()) end = Math.min(last.time + step, close);
+    else if (this.iv === "D") end = close;
+    else return drop();
+    const left = Math.round(end - nowIst);
+    if (left < 0 || left > 7 * 3600) return drop();
+    const hh = Math.floor(left / 3600), mm = Math.floor(left % 3600 / 60), ss = left % 60, two = n => String(n).padStart(2, "0");
+    const title = (hh ? `${hh}:${two(mm)}` : `${mm}`) + `:${two(ss)}`;
+    if (this.cdLine && this.cdMain !== this.main) this.cdLine = null;         // the chart was rebuilt
+    if (!this.cdLine) { this.cdMain = this.main; this.cdLine = this.main.createPriceLine({ price: last.c, color: "rgba(0,0,0,0)", lineWidth: 1, axisLabelVisible: false, title }); }
+    else this.cdLine.applyOptions({ price: last.c, title });
+  }
   /* Real-time: update the last candle in place (or start a new one) without rebuilding the chart.
      Indicators are recalculated when a new candle starts (and at most every 5 s for Heikin-Ashi). */
   upsertBar(bar) {
