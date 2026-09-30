@@ -357,8 +357,13 @@ function intraBase(sym, id) {
   if (s < 60) return { why: "Second candles need tick-by-tick data from the real-time feed (not connected). Try ▶ Replay for NIFTY 50 stocks, or pick 5m or longer." };
   const it = intraOf(sym);
   if (!it) return { why: `No intraday data for ${sym}${(S.map.get(sym) || {}).board === "SME" ? " (SME stocks have NSE end-of-day data only)" : ""}. Switch to 1D.` };
-  if (s % 900 === 0) return { bars: (it.w || []).map(r => { const [d, t] = r[0].split(" "); return { time: ts(d, t), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5] }; }), s: 900 };
-  if (s % 300 === 0) { const day = (S.quotes[sym] || {}).d || S.qmeta.session_date; return { bars: (it.d || []).map(r => ({ time: ts(day, r[0]), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5] })), s: 300 }; }
+  const w15 = (it.w || []).map(r => { const [d, t] = r[0].split(" "); return { time: ts(d, t), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5] }; });
+  const day = (S.quotes[sym] || {}).d || S.qmeta.session_date, d5 = (it.d || []).map(r => ({ time: ts(day, r[0]), o: r[1], h: r[2], l: r[3], c: r[4], v: r[5] }));
+  const D = S.deep[sym];
+  if (D && s % 3600 === 0 && D.b60.length) return { bars: mergeOlder(D.b60, aggBars(w15, 3600)), s: 3600 };
+  if (D && s % 300 === 0 && D.b5.length) return { bars: mergeOlder(D.b5, d5.length ? d5 : w15), s: s % 900 === 0 && !d5.length ? 900 : 300 };
+  if (s % 900 === 0) return { bars: w15, s: 900 };
+  if (s % 300 === 0) return { bars: d5, s: 300 };
   return { why: `${ivLabel(id)} candles need 1-minute data. The delayed feed comes in 5-minute candles: use ▶ Replay (NIFTY 50, real 1-minute data) or pick 5m, 10m, 15m or longer.` };
 }
 function dailyCandles(sym) {
@@ -408,23 +413,63 @@ const eng = new ChartEngine($("#chart"), {
   barSeconds: id => IVSEC[id] || null, ivLabel: id => ivLabel(id),
   marketOpen: () => RP.on || marketHoursNow(), realtime: () => LIVE.ok || RP.on,
   nowIst: () => RP.on ? Date.UTC(+RP.day.slice(0, 4), +RP.day.slice(5, 7) - 1, +RP.day.slice(8, 10)) / 1000 + (555 + Math.floor(RP.k / SUB)) * 60 + (RP.k % SUB) * 15 : null,
-  nearStart: () => {                                        // scrolled back to the start: fetch the older years
-    if (INTRA.includes(iv) || !S.daily[sec] || S.arch[sec] !== undefined) return;
-    const sym = sec, before = eng.bars.length, r = eng.chart.timeScale().getVisibleLogicalRange();
-    showMsg(""); toast(`Loading ${sym}'s older history…`);
-    loadArchive(sym).then(old => {
-      if (sym !== sec) return;
-      if (!old || !old.length) { toast(`No older history for ${sym}: the chart already starts at its first available day`); return; }
-      drawChart(); const added = eng.bars.length - before;
-      if (r) eng.chart.timeScale().setVisibleLogicalRange({ from: r.from + added, to: r.to + added });
-      toast(`History loaded back to ${old[0][0]}`);
-    });
-  },
+  nearStart: () => scrollBack(),
   toolChanged: t => $$("#tools [data-tool]").forEach(b => b.classList.toggle("on", b.dataset.tool === t)),
   indsChanged: () => updIndCount(),
   compareChanged: list => { cmp = cmp.filter(c => list.some(l => l.sym === c.sym)); },
 });
 window.blabChart = eng;                                   // handy for checks from the browser console
+/* Scroll back = more history, like TradingView: whenever the chart reaches its first candle, the next older
+   batch is fetched (daily: older years; intraday: 60 days of 5-minute / 2 years of hourly candles; replay:
+   earlier trading days from the library), and the view stays exactly where you are. */
+let scrollBusy = false;
+function keepView(fn) { const vr = eng.chart && eng.chart.timeScale().getVisibleRange(); fn(); if (vr && eng.chart) eng.chart.timeScale().setVisibleRange(vr); }
+async function scrollBack() {
+  if (scrollBusy || !sec || !eng.chart) return;
+  const sym = sec;
+  const done = msg => { scrollBusy = false; if (msg) toast(msg); };
+  scrollBusy = true;
+  if (RP.on) {                                               // replay: the trading day before the earliest one loaded
+    const loaded = Object.keys(RP.data).sort(), days = RP.idx.days, prev = days[days.indexOf(loaded[0]) - 1];
+    if (!prev) return done(`Start of the replay library (${dayLbl(loaded[0])})`);
+    toast(`Loading ${dayLbl(prev)}…`);
+    await rpLoad(prev);
+    if (sym === sec) keepView(() => drawChart(true));
+    return done();
+  }
+  if (!isIntra(iv)) {                                         // daily and up: older years from the history branch
+    if (!S.daily[sym] || S.arch[sym] !== undefined) return done();
+    toast(`Loading ${sym}'s older history…`);
+    const old = await loadArchive(sym);
+    if (sym !== sec) return done();
+    if (!old || !old.length) return done(`No older history for ${sym}: the chart already starts at its first available day`);
+    keepView(() => drawChart(true));
+    return done(`History loaded back to ${old[0][0]}`);
+  }
+  if (LIVE.ok) return done();
+  if (S.deep[sym] === undefined) {                            // intraday: 60 days of 5-minute + 2 years of hourly candles
+    toast(`Loading ${sym}'s older intraday candles…`);
+    const d = await loadDeep(sym);
+    if (sym !== sec) return done();
+    if (!d) return done(`No older intraday candles for ${sym}`);
+    keepView(() => drawChart(true));
+    return done(`Intraday history loaded: 5-minute from ${dayLbl(d.m5[0]?.[0]?.slice(0, 10))}, hourly from ${dayLbl(d.h1[0]?.[0]?.slice(0, 10))}`);
+  }
+  return done(IVSEC[iv] >= 3600 ? "Start of the hourly history (about 2 years). Switch to 1D for decades." : "Start of the 5-minute history (about 60 days). Switch to 1h for 2 years, or 1D for decades.");
+}
+const INTRADAY_DEEP = "https://raw.githubusercontent.com/atharvatyagi-gif/samnidhy-sandbox/intraday/";
+S.deep = {};
+async function loadDeep(sym) {
+  if (S.deep[sym] !== undefined) return S.deep[sym];
+  try {
+    const r = await fetch(INTRADAY_DEEP + dkey(sym) + ".json"); if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    const conv = rows => rows.map(x => ({ time: ts(x[0].slice(0, 10), x[0].slice(11, 16)), o: x[1], h: x[2], l: x[3], c: x[4], v: x[5] }));
+    S.deep[sym] = { m5: d.m5 || [], h1: d.h1 || [], b5: conv(d.m5 || []), b60: conv(d.h1 || []) };
+  } catch (e) { S.deep[sym] = null; }
+  return S.deep[sym];
+}
+const mergeOlder = (older, newer) => { if (!newer.length) return older; const t0 = newer[0].time; return older.filter(b => b.time < t0).concat(newer); };
 function updIndCount() { const n = eng.inds.length; $("#ind-cnt").textContent = n ? `(${n})` : ""; }
 function compareSeries(bars) {
   const intraday = typeof bars[0].time === "number";

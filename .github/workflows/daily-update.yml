@@ -103,6 +103,18 @@ jobs:
           path: data/terminal
           key: terminal-${{ github.run_id }}
 
+      - name: Deep intraday history for chart scroll-back ("intraday" branch, replaced daily)
+        continue-on-error: true
+        run: |
+          python scripts/intraday_deep.py
+          cd data/terminal/deep
+          git init -q -b intraday
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Intraday history: 5-minute (60 days) and hourly (2 years), $(date -u +%Y-%m-%d)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" intraday:intraday
+
       - name: Older price history for the outlook model (history branch)
         continue-on-error: true
         run: |
