@@ -28,6 +28,64 @@ function loadLeaflet() {
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pinIcon = cls => window.L.divIcon({ className: "globe-pin-wrap", html: `<span class="globe-pin${cls ? " " + cls : ""}"><i></i></span>`, iconSize: [24, 24], iconAnchor: [12, 22], popupAnchor: [0, -22] });
 
+// Real ICAO 3-letter airline designators (public reference data, e.g. ICAO Doc 8585) for carriers that
+// plausibly fly near these 7 chokepoints. A callsign whose prefix isn't in here shows as "Unknown operator" -
+// never a guess. This is the only way to attach an airline name: OpenSky's state vectors carry a callsign, not
+// an airline field, and there is no free lookup API for this, so it is a small static table, same as the
+// chokepoints' own "why it matters" reference facts.
+const AIRLINES = {
+  UAE: "Emirates", ETD: "Etihad Airways", QTR: "Qatar Airways", SVA: "Saudia", FDB: "flydubai", ABY: "Air Arabia",
+  GFA: "Gulf Air", KAC: "Kuwait Airways", OMA: "Oman Air", MSR: "EgyptAir", RJA: "Royal Jordanian", ELY: "El Al",
+  AIC: "Air India", IGO: "IndiGo", SEJ: "SpiceJet", VTI: "Vistara", PIA: "Pakistan International", GOW: "Go First",
+  SIA: "Singapore Airlines", MAS: "Malaysia Airlines", CPA: "Cathay Pacific", THA: "Thai Airways",
+  GIA: "Garuda Indonesia", AXM: "AirAsia", JST: "Jetstar", VJC: "VietJet Air", PAL: "Philippine Airlines",
+  CAL: "China Airlines", EVA: "EVA Air", CES: "China Eastern", CSN: "China Southern", CCA: "Air China",
+  CQH: "Juneyao Airlines", CDG: "Shandong Airlines", HDA: "Hong Kong Airlines", CXA: "Xiamen Airlines",
+  CMP: "Copa Airlines", AAL: "American Airlines", UAL: "United Airlines", DAL: "Delta Air Lines",
+  AVA: "Avianca", ACA: "Air Canada", VOI: "Volaris", AMX: "Aeromexico", LAN: "LATAM Airlines",
+  THY: "Turkish Airlines", AFL: "Aeroflot", DLH: "Lufthansa", BAW: "British Airways", AFR: "Air France",
+  KLM: "KLM Royal Dutch Airlines", IBE: "Iberia", SWR: "Swiss International", AUA: "Austrian Airlines",
+  PGT: "Pegasus Airlines", AZA: "ITA Airways", TAR: "Tunisair", RAM: "Royal Air Maroc", MEA: "Middle East Airlines",
+  FDX: "FedEx Express", UPS: "UPS Airlines", DHK: "DHL (European Air Transport)", GEC: "Lufthansa Cargo",
+  QFA: "Qantas", ANZ: "Air New Zealand", JAL: "Japan Airlines", ANA: "All Nippon Airways", KAL: "Korean Air",
+  AAR: "Asiana Airlines",
+};
+const airlineOf = callsign => AIRLINES[String(callsign || "").trim().slice(0, 3).toUpperCase()] || null;
+const COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+const compassOf = deg => deg == null ? "" : COMPASS[Math.round(deg / 22.5) % 16];
+const kt = ms => ms == null ? null : Math.round(ms * 1.94384);
+const kmh = ms => ms == null ? null : Math.round(ms * 3.6);
+function vrateLabel(ms) {
+  if (ms == null) return "Level flight data unavailable";
+  if (ms > 0.5) return `Climbing, ${ms.toFixed(1)} m/s`;
+  if (ms < -0.5) return `Descending, ${Math.abs(ms).toFixed(1)} m/s`;
+  return "Level flight";
+}
+const EMERGENCY_SQUAWK = { "7500": "HIJACK", "7600": "RADIO FAILURE", "7700": "GENERAL EMERGENCY" };
+function flightPopup(f) {
+  const airline = airlineOf(f.callsign);
+  const emg = f.squawk && EMERGENCY_SQUAWK[f.squawk];
+  const rows = [
+    ["Operator", airline || `Unknown operator (code: ${esc((f.callsign || "").slice(0, 3)) || "—"})`],
+    ["Aircraft (ICAO24)", esc(f.icao24 || "—")],
+    ["Registered in", esc(f.country || "—")],
+    ["Altitude (barometric)", f.alt_m != null ? `${Math.round(f.alt_m).toLocaleString("en-IN")} m` : "—"],
+    ["Altitude (GPS)", f.geo_alt_m != null ? `${Math.round(f.geo_alt_m).toLocaleString("en-IN")} m` : "—"],
+    ["Speed", f.velocity_ms != null ? `${kmh(f.velocity_ms)} km/h (${kt(f.velocity_ms)} kt)` : "—"],
+    ["Heading", f.heading != null ? `${compassOf(f.heading)}, ${Math.round(f.heading)}°` : "—"],
+    ["Vertical rate", vrateLabel(f.vrate_ms)],
+    ["On ground", f.on_ground ? "Yes" : "No"],
+    ["Squawk (transponder code)", f.squawk ? esc(f.squawk) + (emg ? ` — ${emg}` : "") : "—"],
+    ["Position updated", f.age_s != null ? `${f.age_s}s ago` : "—"],
+    ["Route", "Not available"],
+  ];
+  return `<div class="fp">${emg ? `<div class="fp-emg">⚠ Transponder: ${emg}</div>` : ""}
+    <h5>${esc(f.callsign || "Unknown callsign")}${airline ? ` <span class="fp-al">${esc(airline)}</span>` : ""}</h5>
+    <table>${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join("")}</table>
+    <p class="fp-src">Live ADS-B data via OpenSky Network. Route (origin → destination) isn't shown: OpenSky's free anonymous tier returns a 403 for flight-route lookups - only a registered account (free signup) unlocks it.</p>
+  </div>`;
+}
+
 export class GlobeMap {
   constructor(host, hooks = {}) {
     this.host = host; this.hooks = hooks; this.sel = null; this.markers = new Map();
@@ -59,8 +117,10 @@ export class GlobeMap {
     this.flightLayer.clearLayers();
     for (const p of data.chokepoints || []) for (const f of (p.flights && p.flights.sample) || []) {
       if (f.lat == null) continue;
-      L.circleMarker([f.lat, f.lon], { radius: 2.5, weight: 0, fillColor: "#ffb347", fillOpacity: 0.85, className: "globe-plane" })
-        .bindTooltip(`${esc(f.callsign || "flight")}${f.alt_m != null ? " · " + Math.round(f.alt_m) + " m" : ""}`)
+      const airline = airlineOf(f.callsign);
+      L.circleMarker([f.lat, f.lon], { radius: 4, weight: 6, opacity: 0, fillColor: "#ffb347", fillOpacity: 0.9, className: "globe-plane" })
+        .bindTooltip(`${esc(f.callsign || "flight")}${airline ? " · " + esc(airline) : ""}${f.alt_m != null ? " · " + Math.round(f.alt_m).toLocaleString("en-IN") + " m" : ""}`)
+        .bindPopup(flightPopup(f), { className: "globe-popup fp-popup", minWidth: 250, maxWidth: 280 })
         .addTo(this.flightLayer);
     }
     this.chokeLayer.clearLayers(); this.markers.clear();

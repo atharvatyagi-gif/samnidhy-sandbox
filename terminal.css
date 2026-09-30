@@ -599,7 +599,7 @@ html, body { background: var(--paper); color: var(--ink); }
 @media (max-width: 2000px) { .mstats > .ms-opt { display: none; } .foot > .warn { display: none; } }
 @media (max-width: 1800px) { .foot > #st-cover { display: none; } }
 
-/* ---------- Globe (globe-map.js: a real Leaflet pan/zoom map on CARTO's free dark-tile basemap) ---------- */
+/* ---------- Globe (globe-map.js: a real Leaflet pan/zoom map on Esri's free dark basemap) ---------- */
 .globe-map { position: relative; border: 1px solid var(--rule-2); border-radius: var(--r); background: #04120b; overflow: hidden; margin-bottom: 16px; }
 .globe-wrap { position: relative; }
 .globe-leaflet { width: 100%; height: 480px; background: #04120b; }
@@ -614,6 +614,15 @@ html, body { background: var(--paper); color: var(--ink); }
 .leaflet-popup-content { font: 12px/1.5 var(--sans); margin: 9px 12px; }
 .leaflet-popup-content b { color: var(--acc); }
 .leaflet-tooltip { background: var(--card) !important; color: var(--ink) !important; border-color: var(--rule-2) !important; font: 11px var(--mono) !important; }
+.fp-popup .leaflet-popup-content { margin: 10px 12px; width: auto !important; }
+.fp h5 { margin: 0 0 6px; font: 700 13px var(--sans); color: var(--ink); }
+.fp-al { font: 600 10.5px var(--mono); color: var(--acc); }
+.fp-emg { margin: -2px 0 8px; padding: 3px 7px; border-radius: 3px; background: var(--down-soft); color: var(--down); font: 700 11px var(--mono); }
+.fp table { border-collapse: collapse; width: 100%; }
+.fp td { padding: 2.5px 0; font: 11px var(--mono); vertical-align: top; line-height: 1.35; }
+.fp td:first-child { color: var(--ink-4); padding-right: 8px; white-space: nowrap; }
+.fp td:last-child { color: var(--ink-2); text-align: right; max-width: 150px; }
+.fp-src { margin: 8px 0 0; font: 10px/1.4 var(--sans); color: var(--ink-4); font-style: italic; }
 .globe-pin-wrap { background: none; border: none; }
 .globe-pin { position: relative; display: block; width: 22px; height: 22px; cursor: pointer; }
 .globe-pin i { position: absolute; inset: 0; background: var(--acc); border: 2px solid #04120b; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 2px 6px rgba(0,0,0,0.5); transition: background .15s; }

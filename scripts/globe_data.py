@@ -13,8 +13,12 @@ Globe: real-time flights, real geopolitical news and the shipping/oil chokepoint
 
 What this can't do: there is no free, reliable source of real-time cargo-ship positions (AIS data is sold by
 MarineTraffic/VesselFinder and similar). So "cargo" here means real news about each chokepoint, not invented
-ship icons. Chokepoint "why it matters" lines are widely-cited reference facts (EIA, UNCTAD), not live data,
-and are clearly separate from the live flight counts and live news next to them.
+ship icons. Nor does OpenSky's anonymous tier give a flight's route (origin/destination airport) - its
+/flights/aircraft endpoint returns 403 "You cannot access historical flights" without a registered account, so
+that field is left out rather than guessed; everything else per aircraft (speed, altitude, heading, climb rate,
+squawk, position age) is real, straight from /states/all. Chokepoint "why it matters" lines are widely-cited
+reference facts (EIA, UNCTAD), not live data, and are clearly separate from the live flight counts and live
+news next to them.
 
 If a chokepoint's flights or news can't be fetched this run, that one field is simply left out (not
 invented); if nothing at all could be fetched, the previous file is kept untouched.
@@ -58,12 +62,20 @@ GENERAL_QUERY = '(tariff OR sanctions OR "trade war" OR embargo OR "supply chain
 
 
 def flights(lat, lon, half):
+    # OpenSky's anonymous /flights/aircraft (route history) endpoint returns 403 "You cannot access historical
+    # flights" for unauthenticated requests (confirmed live) - so no destination/origin airport is available
+    # here; every field below comes from the one anonymous endpoint this script is allowed to use, /states/all.
     r = requests.get("https://opensky-network.org/api/states/all",
                      params={"lamin": lat - half, "lamax": lat + half, "lomin": lon - half, "lomax": lon + half}, timeout=20)
     r.raise_for_status()
+    now = time.time()
     states = r.json().get("states") or []
-    sample = [{"callsign": (s[1] or "").strip(), "lat": s[6], "lon": s[5], "alt_m": s[7], "heading": s[10], "country": s[2]}
-             for s in states if s[5] is not None and s[6] is not None][:60]
+    sample = [{
+        "icao24": s[0], "callsign": (s[1] or "").strip(), "country": s[2],
+        "lat": s[6], "lon": s[5], "alt_m": s[7], "geo_alt_m": s[13], "on_ground": s[8],
+        "velocity_ms": s[9], "heading": s[10], "vrate_ms": s[11], "squawk": s[14],
+        "src": s[16], "age_s": round(now - s[4]) if s[4] else None,
+    } for s in states if s[5] is not None and s[6] is not None][:60]
     return {"count": len(states), "sample": sample}
 
 
