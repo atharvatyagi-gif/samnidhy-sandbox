@@ -1,21 +1,24 @@
-# Samnidhy Sandbox - market clock.
-# GitHub often delays or drops frequent scheduled runs, so instead of relying on a 15-minute schedule, this job
-# starts once each trading morning, stays running through market hours, and directly triggers the
-# "Live prices" workflow every 15 minutes (directly triggered runs start within seconds).
-# Several start times are scheduled for safety; extra copies wait in the queue and exit if the market has closed.
+# Samnidhy Sandbox - site heartbeat (was "market clock").
+# GitHub's scheduler delays or drops scheduled runs when it is busy (on 30 Sep 2026 it skipped every run from
+# 05:54 to 10:20 IST). So instead of depending on it, this job keeps itself alive around the clock and directly
+# triggers the other workflows (directly triggered runs start within seconds):
+#   - "Live prices" (prices, technicals, news, re-ranked screen, rebuild + publish):
+#       every 15 minutes on market days 09:15-15:40 IST, every 30 minutes at all other times;
+#   - "Daily update" (NSE end-of-day files, screen, model): at 07:30, 09:00 and 19:00 IST.
+# Just before GitHub's 6-hour limit it starts its own replacement, so the chain never stops. The hourly schedule
+# below is only a safety net that restarts the chain if it ever breaks; extra copies wait in the queue.
 name: Market clock
 
 on:
   schedule:
-    - cron: "30 3 * * 1-5"          # 09:00 IST
-    - cron: "0 4-9 * * 1-5"         # hourly back-ups if a start was dropped
+    - cron: "17 * * * *"
   workflow_dispatch:
   push:
     branches: [main]
     paths: [".github/workflows/market-clock.yml"]
 
 permissions:
-  actions: write                    # to trigger the Live prices / Daily update workflows
+  actions: write                    # to trigger the Live prices / Daily update workflows and itself
   contents: read
 
 concurrency:
@@ -25,28 +28,31 @@ concurrency:
 jobs:
   clock:
     runs-on: ubuntu-latest
-    timeout-minutes: 355
+    timeout-minutes: 358
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
-      - name: Trigger price updates every 15 minutes until the close
+      - name: Heartbeat
         run: |
           start_ts=$(date +%s)
-          mins() { local t; t=$(TZ=Asia/Kolkata date +%H:%M); echo $((10#${t%:*} * 60 + 10#${t#*:})); }
-          open=$((9 * 60 + 15)); close=$((15 * 60 + 40))
-          if [ "$(TZ=Asia/Kolkata date +%u)" -gt 5 ]; then echo "Weekend."; exit 0; fi
-          m=$(mins)
-          if [ "$m" -ge "$close" ]; then echo "Market already closed ($(TZ=Asia/Kolkata date +%H:%M) IST)."; exit 0; fi
-          # morning: make sure the daily screen/movers update has run even if its own schedule was dropped
-          if [ "$m" -lt $((10 * 60 + 30)) ]; then gh workflow run daily-update.yml --ref main || true; fi
-          if [ "$m" -lt "$open" ]; then echo "Waiting for 09:15 IST"; sleep $(( (open - m) * 60 )); fi
+          now() { TZ=Asia/Kolkata date +%H:%M; }
+          mins() { local t; t=$(now); echo $((10#${t%:*} * 60 + 10#${t#*:})); }
+          market_day() { [ "$(TZ=Asia/Kolkata date +%u)" -le 5 ]; }
+          fire() { echo "$(now) IST: triggering $1"; gh workflow run "$1" --ref main || echo "  trigger failed, retrying next round"; }
+          last_live=0; daily_done=""
+          # starting in the morning before 10:30: make sure the morning daily update happens
+          m=$(mins); if [ "$m" -ge $((7 * 60 + 15)) ] && [ "$m" -lt $((10 * 60 + 30)) ]; then fire daily-update.yml; daily_done="$(TZ=Asia/Kolkata date +%F)-am"; fi
           while :; do
-            m=$(mins)
-            [ "$m" -ge "$close" ] && { echo "Market closed, done."; exit 0; }
-            echo "$(TZ=Asia/Kolkata date +%H:%M) IST: triggering Live prices"
-            gh workflow run live-prices.yml --ref main || echo "trigger failed, will retry next round"
-            # stop cleanly before GitHub's 6-hour job limit; a queued copy of this workflow takes over
-            [ $(( $(date +%s) - start_ts )) -gt $(( 330 * 60 )) ] && { echo "Handing over to the next clock run."; exit 0; }
-            sleep 900
+            m=$(mins); day=$(TZ=Asia/Kolkata date +%F); t=$(date +%s)
+            if market_day && [ "$m" -ge $((9 * 60 + 15)) ] && [ "$m" -le $((15 * 60 + 40)) ]; then gap=900; else gap=1800; fi
+            if [ $((t - last_live)) -ge "$gap" ]; then fire live-prices.yml; last_live=$t; fi
+            for slot in "07:30 am1" "09:00 am2" "19:00 pm"; do
+              hhmm=${slot% *}; tag=${slot#* }; sm=$((10#${hhmm%:*} * 60 + 10#${hhmm#*:}))
+              if [ "$m" -ge "$sm" ] && [ "$m" -lt $((sm + 20)) ] && [ "$daily_done" != "$day-$tag" ]; then fire daily-update.yml; daily_done="$day-$tag"; fi
+            done
+            if [ $((t - start_ts)) -gt $((345 * 60)) ]; then
+              echo "$(now) IST: handing over to a fresh heartbeat"; fire market-clock.yml; exit 0
+            fi
+            sleep 60
           done
