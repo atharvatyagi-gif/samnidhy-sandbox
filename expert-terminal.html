@@ -111,15 +111,17 @@
           <div class="cc-head" id="cc-head"></div>
           <div class="cc-bar">
             <button class="tb-sym" id="tb-sym" title="Change symbol (/)">—</button>
-            <div class="seg" id="iv-grp" role="group" aria-label="Interval">
-              <button data-iv="1m" hidden title="1-minute candles (real-time feed)">1m</button><button data-iv="5m">5m</button><button data-iv="15m">15m</button><button data-iv="1h">1h</button>
+            <div class="seg" id="iv-grp" role="group" aria-label="Timeframe">
+              <button data-iv="1m">1m</button><button data-iv="5m">5m</button><button data-iv="15m">15m</button><button data-iv="1h">1h</button>
               <button data-iv="D" class="on">D</button><button data-iv="W">W</button><button data-iv="M">M</button>
+              <span class="dd" id="iv-dd"><button id="iv-more" title="All timeframes: seconds, minutes, hours, days">▾</button><div class="dd-menu iv-menu" id="iv-menu" hidden></div></span>
             </div>
             <div class="dd" id="ct-dd">
               <button class="btn-line sm" id="ct-btn" aria-haspopup="true" aria-expanded="false">Candles ▾</button>
               <div class="dd-menu" id="ct-menu" hidden></div>
             </div>
             <button class="btn-line sm" id="ind-open" title="Add indicators">ƒx Indicators <b id="ind-cnt"></b></button>
+            <button class="btn-line sm rp-btn" id="rp-open" title="Replay a past trading day minute by minute (real NSE 1-minute prices)">▶ Replay</button>
             <button class="btn-line sm" id="cmp-open" title="Compare with NIFTY, BANK NIFTY, SENSEX or another stock">⊕ Compare</button>
             <span class="grow"></span>
             <button class="btn-line sm" id="snap" title="Save the chart as an image">Snapshot</button>
@@ -230,6 +232,19 @@
       </div>
     </section>
   </main>
+
+  <div class="rp-bar" id="rp-bar" hidden>
+    <span class="rp-tag">● REPLAY</span>
+    <select id="rp-day" aria-label="Trading day to replay"></select>
+    <button class="rp-play" id="rp-play" title="Play / pause (Space)">❚❚</button>
+    <button class="btn-line sm" id="rp-restart" title="Back to 09:15">⟲</button>
+    <button class="btn-line sm on" id="rp-loop" title="Endless: at the close, roll into the next trading day (and loop the library)">∞ Endless</button>
+    <div class="seg" id="rp-speed" role="group" aria-label="Speed"><button data-sp="1">1×</button><button data-sp="10">10×</button><button data-sp="60" class="on">60×</button><button data-sp="300">300×</button></div>
+    <input type="range" id="rp-slider" min="0" max="1499" value="0" aria-label="Jump to a time">
+    <span class="rp-time" id="rp-time">09:15:00</span>
+    <span class="rp-note">NIFTY 50 · real NSE 1-minute prices, played back · not live</span>
+    <button class="btn-line sm" id="rp-exit" title="Back to current prices">✕ Exit replay</button>
+  </div>
 
   <footer class="foot">
     <span id="st-auto" class="st-auto">● Auto-updating</span>

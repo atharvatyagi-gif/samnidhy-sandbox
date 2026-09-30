@@ -92,6 +92,10 @@ jobs:
         continue-on-error: true
         run: python scripts/terminal_live.py
 
+      - name: Replay library (NIFTY 50 1-minute candles, one file per trading day)
+        continue-on-error: true
+        run: python scripts/replay_data.py
+
       - name: Save the terminal's NSE data cache
         if: always()
         uses: actions/cache/save@v4

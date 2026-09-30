@@ -74,7 +74,8 @@ export class ChartEngine {
   build(keepRange) {
     const L = LCW(); if (!L) { this.hooks.message?.("The chart library could not load. Check your connection and reload."); return; }
     const prev = keepRange && this.chart ? this.chart.timeScale().getVisibleLogicalRange() : null;
-    if (this.chart) { this.chart.remove(); this.chart = null; }
+    // detach everything that points at the old chart first (remove() fires last events and queued redraws)
+    if (this.chart) { const old = this.chart; this.chart = null; this.main = null; this.layer = null; this.cdLine = null; this.cdMain = null; old.remove(); }
     const b = this.bars;
     if (!b.length) { this.lg.innerHTML = ""; return; }
     const chart = this.chart = L.createChart(this.el, {
@@ -83,7 +84,7 @@ export class ChartEngine {
         panes: { separatorColor: "rgba(181,166,130,0.22)", separatorHoverColor: "rgba(0,224,96,0.35)", enableResize: true } },
       grid: { vertLines: { color: THEME.grid }, horzLines: { color: THEME.grid } },
       rightPriceScale: { borderColor: THEME.border, scaleMargins: { top: 0.1, bottom: this.inds.some(i => i.id === "vol" && i.vis) ? 0.2 : 0.08 } },
-      timeScale: { borderColor: THEME.border, timeVisible: this.intraday, secondsVisible: false, rightOffset: 8, barSpacing: this.intraday ? 7 : 6, minBarSpacing: 0.5 },
+      timeScale: { borderColor: THEME.border, timeVisible: this.intraday, secondsVisible: false, rightOffset: 8, barSpacing: this.intraday ? 7 : 6, minBarSpacing: 0.5, shiftVisibleRangeOnNewBar: false },
       crosshair: { mode: this.magnet ? 1 : 0, vertLine: { color: THEME.cross, style: 3, labelBackgroundColor: THEME.label }, horzLine: { color: THEME.cross, style: 3, labelBackgroundColor: THEME.label } },
       localization: { priceFormatter: p => fmt(p) },
       handleScroll: this.tool === "cursor", handleScale: this.tool === "cursor",
@@ -158,7 +159,7 @@ export class ChartEngine {
   tickCountdown() {
     const drop = () => { if (this.cdLine) { try { this.cdMain.removePriceLine(this.cdLine); } catch (e) {} this.cdLine = null; } };
     if (!this.chart || !this.bars.length || !this.hooks.marketOpen?.()) return drop();
-    const step = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600 }[this.iv], nowIst = Date.now() / 1000 + 19800, close = Math.floor(nowIst / 86400) * 86400 + 930 * 60;
+    const step = this.hooks.barSeconds?.(this.iv), nowIst = this.hooks.nowIst?.() ?? Date.now() / 1000 + 19800, close = Math.floor(nowIst / 86400) * 86400 + 930 * 60;
     const last = this.bars[this.bars.length - 1];
     let end;
     if (step && typeof last.time === "number" && this.hooks.realtime?.()) end = Math.min(last.time + step, close);
@@ -182,13 +183,19 @@ export class ChartEngine {
     else if (String(bar.time) > String(last.time) && (typeof bar.time === typeof last.time)) { b.push(bar); fresh = true;
       this.T.push(typeof bar.time === "number" ? bar.time : Date.UTC(+bar.time.slice(0, 4), +bar.time.slice(5, 7) - 1, +bar.time.slice(8, 10)) / 1000); }
     else return;
-    if (fresh || this.type === "heikin" || this.future?.length) { clearTimeout(this.rt); this.rt = setTimeout(() => this.refresh(), fresh ? 50 : 5000); if (this.type === "heikin" || this.future?.length) return; }
+    // indicators are recalculated at most every 3 s (a full rebuild per candle would be too slow at replay speed)
+    if ((fresh || this.type === "heikin" || this.future?.length) && !this.rtPending) { this.rtPending = true; setTimeout(() => { this.rtPending = false; this.refresh(); }, 3000); }
+    if (this.type === "heikin" || this.future?.length) return;
     const x = b[b.length - 1];
     try {
       this.main.update(["candle", "hollow", "bars"].includes(this.type) ? { time: x.time, open: x.o, high: x.h, low: x.l, close: x.c } : { time: x.time, value: x.c });
       const vol = this.inds.find(i => i.id === "vol" && i.vis), vs = vol && this.out[vol.uid]?.series?.v;
       if (vs) vs.update({ time: x.time, value: x.v || 0, color: x.c >= x.o ? "rgba(0,224,96,0.30)" : "rgba(224,160,96,0.32)" });
     } catch (e) { this.refresh(); }
+    if (fresh) {                                             // TradingView-like: follow new candles only when you're at the right edge
+      const ts = this.chart.timeScale(), r = ts.getVisibleLogicalRange(), n = b.length;
+      if (r && n + 3 > r.to && n - 1 >= r.from) ts.setVisibleLogicalRange({ from: r.from + (n + 3 - r.to), to: n + 3 });
+    }
     this.renderLegend();
   }
   futureTimes(k) {                    // k empty bars after the last one, at this chart's spacing
@@ -197,7 +204,8 @@ export class ChartEngine {
     if (typeof last === "number") { for (let i = 1; i <= k; i++) out.push(last + i * this.step); return out; }
     const d = new Date(last + "T00:00:00Z");
     while (out.length < k) {
-      if (this.iv === "M") d.setUTCMonth(d.getUTCMonth() + 1); else if (this.iv === "W") d.setUTCDate(d.getUTCDate() + 7);
+      const mo = { M: 1, Q: 3, H: 6, Y: 12 }[this.iv];
+      if (mo) d.setUTCMonth(d.getUTCMonth() + mo); else if (this.iv === "W") d.setUTCDate(d.getUTCDate() + 7);
       else { d.setUTCDate(d.getUTCDate() + 1); if (d.getUTCDay() === 0 || d.getUTCDay() === 6) continue; }
       out.push(d.toISOString().slice(0, 10));
     }
@@ -244,7 +252,7 @@ export class ChartEngine {
         <button data-a="eye" title="${ins.vis ? "Hide" : "Show"}">${ICON.eye}</button><button data-a="set" title="Settings">${ICON.set}</button><button data-a="del" title="Remove">${ICON.del}</button></span></div>`; };
     for (const ins of this.inds) (byPane[this.paneOf[ins.uid] ?? 0] ||= []).push(row(ins));
     const cmp = (this.cmpSeries || []).map((c, k) => `<div class="lg-row" data-cmp="${k}"><span class="lg-n" style="color:${c.color}">${esc(c.label)}</span><span class="lg-vals">${cmpVals(c)}</span><span class="lg-b"><button data-a="uncmp" title="Remove comparison">${ICON.del}</button></span></div>`).join("");
-    const head = `<div class="lg-row lg-sym"><span class="lg-t">${esc(this.sym)} · ${esc(this.iv)} · NSE</span><span class="lg-vals">${headVals}</span></div>`;
+    const head = `<div class="lg-row lg-sym"><span class="lg-t">${esc(this.sym)} · ${esc(this.hooks.ivLabel?.(this.iv) || this.iv)} · NSE</span><span class="lg-vals">${headVals}</span></div>`;
     const n = this.chart.panes().length;
     let html = `<div class="lg-pane" data-p="0">${head}${(byPane[0] || []).join("")}${cmp}</div>`;
     for (let k = 1; k < n; k++) html += `<div class="lg-pane" data-p="${k}">${(byPane[k] || []).join("")}</div>`;
@@ -329,7 +337,7 @@ export class ChartEngine {
   showBars(from, to) { this.chart?.timeScale().setVisibleLogicalRange({ from: from - 0.5, to: (to ?? this.bars.length - 1) + 8 }); }
   goTo(dateIso) {
     const t = Date.UTC(+dateIso.slice(0, 4), +dateIso.slice(5, 7) - 1, +dateIso.slice(8, 10)) / 1000, l = Math.round(this.tToL(t));
-    const r = this.chart?.timeScale().getVisibleLogicalRange(); const w = r ? (r.to - r.from) / 2 : 60;
+    const r = this.chart?.timeScale().getVisibleLogicalRange(); const w = r ? Math.min((r.to - r.from) / 2, 130) : 60;   // zoomed far out: show about a year around the date
     this.chart?.timeScale().setVisibleLogicalRange({ from: l - w, to: l + w });
   }
   snapshot() {

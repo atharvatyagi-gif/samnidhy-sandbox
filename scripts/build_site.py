@@ -86,7 +86,7 @@ def main() -> None:
     for name in ("universe.json", "quotes.json", "fund.json"):
         if (TERMINAL / name).exists():
             shutil.copyfile(TERMINAL / name, SITE / "t" / name)
-    for sub, dst in (("hist", "h"), ("intra", "i"), ("daily", "d")):
+    for sub, dst in (("hist", "h"), ("intra", "i"), ("daily", "d"), ("replay", "r")):
         if (TERMINAL / sub).exists():
             shutil.copytree(TERMINAL / sub, SITE / "t" / dst, ignore=shutil.ignore_patterns("_meta.json"))
     if (DATA / "institutional" / "fii_dii.json").exists():   # the Advanced page refreshes FII/DII from this

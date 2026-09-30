@@ -60,6 +60,7 @@ jobs:
         run: |
           [ -f data/terminal/universe.json ] || python scripts/nse_eod.py
           python scripts/terminal_live.py
+          [ -f data/terminal/replay/index.json ] || python scripts/replay_data.py   # replay library (normally built each evening)
 
       - name: Re-rank the NIFTY 500 screen on live prices (top 10)
         continue-on-error: true   # on failure the last screen stays
