@@ -83,7 +83,7 @@ async function boot() {
   }
   const hp = new URLSearchParams(location.hash.slice(1));
   sec = hp.get("s") && S.map.has(hp.get("s")) ? hp.get("s") : (loadWatch()[0] || "RELIANCE");
-  $("#search-ph").textContent = `Search ${S.uni.count.toLocaleString("en-IN")} NSE stocks, or press / to jump`;
+  $("#search-ph").textContent = `Search ${S.uni.count.toLocaleString("en-IN")} stocks or sections`;
   fillSectorSelect(); updIndCount(); buildTypeMenu(); renderAll();
   go(hp.get("v") || (hp.get("s") ? "terminal" : "brief"), true);
   openSec(sec);
@@ -220,9 +220,9 @@ function climate() {
 }
 function renderRegime() {
   const c = climate();
-  $("#regime").innerHTML = `<span class="lbl">Market regime · today</span><span class="verdict ${c.tone}">${esc(c.verdict)}</span><span class="mut">${c.good}/${c.n} favourable</span>`
+  $("#regime").innerHTML = `<span class="lbl">Market regime · today</span><span class="verdict ${c.tone}">${esc(c.verdict)}</span><span class="mut">${c.good}/${c.n} favourable</span><span class="rg-scroll">`
     + c.f.map(x => `<span class="f"><i style="background:${x.ok ? "var(--up)" : "var(--down)"}"></i>${esc(x.t)}</span>`).join("")
-    + `<button class="btn-line sm" data-go="world" style="margin-left:auto">Open world →</button>`;
+    + `</span><button class="btn-line sm" data-go="world">Open world →</button>`;
 }
 
 /* ================= BRIEF ================= */
@@ -240,7 +240,7 @@ function renderBrief() {
   const wl = loadWatch().map(sym => ({ sym, x: q(sym) })).filter(r => r.x && r.x.pct != null).sort((a, b2) => b2.x.pct - a.x.pct);
   $("#brief-stats").innerHTML = [
     [S.uni.count.toLocaleString("en-IN"), "NSE securities"], [(S.qmeta.covered || 0).toLocaleString("en-IN"), "delayed live prices"],
-    ["15m", "refresh cycle, market hours"], [`${b.a.toLocaleString("en-IN")}/${b.d.toLocaleString("en-IN")}`, "advancing / declining"],
+    ["15 min", "price refresh"], [`${b.a.toLocaleString("en-IN")}/${b.d.toLocaleString("en-IN")}`, "advancing / declining"],
     [(S.screen.universe_stats || {}).breadth_above_200dma != null ? Math.round(S.screen.universe_stats.breadth_above_200dma * 100) + "%" : "--", "above 200-day avg"],
     [vix && vix.value != null ? vix.value.toFixed(1) : "--", "India VIX"],
   ].map(([v, l]) => `<div><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join("");
@@ -518,7 +518,8 @@ function renderHead() {
   $("#cc-head").innerHTML = `<span class="sym">${esc(sec)}</span><span class="name">${esc(s.n)}</span><span class="px ${ud(x.chg)}">${d ? `<i class="tick ${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"}</i>` : ""}₹${inr(x.p)}</span><span class="chg ${ud(x.chg)}">${sg(x.chg)} (${sg(x.pct)}%)</span>
     <span class="when"><span class="tag">NSE</span><span class="tag">${esc(s.series)}</span>${s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${s.etf ? '<span class="tag">ETF</span>' : ""}${s.n500 ? '<span class="tag">NIFTY 500</span>' : ""}${pick ? `<span class="tag acc">B-Lab screen #${pick.magic_rank}</span>` : ""}<span>${esc(when)}</span></span>`;
   const inW = loadWatch().includes(sec);
-  $("#wl-toggle").textContent = inW ? "✓ On watchlist" : "+ Watchlist";
+  $("#wl-toggle").innerHTML = inW ? '★ <span class="tx wide">On watchlist</span>' : '☆ <span class="tx wide">Watchlist</span>';
+  $("#wl-toggle").title = inW ? "Remove from your watchlist" : "Add to your watchlist";
   $("#wl-toggle").classList.toggle("on", inW);
   flash($("#cc-head .px"), "h:" + sec, x.p);
   document.title = `${sec} ₹${inr(x.p)} · B-LAB DESK`;
@@ -574,7 +575,7 @@ $("#snap").onclick = () => {
   a.href = cv.toDataURL("image/png"); a.download = `${sec}_${iv}_${new Date().toISOString().slice(0, 10)}.png`;
   document.body.appendChild(a); a.click(); a.remove(); toast("Chart image saved");
 };
-$("#fs").onclick = () => { const on = $(".term").classList.toggle("focus"); $("#fs").classList.toggle("on", on); $("#fs").textContent = on ? "⛶ Exit focus" : "⛶ Focus"; };
+$("#fs").onclick = () => { const on = $(".term").classList.toggle("focus"); $("#fs").classList.toggle("on", on); $("#fs").title = on ? "Show the side panel again" : "Focus: hide the side panel"; $("#fs").querySelector(".tx").textContent = on ? "Exit focus" : "Focus"; };
 let viewEpoch = 0;                                          // bumps whenever you navigate, so late-arriving history never undoes it
 $("#goto").onchange = e => { if (!e.target.value) return; viewEpoch++; if (INTRA.includes(iv)) { iv = "D"; rg = "ALL"; syncRange(); drawChart(); } eng.goTo(e.target.value); };
 $("#wl-toggle").onclick = () => toggleWatch(sec);
@@ -1172,7 +1173,7 @@ function renderOutlook() {
   rows.sort((a, b) => olMode === "bottom" ? (a.s ?? a.p) - (b.s ?? b.p) : (b.s ?? b.p) - (a.s ?? a.p));
   if (olMode !== "all") rows = rows.slice(0, 25);
   $("#ol-table tbody").innerHTML = rows.map((r, i) => `<tr data-s="${esc(r.sym)}"><td class="mut">${i + 1}</td><td class="sym">${esc(r.sym)}</td><td class="co">${esc(r.st.n || "")}</td><td class="mut">${esc(r.st.ind || "")}</td>
-    <td class="num">${probBar(r.p)}</td><td class="num">${r.dec}/10</td><td class="num ${ud(r.er)}">${pct1(r.er)}</td><td>${driversHtml(r.drivers)}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">No stocks match.</td></tr>';
+    <td class="num">${probBar(r.p)}</td><td class="num">${r.dec}/10</td><td class="num ${ud(r.er)}">${pct1(r.er)}</td><td class="rs">${driversHtml(r.drivers, 2)}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">No stocks match.</td></tr>';
   $$("#ol-table tbody tr[data-s]").forEach(tr => tr.onclick = () => { openSec(tr.dataset.s); go("terminal"); setSide("details"); });
   $("#ol-foot").innerHTML = `* Past excess: what stocks in the same score decile actually did vs NIFTY, on average over 20 trading days, in the unseen test years. Not a forecast of this stock's return. Updated every evening after the NSE close (${esc(P.as_of)}).`;
 }

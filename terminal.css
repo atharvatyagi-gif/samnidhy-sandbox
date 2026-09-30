@@ -530,3 +530,71 @@ html, body { background: var(--paper); color: var(--ink); }
 .iv-row button:hover { border-color: var(--acc); } .iv-row button.on { background: var(--acc); color: #061a10; border-color: var(--acc); }
 .iv-row button.na { color: var(--ink-4); border-style: dashed; }
 #rp-loop.on { border-color: #ffb347; color: #ffb347; }
+
+/* ======================================================================
+   LAYOUT POLISH: everything fits the window, consistent spacing, calmer type
+   ====================================================================== */
+/* masthead: brand | search (flexes) | status | account */
+.mast { gap: 14px; padding: 0 16px; }
+.brand { flex: none; }
+.search-btn { flex: 1 1 260px; max-width: 440px; min-width: 150px; }
+.search-btn .ph { font-size: 12.5px; }
+.mstats { gap: 14px; min-width: 0; }
+.acct { gap: 8px; }
+.acct .btn-line, .acct .btn-ink { height: 30px; padding: 0 12px; font-size: 11.5px; }
+@media (max-width: 1700px) { .mstats > .ms-opt { display: none; } }
+@media (max-width: 1500px) { .mstats > .ms-ad { display: none; } .brand .sub { display: none; } }
+@media (max-width: 1250px) { .mstats > .clock { display: none; } }
+/* market regime: one line; the factors scroll sideways, the button stays */
+.regime { flex-wrap: nowrap; gap: 14px; padding: 7px 16px; white-space: nowrap; }
+.regime > .lbl, .regime > .verdict, .regime > .mut, .regime > button { flex: none; }
+.rg-scroll { flex: 1; min-width: 0; display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 94%, transparent); mask-image: linear-gradient(90deg, #000 94%, transparent); }
+.rg-scroll::-webkit-scrollbar { display: none; }
+.regime .f { white-space: nowrap; }
+@media (max-width: 1400px) { .regime > .lbl { display: none; } }
+/* pages: tighter headings, even rhythm */
+.page, .brief { padding: 22px 28px 48px; max-width: 1360px; }
+.kick { margin: 0 0 6px; }
+.page-head h2 { font-size: clamp(22px, 2vw, 30px); margin: 0 0 6px; }
+.brief-head h1 { font-size: clamp(26px, 2.5vw, 38px); margin: 0 0 8px; }
+.brief-head .lede, .page .lede { margin: 0 0 10px; }
+.asof { margin: 0 0 16px; line-height: 1.5; }
+.statstrip b { font-size: clamp(19px, 1.6vw, 26px); }
+.statstrip div { padding: 12px 14px; }
+.controls { margin-bottom: 12px; }
+/* table card headers: dark with accent text (were light beige left over from the light theme) */
+.card-bar { background: #0f2e1f; color: var(--ink); border-bottom: 1px solid var(--rule-2); }
+.card-bar .mut { color: var(--ink-3); }
+/* terminal toolbar: one row; labels on wide screens, icons + tooltips on laptops */
+.cc-bar { flex-wrap: nowrap; gap: 6px; overflow: hidden; }
+.cc-bar > * { flex: none; }
+.cc-bar .grow { flex: 1 1 0; min-width: 0; }
+.icon-lg { min-width: 30px; justify-content: center; font-size: 13px; }
+@media (max-width: 1700px) { .tx.wide { display: none; } }
+@media (max-width: 1450px) { #ind-open .tx, #rp-open .tx, #cmp-open .tx { display: none; } .tb-sym { max-width: 110px; overflow: hidden; text-overflow: ellipsis; } }
+.cc-head { gap: 4px 14px; }
+.cc-head .when { font-size: 11px; }
+/* chart footer: ranges | date | note (shrinks) | scale */
+.cc-foot { gap: 8px; }
+.cc-foot .seg button { padding: 0 9px; }
+#src-note { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+.cc-foot > .grow { display: none; }
+.goto input { width: 124px; }
+/* rail */
+.rail-h { height: 34px; }
+.wl-cols { height: 26px; }
+/* footer: never runs off-screen */
+.foot { gap: 14px; padding: 0 16px; }
+.foot > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.foot > #st-auto { flex: none; }
+@media (max-width: 1600px) { .foot > #st-cover { display: none; } }
+@media (max-width: 1800px) { .foot > .warn { display: none; } }
+/* outlook table: reasons wrap inside the cell */
+#ol-table td.rs { white-space: normal; min-width: 200px; }
+#ol-table td.co { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+/* tabs: a touch more compact on laptops */
+@media (max-width: 1450px) { .tabs button { padding: 0 12px; font-size: 12px; } }
+.search-btn { min-width: 240px; }
+@media (max-width: 2000px) { .mstats > .ms-opt { display: none; } .foot > .warn { display: none; } }
+@media (max-width: 1800px) { .foot > #st-cover { display: none; } }
