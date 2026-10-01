@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-09-30T18:30:44+00:00",
+  "generated_on": "2026-10-01T02:01:31+00:00",
   "session_date": "2026-09-30",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,16 +40,16 @@
         "turnover_crore": 895.95
       },
       "latest_close": 117.09,
-      "trailing_pe": 17.821917,
+      "trailing_pe": 17.958588,
       "market_cap": 110124982272,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.24475,
-      "total_return": 2.000317,
+      "total_return": 2.000318,
       "annualised_volatility": 0.46861,
       "max_drawdown": -0.684685,
       "beta": 1.3892
@@ -69,16 +69,16 @@
         "turnover_crore": 2154.73
       },
       "latest_close": 605.0,
-      "trailing_pe": 14.897808,
+      "trailing_pe": 15.58475,
       "market_cap": 238421180416,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.054844,
-      "total_return": 0.307281,
+      "total_return": 0.30728,
       "annualised_volatility": 0.3067,
       "max_drawdown": -0.483166,
       "beta": 0.7865
@@ -104,7 +104,7 @@
         "first_date": "2021-09-23",
         "trading_days": 1240,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.133882,
       "total_return": 0.878658,
@@ -127,13 +127,13 @@
         "turnover_crore": 450.92
       },
       "latest_close": 770.0,
-      "trailing_pe": 55.435562,
+      "trailing_pe": 55.555557,
       "market_cap": 581317754880,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.233211,
       "total_return": 1.863319,
@@ -156,13 +156,13 @@
         "turnover_crore": 1730.48
       },
       "latest_close": 8165.5,
-      "trailing_pe": 56.131847,
+      "trailing_pe": 56.35655,
       "market_cap": 1174073638912,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.101977,
       "total_return": 0.627954,
@@ -191,7 +191,7 @@
         "first_date": "2021-09-23",
         "trading_days": 1240,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.202065,
       "total_return": 1.51835,
@@ -216,7 +216,7 @@
       "start": "2021-09-23",
       "end": "2026-09-30",
       "years": 5.02,
-      "session_price_from": "NSE"
+      "session_price_from": "Yahoo"
     },
     "latest_close": 22620.45,
     "session_pct_change": -0.4215,
@@ -1320,7 +1320,7 @@
         275.47,
         259.21,
         266.24,
-        270.86,
+        270.85,
         264.49,
         261.49,
         251.51,
@@ -1653,7 +1653,7 @@
         770.0
       ],
       "APOLLOHOSP.NS": [
-        4668.14,
+        4668.15,
         4399.41,
         4320.34,
         4270.17,
@@ -1670,7 +1670,7 @@
         4945.96,
         4954.29,
         4907.14,
-        4628.54,
+        4628.53,
         4418.35,
         4624.84,
         4454.16,
@@ -1706,7 +1706,7 @@
         4412.39,
         4233.73,
         4370.94,
-        4336.27,
+        4336.26,
         4346.85,
         4250.94,
         4341.85,
@@ -1736,7 +1736,7 @@
         4162.38,
         4356.88,
         4320.23,
-        4471.19,
+        4471.2,
         4559.16,
         4561.88,
         4405.27,
@@ -1754,7 +1754,7 @@
         4859.95,
         4811.54,
         4828.56,
-        4803.61,
+        4803.6,
         4947.31,
         5053.15,
         4951.67,
@@ -1810,7 +1810,7 @@
         6871.1,
         6982.87,
         7046.04,
-        7196.6,
+        7196.61,
         6738.58,
         6947.3,
         6946.8,
