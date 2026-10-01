@@ -195,6 +195,23 @@ def pw_date(v):
     return str(v)[:10] if v else None
 
 
+PW_DIS_FIELDS = "eventid,eventtype,eventname,htmldescription,alertlevel,country,fromdate,todate,severitytext,lat,long,n_affectedports"
+
+
+def pw_disruptions():
+    since = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%d")
+    try:
+        dis = pw_query("portwatch_disruptions_database", where=f"todate >= TIMESTAMP '{since} 00:00:00'", orderByFields="fromdate DESC",
+                       resultRecordCount=80, outFields=PW_DIS_FIELDS)
+    except Exception:              # date-filter syntax varies between ArcGIS versions: take the newest and filter here
+        dis = pw_query("portwatch_disruptions_database", orderByFields="ObjectId DESC", resultRecordCount=150, outFields=PW_DIS_FIELDS)
+        dis = [d for d in dis if (pw_date(d.get("todate")) or "") >= since]
+    return [{"id": d["eventid"], "type": d.get("eventtype"), "name": d.get("eventname"), "desc": d.get("htmldescription"),
+             "alert": d.get("alertlevel"), "country": d.get("country"), "from": pw_date(d.get("fromdate")), "to": pw_date(d.get("todate")),
+             "severity": d.get("severitytext"), "lat": d.get("lat"), "lon": d.get("long"), "ports_hit": d.get("n_affectedports")}
+            for d in dis if d.get("lat") is not None]
+
+
 def portwatch():
     cps = pw_query("PortWatch_chokepoints_database")
     out = []
@@ -211,12 +228,14 @@ def portwatch():
         time.sleep(0.3)
     ports = pw_query("PortWatch_ports_database", where="ISO3='IND'")
     ports.sort(key=lambda p: -(p.get("vessel_count_total") or 0))
-    pout = []
+    pout, daily_ok, t0 = [], True, time.time()
     for p in ports[:30]:
-        try:
-            rows = pw_query("Daily_Ports_Data", where=f"portid='{p['portid']}'", orderByFields="date DESC", resultRecordCount=60)
-        except Exception:
-            rows = []
+        rows = []
+        if daily_ok and time.time() - t0 < 240:       # the daily-ports service can be slow; one failure or 4 min -> ports keep only reference data
+            try:
+                rows = pw_query("Daily_Ports_Data", where=f"portid='{p['portid']}'", orderByFields="date DESC", resultRecordCount=60)
+            except Exception:
+                daily_ok = False
         keys = [k for k in (rows[0] if rows else {}) if k.startswith("portcalls") or k in ("import", "export")]
         series = sorted(([pw_date(r["date"])] + [r.get(k) for k in keys] for r in rows if r.get("date") is not None), key=lambda x: x[0])
         pout.append({"id": p["portid"], "name": p["portname"], "lat": round(p["lat"], 3), "lon": round(p["lon"], 3),
@@ -224,18 +243,15 @@ def portwatch():
                      "industries": [p.get(k) for k in ("industry_top1", "industry_top2", "industry_top3") if p.get(k)],
                      "fields": keys, "series": series})
         time.sleep(0.3)
-    cutoff = (time.time() - 60 * 86400) * 1000
-    dis = pw_query("portwatch_disruptions_database", where=f"todate >= {int(cutoff)}", orderByFields="fromdate DESC", resultRecordCount=80,
-                   outFields="eventid,eventtype,eventname,htmldescription,alertlevel,country,fromdate,todate,severitytext,lat,long,n_affectedports,affectedpopulation")
-    dout = [{"id": d["eventid"], "type": d.get("eventtype"), "name": d.get("eventname"), "desc": d.get("htmldescription"),
-             "alert": d.get("alertlevel"), "country": d.get("country"), "from": pw_date(d.get("fromdate")), "to": pw_date(d.get("todate")),
-             "severity": d.get("severitytext"), "lat": d.get("lat"), "lon": d.get("long"), "ports_hit": d.get("n_affectedports")}
-            for d in dis if d.get("lat") is not None]
+    try:
+        dout = pw_disruptions()
+    except Exception:
+        dout = None                                # disruptions are optional; transits and ports still publish
     latest = max((c["series"][-1][0] for c in out if c["series"]), default=None)
     return {"fetched_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "data_through": latest,
             "source": "IMF PortWatch (portwatch.imf.org), daily counts from satellite AIS",
             "series_cols": ["date", "total", "tanker", "container", "dry_bulk", "general_cargo", "roro"],
-            "chokepoints": out, "india_ports": pout, "disruptions": dout}
+            "chokepoints": out, "india_ports": pout, "disruptions": dout or []}
 
 
 # ---------------------------------------------------------------- natural hazards
@@ -268,18 +284,41 @@ def eonet():
 
 
 def gdacs():
-    r = requests.get("https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP", headers=UA, timeout=30)
-    r.raise_for_status()
+    today = datetime.now(timezone.utc).date()
+    try:
+        r = requests.get("https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH", headers=UA, timeout=30,
+                         params={"eventlist": "EQ;TC;FL;VO;DR;WF", "fromDate": str(today - timedelta(days=30)), "toDate": str(today),
+                                 "alertlevel": "Green;Orange;Red"})
+        r.raise_for_status()
+        feats = r.json().get("features", [])
+    except Exception:
+        return gdacs_rss()
     out = []
-    for f in r.json().get("features", []):
-        p = f.get("properties", {})
-        g = f.get("geometry") or {}
+    for f in feats:
+        p, g = f.get("properties", {}), f.get("geometry") or {}
         if g.get("type") != "Point":
             continue
         out.append({"type": p.get("eventtype"), "name": p.get("name") or p.get("eventname"), "alert": p.get("alertlevel"),
                     "country": p.get("country"), "from": (p.get("fromdate") or "")[:10], "to": (p.get("todate") or "")[:10],
                     "severity": (p.get("severitydata") or {}).get("severitytext"), "lat": round(g["coordinates"][1], 3),
                     "lon": round(g["coordinates"][0], 3), "url": (p.get("url") or {}).get("report")})
+    return out
+
+
+def gdacs_rss():
+    r = requests.get("https://www.gdacs.org/xml/rss.xml", headers=UA, timeout=30)
+    r.raise_for_status()
+    root = ET.fromstring(r.content)
+    ns = {"geo": "http://www.w3.org/2003/01/geo/wgs84_pos#", "gdacs": "http://www.gdacs.org"}
+    out = []
+    for it in root.iter("item"):
+        lat, lon = it.findtext("geo:Point/geo:lat", namespaces=ns), it.findtext("geo:Point/geo:long", namespaces=ns)
+        if lat is None or lon is None:
+            continue
+        out.append({"type": it.findtext("gdacs:eventtype", namespaces=ns), "name": it.findtext("gdacs:eventname", namespaces=ns) or it.findtext("title"),
+                    "alert": it.findtext("gdacs:alertlevel", namespaces=ns), "country": it.findtext("gdacs:country", namespaces=ns),
+                    "from": (it.findtext("gdacs:fromdate", namespaces=ns) or "")[:16], "to": (it.findtext("gdacs:todate", namespaces=ns) or "")[:16],
+                    "severity": it.findtext("gdacs:severity", namespaces=ns), "lat": round(float(lat), 3), "lon": round(float(lon), 3), "url": it.findtext("link")})
     return out
 
 
@@ -310,24 +349,36 @@ def cables():
     return {"source": "TeleGeography Submarine Cable Map (submarinecablemap.com), CC BY-SA 4.0", "cables": lines, "landings": pts}
 
 
-WD_HQ = """SELECT ?co ?coLabel ?ticker ?f ?fLabel ?coord WHERE {
-  ?ex rdfs:label "National Stock Exchange of India"@en .
-  ?co p:P414 ?st . ?st ps:P414 ?ex ; pq:P249 ?ticker .
-  { ?co wdt:P159 ?f . ?f wdt:P625 ?coord . } UNION { ?co wdt:P625 ?coord . BIND(?co AS ?f) }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }"""
-WD_FAC = """SELECT ?ticker ?co ?f ?fLabel ?typeLabel ?coord ?rel ?viaLabel WHERE {
-  ?ex rdfs:label "National Stock Exchange of India"@en .
-  ?co p:P414 ?st . ?st ps:P414 ?ex ; pq:P249 ?ticker .
-  { ?f wdt:P127 ?co . BIND("owner" AS ?rel) } UNION { ?f wdt:P137 ?co . BIND("operator" AS ?rel) }
-  UNION { ?via wdt:P749 ?co . ?f wdt:P127|wdt:P137 ?via . BIND("via subsidiary" AS ?rel) }
+UNIVERSE = ROOT / "data" / "universe" / "nifty500.csv"
+
+
+def isin_map():                                  # ISIN -> NSE symbol, from the site's own NIFTY 500 list (an exact key; no name matching)
+    import csv
+    with open(UNIVERSE, encoding="utf-8") as fh:
+        return {r["ISIN Code"].strip(): r["Symbol"].strip() for r in csv.DictReader(fh) if r.get("ISIN Code")}
+
+
+WD_HQ = """SELECT ?co ?coLabel ?isin ?f ?fLabel ?coord WHERE {{
+  {listed}
+  {{ ?co wdt:P159 ?f . ?f wdt:P625 ?coord . }} UNION {{ ?co wdt:P625 ?coord . BIND(?co AS ?f) }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }} }}"""
+WD_LISTED = "VALUES ?isin {{ {isins} }} ?co wdt:P946 ?isin ."
+WD_FAC = {
+    "owner": "?f wdt:P127 ?co .",
+    "operator": "?f wdt:P137 ?co .",
+    "via subsidiary": "?via wdt:P749 ?co . ?f wdt:P127 ?via .",
+}
+WD_FAC_Q = """SELECT ?isin ?co ?f ?fLabel ?typeLabel ?coord ?viaLabel WHERE {{
+  {listed}
+  {link}
   ?f wdt:P625 ?coord .
-  OPTIONAL { ?f wdt:P31 ?type }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }"""
+  OPTIONAL {{ ?f wdt:P31 ?type }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }} }} LIMIT 8000"""
 
 
 def _sparql(q):
-    r = requests.get("https://query.wikidata.org/sparql", params={"query": q, "format": "json"},
-                     headers={**UA, "Accept": "application/sparql-results+json"}, timeout=90)
+    r = requests.post("https://query.wikidata.org/sparql", data={"query": q, "format": "json"},
+                      headers={**UA, "Accept": "application/sparql-results+json"}, timeout=90)
     r.raise_for_status()
     return r.json()["results"]["bindings"]
 
@@ -342,29 +393,38 @@ def _pt(wkt):                                   # "Point(lon lat)"
 
 def companies():
     v = lambda b, k: (b.get(k) or {}).get("value")
-    out = {}
-    for b in _sparql(WD_HQ):
-        t, pt = (v(b, "ticker") or "").strip().upper(), _pt(v(b, "coord") or "")
+    out, isins = {}, isin_map()
+    listed = WD_LISTED.format(isins=" ".join(f'"{i}"' for i in isins))
+    tick = lambda b: isins.get((v(b, "isin") or "").strip())
+    for b in _sparql(WD_HQ.format(listed=listed)):
+        t, pt = tick(b), _pt(v(b, "coord") or "")
         if not t or not pt:
             continue
         c = out.setdefault(t, {"name": v(b, "coLabel"), "qid": v(b, "co").rsplit("/", 1)[-1], "hq": None, "sites": {}})
         if c["hq"] is None:
             c["hq"] = {"n": v(b, "fLabel"), "lat": pt[0], "lon": pt[1]}
-    time.sleep(2)
-    for b in _sparql(WD_FAC):
-        t, pt = (v(b, "ticker") or "").strip().upper(), _pt(v(b, "coord") or "")
-        if not t or not pt:
+    failed = []
+    for rel, link in WD_FAC.items():
+        time.sleep(2)
+        try:
+            rows = _sparql(WD_FAC_Q.format(listed=listed, link=link))
+        except Exception as exc:
+            failed.append(f"{rel}: {type(exc).__name__}")
             continue
-        c = out.setdefault(t, {"name": None, "qid": v(b, "co").rsplit("/", 1)[-1], "hq": None, "sites": {}})
-        q = v(b, "f").rsplit("/", 1)[-1]
-        s = c["sites"].setdefault(q, {"q": q, "n": v(b, "fLabel"), "lat": pt[0], "lon": pt[1], "types": [], "rel": v(b, "rel"), "via": v(b, "viaLabel")})
-        ty = v(b, "typeLabel")
-        if ty and ty not in s["types"] and len(s["types"]) < 3:
-            s["types"].append(ty)
+        for b in rows:
+            t, pt = tick(b), _pt(v(b, "coord") or "")
+            if not t or not pt:
+                continue
+            c = out.setdefault(t, {"name": None, "qid": v(b, "co").rsplit("/", 1)[-1], "hq": None, "sites": {}})
+            q = v(b, "f").rsplit("/", 1)[-1]
+            s_ = c["sites"].setdefault(q, {"q": q, "n": v(b, "fLabel"), "lat": pt[0], "lon": pt[1], "types": [], "rel": rel, "via": v(b, "viaLabel")})
+            ty = v(b, "typeLabel")
+            if ty and ty not in s_["types"] and len(s_["types"]) < 3:
+                s_["types"].append(ty)
     for c in out.values():
         c["sites"] = list(c["sites"].values())[:150]
-    return {"source": "Wikidata (CC0): NSE-listed companies, their headquarters and the facilities Wikidata lists them, or a subsidiary, as owning or operating",
-            "companies": out}
+    return {"source": "Wikidata (CC0): NIFTY 500 companies matched by ISIN, their headquarters and the facilities Wikidata lists them, or a subsidiary, as owning or operating",
+            "partial": failed, "companies": out}
 
 
 def weekly(name, fn, errors):

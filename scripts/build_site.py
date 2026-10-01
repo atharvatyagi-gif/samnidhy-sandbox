@@ -97,6 +97,8 @@ def main() -> None:
         shutil.copyfile(DATA / "nse_live" / "latest.json", SITE / "nse_live.json")
     if (DATA / "globe" / "latest.json").exists():   # live flights + real geopolitical news (scripts/globe_data.py)
         shutil.copyfile(DATA / "globe" / "latest.json", SITE / "globe.json")
+    if (DATA / "globe" / "layers").exists():        # map layers: lanes, cables, power plants, company sites (globe_static.py / globe_data.py)
+        shutil.copytree(DATA / "globe" / "layers", SITE / "globe" / "layers")
     if (DATA / "status.json").exists():   # the main page checks this to load a newer session by itself
         shutil.copyfile(DATA / "status.json", SITE / "status.json")
     if (DATA / "news" / "wire.json").exists():   # the terminal's News tab (scripts/news_wire.py)
