@@ -358,17 +358,19 @@ def isin_map():                                  # ISIN -> NSE symbol, from the 
         return {r["ISIN Code"].strip(): r["Symbol"].strip() for r in csv.DictReader(fh) if r.get("ISIN Code")}
 
 
-WD_HQ = """SELECT ?co ?coLabel ?isin ?f ?fLabel ?coord WHERE {{
+WD_HQ = """SELECT ?co ?coLabel ?isin ?tk ?f ?fLabel ?coord WHERE {{
   {listed}
   {{ ?co wdt:P159 ?f . ?f wdt:P625 ?coord . }} UNION {{ ?co wdt:P625 ?coord . BIND(?co AS ?f) }}
   SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }} }}"""
-WD_LISTED = "VALUES ?isin {{ {isins} }} ?co wdt:P946 ?isin ."
+# a NIFTY 500 company is found either by its ISIN or by its exact NSE ticker on Wikidata's stock-exchange statement
+WD_LISTED = """{{ VALUES ?isin {{ {isins} }} ?co wdt:P946 ?isin . }} UNION
+  {{ VALUES ?tk {{ {ticks} }} ?co p:P414 ?st . ?st pq:P249 ?tk ; ps:P414 ?ex . ?ex rdfs:label "National Stock Exchange of India"@en . }}"""
 WD_FAC = {
     "owner": "?f wdt:P127 ?co .",
     "operator": "?f wdt:P137 ?co .",
     "via subsidiary": "?via wdt:P749 ?co . ?f wdt:P127 ?via .",
 }
-WD_FAC_Q = """SELECT ?isin ?co ?f ?fLabel ?typeLabel ?coord ?viaLabel WHERE {{
+WD_FAC_Q = """SELECT ?isin ?tk ?co ?f ?fLabel ?typeLabel ?coord ?viaLabel WHERE {{
   {listed}
   {link}
   ?f wdt:P625 ?coord .
@@ -394,9 +396,18 @@ def _pt(wkt):                                   # "Point(lon lat)"
 def companies():
     v = lambda b, k: (b.get(k) or {}).get("value")
     out, isins = {}, isin_map()
-    listed = WD_LISTED.format(isins=" ".join(f'"{i}"' for i in isins))
-    tick = lambda b: isins.get((v(b, "isin") or "").strip())
-    for b in _sparql(WD_HQ.format(listed=listed)):
+    syms = set(isins.values())
+    listed = WD_LISTED.format(isins=" ".join(f'"{i}"' for i in isins), ticks=" ".join(f'"{t}"' for t in sorted(syms)))
+    listed_isin = "VALUES ?isin { " + " ".join(f'"{i}"' for i in isins) + " } ?co wdt:P946 ?isin ."
+
+    def ask(tmpl, **kw):                       # the ISIN+ticker query is heavier; if Wikidata times out, retry with ISIN only
+        try:
+            return _sparql(tmpl.format(listed=listed, **kw))
+        except Exception:
+            time.sleep(3)
+            return _sparql(tmpl.format(listed=listed_isin, **kw))
+    tick = lambda b: isins.get((v(b, "isin") or "").strip()) or ((v(b, "tk") or "").strip().upper() if (v(b, "tk") or "").strip().upper() in syms else None)
+    for b in ask(WD_HQ):
         t, pt = tick(b), _pt(v(b, "coord") or "")
         if not t or not pt:
             continue
@@ -407,7 +418,7 @@ def companies():
     for rel, link in WD_FAC.items():
         time.sleep(2)
         try:
-            rows = _sparql(WD_FAC_Q.format(listed=listed, link=link))
+            rows = ask(WD_FAC_Q, link=link)
         except Exception as exc:
             failed.append(f"{rel}: {type(exc).__name__}")
             continue

@@ -299,11 +299,11 @@ export class GlobeMap {
       this.counts.lanes = d.lines.length;
       this.asof.lanes = { src: d.source, when: "Reference map (CIA 2012, revised 2022)" };
     } else if (l.key === "cables") {
-      for (const c of d.cables) L.polyline(c.segs, { pane: "lines", color: c.col || l.col, weight: 1.3, opacity: 0.7 })
+      for (const c of d.cables) L.polyline(c.segs, { pane: "lines", color: c.col || l.col, weight: 1.1, opacity: 0.55 })
         .bindTooltip(esc(c.n)).bindPopup(`<b>${esc(c.n)}</b><br><span class="mut">Submarine cable · TeleGeography</span>${c.id ? `<br><a href="https://www.submarinecablemap.com/submarine-cable/${esc(c.id)}" target="_blank" rel="noopener">Details ↗</a>` : ""}`, { className: "globe-popup" }).addTo(lg);
       for (const p of d.landings) {
         const india = /, India$/.test(p.n || "");
-        L.circleMarker([p.lat, p.lon], { radius: india ? 4 : 2.5, color: india ? "#fff" : l.col, weight: india ? 1.5 : 0, fillColor: l.col, fillOpacity: 0.9 })
+        L.circleMarker([p.lat, p.lon], { radius: india ? 4 : 1.6, color: india ? "#fff" : l.col, weight: india ? 1.5 : 0, fillColor: l.col, fillOpacity: india ? 0.95 : 0.45 })
           .bindTooltip(`${esc(p.n)} · cable landing`).addTo(lg);
       }
       this.counts.cables = d.cables.length;
