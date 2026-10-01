@@ -11,7 +11,7 @@
 import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
 import { technicals, recommend } from "./chart-indicators.js";
 import { LIVE_RELAY_URL } from "./config.js";
-import { GlobeMap } from "./globe-map.js";
+import { GlobeMap, transitStats } from "./globe-map.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -29,6 +29,7 @@ let movMode = "gain", board = "All", sector = "", movSort = null, movLimit = 50,
 const inr = (v, d = 2) => v == null || isNaN(v) ? "--" : Number(v).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
 const us = (v, d = 2) => v == null ? "--" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 const sg = (v, d = 2) => v == null || isNaN(v) ? "--" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+const num1 = v => v == null ? "—" : v.toFixed(1);
 const ud = v => v == null || v === 0 ? "flat" : v > 0 ? "up" : "down";
 const big = v => v == null ? "--" : v >= 1e7 ? (v / 1e7).toFixed(2) + " Cr" : v >= 1e5 ? (v / 1e5).toFixed(2) + " L" : Math.round(v).toLocaleString("en-IN");
 const cr = v => v == null ? "--" : "₹" + Math.round(v).toLocaleString("en-IN") + " Cr";
@@ -195,7 +196,7 @@ function go(v, quiet) {
   $$("#tabs [data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === v && !b.dataset.side));
   history.replaceState(null, "", `#v=${v}${sec ? "&s=" + encodeURIComponent(sec) : ""}`);
   if (v === "terminal") requestAnimationFrame(() => { if (!eng.chart) drawChart(); });
-  if (v === "globe") { const gm = ensureGlobeMap(); if (gm && S.globe) gm.update(S.globe); requestAnimationFrame(() => gm && gm.resize()); }
+  if (v === "globe") { const gm = ensureGlobeMap(); if (gm && S.globe) gm.update(S.globe); if (gm) gm.setCompany(sec, (S.map.get(sec) || {}).n); requestAnimationFrame(() => gm && gm.resize()); }
   if (!quiet) $("#v-" + v).scrollTop = 0;
 }
 document.addEventListener("click", e => {
@@ -1264,6 +1265,24 @@ function renderGlobeBrief(G) {
     if (quietest.id !== busiest.id) cards.push(bcard("neutral", "Quietest right now", `${esc(quietest.name)} · ${quietest.flights.count} flight${quietest.flights.count === 1 ? "" : "s"}`,
       `${nActive} of 7 chokepoints busier than the group average.`, "Open on map", `data-choke="${esc(quietest.id)}"`));
   }
+  const pw = G.portwatch;
+  if (pw && (pw.chokepoints || []).length) {
+    // only chokepoints with real traffic (>= 5 ships/day on average before) - a 2-ships-to-0 swing is noise, not news
+    const st = pw.chokepoints.map(c => ({ c, st: transitStats(c) })).filter(x => x.st && x.st.chg != null && x.st.a90 >= 5);
+    if (st.length) {
+      const big = st.reduce((a, b) => Math.abs(b.st.chg) > Math.abs(a.st.chg) ? b : a);
+      const key = (G.chokepoints || []).find(p => p.portwatch_id === big.c.id);
+      cards.push(bcard(big.st.chg >= 0 ? "pos" : "neg", "Biggest change in ship traffic", `${esc(big.c.name)} <span class="${ud(big.st.chg)}">${sg(big.st.chg, 0)}%</span>`,
+        `${num1(big.st.a7)} ships/day over the last 7 published days vs ${num1(big.st.a90)} over the 90 before (IMF PortWatch, data through ${esc(big.st.through)}).`,
+        key ? "Open chokepoint" : "See it on the map", key ? `data-choke="${esc(key.id)}"` : `data-mapgo="${big.c.lat},${big.c.lon}"`));
+    }
+  }
+  const hz = G.hazards || {};
+  const reds = ((hz.gdacs || {}).items || []).filter(g => g.alert === "Red"), qk = ((hz.quakes || {}).items || []).slice().sort((a, b) => b.mag - a.mag)[0];
+  if (reds.length) cards.push(bcard("neg", "Red disaster alerts now", `${reds.length} red alert${reds.length === 1 ? "" : "s"} (GDACS)`,
+    esc(reds.slice(0, 3).map(g => `${g.name || g.country}`).join(" · ")), "See it on the map", `data-mapgo="${reds[0].lat},${reds[0].lon}"`));
+  else if (qk) cards.push(bcard(qk.mag >= 6.5 ? "neg" : "neutral", "Strongest earthquake, 7 days", `M${esc(qk.mag)} · ${esc(qk.place || "")}`,
+    `USGS, ${esc(newsTimeAgo(qk.time_utc))}.`, "See it on the map", `data-mapgo="${qk.lat},${qk.lon}"`));
   const secs = sectorStats();
   let bestSec = null;
   for (const p of pts) for (const [name, why] of (CHOKE_SECTORS[p.id] || [])) {
@@ -1283,6 +1302,7 @@ function renderGlobeBrief(G) {
   if (fresh) cards.push(`<a class="bcard neutral" href="${esc(fresh.url)}" target="_blank" rel="noopener noreferrer"><span class="lbl">Freshest real headline</span><span class="ttl">${esc(fresh.title)}</span><span class="sub">${esc(fresh.source || "")} · ${esc(fresh.choke)} · ${esc(newsTimeAgo(fresh.seen_utc))}</span><span class="go">Read the article →</span></a>`);
   el.innerHTML = cards.join("") || '<p class="empty">Not enough data yet for a brief - check back after the next hourly refresh.</p>';
   $$("#globe-brief [data-choke]").forEach(bt => bt.onclick = () => { selectChoke(bt.dataset.choke); $("#globe-map").scrollIntoView({ behavior: "smooth", block: "center" }); });
+  $$("#globe-brief [data-mapgo]").forEach(bt => bt.onclick = () => { const [la, lo] = bt.dataset.mapgo.split(",").map(Number); if (globeMap && globeMap.map) globeMap.map.flyTo([la, lo], 5, { duration: 0.8 }); $("#globe-map").scrollIntoView({ behavior: "smooth", block: "center" }); });
 }
 function renderGlobe() {
   const G = S.globe;
@@ -1307,6 +1327,11 @@ const CHOKE_SECTORS = {
   taiwan: [["Automobile and Auto Components", "the auto industry's 2021-22 chip shortage traced back to Taiwan"], ["Consumer Durables", "electronics assembly depends on Taiwan-made chips"]],
   bosphorus: [["Oil Gas & Consumable Fuels", "Black Sea oil route"]],
 };
+function shipLine(G, p) {                                  // real daily ship transits for this chokepoint (IMF PortWatch), if published
+  const c = p.portwatch_id && ((G.portwatch || {}).chokepoints || []).find(x => x.id === p.portwatch_id);
+  const st = transitStats(c); if (!st) return "";
+  return `<p class="gc-ships"><b>${num1(st.a7)}</b> ships/day, last 7 days · <span class="${ud(st.chg)}">${sg(st.chg, 0)}%</span> vs prior 90 days · ${num1(st.tanker7)} tankers/day <span class="src">(PortWatch, to ${esc(st.through)})</span></p>`;
+}
 function renderGlobeCards() {
   const el = $("#globe-cards"); if (!el) return;
   const G = S.globe;
@@ -1325,6 +1350,7 @@ function renderGlobeCards() {
     return `<div class="gc-card${globeSel === p.id ? " on" : ""}" data-id="${esc(p.id)}">
       <h4>${esc(p.name)}<span class="gc-r"><b>${n} flight${n === 1 ? "" : "s"} now</b>${badge}</span></h4>
       <p class="why">${esc(p.why)}</p>
+      ${shipLine(G, p)}
       ${secTags ? `<div class="gc-secs"><span class="lbl">Exposed NSE sectors, real move today</span>${secTags}</div>` : ""}
       ${news.length ? `<ul>${news.slice(0, 3).map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">${esc(a.title)}</a> <span class="src">· ${esc(a.source || "")} · ${esc(newsTimeAgo(a.seen_utc))}</span></li>`).join("")}</ul>`
         : '<p class="none">No recent news matched this chokepoint.</p>'}
@@ -1338,6 +1364,7 @@ async function openSec(sym) {
   if (!S.map.has(sym)) return;
   if (RP.on && !RP.syms.has(sym)) { toast(`Replay covers the NIFTY 50 only: exit replay to open ${sym}`); return; }
   sec = sym; eng.cancel(); descOpen = false; LIVE.dayVol = null; sendFocus();
+  if (globeMap) globeMap.setCompany(sym, (S.map.get(sym) || {}).n);
   history.replaceState(null, "", `#v=${view}&s=${encodeURIComponent(sym)}`);
   $$("#watch .wl-row").forEach(r => r.classList.toggle("sel", r.dataset.s === sym));
   renderHead(); renderDetails();
