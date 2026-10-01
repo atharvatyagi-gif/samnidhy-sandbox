@@ -2,6 +2,20 @@
 
 Branch: `terminal-v2`. Not merged to `main` by this plan or by any commit on this branch — ends in a PR for review, per the brief.
 
+## Status
+- **(a) Visual system + chrome + command line — done.** Black/amber Bloomberg-genre palette (every existing
+  screen re-themed via shared CSS variables, no per-component rewrites needed), square corners, reduced-motion
+  respected, light theme kept as an accessibility option. Always-visible command line (`SYMBOL FUNCTION`
+  grammar, fuzzy autocomplete, history, hash-sync), 17 function codes with honest "not built yet" messaging
+  for the ones without a screen yet, F1-F8 function-key bar, HELP directory, freshness lights (real ages,
+  reusing `renderAsOf()`), scrolling ticker tape + headline crawl (real data, CSS-only marquee). Market status
+  was already real (`livechip`) - no change needed there. Tested against the full regression suite
+  (click_all, replay, timeframes, globe) at every step; zero new failures. One real bug found and fixed by the
+  tests, not assumed away: blurring the command line after a command left a stray `Esc` falling through to
+  the pre-existing "nothing open -> go back to B-Lab" handler, silently navigating away.
+- **(b) MAP** — not started. Next.
+- **(c) remaining functions, (d) data additions** — not started.
+
 ## 1. Current state (what exists today, verified by reading the actual files, not assumed)
 
 - **Shell**: `expert-terminal.html` (tab bar: Brief/Terminal/Movers/Sectors/World/Outlook/News/Globe/Watchlist), `terminal.js` (~1,500 lines), `terminal.css`, behind Firebase sign-in (`auth-check.js`). `#v=<view>&s=<SYMBOL>` hash already drives navigation (`go()`, `terminal.js:190`) — the command-line grammar in this plan extends that, it doesn't replace it.
