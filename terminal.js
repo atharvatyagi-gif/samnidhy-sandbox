@@ -110,7 +110,7 @@ function applyNseLive() {
     S.quotes[sym] = { p: row.p, chg: row.chg, pct: row.pct, o: row.o, h: row.h, l: row.l, v: row.v, t: row.t ? row.t.slice(11, 19) : "live", d: todayIST(), nse: true, grp: row.grp };
   }
 }
-function renderAll() { renderAsOf(); renderMast(); renderGlobe(); renderTape(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); renderOutlook(); }
+function renderAll() { renderAsOf(); renderMast(); renderGlobe(); renderTape(); renderCrawl(); renderRegime(); renderBrief(); renderWatch(); renderMovers(); renderSectors(); renderWorld(); renderNews(); renderOutlook(); }
 /* Auto-update: every minute the desk checks every published file and redraws what changed, so it never needs a
    reload. Prices (t/quotes.json, ~15 min), news (every 15-30 min), world/markets (live.json), FII/DII, the B-Lab
    screen, the model outlook, and, when a new trading day is published, the whole stock list + end-of-day prices. */
@@ -122,7 +122,7 @@ async function poll() {
       getJSON("t/universe.json").catch(() => null), getJSON("predict.json").catch(() => null)]);
     lastCheck = Date.now(); checkOk = true;
     if (news && news.generated_utc !== S.news.generated_utc) S.news = news;
-    renderNews();                                            // ages move on even when the wire hasn't changed
+    renderNews(); renderCrawl();                              // ages move on even when the wire hasn't changed
     let changed = quotes.generated_utc !== S.qmeta.generated_utc || live.generated_utc !== S.live.generated_utc;
     if (screen && screen.generated_utc !== S.screen.generated_utc) { S.screen = screen; changed = true; }
     if (pred && pred.generated_utc !== (S.pred || {}).generated_utc) { S.pred = pred; changed = true; }
@@ -229,15 +229,27 @@ function renderMast() {
 }
 const mk = t => (S.live.markets || []).find(m => m.ticker === t) || null;
 const ix = c => (S.live.indices || []).find(r => r.code === c && !r.error) || null;
+// The tape and headline crawl are continuous CSS-animated marquees (pause on hover, prefers-reduced-motion
+// respected globally): the track's content is rendered twice back-to-back and the animation slides it by
+// exactly -50%, so the seam is invisible and it loops forever without any JS-driven timer.
 function renderTape() {
+  if (RP.on) { const L = S.idxLive["^NSEI"];
+    const html = `<span class="chip"><b>REPLAY</b><span class="v">${esc(dayLbl(RP.day))} ${esc(rpClock(RP.k))}</span></span>` + (L ? `<span class="chip"><b>NIFTY 50</b><span class="v">${us(L.p)}</span><em class="${ud(L.pct)}">${sg(L.pct)}%</em></span>` : "");
+    $("#tape-track").innerHTML = html + html; return; }
   const chips = [];
-  if (RP.on) { const L = S.idxLive["^NSEI"]; $("#tape").innerHTML = `<span class="chip"><b>REPLAY</b><span class="v">${esc(dayLbl(RP.day))} ${esc(rpClock(RP.k))}</span></span>` + (L ? `<span class="chip"><b>NIFTY 50</b><span class="v">${us(L.p)}</span><em class="${ud(L.pct)}">${sg(L.pct)}%</em></span>` : ""); return; }
   for (const c of ["NIFTY", "SENSEX", "NSEBANK"]) { const L = S.idxLive?.[IDX_OF[c]], r = ix(c); if (L) chips.push([c === "NSEBANK" ? "BANK NIFTY" : c, us(L.p), L.pct]); else if (r) chips.push([c === "NSEBANK" ? "BANK NIFTY" : c, us(r.value), r.pct]); }
   for (const [t, name, fmt] of [["^INDIAVIX", "INDIA VIX", v => v.toFixed(2)], ["INR=X", "USD/INR", v => "₹" + v.toFixed(2)], ["BZ=F", "BRENT", v => "$" + v.toFixed(2)],
     ["GC=F", "GOLD", v => "$" + us(v, 0)], ["^TNX", "US10Y", v => v.toFixed(2) + "%"]]) { const m = mk(t); if (m && !m.error) chips.push([name, fmt(m.value), m.change_pct]); }
   for (const c of ["SPX", "NKY", "HSI", "DAX"]) { const r = ix(c); if (r) chips.push([c, us(r.value), r.pct]); }
-  $("#tape").innerHTML = chips.map(([n, v, p]) => `<button class="chip" data-go="world" title="Open World"><b>${esc(n)}</b><span class="v">${esc(v)}</span><em class="${ud(p)}">${sg(p)}%</em></button>`).join("")
-    || '<span class="chip">Market tape not available</span>';
+  const html = chips.map(([n, v, p]) => `<button class="chip" data-go="world" title="Open World"><b>${esc(n)}</b><span class="v">${esc(v)}</span><em class="${ud(p)}">${sg(p)}%</em></button>`).join("");
+  $("#tape-track").innerHTML = html ? html + html : '<span class="chip">Market tape not available</span>';
+}
+function renderCrawl() {
+  const items = [];
+  for (const g of newsSources()) for (const s of g.sources) for (const it of s.items || []) if (it.t && it.u) items.push({ t: it.t, u: it.u, src: s.name, mins: it.mins });
+  items.sort((a, b) => (a.mins ?? 1e9) - (b.mins ?? 1e9));
+  const html = items.slice(0, 20).map(it => `<a href="${esc(it.u)}" target="_blank" rel="noopener noreferrer">${esc(it.t)}<span class="src">${esc(it.src || "")}</span></a>`).join("");
+  $("#crawl-track").innerHTML = html ? html + html : '<span class="empty">Headline wire not available.</span>';
 }
 function climate() {
   const f = [], nifty = mk("^NSEI"), vix = mk("^INDIAVIX"), br = (S.screen.universe_stats || {}).breadth_above_200dma, days = S.inst.days || [];

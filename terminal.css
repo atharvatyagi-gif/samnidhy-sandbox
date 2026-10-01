@@ -71,7 +71,7 @@ a { color: inherit; }
 kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-2); border-radius: var(--r); padding: 1px 6px; background: var(--card); }
 
 /* ---------------- frame ---------------- */
-.desk { height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 62px 40px auto 46px minmax(0, 1fr) 26px; }
+.desk { height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 62px 40px 26px auto 46px minmax(0, 1fr) 26px; }
 .desk > * { min-width: 0; }
 
 /* masthead */
@@ -116,11 +116,22 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .who { display: inline-flex; align-items: center; gap: 8px; font: 12px var(--mono); color: var(--ink-2); max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
 .av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--acc); color: var(--paper); font: 700 12px var(--mono); flex: none; }
 
-/* tape */
-.tape { display: flex; align-items: center; gap: 0; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--rule); background: var(--card); }
+/* tape: continuously-scrolling marquee (real index/FX/commodity chips), pauses on hover */
+.tape { overflow: hidden; white-space: nowrap; border-bottom: 1px solid var(--rule); background: var(--card); }
+.tape-track { display: inline-flex; align-items: center; animation: tapeScroll 50s linear infinite; }
+.tape:hover .tape-track { animation-play-state: paused; }
+@keyframes tapeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .chip { display: inline-flex; align-items: center; gap: 8px; height: 100%; padding: 0 16px; border-right: 1px solid var(--rule); font: 12px var(--mono); white-space: nowrap; }
 .chip:hover { background: var(--card-hover); }
 .chip b { font-weight: 600; letter-spacing: 0.03em; }
+/* headline crawl: same marquee mechanics, real news.json headlines */
+.crawl { overflow: hidden; white-space: nowrap; border-bottom: 1px solid var(--rule); background: var(--sunken); height: 26px; display: flex; align-items: center; }
+.crawl-track { display: inline-flex; align-items: center; gap: 36px; animation: tapeScroll 90s linear infinite; padding-left: 16px; }
+.crawl:hover .crawl-track { animation-play-state: paused; }
+.crawl a { color: var(--ink-2); text-decoration: none; font: 12px var(--sans); white-space: nowrap; }
+.crawl a:hover { color: var(--acc); }
+.crawl .src { color: var(--ink-4); font: 11px var(--mono); margin-left: 6px; }
+.crawl .empty { color: var(--ink-4); padding-left: 16px; font: 12px var(--sans); }
 .chip span.v { color: var(--ink-2); }
 .chip em { font-style: normal; padding: 1px 4px; border-radius: 0; }
 .chip em.up { background: var(--up-soft); } .chip em.down { background: var(--down-soft); }
@@ -347,7 +358,7 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 @media (max-width: 1280px) { .mstats span:not(.livechip):not(.clock) { display: none; } .statstrip { grid-template-columns: repeat(3, 1fr); } .statstrip div:nth-child(3) { border-right: 0; } }
 @media (max-width: 1000px) {
   body { overflow: auto; }
-  .desk { height: auto; min-height: 100vh; grid-template-rows: auto auto auto auto auto 26px; }
+  .desk { height: auto; min-height: 100vh; grid-template-rows: auto auto auto auto auto auto 26px; }
   .mast { flex-wrap: wrap; padding: 10px 14px; gap: 10px; } .cmdline { order: 5; flex-basis: 100%; } .who span:last-child, .mstats { display: none; }
   .tabs { overflow-x: auto; } .tabs .tab-side { display: none; }
   .view { position: static; } #v-terminal.on { display: block; }
@@ -390,7 +401,7 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 #v-terminal .wl-row .s, #v-terminal .wl-row .p, #v-terminal .wl-row .c { font-size: 12.5px; }
 /* on the chart, the regime strip folds away so the chart gets the height (it stays on every other tab) */
 .desk.on-terminal .regime { display: none; }
-@media (min-width: 1001px) { .desk.on-terminal { grid-template-rows: 62px 40px 46px minmax(0, 1fr) 26px; } }
+@media (min-width: 1001px) { .desk.on-terminal { grid-template-rows: 62px 40px 26px 46px minmax(0, 1fr) 26px; } }
 @media (max-width: 1000px) { .rail-watch { flex: none; max-height: 45vh; } #v-terminal .term { padding: 0; } }
 #v-terminal .legend { background: rgba(6,26,16,0.78); border-color: var(--rule); }
 
