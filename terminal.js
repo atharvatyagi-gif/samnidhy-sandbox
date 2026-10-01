@@ -19,7 +19,6 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const IST = "Asia/Kolkata";
 const POLL_MS = 60000;
 // (chart colours live in chart-engine.js)
-const COL_UNUSED = { up: "#00e060", upFill: "rgba(0,224,96,0.9)", down: "#e0a060", ink: "#e8dcc3", ink3: "#83795f", card: "#061a10", acc: "#00e060" };  // dark chart workspace (old terminal palette)
 const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
 const S = { uni: null, map: new Map(), quotes: {}, qmeta: {}, fund: null, live: {}, screen: {}, inst: {}, hist: {}, intra: {}, prevWei: {}, news: {} };
@@ -87,7 +86,7 @@ async function boot() {
   }
   const hp = new URLSearchParams(location.hash.slice(1));
   sec = hp.get("s") && S.map.has(hp.get("s")) ? hp.get("s") : (loadWatch()[0] || "RELIANCE");
-  $("#search-ph").textContent = `Search ${S.uni.count.toLocaleString("en-IN")} stocks or sections`;
+  $("#cmd").placeholder = `SYMBOL FUNCTION, e.g. RELIANCE CH · HELP for the list (${S.uni.count.toLocaleString("en-IN")} NSE securities)`;
   fillSectorSelect(); updIndCount(); buildTypeMenu(); renderAll();
   go(hp.get("v") || (hp.get("s") ? "terminal" : "brief"), true);
   openSec(sec);
@@ -177,6 +176,13 @@ function renderAsOf() {
   const ms = $("#ms-asof");
   if (ms) { ms.textContent = RP.on ? `REPLAY ${rpClock(RP.k).slice(0, 5)}` : LIVE.ok ? "REAL-TIME" : q.session_date ? `${priceStale ? "⚠ " : ""}${dayLbl(q.session_date)} · ${q.last_bar_ist || ""} IST` : "--"; ms.classList.toggle("stale", priceStale);
     ms.title = priceStale ? `Prices were last published ${agoTxt(pm)}: the next update is late` : `Prices as of ${dayLbl(q.session_date)} ${q.last_bar_ist || ""} IST, published ${agoTxt(pm)}`; }
+  // freshness lights: green <=20min, amber <=90min, red older/missing (prices/globe/news)
+  const light = (mins, label) => mins == null ? ["red", `${label}: not available`] : mins <= 20 ? ["green", `${label}: ${agoTxt(mins)}`] : mins <= 90 ? ["amber", `${label}: ${agoTxt(mins)}`] : ["red", `${label}: ${agoTxt(mins)} - late`];
+  for (const [id, mins, label] of [["fresh-p", LIVE.ok ? 0 : pm, "Prices"], ["fresh-g", gm, "Globe"], ["fresh-n", nm, "News"]]) {
+    const el = $("#" + id); if (!el) continue;
+    const [cls, title] = light(mins, label);
+    el.className = cls; el.title = title;
+  }
 }
 setInterval(renderAsOf, 5000);
 setInterval(() => {
@@ -1352,19 +1358,16 @@ async function openSec(sym) {
 
 /* ================= search ================= */
 const FUNCS = { BRIEF: "Brief", TERMINAL: "Terminal", MOVERS: "Movers", SECTORS: "Sectors", WORLD: "World", OUTLOOK: "Outlook", NEWS: "News", WATCHLIST: "Watchlist", SETUP: "Set up desk", BACK: "Back to B-Lab", LOGOFF: "Log off" };
-let qFilter = "all", qOpts = [], qAct = 0;
-let qAdd = false;                                       // search opened from "+ Add": the pick goes on the watchlist
-function openSearch(initial = "", add = false) { qAdd = add; $("#q").placeholder = add ? "Add a stock to your watchlist…" : "Symbol, company name, or a section (MOVERS, NEWS…)"; $("#search").hidden = false; const i = $("#q"); i.value = initial; i.focus(); runSearch(); }
-function closeSearch() { $("#search").hidden = true; }
-function runSearch() {
-  const Q = $("#q").value.trim().toUpperCase(), words = Q.split(/\s+/).filter(Boolean), joined = words.join("");
-  const fns = words.length === 1 && Q.length >= 2 ? Object.keys(FUNCS).filter(f => f.startsWith(Q)).map(f => ({ fn: f })) : [];
+// shared fuzzy symbol/company scorer (lower = better) used by both the "+ Add to watchlist" picker (modal,
+// below) and the command line's autocomplete (further down) - one matching algorithm, not two to keep in sync.
+function scoreStocks(Q, filter) {
+  const words = Q.split(/\s+/).filter(Boolean), joined = words.join("");
   const out = [];
   for (const s of S.uni.stocks) {
-    if (qFilter === "Main" && (s.board !== "Main" || s.etf)) continue;
-    if (qFilter === "SME" && s.board !== "SME") continue;
-    if (qFilter === "etf" && !s.etf) continue;
-    if (qFilter === "n500" && !s.n500) continue;
+    if (filter === "Main" && (s.board !== "Main" || s.etf)) continue;
+    if (filter === "SME" && s.board !== "SME") continue;
+    if (filter === "etf" && !s.etf) continue;
+    if (filter === "n500" && !s.n500) continue;
     let sc;
     if (!Q) sc = 5;
     else { const nw = s.n.toUpperCase().split(/[^A-Z0-9&]+/), hit = words.every(t => nw.some(w => w.startsWith(t)));
@@ -1372,7 +1375,16 @@ function runSearch() {
     if (sc < 9) out.push([sc, -((s.v || 0) * (s.c || 0)), s]);
   }
   out.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  qOpts = [...fns, ...out.slice(0, 50).map(r => ({ s: r[2] }))]; qAct = 0;
+  return out.map(r => r[2]);
+}
+let qFilter = "all", qOpts = [], qAct = 0;
+let qAdd = false;                                       // search opened from "+ Add": the pick goes on the watchlist
+function openSearch(initial = "", add = false) { qAdd = add; $("#q").placeholder = add ? "Add a stock to your watchlist…" : "Symbol, company name, or a section (MOVERS, NEWS…)"; $("#search").hidden = false; const i = $("#q"); i.value = initial; i.focus(); runSearch(); }
+function closeSearch() { $("#search").hidden = true; }
+function runSearch() {
+  const Q = $("#q").value.trim().toUpperCase(), words = Q.split(/\s+/).filter(Boolean);
+  const fns = words.length === 1 && Q.length >= 2 ? Object.keys(FUNCS).filter(f => f.startsWith(Q)).map(f => ({ fn: f })) : [];
+  qOpts = [...fns, ...scoreStocks(Q, qFilter).slice(0, 50).map(s => ({ s }))]; qAct = 0;
   $("#q-list").innerHTML = qOpts.map((o, i) => {
     if (o.fn) return `<li role="option" data-i="${i}" aria-selected="${i === qAct}"><span class="lg">→</span><span class="fn">${o.fn}</span><span class="n">${esc(FUNCS[o.fn])}</span><span class="t">section</span><span></span></li>`;
     const x = q(o.s.s);
@@ -1400,8 +1412,113 @@ $("#q").addEventListener("keydown", e => {
 $("#q-list").addEventListener("click", e => { const li = e.target.closest("li[role=option]"); if (li) chooseQ(qOpts[+li.dataset.i]); });
 $$("#q-tabs button").forEach(b => b.onclick = () => { qFilter = b.dataset.f; $$("#q-tabs button").forEach(x => x.classList.toggle("on", x === b)); runSearch(); $("#q").focus(); });
 $("#search").addEventListener("mousedown", e => { if (e.target.id === "search") closeSearch(); });
-$("#open-search").onclick = () => openSearch();
 $("#wl-add").onclick = () => openSearch("", true);
+
+/* ================= command line (always-visible, masthead) ================= */
+// Grammar: SYMBOL FUNCTION <Enter>, e.g. "RELIANCE CH", "NIFTY MOV", or a bare FUNCTION with no symbol
+// ("MAP", "HELP"). Every command that actually navigates goes through go()/openSec(), so the URL hash stays
+// the single source of truth - sharing a page always works, back/forward always works.
+function openAndGo(sym, view) { if (!S.map.has(sym)) { toast(`Unknown symbol: ${sym}`); return; } openSec(sym); go(view); }
+function notBuilt(code) { toast(`${code} isn't built yet - it's on the plan (docs/TERMINAL_PLAN.md), coming in a later step.`); }
+const FUNC_CODES = {
+  OV: { label: "Security overview", needsSym: true, run: sym => openAndGo(sym, "terminal") },
+  CH: { label: "Chart", needsSym: true, run: sym => openAndGo(sym, "terminal") },
+  ID: { label: "Intraday", needsSym: true, run: sym => openAndGo(sym, "terminal") },
+  HIS: { label: "Historical table + CSV", needsSym: true, run: () => notBuilt("HIS") },
+  FIN: { label: "Financials / ratios", needsSym: true, run: () => notBuilt("FIN") },
+  PEER: { label: "Peer comparison", needsSym: true, run: () => notBuilt("PEER") },
+  MOV: { label: "Movers", run: () => go("movers") },
+  SEC: { label: "Sector heat", run: () => go("sectors") },
+  HEAT: { label: "NIFTY 500 treemap", run: () => notBuilt("HEAT") },
+  SCR: { label: "Screener", run: () => notBuilt("SCR") },
+  FII: { label: "FII/DII flows", run: () => go("world") },
+  NEWS: { label: "News", run: () => go("news") },
+  OUT: { label: "Outlook / ALADIN model", run: () => go("outlook") },
+  CORR: { label: "Correlation matrix", run: () => notBuilt("CORR") },
+  WATCH: { label: "Watchlist", run: () => { go("terminal"); setSide("watch"); } },
+  MAP: { label: "World map: flights, chokepoints, real news", run: () => go("globe") },
+  HELP: { label: "Function directory", run: () => openHelp() },
+};
+let cmdOpts = [], cmdAct = -1, cmdHist = [], cmdHistAt = -1;
+function closeCmd() { $("#cmd-list").hidden = true; $("#cmd").setAttribute("aria-expanded", "false"); cmdOpts = []; cmdAct = -1; }
+function focusCmd(initial = "") { const i = $("#cmd"); i.value = initial; i.focus(); i.setSelectionRange(initial.length, initial.length); runCmd(); }
+function paintCmd() {
+  $$("#cmd-list li[role=option]").forEach(li => li.classList.toggle("on", +li.dataset.i === cmdAct));
+  $("#cmd-list li.on")?.scrollIntoView({ block: "nearest" });
+}
+function runCmd() {
+  const raw = $("#cmd").value, Q = raw.trim().toUpperCase(), words = Q.split(/\s+/).filter(Boolean);
+  if (!words.length) { closeCmd(); return; }
+  const last = words[words.length - 1];
+  const codeMatches = Object.keys(FUNC_CODES).filter(c => c.startsWith(last));
+  let out = [];
+  if (words.length > 1 && FUNC_CODES[last]) {                       // "SYMBOL CODE" with a complete, known code: resolve the symbol part
+    const symQ = words.slice(0, -1).join(" ");
+    out = scoreStocks(symQ, "all").slice(0, 8).map(s => ({ s, code: last }));
+  } else {
+    const symOut = scoreStocks(Q, "all").slice(0, 8).map(s => ({ s }));
+    const codeOut = codeMatches.map(c => ({ code: c }));
+    out = words.length === 1 ? [...codeOut, ...symOut] : symOut;
+  }
+  cmdOpts = out; cmdAct = out.length ? 0 : -1;
+  $("#cmd-list").innerHTML = cmdOpts.map((o, i) => {
+    if (o.s && o.code) return `<li role="option" data-i="${i}" class="${i === cmdAct ? "on" : ""}"><span class="lg">${esc(o.s.s[0])}</span><span class="s">${esc(o.s.s)}</span><span class="n">${esc(o.s.n)}</span><span class="t">${esc(o.code)} · ${esc(FUNC_CODES[o.code].label)}</span></li>`;
+    if (o.code) return `<li role="option" data-i="${i}" class="${i === cmdAct ? "on" : ""}"><span class="lg">→</span><span class="s">${esc(o.code)}</span><span class="n">${esc(FUNC_CODES[o.code].label)}</span><span class="t">function</span></li>`;
+    const x = q(o.s.s);
+    return `<li role="option" data-i="${i}" class="${i === cmdAct ? "on" : ""}"><span class="lg">${esc(o.s.s[0])}</span><span class="s">${esc(o.s.s)}</span><span class="n">${esc(o.s.n)}</span><span class="q">${inr(x?.p)} <span class="${ud(x?.pct)}">${sg(x?.pct)}%</span></span></li>`;
+  }).join("") || `<li class="empty">No matches. Try a symbol, or HELP for the function list.</li>`;
+  $("#cmd-list").hidden = false; $("#cmd").setAttribute("aria-expanded", "true");
+}
+function commitCmd(opt) {
+  const raw = $("#cmd").value.trim();
+  if (raw) { cmdHist = cmdHist.filter(h => h !== raw); cmdHist.unshift(raw); cmdHist = cmdHist.slice(0, 50); }
+  cmdHistAt = -1;
+  if (opt) {
+    if (opt.s && opt.code) FUNC_CODES[opt.code].run(opt.s.s);
+    else if (opt.code) { if (FUNC_CODES[opt.code].needsSym) toast(`${opt.code} needs a symbol first, e.g. RELIANCE ${opt.code}`); else FUNC_CODES[opt.code].run(); }
+    else openAndGo(opt.s.s, "terminal");
+    $("#cmd").value = ""; closeCmd(); return;
+  }
+  // free text with no dropdown selection: try the grammar directly
+  const Q = raw.toUpperCase(), words = Q.split(/\s+/).filter(Boolean);
+  if (words.length >= 2 && FUNC_CODES[words[words.length - 1]]) {
+    const code = words[words.length - 1], symQ = words.slice(0, -1).join(" ");
+    const hit = S.map.has(symQ.replace(/\s+/g, "")) ? symQ.replace(/\s+/g, "") : (scoreStocks(symQ, "all")[0] || {}).s;
+    if (hit) { FUNC_CODES[code].needsSym ? FUNC_CODES[code].run(hit) : FUNC_CODES[code].run(hit); $("#cmd").value = ""; closeCmd(); return; }
+  } else if (words.length === 1 && FUNC_CODES[words[0]]) {
+    const f = FUNC_CODES[words[0]]; if (f.needsSym) toast(`${words[0]} needs a symbol first, e.g. RELIANCE ${words[0]}`); else f.run();
+    $("#cmd").value = ""; closeCmd(); return;
+  } else if (words.length === 1 && S.map.has(words[0])) {
+    openAndGo(words[0], "terminal"); $("#cmd").value = ""; closeCmd(); return;
+  }
+  toast(`Didn't recognise "${raw}" - try a symbol, SYMBOL CODE, or HELP for the function list.`);
+}
+function openHelp(filter = "") {
+  const f = filter.trim().toUpperCase();
+  const rows = Object.entries(FUNC_CODES).filter(([c, fn]) => !f || c.includes(f) || fn.label.toUpperCase().includes(f))
+    .map(([c, fn]) => `<tr><td class="num">${esc(c)}</td><td>${esc(fn.label)}</td><td class="mut">${fn.needsSym ? `e.g. RELIANCE ${esc(c)}` : esc(c)}</td></tr>`).join("");
+  $("#help-list").innerHTML = rows || '<tr><td colspan="3" class="empty">No matching function.</td></tr>';
+  $("#help").hidden = false; $("#help-q").focus();
+}
+function closeHelp() { $("#help").hidden = true; }
+$("#help-q").addEventListener("input", e => openHelp(e.target.value));
+$("#help").addEventListener("mousedown", e => { if (e.target.id === "help") closeHelp(); });
+$("#help-close").onclick = closeHelp;
+$("#cmd").addEventListener("input", runCmd);
+$("#cmd").addEventListener("keydown", e => {
+  if (e.key === "ArrowDown") { if ($("#cmd-list").hidden) runCmd(); else { cmdAct = Math.min(cmdOpts.length - 1, cmdAct + 1); paintCmd(); } e.preventDefault(); }
+  else if (e.key === "ArrowUp") {
+    if (!$("#cmd").value && cmdHist.length) { cmdHistAt = Math.min(cmdHist.length - 1, cmdHistAt + 1); $("#cmd").value = cmdHist[cmdHistAt]; e.preventDefault(); return; }
+    cmdAct = Math.max(0, cmdAct - 1); paintCmd(); e.preventDefault();
+  }
+  else if (e.key === "Tab" && cmdOpts[cmdAct]) { const o = cmdOpts[cmdAct]; $("#cmd").value = o.s ? o.s.s + (o.code ? " " + o.code : "") : o.code; e.preventDefault(); runCmd(); }
+  else if (e.key === "Enter") { commitCmd(cmdOpts[cmdAct] || null); e.preventDefault(); }
+});
+$("#cmd-list").addEventListener("click", e => { const li = e.target.closest("li[role=option]"); if (li) commitCmd(cmdOpts[+li.dataset.i]); });
+$$("#fkeys button").forEach(b => b.onclick = () => {
+  const f = FUNC_CODES[b.dataset.code];
+  if (f.needsSym) { if (sec) f.run(sec); else toast(`${b.dataset.code} needs a symbol first, e.g. RELIANCE ${b.dataset.code}`); } else f.run();
+});
 
 /* ================= desk setup (first visit) ================= */
 const LANES = [
@@ -1439,9 +1556,22 @@ $("#ob-open").onclick = () => {
 $("#setup-btn").onclick = openOnboard;
 
 /* ================= keyboard ================= */
+// F1-F8 mirror the function-key bar at the bottom (same codes as the command line). Browsers/OSes reserve a
+// few of these (F1 help, F3 find, F5 refresh) in some combinations; preventDefault() overrides it on this
+// page in every browser tested here, but it's a known limitation of running function-key shortcuts on the
+// web rather than dedicated hardware - documented, not silently assumed to work everywhere.
+const FKEYS = { F1: "HELP", F2: "WATCH", F3: "CH", F4: "NEWS", F5: "MOV", F6: "MAP", F7: "SCR", F8: "OUT" };
 document.addEventListener("keydown", e => {
   const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if (FKEYS[e.key] && !(!$("#onboard").hidden)) {
+    e.preventDefault();
+    const f = FUNC_CODES[FKEYS[e.key]];
+    if (f.needsSym) { if (sec) f.run(sec); else toast(`${FKEYS[e.key]} needs a symbol first, e.g. RELIANCE ${FKEYS[e.key]}`); } else f.run();
+    return;
+  }
   if (e.key === "Escape") {
+    if (document.activeElement === $("#cmd")) { closeCmd(); $("#cmd").blur(); return; }
+    if (!$("#help").hidden) { closeHelp(); return; }
     if (!$("#search").hidden) { closeSearch(); return; }
     if (!$("#onboard").hidden) { $("#ob-skip").click(); return; }
     if (document.querySelector(".eng-modal")) return;
@@ -1456,8 +1586,8 @@ document.addEventListener("keydown", e => {
   if (!typing && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && view === "terminal") { e.preventDefault(); eng.undo(); return; }
   if (typing || e.ctrlKey || e.metaKey || !$("#onboard").hidden) return;
   if (e.key === " " && RP.on) { e.preventDefault(); $("#rp-play").click(); return; }
-  if (e.key === "/") { e.preventDefault(); openSearch(); return; }
-  if (e.key.length === 1 && /[a-z0-9]/i.test(e.key)) { e.preventDefault(); openSearch(e.key); }
+  if (e.key === "/") { e.preventDefault(); focusCmd(); return; }
+  if (e.key.length === 1 && /[a-z0-9]/i.test(e.key)) { e.preventDefault(); focusCmd(e.key); }
 });
 
 boot();

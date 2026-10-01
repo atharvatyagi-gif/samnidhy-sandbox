@@ -26,13 +26,19 @@
       <a class="wordmark" href="#brief" data-go="brief">B-LAB DESK</a>
       <span class="sub">NSE market intelligence · TAPMI · est. 2026</span>
     </div>
-    <button class="search-btn" id="open-search" title="Search (/)"><span class="k">/</span><span class="ph" id="search-ph">Search NSE stocks, or press / to jump</span><kbd>/</kbd></button>
+    <div class="cmdline" id="cmdline">
+      <span class="cmd-k">/</span>
+      <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="SYMBOL FUNCTION, e.g. RELIANCE CH · HELP for the list" aria-label="Command line" aria-autocomplete="list" aria-expanded="false" role="combobox">
+      <kbd>Esc</kbd>
+      <ul class="cmd-list" id="cmd-list" role="listbox" hidden></ul>
+    </div>
     <div class="mstats">
       <span class="livechip" id="livechip"><i></i><b id="live-txt">LIVE</b></span>
       <span class="asof-m" id="ms-asof" title="When the prices on this page were last updated">--</span>
       <span class="ms-opt">STOCKS <b id="ms-stocks">--</b></span>
       <span class="ms-opt">LIVE PRICES <b id="ms-live">--</b></span>
       <span class="ms-ad">ADV / DEC <b id="ms-ad">--</b></span>
+      <span class="fresh" id="fresh" aria-label="Data freshness"><i class="p" id="fresh-p"></i><i class="g" id="fresh-g"></i><i class="n" id="fresh-n"></i></span>
       <span class="clock" id="clock">--:--:-- IST</span>
     </div>
     <div class="acct">
@@ -267,6 +273,18 @@
     <span class="grow"></span>
     <span class="warn">Real data only · delayed · educational analysis only, not investment advice</span>
   </footer>
+
+  <!-- function-key bar: fixed overlay, same codes as the command line -->
+  <nav class="fkeys" id="fkeys" aria-label="Function keys">
+    <button data-code="HELP"><kbd>F1</kbd>HELP</button>
+    <button data-code="WATCH"><kbd>F2</kbd>WATCH</button>
+    <button data-code="CH"><kbd>F3</kbd>CH</button>
+    <button data-code="NEWS"><kbd>F4</kbd>NEWS</button>
+    <button data-code="MOV"><kbd>F5</kbd>MOV</button>
+    <button data-code="MAP"><kbd>F6</kbd>MAP</button>
+    <button data-code="SCR"><kbd>F7</kbd>SCR</button>
+    <button data-code="OUT"><kbd>F8</kbd>OUT</button>
+  </nav>
 </div>
 
 <!-- search -->
@@ -276,6 +294,15 @@
     <div class="m-tabs" id="q-tabs"><button data-f="all" class="on">All</button><button data-f="Main">Main board</button><button data-f="SME">SME</button><button data-f="etf">ETFs</button><button data-f="n500">NIFTY 500</button></div>
     <ul class="m-list" id="q-list" role="listbox"></ul>
     <div class="m-foot" id="q-foot"></div>
+  </div>
+</div>
+
+<!-- HELP: function directory -->
+<div class="modal" id="help" hidden>
+  <div class="m-box" role="dialog" aria-label="Function directory">
+    <div class="m-in"><span>HELP</span><input id="help-q" type="text" autocomplete="off" spellcheck="false" placeholder="Filter functions…"><kbd>Esc</kbd></div>
+    <table class="tbl"><thead><tr><th>Code</th><th>Screen</th><th>Example</th></tr></thead><tbody id="help-list"></tbody></table>
+    <div class="m-foot"><button class="btn-line sm" id="help-close">Close</button></div>
   </div>
 </div>
 
