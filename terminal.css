@@ -615,7 +615,7 @@ html, body { background: var(--paper); color: var(--ink); }
 .leaflet-popup-content { font: 12px/1.5 var(--sans); margin: 9px 12px; }
 .leaflet-popup-content b { color: var(--acc); }
 .leaflet-tooltip { background: var(--card) !important; color: var(--ink) !important; border-color: var(--rule-2) !important; font: 11px var(--mono) !important; }
-.fp-popup .leaflet-popup-content { margin: 10px 12px; width: auto !important; }
+.fp-popup .leaflet-popup-content { margin: 10px 12px; width: auto !important; max-height: min(420px, 60vh); overflow-y: auto; }
 .fp h5 { margin: 0 0 6px; font: 700 13px var(--sans); color: var(--ink); }
 .fp-al { font: 600 10.5px var(--mono); color: var(--acc); }
 .fp-emg { margin: -2px 0 8px; padding: 3px 7px; border-radius: 3px; background: var(--down-soft); color: var(--down); font: 700 11px var(--mono); }

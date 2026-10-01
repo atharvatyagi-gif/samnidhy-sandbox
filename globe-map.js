@@ -347,12 +347,12 @@ export class GlobeMap {
     // the 7 key chokepoints (pins tied to the cards below the map)
     this.layers.key7.clearLayers(); this.markers.clear();
     for (const p of data.chokepoints || []) {
-      const n = (p.flights && p.flights.count) || 0, c = p.portwatch_id && this.pwById.get(p.portwatch_id), st = transitStats(c);
+      const n = (p.flights && p.flights.count) || 0, c = p.portwatch_id && this.pwById.get(p.portwatch_id);
       const m = L.marker([p.lat, p.lon], { icon: pinIcon(this.flagOf(p.id)), keyboard: true, alt: p.name, title: p.name, zIndexOffset: 500 })
         .bindPopup(`<div class="fp"><h5>${esc(p.name)}</h5><p class="why">${esc(p.why)}</p>
-          ${table([["Aircraft overhead now", num(n)], ...(st ? [["Ships/day, last 7 days", `${num(st.a7, 1)} (${chgHtml(st.chg)} vs 90d)`]] : [])])}
+          ${table([["Aircraft overhead now", num(n)]])}
           ${c ? transitBlock(c) : ""}</div>`, { className: "globe-popup fp-popup", minWidth: 270, maxWidth: 290 })
-        .on("click", () => this.select(p.id))
+        .on("click", () => this.select(p.id, true))
         .addTo(this.layers.key7);
       const elm = m.getElement(); if (elm) elm.setAttribute("data-id", p.id);
       this.markers.set(p.id, m);
@@ -504,13 +504,16 @@ export class GlobeMap {
   resize() {                                                // Leaflet sizes itself from its container at construction time;
     this.ready.then(() => { if (this.map) this.map.invalidateSize(); });   // if it was hidden (display:none) then, tiles come out wrong until this runs
   }
-  select(id) {                                              // one entry point for both the map and the cards (terminal.js)
+  select(id, fromMap = false) {                             // one entry point for both the map and the cards (terminal.js)
     this.sel = this.sel === id ? null : id;
     for (const [pid, m] of this.markers) {
       m.setIcon(pinIcon(this.flagOf(pid)));
       const elm = m.getElement(); if (elm) elm.setAttribute("data-id", pid);
     }
-    if (this.sel && this.map) { const p = (this.data.chokepoints || []).find(x => x.id === this.sel); if (p) this.map.flyTo([p.lat, p.lon], Math.max(this.map.getZoom(), 6), { duration: 0.8 }); }
+    if (this.sel && this.map && !fromMap) {                 // from a card: fly there, then open its popup (a map click already has the popup open)
+      const p = (this.data.chokepoints || []).find(x => x.id === this.sel), m = this.markers.get(this.sel);
+      if (p) { this.map.once("moveend", () => m && m.openPopup()); this.map.flyTo([p.lat, p.lon], Math.max(this.map.getZoom(), 5), { duration: 0.8 }); }
+    }
     this.hooks.onSelect?.(this.sel);
   }
 }

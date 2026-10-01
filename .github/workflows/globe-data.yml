@@ -18,7 +18,7 @@ on:
     - cron: "20 * * * *"   # hourly backup in case the heartbeat is ever down
   workflow_dispatch:
   push:
-    branches: [main, globe-detailed]
+    branches: [main]
     paths: [".github/workflows/globe-data.yml", "scripts/globe_data.py", "scripts/globe_static.py"]
 
 permissions:

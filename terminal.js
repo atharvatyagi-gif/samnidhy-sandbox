@@ -1267,7 +1267,8 @@ function renderGlobeBrief(G) {
   }
   const pw = G.portwatch;
   if (pw && (pw.chokepoints || []).length) {
-    const st = pw.chokepoints.map(c => ({ c, st: transitStats(c) })).filter(x => x.st && x.st.chg != null);
+    // only chokepoints with real traffic (>= 5 ships/day on average before) - a 2-ships-to-0 swing is noise, not news
+    const st = pw.chokepoints.map(c => ({ c, st: transitStats(c) })).filter(x => x.st && x.st.chg != null && x.st.a90 >= 5);
     if (st.length) {
       const big = st.reduce((a, b) => Math.abs(b.st.chg) > Math.abs(a.st.chg) ? b : a);
       const key = (G.chokepoints || []).find(p => p.portwatch_id === big.c.id);
