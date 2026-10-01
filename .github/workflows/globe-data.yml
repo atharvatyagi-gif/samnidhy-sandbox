@@ -18,8 +18,8 @@ on:
     - cron: "20 * * * *"   # hourly backup in case the heartbeat is ever down
   workflow_dispatch:
   push:
-    branches: [main]
-    paths: [".github/workflows/globe-data.yml", "scripts/globe_data.py"]
+    branches: [main, globe-detailed]
+    paths: [".github/workflows/globe-data.yml", "scripts/globe_data.py", "scripts/globe_static.py"]
 
 permissions:
   contents: write
@@ -43,7 +43,7 @@ jobs:
       - name: Install Python packages
         run: pip install -r requirements.txt
 
-      - name: Live flights (OpenSky) and geopolitical news (GDELT) around 7 chokepoints
+      - name: Flights, news, ship transits, hazards and map layers
         run: python scripts/globe_data.py
 
       - name: Save it to the repository (the next Live prices run publishes it)
@@ -55,6 +55,6 @@ jobs:
             echo "Nothing new to save."
           else
             git commit -q -m "Globe data: $(date -u +%Y-%m-%d\ %H:%M) UTC"
-            git pull --rebase origin main
-            git push origin HEAD:main
+            git pull --rebase origin "$GITHUB_REF_NAME"
+            git push origin "HEAD:$GITHUB_REF_NAME"
           fi
