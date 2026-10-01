@@ -155,7 +155,7 @@ export class GlobeMap {
       this.naturalLayer = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 6 }).addTo(this.map);
       this.alertLayer = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 6 }).addTo(this.map);
 
-      L.control.layers(this.baseLayers, {
+      this.layerControl = L.control.layers(this.baseLayers, {
         "Chokepoints": this.chokeLayer, "Live flights": this.flightLayer,
         "Disruptions (PortWatch)": this.disruptionLayer, "Earthquakes M4.5+ (USGS)": this.quakeLayer,
         "Natural events, 7d (NASA EONET)": this.naturalLayer, "Disaster alerts (GDACS)": this.alertLayer,
@@ -189,8 +189,45 @@ export class GlobeMap {
       this.map.on("mousemove", e => { if (this.coordEl) this.coordEl.textContent = `${e.latlng.lat.toFixed(2)}, ${e.latlng.lng.toFixed(2)}`; });
 
       this.msg.hidden = true;
+      await this.loadSlowLayers();   // shipping lanes, cables, power plants - fetched once, change at most weekly
     } catch (e) {
       this.msg.textContent = "The map couldn't load (needs an internet connection the first time). Chokepoint cards below still work.";
+    }
+  }
+  async loadSlowLayers() {
+    const L = window.L;
+    this.laneLayer = L.layerGroup();
+    this.cableLayer = L.layerGroup();
+    this.plantLayer = L.layerGroup();
+    const FUEL_COLOR = { Coal: "#8a8a8a", Gas: "#ffa028", Hydro: "#4fc3f7", Solar: "#ffd400", Wind: "#2ecc71", Nuclear: "#a78bfa", Oil: "#ff4d4d" };
+    try {
+      const lanes = await fetch("globe/layers/shipping_lanes.json").then(r => r.ok ? r.json() : null);
+      if (lanes) for (const lane of lanes.lanes || []) {
+        const w = lane.type === "Major" ? 1.4 : lane.type === "Middle" ? 1 : 0.6;
+        const op = lane.type === "Major" ? 0.55 : lane.type === "Middle" ? 0.4 : 0.25;
+        for (const line of lane.lines) L.polyline(line.map(([x, y]) => [y, x]), { color: "#4fc3f7", weight: w, opacity: op })
+          .bindTooltip(`${esc(lane.type)} shipping lane`).addTo(this.laneLayer);
+      }
+    } catch (e) { /* optional layer: map still works without it */ }
+    try {
+      const cables = await fetch("globe/layers/cables.json").then(r => r.ok ? r.json() : null);
+      if (cables) {
+        for (const c of cables.cables || []) for (const line of c.lines) L.polyline(line.map(([x, y]) => [y, x]), { color: "#ffa028", weight: 0.8, opacity: 0.3 })
+          .bindTooltip(esc(c.name || "Submarine cable")).addTo(this.cableLayer);
+        for (const lp of cables.landing_points || []) L.circleMarker([lp.lat, lp.lon], { radius: lp.india ? 4 : 2.5, weight: 0, fillColor: lp.india ? "#ffa028" : "#8a8a8a", fillOpacity: 0.8 })
+          .bindTooltip(esc(lp.name)).addTo(this.cableLayer);
+      }
+    } catch (e) { /* optional layer */ }
+    try {
+      const plants = await fetch("globe/layers/power_plants_india.json").then(r => r.ok ? r.json() : null);
+      if (plants) for (const p of plants.plants || []) L.circleMarker([p.lat, p.lon], { radius: Math.max(3, Math.min(10, p.capacity_mw / 300)), weight: 1, color: "#04120b", fillColor: FUEL_COLOR[p.fuel] || "#8a8a8a", fillOpacity: 0.8 })
+        .bindPopup(hazardPopup(p.name, [["Fuel", p.fuel], ["Capacity", `${p.capacity_mw.toLocaleString("en-IN")} MW`], ["Commissioned", p.commissioning_year], ["Data vintage", p.data_vintage]], "WRI Global Power Plant Database - not real-time"), { className: "globe-popup" })
+        .addTo(this.plantLayer);
+    } catch (e) { /* optional layer */ }
+    if (this.layerControl) {
+      this.layerControl.addOverlay(this.laneLayer, "Shipping lanes");
+      this.layerControl.addOverlay(this.cableLayer, "Submarine cables");
+      this.layerControl.addOverlay(this.plantLayer, "Power plants, India ≥100MW");
     }
   }
   async update(data) {
