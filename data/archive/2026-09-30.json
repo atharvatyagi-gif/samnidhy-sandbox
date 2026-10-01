@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-01T03:30:51+00:00",
+  "generated_on": "2026-10-01T08:15:16+00:00",
   "session_date": "2026-09-30",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,8 +40,8 @@
         "turnover_crore": 895.95
       },
       "latest_close": 117.09,
-      "trailing_pe": 17.821917,
-      "market_cap": 110124982272,
+      "trailing_pe": 16.728527,
+      "market_cap": 102582050816,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
@@ -69,8 +69,8 @@
         "turnover_crore": 2154.73
       },
       "latest_close": 605.0,
-      "trailing_pe": 14.897808,
-      "market_cap": 238421180416,
+      "trailing_pe": 15.182801,
+      "market_cap": 232391704576,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
@@ -98,8 +98,8 @@
         "turnover_crore": 1069.52
       },
       "latest_close": 209.05,
-      "trailing_pe": 24.0841,
-      "market_cap": 100470218752,
+      "trailing_pe": 23.5553,
+      "market_cap": 98264252416,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
@@ -127,8 +127,8 @@
         "turnover_crore": 450.92
       },
       "latest_close": 770.0,
-      "trailing_pe": 55.555557,
-      "market_cap": 581317754880,
+      "trailing_pe": 55.815296,
+      "market_cap": 584035598336,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
@@ -156,8 +156,8 @@
         "turnover_crore": 1730.48
       },
       "latest_close": 8165.5,
-      "trailing_pe": 56.17819,
-      "market_cap": 1174073638912,
+      "trailing_pe": 55.36269,
+      "market_cap": 1153368588288,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
@@ -185,8 +185,8 @@
         "turnover_crore": 1286.52
       },
       "latest_close": 929.8,
-      "trailing_pe": 62.27729,
-      "market_cap": 904983871488,
+      "trailing_pe": 62.547043,
+      "market_cap": 905859891200,
       "history": {
         "first_date": "2021-09-23",
         "trading_days": 1240,
@@ -304,7 +304,7 @@
       "IRCON.NS": 0.026697,
       "SUNTV.NS": 0.010887,
       "RITES.NS": 0.024381,
-      "FORTIS.NS": 0.093448,
+      "FORTIS.NS": 0.093449,
       "APOLLOHOSP.NS": 0.023002,
       "MAXHEALTH.NS": 0.025271
     },
@@ -1073,7 +1073,7 @@
         554.69,
         546.19,
         548.88,
-        541.51,
+        541.5,
         550.1,
         527.84,
         546.53,
@@ -1404,7 +1404,7 @@
         271.65,
         295.13,
         284.85,
-        284.35,
+        284.36,
         273.98,
         263.36,
         262.86,
@@ -1666,7 +1666,7 @@
         5359.32,
         5174.74,
         4722.31,
-        4777.36,
+        4777.35,
         4945.96,
         4954.29,
         4907.14,
@@ -1682,7 +1682,7 @@
         4620.2,
         4446.27,
         4544.19,
-        4680.62,
+        4680.63,
         4748.94,
         4394.43,
         3775.86,
@@ -1825,7 +1825,7 @@
         7214.21,
         7208.84,
         7260.62,
-        7000.37,
+        7000.38,
         6792.8,
         6710.18,
         6775.29,
