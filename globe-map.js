@@ -1,32 +1,40 @@
-/* B-LAB globe: a real pan/zoom/scroll map (Leaflet.js, BSD-2-Clause, https://leafletjs.com) on Esri's free
-   "World Dark Gray" basemap (server.arcgisonline.com, no API key needed - verified by fetching a tile directly;
-   CARTO's basemap CDN was tried first but now returns an "API KEY REQUIRED" placeholder image instead of real
-   tiles, so it was dropped) - the same trusted-CDN pattern this app already uses for Lightweight Charts.
-   Data (data/globe/latest.json, from scripts/globe_data.py): real live flight positions near each of 7
-   shipping/oil chokepoints (OpenSky Network) and real news about each one and about world events generally
-   (GDELT Project). There is no free live cargo-ship position source, so ships are not drawn; each chokepoint's
-   card carries real news instead. "Why it matters" lines are static reference facts, shown separately from the
-   live flight/news data next to them - never presented as a prediction of what will happen. */
+/* B-LAB globe: a real pan/zoom/scroll map (Leaflet.js, BSD-2-Clause, https://leafletjs.com) with three free,
+   no-key base maps (Esri World Dark Gray/Imagery/Streets, server.arcgisonline.com - verified by fetching
+   tiles directly; CARTO's basemap CDN was tried first but now returns an "API KEY REQUIRED" placeholder
+   image instead of real tiles, so it was dropped) and Leaflet.markercluster (also jsDelivr, MIT) for the
+   denser layers - the same trusted-CDN pattern this app already uses for Lightweight Charts.
+   Data (data/globe/latest.json, from scripts/globe_data.py): real live flight positions (OpenSky), real
+   daily vessel-transit counts by type (IMF PortWatch - not live AIS, its own lag shown on screen), real
+   hazards (PortWatch disruptions, USGS earthquakes, NASA EONET, GDACS alerts), and real news (Google News
+   RSS, GDELT as a bonus). There is no free live cargo-ship *position* source, so ships are not drawn as
+   icons; PortWatch's real daily counts stand in for that instead - still real data, just not real-time AIS.
+   "Why it matters" lines are static reference facts, shown separately from the live data next to them -
+   never presented as a prediction of what will happen. */
 
 const LEAFLET_CSS = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css";
 const LEAFLET_JS = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js";
+const CLUSTER_CSS = ["https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css",
+  "https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"];
+const CLUSTER_JS = "https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js";
 let leafletLoad = null;
+function loadCss(href, mark) {
+  if (document.querySelector(`link[data-${mark}]`)) return;
+  const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset[mark] = "1";
+  document.head.appendChild(l);
+}
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error(src + " failed to load")); document.head.appendChild(s); });
+}
 function loadLeaflet() {
-  if (window.L) return Promise.resolve();
+  if (window.L && window.L.markerClusterGroup) return Promise.resolve();
   if (leafletLoad) return leafletLoad;
-  leafletLoad = new Promise((res, rej) => {
-    if (!document.querySelector("link[data-leaflet]")) {
-      const l = document.createElement("link"); l.rel = "stylesheet"; l.href = LEAFLET_CSS; l.dataset.leaflet = "1";
-      document.head.appendChild(l);
-    }
-    const s = document.createElement("script");
-    s.src = LEAFLET_JS; s.onload = res; s.onerror = () => rej(new Error("Leaflet failed to load"));
-    document.head.appendChild(s);
-  });
+  loadCss(LEAFLET_CSS, "leaflet"); CLUSTER_CSS.forEach((h, i) => loadCss(h, "cluster" + i));
+  leafletLoad = loadScript(LEAFLET_JS).then(() => loadScript(CLUSTER_JS));
   return leafletLoad;
 }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pinIcon = cls => window.L.divIcon({ className: "globe-pin-wrap", html: `<span class="globe-pin${cls ? " " + cls : ""}"><i></i></span>`, iconSize: [24, 24], iconAnchor: [12, 22], popupAnchor: [0, -22] });
+const dotIcon = (cls, size = 14) => window.L.divIcon({ className: "globe-dot-wrap", html: `<span class="globe-dot ${cls}"></span>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2], popupAnchor: [0, -size / 2] });
 
 // Real ICAO 3-letter airline designators (public reference data, e.g. ICAO Doc 8585) for carriers that
 // plausibly fly near these 7 chokepoints. A callsign whose prefix isn't in here shows as "Unknown operator" -
@@ -85,11 +93,49 @@ function flightPopup(f) {
     <p class="fp-src">Live ADS-B data via OpenSky Network. Route (origin → destination) isn't shown: OpenSky's free anonymous tier returns a 403 for flight-route lookups - only a registered account (free signup) unlocks it.</p>
   </div>`;
 }
+function sparkSvg(vals, w = 220, h = 36) {
+  if (!vals || vals.length < 2) return "";
+  const mn = Math.min(...vals), mx = Math.max(...vals), span = mx - mn || 1;
+  const pts = vals.map((v, i) => `${(i / (vals.length - 1) * w).toFixed(1)},${(h - (v - mn) / span * h).toFixed(1)}`).join(" ");
+  return `<svg class="fp-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+}
+function vesselPopup(name, v) {
+  if (!v) return `<p class="fp-src">No recent IMF PortWatch vessel data for ${esc(name)}.</p>`;
+  const pct = v.avg7_vs_prior90_pct;
+  const pctTxt = pct == null ? "—" : `${pct > 0 ? "+" : ""}${pct}%`;
+  const rows = [
+    ["Date (PortWatch)", esc(v.date)], ["Vessels that day", v.n_total],
+    ["Tankers", v.n_tanker], ["Container ships", v.n_container], ["Dry bulk", v.n_dry_bulk],
+    ["General cargo", v.n_general_cargo], ["RoRo", v.n_roro],
+    ["7-day avg vs prior 90-day avg", pctTxt],
+  ];
+  return `<div class="fp"><h5>Real vessel traffic — ${esc(name)}</h5>
+    ${sparkSvg(v.sparkline_90d)}
+    <table>${rows.map(([k, val]) => `<tr><td>${esc(k)}</td><td>${val}</td></tr>`).join("")}</table>
+    ${v.industries && v.industries.length ? `<p class="fp-src">Top industries served: ${v.industries.map(esc).join(", ")}.</p>` : ""}
+    <p class="fp-src">IMF PortWatch (portwatch.imf.org) - real daily vessel counts, not live AIS; expect a few days' lag.</p>
+  </div>`;
+}
+function hazardPopup(title, rows, srcLine, url) {
+  return `<div class="fp"><h5>${esc(title)}</h5><table>${rows.filter(r => r[1] != null && r[1] !== "").map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(String(v))}</td></tr>`).join("")}</table>
+    <p class="fp-src">${esc(srcLine)}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Source →</a>` : ""}</p></div>`;
+}
+const ago = iso => { if (!iso) return "—"; const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000)); return m < 60 ? `${m}m ago` : m < 1440 ? `${Math.floor(m / 60)}h ago` : `${Math.floor(m / 1440)}d ago`; };
+
+const BASEMAPS = {
+  dark: { name: "Dark (default)", url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, and the GIS user community' },
+  sat: { name: "Satellite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: 'Tiles &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics, and the GIS user community' },
+  street: { name: "Streets", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS, and the GIS user community' },
+};
+const ZOOM_PRESETS = { world: [[20, 25], 2], india: [[22, 80], 5] };
 
 export class GlobeMap {
   constructor(host, hooks = {}) {
     this.host = host; this.hooks = hooks; this.sel = null; this.markers = new Map();
-    host.innerHTML = '<div class="globe-wrap"><div class="globe-leaflet"></div><div class="globe-msg">Loading the map…</div></div>';
+    host.innerHTML = '<div class="globe-wrap"><div class="globe-leaflet"></div><div class="globe-msg">Loading the map…</div><div class="globe-legend" id="globe-legend"></div></div>';
     this.el = host.querySelector(".globe-leaflet"); this.msg = host.querySelector(".globe-msg");
     this.ready = this.buildBase();
   }
@@ -97,13 +143,51 @@ export class GlobeMap {
     try {
       await loadLeaflet();
       const L = window.L;
-      this.map = L.map(this.el, { worldCopyJump: true, minZoom: 2, maxZoom: 12 }).setView([20, 25], 2);
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
-        attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, and the GIS user community',
-        maxZoom: 16,
-      }).addTo(this.map);
+      this.map = L.map(this.el, { worldCopyJump: true, minZoom: 2, maxZoom: 12 }).setView(...ZOOM_PRESETS.world);
+      this.baseLayers = {};
+      for (const [key, b] of Object.entries(BASEMAPS)) this.baseLayers[b.name] = L.tileLayer(b.url, { attribution: b.attribution, maxZoom: 16 });
+      this.baseLayers[BASEMAPS.dark.name].addTo(this.map);
+
       this.flightLayer = L.layerGroup().addTo(this.map);
       this.chokeLayer = L.layerGroup().addTo(this.map);
+      this.disruptionLayer = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 6 }).addTo(this.map);
+      this.quakeLayer = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 6 }).addTo(this.map);
+      this.naturalLayer = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 6 }).addTo(this.map);
+      this.alertLayer = L.markerClusterGroup({ maxClusterRadius: 40, disableClusteringAtZoom: 6 }).addTo(this.map);
+
+      L.control.layers(this.baseLayers, {
+        "Chokepoints": this.chokeLayer, "Live flights": this.flightLayer,
+        "Disruptions (PortWatch)": this.disruptionLayer, "Earthquakes M4.5+ (USGS)": this.quakeLayer,
+        "Natural events, 7d (NASA EONET)": this.naturalLayer, "Disaster alerts (GDACS)": this.alertLayer,
+      }, { collapsed: true, position: "topright" }).addTo(this.map);
+      L.control.scale({ metric: true, imperial: false, position: "bottomleft" }).addTo(this.map);
+
+      const presets = L.control({ position: "topleft" });
+      presets.onAdd = () => {
+        const d = L.DomUtil.create("div", "globe-presets leaflet-bar");
+        d.innerHTML = '<a href="#" data-z="world" title="Zoom to world view">World</a><a href="#" data-z="india" title="Zoom to India">India</a>';
+        L.DomEvent.disableClickPropagation(d);
+        d.querySelectorAll("a").forEach(a => a.onclick = e => { e.preventDefault(); this.map.setView(...ZOOM_PRESETS[a.dataset.z]); });
+        return d;
+      };
+      presets.addTo(this.map);
+
+      const fs = L.control({ position: "topleft" });
+      fs.onAdd = () => {
+        const d = L.DomUtil.create("div", "globe-fs leaflet-bar");
+        d.innerHTML = '<a href="#" title="Fullscreen">⛶</a>';
+        L.DomEvent.disableClickPropagation(d);
+        d.querySelector("a").onclick = e => { e.preventDefault(); if (!document.fullscreenElement) this.host.requestFullscreen?.(); else document.exitFullscreen?.(); };
+        return d;
+      };
+      fs.addTo(this.map);
+
+      const coord = L.control({ position: "bottomright" });
+      coord.onAdd = () => { const d = L.DomUtil.create("div", "globe-coord"); d.textContent = "—, —"; return d; };
+      coord.addTo(this.map);
+      this.coordEl = this.el.querySelector(".globe-coord");
+      this.map.on("mousemove", e => { if (this.coordEl) this.coordEl.textContent = `${e.latlng.lat.toFixed(2)}, ${e.latlng.lng.toFixed(2)}`; });
+
       this.msg.hidden = true;
     } catch (e) {
       this.msg.textContent = "The map couldn't load (needs an internet connection the first time). Chokepoint cards below still work.";
@@ -114,6 +198,7 @@ export class GlobeMap {
     if (!this.map) return;
     const L = window.L;
     this.data = data;
+
     this.flightLayer.clearLayers();
     for (const p of data.chokepoints || []) for (const f of (p.flights && p.flights.sample) || []) {
       if (f.lat == null) continue;
@@ -123,16 +208,64 @@ export class GlobeMap {
         .bindPopup(flightPopup(f), { className: "globe-popup fp-popup", minWidth: 250, maxWidth: 280 })
         .addTo(this.flightLayer);
     }
+
     this.chokeLayer.clearLayers(); this.markers.clear();
     for (const p of data.chokepoints || []) {
       const n = (p.flights && p.flights.count) || 0;
+      const v = p.vessels;
       const m = L.marker([p.lat, p.lon], { icon: pinIcon(this.flagOf(p.id)), keyboard: true, alt: p.name, title: p.name })
-        .bindPopup(`<b>${esc(p.name)}</b><br>${n} flight${n === 1 ? "" : "s"} now`, { className: "globe-popup" })
+        .bindPopup(`<div class="fp"><h5>${esc(p.name)}</h5><table><tr><td>Live flights</td><td>${n}</td>${v ? `<tr><td>Vessels (${esc(v.date)})</td><td>${v.n_total}</td></tr>` : ""}</table></div>`, { className: "globe-popup" })
         .on("click", () => this.select(p.id))
         .addTo(this.chokeLayer);
       const elm = m.getElement(); if (elm) elm.setAttribute("data-id", p.id);
       this.markers.set(p.id, m);
     }
+
+    const H = data.hazards || {};
+    this.disruptionLayer.clearLayers();
+    for (const d of H.disruptions || []) {
+      if (d.lat == null) continue;
+      const cls = d.alert === "RED" ? "red" : d.alert === "ORANGE" ? "orange" : "grey";
+      L.marker([d.lat, d.lon], { icon: dotIcon("sq " + cls) })
+        .bindPopup(hazardPopup(`${d.name || d.type}`, [["Type", d.type], ["Alert level", d.alert], ["Country", d.country], ["Severity", d.severity],
+          ["Ports affected", d.n_ports], ["From", d.from_utc ? ago(d.from_utc) : null], ["To", d.to_utc ? ago(d.to_utc) : null]],
+          "IMF PortWatch disruptions (real port-impact data)"), { className: "globe-popup" })
+        .addTo(this.disruptionLayer);
+    }
+    this.quakeLayer.clearLayers();
+    for (const q of H.earthquakes || []) {
+      if (q.lat == null) continue;
+      const r = Math.max(4, Math.min(16, q.mag * 2.2));
+      L.circleMarker([q.lat, q.lon], { radius: r, weight: 1, color: "#ffd400", fillColor: "#ffd400", fillOpacity: 0.35, className: "globe-quake" })
+        .bindPopup(hazardPopup(`M${q.mag} earthquake`, [["Place", q.place], ["Tsunami warning", q.tsunami ? "Yes" : "No"], ["Time", ago(q.time_utc)]],
+          "USGS Earthquake Hazards Program", q.url), { className: "globe-popup" })
+        .addTo(this.quakeLayer);
+    }
+    this.naturalLayer.clearLayers();
+    for (const n of H.natural_events || []) {
+      if (n.lat == null) continue;
+      L.marker([n.lat, n.lon], { icon: dotIcon("tri") })
+        .bindPopup(hazardPopup(n.title, [["Category", n.category], ["Date", n.date ? ago(n.date) : null]], "NASA EONET", n.url), { className: "globe-popup" })
+        .addTo(this.naturalLayer);
+    }
+    this.alertLayer.clearLayers();
+    for (const a of H.alerts || []) {
+      if (a.lat == null) continue;
+      const cls = (a.alert || "").toLowerCase() === "red" ? "red" : (a.alert || "").toLowerCase() === "orange" ? "orange" : "green";
+      L.marker([a.lat, a.lon], { icon: dotIcon("tri " + cls) })
+        .bindPopup(hazardPopup(a.name || a.type, [["Type", a.type], ["Alert level", a.alert], ["Country", a.country]], "GDACS", a.url), { className: "globe-popup" })
+        .addTo(this.alertLayer);
+    }
+
+    const legend = this.host.querySelector("#globe-legend");
+    if (legend) legend.innerHTML = [
+      ["acc", "Chokepoint"], ["plane", "Live flight"], ["sq red", "Disruption (red)"], ["sq orange", "Disruption (orange)"],
+      ["quake", "Earthquake M4.5+"], ["tri", "Natural event"], ["tri red", "Alert (red)"],
+    ].map(([cls, label]) => `<span class="gl-item"><i class="gl-${cls}"></i>${esc(label)}</span>`).join("");
+  }
+  vesselPopupFor(id) {   // used by terminal.js when a card is clicked, to keep the popup content identical to the map's own
+    const p = (this.data && this.data.chokepoints || []).find(x => x.id === id);
+    return p ? vesselPopup(p.name, p.vessels) : "";
   }
   flagOf(id) {                                              // "active"/"quiet": this run's own count vs. the 7-point average (see terminal.js activityFlag)
     const pts = (this.data && this.data.chokepoints) || [];

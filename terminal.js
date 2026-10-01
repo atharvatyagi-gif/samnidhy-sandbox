@@ -1340,9 +1340,14 @@ function renderGlobeCards() {
       const s = secs.find(x => x.k === name); if (!s) return "";
       return `<span class="gc-sec ${ud(s.avg)}" title="${esc(name)}: ${esc(why)}">${esc(name)} ${sg(s.avg)}%</span>`;
     }).filter(Boolean).join("");
+    const v = p.vessels;
+    const vesselRow = v
+      ? `<div class="gc-vessels"><span class="lbl">Real vessels, ${esc(v.date)}</span><span class="gc-vn">${v.n_total}</span>${v.avg7_vs_prior90_pct != null ? `<span class="gc-vp ${ud(v.avg7_vs_prior90_pct)}">${sg(v.avg7_vs_prior90_pct)}% vs 90d avg</span>` : ""}</div>`
+      : '<p class="none">No recent IMF PortWatch vessel data for this chokepoint.</p>';
     return `<div class="gc-card${globeSel === p.id ? " on" : ""}" data-id="${esc(p.id)}">
       <h4>${esc(p.name)}<span class="gc-r"><b>${n} flight${n === 1 ? "" : "s"} now</b>${badge}</span></h4>
       <p class="why">${esc(p.why)}</p>
+      ${vesselRow}
       ${secTags ? `<div class="gc-secs"><span class="lbl">Exposed NSE sectors, real move today</span>${secTags}</div>` : ""}
       ${news.length ? `<ul>${news.slice(0, 3).map(a => `<li><a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">${esc(a.title)}</a> <span class="src">· ${esc(a.source || "")} · ${esc(newsTimeAgo(a.seen_utc))}</span></li>`).join("")}</ul>`
         : '<p class="none">No recent news matched this chokepoint.</p>'}

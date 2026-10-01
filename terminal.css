@@ -663,6 +663,36 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .globe-pin.active i { background: var(--up); }
 .globe-pin.quiet i { background: var(--ink-4); }
 .globe-pin.on i { background: #ffb347; transform: rotate(-45deg) scale(1.15); }
+/* hazard layer markers: a plain dot (circle), square (disruptions) or triangle (natural events/alerts),
+   coloured by real alert level - never a custom brand icon set, just shape + colour so it reads at a glance */
+.globe-dot-wrap { background: none; border: none; }
+.globe-dot { display: block; width: 100%; height: 100%; background: var(--ink-3); border: 1.5px solid #04120b; }
+.globe-dot.sq { border-radius: 2px; }
+.globe-dot.tri { background: none; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 13px solid var(--ink-3); border-top: none; }
+.globe-dot.red, .globe-dot.tri.red { background: var(--down); border-bottom-color: var(--down); }
+.globe-dot.orange { background: var(--gold); } .globe-dot.tri.orange { border-bottom-color: var(--gold); }
+.globe-dot.green, .globe-dot.tri.green { background: var(--up); border-bottom-color: var(--up); }
+.globe-dot.grey { background: var(--ink-4); }
+/* custom Leaflet controls: zoom presets, fullscreen, lat/lon readout - styled to match the icon-btn/btn-line language */
+.globe-presets, .globe-fs { background: none; border: none; }
+.globe-presets a, .globe-fs a { display: flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 8px; background: var(--card); color: var(--ink-2); border: 1px solid var(--rule-2); font: 600 10.5px var(--mono); text-decoration: none; }
+.globe-presets a:hover, .globe-fs a:hover { background: var(--acc-soft); color: var(--acc); }
+.globe-presets { display: flex; }
+.globe-coord { background: rgba(4,18,11,0.78); color: var(--ink-3); font: 11px var(--mono); padding: 2px 8px; border: 1px solid var(--rule-2); }
+.globe-legend { position: absolute; left: 8px; bottom: 8px; z-index: 450; display: flex; flex-wrap: wrap; gap: 8px; max-width: 70%; pointer-events: none; }
+.gl-item { display: inline-flex; align-items: center; gap: 4px; font: 10px var(--mono); color: var(--ink-3); background: rgba(4,18,11,0.7); padding: 2px 6px; border-radius: 9px; }
+.gl-item i { width: 8px; height: 8px; display: inline-block; border-radius: 50%; }
+.gl-acc { background: var(--acc); } .gl-plane { background: #ffb347; }
+.gl-sq.red { background: var(--down); border-radius: 2px; } .gl-sq.orange { background: var(--gold); border-radius: 2px; }
+.gl-quake { background: var(--gold); opacity: 0.5; } .gl-tri { background: var(--ink-3); } .gl-tri.red { background: var(--down); }
+/* Leaflet's own panels, themed to match the rest of the terminal instead of Leaflet's light default */
+.leaflet-control-layers { background: var(--card) !important; color: var(--ink) !important; border: 1px solid var(--rule-2) !important; border-radius: 0 !important; }
+.leaflet-control-layers-toggle { filter: invert(1); }
+.leaflet-control-layers label { font: 12px var(--sans) !important; color: var(--ink-2) !important; }
+.leaflet-control-layers-separator { border-color: var(--rule-2) !important; }
+.marker-cluster { background: var(--acc-soft) !important; }
+.marker-cluster div { background: var(--acc) !important; color: #000 !important; font: 700 11px var(--mono) !important; }
+.fp-spark { display: block; color: var(--acc); margin: 4px 0 8px; }
 .globe-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 8px; }
 .gc-card { padding: 12px 14px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--card); cursor: pointer; }
 .gc-card.on { border-color: var(--acc); background: var(--acc-soft); }
@@ -672,6 +702,11 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .gc-act { font: 700 9.5px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: 0; white-space: nowrap; }
 .gc-act.active { color: var(--up); background: var(--up-soft); } .gc-act.quiet { color: var(--ink-4); background: rgba(181,166,130,0.08); }
 .gc-card .why { margin: 0 0 8px; font: 12px/1.5 var(--sans); color: var(--ink-3); }
+.gc-vessels { margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gc-vessels .lbl { font: 10px var(--mono); color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.05em; }
+.gc-vn { font: 700 13px var(--mono); color: var(--ink); }
+.gc-vp { font: 600 11px var(--mono); padding: 1px 6px; border-radius: 9px; }
+.gc-vp.up { color: var(--up); background: var(--up-soft); } .gc-vp.down { color: var(--down); background: var(--down-soft); } .gc-vp.flat { color: var(--ink-3); }
 .gc-secs { margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .gc-secs .lbl { font: 10px var(--mono); color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.05em; margin-right: 2px; }
 .gc-sec { font: 600 11px var(--mono); padding: 2px 7px; border-radius: 0; border: 1px solid var(--rule-2); white-space: nowrap; }
