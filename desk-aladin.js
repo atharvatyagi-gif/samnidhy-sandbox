@@ -383,6 +383,15 @@ function flush() {
   dirtyPx.clear(); dirtySw.clear();
 }
 
+/* One stock's ALADIN view for other panels (the Globe's exposure table): combined P(up) at the primary horizon, confidence, sentiment level. null if no data. */
+export function stockView(sym) {
+  if (!ctx || !ctx.S.aladin) return null;
+  const h = ctx.S.aladin.primary || 10, c = calc(sym, h);
+  if (!c) return null;
+  const sn = sentOf(sym);
+  return { p: c.p, conf: c.conf, agree: c.agree, h, lvl: sn ? sn.lvl : "NO NEWS", sc: sn ? sn.sc : null };
+}
+
 /* ---------- Details rail and Brief card ---------- */
 export function renderAladinMini(sym) {
   if (!ctx) return "";
