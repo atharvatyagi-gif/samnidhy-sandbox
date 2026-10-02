@@ -13,7 +13,8 @@ Branch: `terminal-v2`. Not merged to `main` by this plan or by any commit on thi
   (click_all, replay, timeframes, globe) at every step; zero new failures. One real bug found and fixed by the
   tests, not assumed away: blurring the command line after a command left a stray `Esc` falling through to
   the pre-existing "nothing open -> go back to B-Lab" handler, silently navigating away.
-- **(b) MAP** — not started. Next.
+- **(b) MAP — done, except two items.** Real IMF PortWatch vessel traffic (daily counts by type, 90-day sparkline, 7d-vs-90d %, top industries) now replaces the old "no ship data" note; real hazards (PortWatch disruptions, USGS, NASA EONET, GDACS); Google News RSS as primary news source; three Esri base maps, layer toggles, clustering, scale bar, World/India presets, fullscreen, lat/lon readout, legend; slow layers (shipping lanes, submarine cables, India power plants >=100MW with each plant's own data vintage); Wikidata company-footprint layer that flies to the open stock's mapped facilities (thin coverage, honest empty state). Real bugs found by running against the live APIs and fixed: ASC+row-cap returned 2019 vessel data; ArcGIS returns HTTP 200 with an error body for a bad query (now raised via pw_query); date fields need `timestamp '...'` literals; mtime staleness never works in CI (use generated_utc); naive "india" match would have included British Indian Ocean Territory.
+  **Not done, on purpose:** (1) live ship AIS (aisstream.io) and conflict events (ACLED) - both need a free key from the user; (2) NSE-sector links on every hazard marker - only the 7 chokepoints have structurally documented sector exposure, attaching one to an arbitrary earthquake would be invented reasoning.
 - **(c) remaining functions, (d) data additions** — not started.
 
 ## 1. Current state (what exists today, verified by reading the actual files, not assumed)
