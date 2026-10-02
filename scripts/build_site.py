@@ -34,6 +34,15 @@ TERMINAL = ROOT / "data" / "terminal"
 ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "terminal.js", "auth-check.js"]
 
 
+def geo_summary(g: dict) -> dict:
+    """A few hundred bytes for the regime strip and the Brief, so geo.json itself can stay lazy: the highest-scoring region (if any region has a score yet)."""
+    scored = [r for r in g.get("regions", []) if r.get("score") is not None]
+    top = max(scored, key=lambda r: r["score"]) if scored else None
+    first = (g.get("regions") or [{}])[0].get("baseline", {})
+    return {"generated_utc": g.get("generated_utc"), "baseline": {k: first.get(k) for k in ("n", "need", "days", "need_days")},
+            "top": None if top is None else {"id": top["id"], "name": top["name"], "level": top["level"], "score": top["score"], "head": ((top.get("heads") or [{}])[0]).get("title")}}
+
+
 def version_assets() -> None:
     names = "|".join(re.escape(a) for a in ASSETS)
     ref = re.compile(r'((?:src|href)="(?:\.\./)?|from "\./)(' + names + r')(?=")')
@@ -110,12 +119,21 @@ def main() -> None:
     # data/live_extra/ticks.json is deliberately NEVER copied: it's the operator's own live feed (NSE's website
     # terms restrict redistributing it) and must not be published.
     desk = {"aladin": DATA / "aladin" / "latest.json", "sentiment": DATA / "aladin" / "sentiment.json", "geo": DATA / "aladin" / "geo.json",
-            "houses": DATA / "config" / "business_houses.json", "paper": DATA / "paper_trades" / "portfolio.json"}
+            "houses": DATA / "config" / "business_houses.json", "paper": DATA / "paper_trades" / "portfolio.json", "method": DATA / "config" / "aladin_method.json"}
     present = {}
     for key, src in desk.items():
         present[key] = src.exists()
         if src.exists():
-            shutil.copyfile(src, SITE / {"aladin": "aladin.json", "sentiment": "sentiment.json", "geo": "geo.json", "houses": "houses.json", "paper": "paper.json"}[key])
+            shutil.copyfile(src, SITE / {"aladin": "aladin.json", "sentiment": "sentiment.json", "geo": "geo.json", "houses": "houses.json", "paper": "paper.json", "method": "aladin_method.json"}[key])
+    # geo.json itself loads only when the Globe tab is opened; this tiny summary (a few hundred bytes) is what the regime strip and the Brief read.
+    present["geo_summary"] = False
+    if present.get("geo"):
+        try:
+            g = json.loads((SITE / "geo.json").read_text(encoding="utf-8"))
+            (SITE / "geo_summary.json").write_text(json.dumps(geo_summary(g), ensure_ascii=False), encoding="utf-8")
+            present["geo_summary"] = True
+        except (OSError, ValueError, KeyError):
+            pass
     (SITE / "desk_data.json").write_text(json.dumps(present), encoding="utf-8")
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
         (SITE / "screener.json").write_text((SCREENER / "latest.json").read_text(encoding="utf-8"), encoding="utf-8")

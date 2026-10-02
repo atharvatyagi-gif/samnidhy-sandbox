@@ -9,7 +9,7 @@ let ctx = null, ws = null, timer = null, poll = null, fails = 0, connected = fal
 const listeners = new Set();
 const IDX = { "NIFTY 50": "^NSEI", "NIFTY BANK": "^NSEBANK" };
 const KEY = "aladin.ticks";
-const LOCAL = ["127.0.0.1", "localhost"].includes(location.hostname);
+const LOCAL = typeof location !== "undefined" && ["127.0.0.1", "localhost"].includes(location.hostname);       // (guarded so the module can be imported by the node tests)
 
 const store = {
   get() { try { return localStorage.getItem(KEY) === "1"; } catch (e) { return false; } },
@@ -75,12 +75,12 @@ function onMsg(m) {
   } else if (m.type === "snap" || m.type === "ticks") {
     lastTickAt = Date.now();
     const q = convert(m.q);
-    if (Object.keys(q).length) { ctx.applyTicks(q, true); emitTick(q); }
+    if (Object.keys(q).length) { ctx.applyTicks(q, true); emitTick({ type: "ticks", q }); }
   } else if (m.type === "sweeps") {
     ctx.S.sweep = ctx.S.sweep || {};
     Object.assign(ctx.S.sweep, m.agg || {});
     ctx.S.sweepEv = (ctx.S.sweepEv || []).concat(m.s || []).slice(-200);
-    emitTick({ sweeps: m.s });
+    emitTick({ type: "sweeps", s: m.s || [], agg: m.agg || {} });
   } else if (m.type === "warn" && !warned.has(m.msg)) { warned.add(m.msg); ctx.toast(m.msg); }
 }
 
@@ -100,7 +100,7 @@ function startPoll() {
       const j = await r.json();
       if (j && j.q && Object.keys(j.q).length && !ctx.LIVE.ok) {
         lastTickAt = Date.now(); connected = true;
-        const q = convert(j.q); ctx.applyTicks(q, true); emitTick(q);
+        const q = convert(j.q); ctx.applyTicks(q, true); emitTick({ type: "ticks", q });
         if (j.sweeps) { ctx.S.sweep = ctx.S.sweep || {}; for (const [s, v] of Object.entries(j.sweeps)) ctx.S.sweep[s] = v.s; }
         ctx.renderMast && ctx.renderMast();
       }

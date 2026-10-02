@@ -84,8 +84,9 @@ async function boot() {
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
     S.nseLive = await getJSON("nse_live.json").catch(() => null);
     applyNseLive();
-    initDesk(); await loadDeskData().catch(() => {});
-    setTimeout(() => GeoDesk.preload().then(j => { if (j) renderRegimeBrief(); }).catch(() => {}), 4000);   // after the desk is up: the regime strip and Brief read the geo index, but it never delays opening
+    initDesk(); loadDeskData().catch(() => {});                  // not awaited: the desk draws first, the desk files (tiny) fill in right after
+    setTimeout(() => Aladin.preload().then(a => { if (a) { renderBrief(); renderDetails(); } }).catch(() => {}), 5000);   // ALADIN data for the Details rail and Brief card: after start, never before it
+    // geo.json itself loads only when the Globe tab is opened; the regime strip and Brief read the tiny geo_summary.json instead
   } catch (e) {
     $("#st-data").textContent = "Data not available: the NSE stock list could not be loaded. Nothing is shown in its place.";
     $("#brief-cards").innerHTML = '<div class="empty">Data not available.</div>'; return;
@@ -203,22 +204,23 @@ setInterval(() => {
 // Each module gets the same ctx and renders only after its tab is first opened. Optional data files are listed in
 // desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
 // while a file hasn't been produced yet.
-const DESK_FILES = { sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json" };
-const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment"]);   // big or tab-specific files: fetched by their own tab, never at page start
+const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json" };
+const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
-function deskCtx() { return { renderRegimeBrief, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
+function deskCtx() { return { renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
 function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks]) m.init(c); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
   let changed = false;
   if (S.geo) GeoDesk.refresh();                                  // lazy file, but once it has been opened keep it current
-  for (const [k, file] of Object.entries(DESK_FILES)) {
-    if (!man[k] || DESK_LAZY.has(k)) continue;                  // lazy files are fetched by their own tab on first open
+  if (S.aladin) Aladin.refresh();
+  await Promise.all(Object.entries(DESK_FILES).map(async ([k, file]) => {
+    if (!man[k] || DESK_LAZY.has(k)) return;                    // lazy files are fetched by their own tab on first open
     const j = await getJSON(file).catch(() => null);
     if (j && (!S[k] || j.generated_utc !== S[k].generated_utc)) { S[k] = j; changed = true; }
-  }
-  if (changed) { if (view === "houses") Houses.renderHouses(); if (view === "lab") Aladin.renderAladin(); }
+  }));
+  if (changed) { if (view === "houses") Houses.renderHouses(); if (view === "lab") Aladin.renderAladin(); renderRegimeBrief(); }      // the regime strip and Brief read geo_summary.json
 }
 
 /* ================= navigation ================= */
@@ -297,7 +299,7 @@ function climate() {
 }
 function renderRegime() {
   const c = climate();
-  $("#regime").innerHTML = `<span class="lbl">Market regime · today</span><span class="verdict ${c.tone}">${esc(c.verdict)}</span><span class="mut">${c.good}/${c.n} favourable</span><span class="rg-scroll">`
+  $("#regime").innerHTML = `<span class="lbl">Market regime · today</span><span class="verdict ${c.tone}">${esc(c.verdict)}</span><span class="mut">${c.good}/${c.n} favourable</span><span class="rg-scroll" tabindex="0" role="group" aria-label="Market conditions">`
     + c.f.map(x => `<span class="f"><i style="background:${x.ok ? "var(--up)" : "var(--down)"}"></i>${esc(x.t)}</span>`).join("")
     + (GeoDesk.regimeItem() ? `<span class="f"><i style="background:var(--gold)"></i>${esc(GeoDesk.regimeItem())}</span>` : "")      // not part of the favourable/total tally
     + `</span><button class="btn-line sm" data-go="world">Open world →</button>`;
@@ -332,6 +334,7 @@ function renderBrief() {
   if (fl) cards.push(bcard(fl.fii.net_cr >= 0 ? "pos" : "neg", "Institutional flows · NSE", `FII ${crS(fl.fii.net_cr)}, DII ${crS(fl.dii.net_cr)}`, `Cash market, provisional, ${dt(fl.date, { weekday: "short", day: "numeric", month: "short" })}.`, "Open world", 'data-go="world"'));
   if (pick) { const x = q(pick.symbol); cards.push(bcard("pos", "B-Lab screen · rank #1", `${esc(pick.symbol)} · F-Score ${pick.fscore}/9`, `Return on capital ${pctF(pick.roc, 0)}, earnings yield ${pctF(pick.earnings_yield)}${x ? ` · ₹${inr(x.p)} (${sg(x.pct)}%)` : ""}`, "Open chart", `data-open="${esc(pick.symbol)}"`)); }
   { const geo = GeoDesk.briefCard(bcard); if (geo) cards.push(geo); }
+  { const al = Aladin.briefCard(bcard); if (al) cards.push(al); }
   if (wl.length) cards.push(bcard(wl[0].x.pct >= 0 ? "pos" : "neg", "Your watchlist", `Best ${esc(wl[0].sym)} ${sg(wl[0].x.pct)}% · worst ${esc(wl[wl.length - 1].sym)} ${sg(wl[wl.length - 1].x.pct)}%`, `${wl.filter(r => r.x.pct > 0).length} of ${wl.length} up today.`, "Open watchlist", 'data-go="terminal" data-side="watch"'));
   $("#brief-cards").innerHTML = cards.join("");
   $$("#brief-cards [data-open]").forEach(bt => bt.onclick = () => { openSec(bt.dataset.open); go("terminal"); });
@@ -1017,7 +1020,7 @@ function renderDetails() {
   const s = S.map.get(sec), x = q(sec); if (!s || !x || side !== "details") return;
   const f = S.fund ? (S.fund[sec] || null) : undefined, pick = (S.screen.picks || []).find(p => p.symbol === sec);
   const stat = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`, perf = perfFrom(sec);
-  let html = `<div class="sec-t">Ranges</div>${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}${outlookHtml(sec)}${analysisHtml(sec)}
+  let html = `<div class="sec-t">Ranges</div>${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}${outlookHtml(sec)}${Aladin.renderAladinMini(sec)}${analysisHtml(sec)}
     <div class="sec-t">Key stats</div><div class="stats">${stat("Open", inr(x.o))}${stat("Prev close", inr(x.pc))}${stat("Volume", big(x.v))}${stat("Avg vol 20D", big(s.avgv20))}
       ${stat("Value", x.v != null ? cr(x.v * x.p / 1e7) : "--")}${stat("Delivery", s.deliv == null ? "--" : s.deliv.toFixed(1) + "%")}
       ${f ? stat("Market cap", f.mcap ? cr(f.mcap / 1e7) : "--") + stat("P/E", f.pe ? f.pe.toFixed(1) : "--") + stat("EPS", f.eps != null ? "₹" + inr(f.eps) : "--") + stat("Div yield", f.dy != null ? f.dy.toFixed(2) + "%" : "--")

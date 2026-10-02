@@ -118,16 +118,19 @@ export function renderGeo() {
 }
 
 /* ---------- Brief / regime strip ---------- */
+/* Read the full geo.json once the Globe has loaded it; before that, the tiny geo_summary.json (written by build_site.py) is enough. */
+function topRegion() {
+  const G = ctx && ctx.S.geo, M = ctx && ctx.S.geo_summary;
+  if (G) { const t = G.regions.filter(r => r.score != null).sort((a, b) => b.score - a.score)[0]; return t ? { name: t.name, level: t.level, score: t.score, head: ((t.heads || [])[0] || {}).title } : null; }
+  return M && M.top ? M.top : null;
+}
 export function regimeItem() {
-  const G = ctx && ctx.S.geo; if (!G) return null;
-  const top = G.regions.filter(r => r.score != null).sort((a, b) => b.score - a.score)[0];
-  if (!top) return "Geo news attention: building baseline";
-  return `Geo news attention: ${top.level} · ${top.name}`;
+  if (!ctx || !(ctx.S.geo || ctx.S.geo_summary)) return null;
+  const top = topRegion();
+  return top ? `Geo news attention: ${top.level} · ${top.name}` : "Geo news attention: building baseline";
 }
 export function briefCard(bcard) {
-  const G = ctx && ctx.S.geo; if (!G) return "";
-  const top = G.regions.filter(r => r.score != null).sort((a, b) => b.score - a.score)[0];
-  if (!top) return "";
+  const top = topRegion(); if (!top) return "";
   const { esc } = ctx;
-  return bcard(top.score >= 65 ? "neg" : "neutral", "Geopolitics · news attention", `${esc(top.name)}: ${esc(top.level)} (${top.score})`, `${esc(((top.heads || [])[0] || {}).title || "No headlines in the last 24 hours")}`, "Open globe", 'data-go="globe"');
+  return bcard(top.score >= 65 ? "neg" : "neutral", "Geopolitics · news attention", `${esc(top.name)}: ${esc(top.level)} (${top.score})`, `${esc(top.head || "No headlines in the last 24 hours")}`, "Open globe", 'data-go="globe"');
 }

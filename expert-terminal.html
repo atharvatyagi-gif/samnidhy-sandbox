@@ -12,7 +12,8 @@
 <script src="reload-home.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="terminal.css">
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -256,6 +257,7 @@
     <section class="view" id="v-lab">
       <div class="page">
         <div class="page-head"><p class="kick">— Tools · B-Lab quant desk</p><h2>Models you can <span class="acc">question.</span></h2><p class="asof" data-asof="aladin"></p></div>
+        <div class="al-tools" id="al-tools"><button class="bcard pos" aria-current="true"><span class="lbl">Tool</span><span class="ttl">ALADIN</span><span class="sub">Probability that a stock closes higher in 5, 10 or 20 trading days, from three views you can inspect.</span></button><button class="bcard neutral" disabled><span class="lbl">Tool</span><span class="ttl">More tools soon</span><span class="sub">Not built yet.</span></button></div>
         <div id="aladin"></div>
       </div>
     </section>

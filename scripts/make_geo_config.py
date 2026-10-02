@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 OIL_UP = [{"sym": s, "dir": "+", "why": "Earns more when crude prices rise"} for s in ("ONGC", "OIL")]
-OIL_DN = [{"sym": s, "dir": "-", "why": "Buys crude: dearer oil squeezes margins"} for s in ("IOC", "BPCL", "HINDPETRO")]
+OIL_DN = [{"sym": s, "dir": "-", "why": "Crude is a main input: dearer oil squeezes margins"} for s in ("IOC", "BPCL", "HINDPETRO")]
 DEFENCE = [{"sym": s, "dir": "+", "why": "Defence order flow tends to draw attention in tense periods"} for s in ("HAL", "BEL", "BDL")]
 
 R = [

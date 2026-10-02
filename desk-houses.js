@@ -130,8 +130,8 @@ function draw(el) {
     const s = g.sum, moved = g.rankPrev - g.rank, isOpen = open.has(g.h.id), t = s.up + s.down + s.flat || 1;
     const mv = moved > 0 ? `<span class="up" title="Up ${moved} place${moved > 1 ? "s" : ""} on yesterday's close">▲${moved}</span>` : moved < 0 ? `<span class="down" title="Down ${-moved} place${moved < -1 ? "s" : ""} on yesterday's close">▼${-moved}</span>` : '<span class="mut">–</span>';
     const miss = s.missing ? ` <span class="tag warn" title="${s.missing} listed compan${s.missing > 1 ? "ies have" : "y has"} no share count yet, so ${s.missing > 1 ? "they are" : "it is"} not in the totals">${s.missing} not counted</span>` : "";
-    return `<tr class="hh-row${isOpen ? " on" : ""}" data-h="${esc(g.h.id)}" tabindex="0" aria-expanded="${isOpen}">
-      <td class="num">${g.rank}</td><td>${mv}</td><td class="co"><b>${esc(g.h.name)}</b>${miss}</td>
+    return `<tr class="hh-row${isOpen ? " on" : ""}" data-h="${esc(g.h.id)}">
+      <td class="num">${g.rank}</td><td>${mv}</td><td class="co"><button class="hh-tg" aria-expanded="${isOpen}" aria-label="${isOpen ? "Hide" : "Show"} the companies in ${esc(g.h.name)}">${isOpen ? "▾" : "▸"}</button> <b>${esc(g.h.name)}</b>${miss}</td>
       <td class="num hh-hide">${s.n}</td>
       <td class="num">${crTxt(s.mcap / CR)}</td><td class="num ${cls(s.dayPct)}">${pctTxt(s.dayPct)}</td><td class="num ${cls(s.dayCr)}">${s.dayCr == null ? "—" : (s.dayCr > 0 ? "+" : s.dayCr < 0 ? "−" : "") + crTxt(Math.abs(s.dayCr))}</td>
       <td><div class="b-bar" title="${s.up} up · ${s.flat} unchanged · ${s.down} down"><i style="width:${s.up / t * 100}%;background:var(--up)"></i><i style="width:${s.flat / t * 100}%;background:var(--ink-4)"></i><i style="width:${s.down / t * 100}%;background:var(--down)"></i></div></td>
@@ -159,8 +159,12 @@ function draw(el) {
   el.querySelectorAll("#hh-sort button").forEach(b => b.onclick = () => { sortKey = b.dataset.k; draw(el); });
   const f = el.querySelector("#hh-filter"); f.oninput = () => { query = f.value; const pos = f.selectionStart; draw(el); const g = el.querySelector("#hh-filter"); g.focus(); g.setSelectionRange(pos, pos); };
   el.querySelectorAll("tr.hh-row").forEach(tr => {
-    const toggle = () => { const id = tr.dataset.h; open.has(id) ? open.delete(id) : open.add(id); draw(el); if (open.has(id)) loadReturns(el, id); };
-    tr.onclick = toggle; tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
+    const toggle = e => {
+      const id = tr.dataset.h, viaKey = e && e.detail === 0;                             // detail 0 = from the keyboard (the row button): keep the focus there
+      open.has(id) ? open.delete(id) : open.add(id); draw(el); if (open.has(id)) loadReturns(el, id);
+      if (viaKey) { const b = el.querySelector(`tr.hh-row[data-h="${id}"] .hh-tg`); if (b) b.focus(); }
+    };
+    tr.onclick = toggle;
   });
   el.querySelectorAll("tr.hh-detail tbody tr[data-s]").forEach(tr => tr.onclick = () => { ctx.openSec(tr.dataset.s); ctx.go("terminal"); });
   void n500Total;
@@ -194,7 +198,7 @@ function detailHtml(g) {
     <td class="num">${r.mcap == null || !tmcap ? "—" : (r.mcap / tmcap * 100).toFixed(1) + "%"}</td>${stockRet(r, "1W")}${stockRet(r, "1M")}${stockRet(r, "YTD")}</tr>`).join("");
   return `<div class="tablecard"><table class="tbl"><thead><tr><th>Symbol</th><th>Company</th><th class="r">Last</th><th class="r">Chg %</th><th class="r">Mcap ₹ cr</th><th class="r">Weight</th><th class="r">1W</th><th class="r">1M</th><th class="r">YTD</th></tr></thead>
     <tbody>${body}<tr class="hh-total"><td colspan="2"><b>Group, market-cap weighted</b></td><td></td><td class="num ${cls(g.sum.dayPct)}">${pctTxt(g.sum.dayPct)}</td><td class="num">${crTxt(tmcap / CR)}</td><td class="num">100%</td>${groupRet("1W")}${groupRet("1M")}${groupRet("YTD")}</tr></tbody></table></div>
-    ${g.h.note ? `<p class="note">${esc(g.h.note)}</p>` : ""}<p class="note">Returns use today's share counts and split-adjusted closes, so they reflect price moves only (no buybacks, issues or dividends).</p>`;
+    ${g.h.note ? `<p class="note">${esc(g.h.note)}</p>` : ""}<p class="note">Returns use today's share counts and split-adjusted closes, so they reflect price moves only (no share repurchases, issues or dividends).</p>`;
 }
 
 async function loadReturns(el, id) {
