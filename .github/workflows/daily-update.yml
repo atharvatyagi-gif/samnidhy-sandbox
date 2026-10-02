@@ -84,9 +84,13 @@ jobs:
         continue-on-error: true
         run: python scripts/terminal_hist.py
 
-      - name: NIFTY 500 fundamentals for the terminal
+      - name: Fundamentals for the terminal (NIFTY 500 daily, rest of the main board 1/5 per run, business-house members always)
         continue-on-error: true
         run: python scripts/terminal_fund.py
+
+      - name: Check the business-house list against today's NSE universe (reports renamed or delisted symbols; never blocks the deploy)
+        continue-on-error: true
+        run: python scripts/check_houses.py
 
       - name: Delayed prices for all main-board stocks
         continue-on-error: true

@@ -1,0 +1,330 @@
+{
+ "version": 1,
+ "method": "Listed companies grouped by promoter / parent group, as publicly described. Market cap = shares outstanding x last price for each listed company, summed; cross-holdings and promoter stakes are NOT netted out (a parent and its listed subsidiary both count). Memberships can go stale after demergers, renames and sales: scripts/check_houses.py catches symbols that no longer exist, not changes of control.",
+ "houses": [
+  {
+   "id": "tata",
+   "name": "Tata Group",
+   "symbols": [
+    "TCS",
+    "TMPV",
+    "TMCV",
+    "TATASTEEL",
+    "TITAN",
+    "TATAPOWER",
+    "TATACONSUM",
+    "TATACOMM",
+    "TATAELXSI",
+    "TATACHEM",
+    "TATAINVEST",
+    "INDHOTEL",
+    "VOLTAS",
+    "TRENT",
+    "TATATECH",
+    "NELCO",
+    "TTML",
+    "RALLIS",
+    "TATACAP"
+   ]
+  },
+  {
+   "id": "reliance",
+   "name": "Reliance Industries (Mukesh Ambani)",
+   "symbols": [
+    "RELIANCE",
+    "JIOFIN",
+    "NETWORK18"
+   ]
+  },
+  {
+   "id": "adani",
+   "name": "Adani Group",
+   "symbols": [
+    "ADANIENT",
+    "ADANIPORTS",
+    "ADANIPOWER",
+    "ADANIGREEN",
+    "ADANIENSOL",
+    "ATGL",
+    "NDTV",
+    "ACC",
+    "AMBUJACEM"
+   ]
+  },
+  {
+   "id": "aditya-birla",
+   "name": "Aditya Birla Group",
+   "symbols": [
+    "GRASIM",
+    "ULTRACEMCO",
+    "HINDALCO",
+    "ABCAPITAL",
+    "ABFRL",
+    "ABLBL",
+    "ABREL",
+    "ABSLAMC"
+   ]
+  },
+  {
+   "id": "mahindra",
+   "name": "Mahindra Group",
+   "symbols": [
+    "M&M",
+    "M&MFIN",
+    "TECHM",
+    "MAHLIFE",
+    "MHRIL",
+    "MAHLOG",
+    "MAHEPC"
+   ]
+  },
+  {
+   "id": "bajaj",
+   "name": "Bajaj Group (Bajaj Auto / Finserv)",
+   "symbols": [
+    "BAJFINANCE",
+    "BAJAJFINSV",
+    "BAJAJ-AUTO",
+    "BAJAJHLDNG",
+    "BAJAJHFL"
+   ]
+  },
+  {
+   "id": "godrej",
+   "name": "Godrej Group",
+   "symbols": [
+    "GODREJCP",
+    "GODREJPROP",
+    "GODREJIND",
+    "GODREJAGRO"
+   ]
+  },
+  {
+   "id": "jsw",
+   "name": "JSW Group (Sajjan Jindal)",
+   "symbols": [
+    "JSWSTEEL",
+    "JSWENERGY",
+    "JSWINFRA",
+    "JSWHL",
+    "JSWCEMENT"
+   ]
+  },
+  {
+   "id": "vedanta",
+   "name": "Vedanta Group",
+   "symbols": [
+    "VEDL",
+    "HINDZINC",
+    "VAML",
+    "VISL",
+    "VOGL",
+    "VEDPOWER"
+   ]
+  },
+  {
+   "id": "murugappa",
+   "name": "Murugappa Group",
+   "symbols": [
+    "CHOLAFIN",
+    "CHOLAHLDNG",
+    "TIINDIA",
+    "CARBORUNIV",
+    "COROMANDEL",
+    "EIDPARRY",
+    "SHANTIGEAR"
+   ]
+  },
+  {
+   "id": "tvs",
+   "name": "TVS Group",
+   "symbols": [
+    "TVSMOTOR",
+    "TVSHLTD",
+    "SUNDRMFAST",
+    "SUNCLAY",
+    "TVSSCS",
+    "TVSSRICHAK"
+   ]
+  },
+  {
+   "id": "hinduja",
+   "name": "Hinduja Group",
+   "symbols": [
+    "ASHOKLEY",
+    "GULFOILLUB",
+    "HGS",
+    "INDUSINDBK"
+   ]
+  },
+  {
+   "id": "bharti",
+   "name": "Bharti Group (Sunil Mittal)",
+   "symbols": [
+    "BHARTIARTL",
+    "BHARTIHEXA",
+    "INDUSTOWER"
+   ]
+  },
+  {
+   "id": "kalyani",
+   "name": "Kalyani Group",
+   "symbols": [
+    "BHARATFORG",
+    "KSL",
+    "KICL"
+   ]
+  },
+  {
+   "id": "rpg",
+   "name": "RPG Group",
+   "symbols": [
+    "CEATLTD",
+    "KEC",
+    "RPGLIFE",
+    "ZENSARTECH"
+   ]
+  },
+  {
+   "id": "piramal",
+   "name": "Piramal Group",
+   "symbols": [
+    "PIRAMALFIN",
+    "PPLPHARMA"
+   ]
+  },
+  {
+   "id": "hero",
+   "name": "Hero Group",
+   "symbols": [
+    "HEROMOTOCO"
+   ]
+  },
+  {
+   "id": "torrent",
+   "name": "Torrent Group",
+   "symbols": [
+    "TORNTPHARM",
+    "TORNTPOWER"
+   ]
+  },
+  {
+   "id": "zydus",
+   "name": "Zydus Group",
+   "symbols": [
+    "ZYDUSLIFE",
+    "ZYDUSWELL"
+   ]
+  },
+  {
+   "id": "sun-pharma",
+   "name": "Sun Pharma Group",
+   "symbols": [
+    "SUNPHARMA",
+    "SPARC"
+   ]
+  },
+  {
+   "id": "dabur-burman",
+   "name": "Dabur / Burman",
+   "symbols": [
+    "DABUR"
+   ]
+  },
+  {
+   "id": "emami",
+   "name": "Emami Group",
+   "symbols": [
+    "EMAMILTD",
+    "EMAMIREAL",
+    "EMAMIPAP"
+   ]
+  },
+  {
+   "id": "jindal",
+   "name": "Jindal groups",
+   "symbols": [
+    "JINDALSTEL",
+    "JSL",
+    "JINDALSAW"
+   ],
+   "note": "The Jindal name is shared by separate family groups (O.P. Jindal, Naveen Jindal) that are grouped together here for convenience. JSW (Sajjan Jindal) is listed separately."
+  },
+  {
+   "id": "wadia",
+   "name": "Wadia Group",
+   "symbols": [
+    "BRITANNIA",
+    "BOMDYEING"
+   ]
+  },
+  {
+   "id": "ck-birla",
+   "name": "CK Birla Group",
+   "symbols": [
+    "ORIENTELEC"
+   ]
+  },
+  {
+   "id": "max",
+   "name": "Max Group (Analjit Singh)",
+   "symbols": [
+    "MAXHEALTH",
+    "MFSL",
+    "MAXESTATES"
+   ]
+  },
+  {
+   "id": "apollo",
+   "name": "Apollo Hospitals Group",
+   "symbols": [
+    "APOLLOHOSP"
+   ]
+  },
+  {
+   "id": "hdfc",
+   "name": "HDFC Group",
+   "symbols": [
+    "HDFCBANK",
+    "HDFCLIFE",
+    "HDFCAMC"
+   ]
+  },
+  {
+   "id": "icici",
+   "name": "ICICI Group",
+   "symbols": [
+    "ICICIBANK",
+    "ICICIPRULI",
+    "ICICIGI",
+    "ICICIAMC"
+   ]
+  },
+  {
+   "id": "sbi",
+   "name": "SBI Group",
+   "symbols": [
+    "SBIN",
+    "SBILIFE",
+    "SBICARD"
+   ]
+  },
+  {
+   "id": "kotak",
+   "name": "Kotak Group",
+   "symbols": [
+    "KOTAKBANK"
+   ]
+  },
+  {
+   "id": "adag",
+   "name": "Anil Ambani Group (ADAG)",
+   "symbols": [
+    "RPOWER",
+    "RELINFRA",
+    "RCOM",
+    "RHFL"
+   ]
+  }
+ ]
+}

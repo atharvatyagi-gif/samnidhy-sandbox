@@ -730,6 +730,16 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 
 /* ---------- HOUSES ---------- */
 #houses .empty, #aladin .empty { padding: 18px 0; color: var(--ink-3); }
+#houses .note { margin-top: 12px; }
+#houses .controls { margin-bottom: 14px; }
+#houses .hh-row { cursor: pointer; } #houses .hh-row:hover, #houses .hh-row:focus-visible { background: var(--card-hover); outline: 0; }
+#houses .hh-row.on { background: var(--sunken); }
+#houses .hh-row .b-bar { min-width: 90px; }
+#houses .hh-detail > td { padding: 0 0 6px; background: var(--sunken); }
+#houses .hh-detail .tablecard { border: 0; margin: 0; }
+#houses .hh-detail tbody tr[data-s] { cursor: pointer; }
+#houses .hh-total td { border-top: 1px solid var(--rule-2); }
+@media (max-width: 1000px) { #houses .hh-hide { display: none; } }
 
 /* ---------- MAP ---------- */
 /* (geo-tension is a Globe layer; its styles join the Globe block above when the MAP phase lands) */

@@ -203,13 +203,15 @@ setInterval(() => {
 // desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
 // while a file hasn't been produced yet.
 const DESK_FILES = { sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json" };
+const DESK_LAZY = new Set(["houses", "geo"]);
 function deskCtx() { return { S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
 function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks]) m.init(c); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
+  S.deskMan = man;
   let changed = false;
   for (const [k, file] of Object.entries(DESK_FILES)) {
-    if (!man[k]) continue;
+    if (!man[k] || DESK_LAZY.has(k)) continue;                  // lazy files are fetched by their own tab on first open
     const j = await getJSON(file).catch(() => null);
     if (j && (!S[k] || j.generated_utc !== S[k].generated_utc)) { S[k] = j; changed = true; }
   }
@@ -1594,7 +1596,7 @@ $$("#fkeys button").forEach(b => b.onclick = () => {
 /* ================= desk setup (first visit) ================= */
 const LANES = [
   { id: "screen", name: "B-Lab screen", sub: "Today's 10 screened stocks", pick: () => (S.screen.picks || []).map(p => p.symbol) },
-  { id: "large", name: "Largest companies", sub: "NIFTY 500 by market value", pick: () => Object.entries(S.fund || {}).filter(([, f]) => f.mcap).sort((a, b) => b[1].mcap - a[1].mcap).map(([s]) => s) },
+  { id: "large", name: "Largest companies", sub: "NIFTY 500 by market value", pick: () => Object.entries(S.fund || {}).filter(([s, f]) => f.mcap && (S.map.get(s) || {}).n500).sort((a, b) => b[1].mcap - a[1].mcap).map(([s]) => s) },
   { id: "fin", name: "Banks & finance", sub: "Financial services", ind: "Financial Services" },
   { id: "it", name: "Technology", sub: "Information technology", ind: "Information Technology" },
   { id: "energy", name: "Energy", sub: "Oil, gas & power", ind: ["Oil Gas & Consumable Fuels", "Power"] },
