@@ -1,0 +1,241 @@
+{
+  "generated_utc": "2026-10-01T04:55:41+00:00",
+  "run_context": "GitHub Actions",
+  "runner_ip_note": "See each source's real status below; do not assume local results transfer to Actions runners.",
+  "results": [
+    {
+      "category": "map",
+      "name": "OpenSky /states/all (Hormuz bbox)",
+      "url": "https://opensky-network.org/api/states/all?lamin=25.3&lamax=27.9&lomin=55.0&lomax=57.6",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"count\": 7}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "IMF PortWatch: chokepoints_database",
+      "url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/PortWatch_chokepoints_database/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=json&resultRecordCount=2",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_features\": 2, \"first\": \"Suez Canal\"}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "IMF PortWatch: Daily_Chokepoints_Data",
+      "url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=json&resultRecordCount=1&orderByFields=date+DESC",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"date\": \"2026-09-27\", \"year\": 2026, \"month\": 9, \"day\": 27, \"portid\": \"chokepoint1\", \"portname\": \"Suez Canal\", \"n_container\": 10, \"n_dry_bulk\": 8, \"n_general_cargo\": 4, \"n_roro\": 3, \"n_tanker\": 12, \"n_cargo\": 25, \"n_total\": 37, \"capacity_container\": 404907, \"capacity_dry_bulk\": 306615, \"capacity_general_cargo\": 41468, \"capacity_roro\": 2026, \"capacity_tanker\": 522735, \"capacity_cargo\": 755018, \"cap",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "IMF PortWatch: portwatch_disruptions_database",
+      "url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/portwatch_disruptions_database/FeatureServer/0/query?where=1%3D1&outFields=%2A&f=json&resultRecordCount=2",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_features\": 2}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "IMF PortWatch: PortWatch_ports_database (India)",
+      "url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/PortWatch_ports_database/FeatureServer/0/query?where=ISO3%3D%27IND%27&outFields=%2A&f=json",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_india_ports\": 37}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "IMF PortWatch: Daily_Ports_Data",
+      "url": "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Ports_Data/FeatureServer/0/query?where=ISO3%3D%27IND%27&outFields=%2A&f=json&resultRecordCount=1&orderByFields=date+DESC",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"date\": \"2026-09-25\", \"year\": 2026, \"month\": 9, \"day\": 25, \"portid\": \"port207\", \"portname\": \"Kolkata (Syama Prasad Mookerje Port)\", \"country\": \"India\", \"ISO3\": \"IND\", \"portcalls_container\": 2, \"portcalls_dry_bulk\": 0, \"portcalls_general_cargo\": 0, \"portcalls_roro\": 0, \"portcalls_tanker\": 0, \"portcalls_cargo\": 2, \"portcalls\": 2, \"import_container\": 2207, \"import_dry_bulk\": 0, \"import_general_cargo",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "Shipping lanes (newzealandpaul/Shipping-Lanes, CC BY 4.0)",
+      "url": "https://raw.githubusercontent.com/newzealandpaul/Shipping-Lanes/main/data/Shipping_Lanes_v1.geojson",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_features\": 3, \"bytes\": 1170949}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "TeleGeography submarine cables",
+      "url": "https://www.submarinecablemap.com/api/v3/cable/cable-geo.json",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_cables\": 730}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "TeleGeography landing points",
+      "url": "https://www.submarinecablemap.com/api/v3/landing-point/landing-point-geo.json",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_points\": 1925}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "WRI Global Power Plant Database (CSV)",
+      "url": "https://raw.githubusercontent.com/wri/global-power-plant-database/master/output_database/global_power_plant_database.csv",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_rows_india\": 1589, \"bytes\": 11973385}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "USGS earthquakes M4.5+ (7 days)",
+      "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_events\": 128}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "NASA EONET v3 (open events)",
+      "url": "https://eonet.gsfc.nasa.gov/api/v3/events?status=open",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_events\": 7197}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "GDACS event list",
+      "url": "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_events\": 89}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "Wikidata SPARQL (company facilities, Reliance test query)",
+      "url": "https://query.wikidata.org/sparql?query=%0A++++++SELECT+%3Fcompany+%3FcompanyLabel+%3Ffacility+%3FfacilityLabel+%3Fcoord+WHERE+%7B%0A++++++++%3Fcompany+wdt%3AP414+%3Fexchange+.+%3Fcompany+rdfs%3Alabel+%22Reliance+Industries%22%40en+.%0A++++++++%3Ffacility+wdt%3AP127+%3Fcompany+.+%3Ffacility+wdt%3AP625+%3Fcoord+.%0A++++++++SERVICE+wikibase%3Alabel+%7B+bd%3AserviceParam+wikibase%3Alanguage+%22en%22.+%7D%0A++++++%7D+LIMIT+5&format=json",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"n_bindings\": 0}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "GDELT DOC 2.0 (claimed failing from Actions - testing live)",
+      "url": "https://api.gdeltproject.org/api/v2/doc/doc?query=%22Strait+of+Hormuz%22&mode=artlist&maxrecords=3&format=json&sort=datedesc",
+      "status": "FAIL",
+      "detail": "HTTP 429",
+      "sample": null,
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "Google News RSS (GDELT fallback)",
+      "url": "https://news.google.com/rss/search?q=Strait+of+Hormuz&hl=en-IN&gl=IN&ceid=IN%3Aen",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"bytes\": 172048, \"looks_like_rss\": true}",
+      "needs_key": false
+    },
+    {
+      "category": "map",
+      "name": "aisstream.io (ship AIS)",
+      "url": "wss://stream.aisstream.io/v0/stream",
+      "status": "NEEDS_KEY",
+      "detail": "AISSTREAM_KEY not set - user must register a free account and provide it as a GitHub secret.",
+      "sample": null,
+      "needs_key": true
+    },
+    {
+      "category": "map",
+      "name": "ACLED API (conflict events)",
+      "url": "https://api.acleddata.com/acled/read",
+      "status": "NEEDS_KEY",
+      "detail": "ACLED_KEY/ACLED_EMAIL not set - user must register a free account and provide both as GitHub secrets.",
+      "sample": null,
+      "needs_key": true
+    },
+    {
+      "category": "macro",
+      "name": "Yahoo Finance (yfinance) FX & commodities",
+      "url": "yfinance",
+      "status": "OK",
+      "detail": "fetched",
+      "sample": "{\"BZ=F\": 96.95999908447266, \"GC=F\": 4205.39990234375, \"HG=F\": 6.60699987411499, \"NG=F\": 2.9809999465942383, \"SI=F\": 61.470001220703125, \"USDINR=X\": 95.9625015258789}",
+      "needs_key": false
+    },
+    {
+      "category": "macro",
+      "name": "RBI reference rate page",
+      "url": "https://www.rbi.org.in/Scripts/ReferenceRateArchive.aspx",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": null,
+      "needs_key": false
+    },
+    {
+      "category": "macro",
+      "name": "RBI current rates page",
+      "url": "https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": null,
+      "needs_key": false
+    },
+    {
+      "category": "macro",
+      "name": "MOSPI release calendar",
+      "url": "https://www.mospi.gov.in/release-calendar",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": null,
+      "needs_key": false
+    },
+    {
+      "category": "macro",
+      "name": "World Bank API (India GDP)",
+      "url": "https://api.worldbank.org/v2/country/IN/indicator/NY.GDP.MKTP.CD?format=json&per_page=1",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "[{\"indicator\": {\"id\": \"NY.GDP.MKTP.CD\", \"value\": \"GDP (current US$)\"}, \"country\": {\"id\": \"IN\", \"value\": \"India\"}, \"countryiso3code\": \"IND\", \"date\": \"2025\", \"value\": 3956067115771.63, \"unit\": \"\", \"obs_status\": \"\", \"decimal\": 0}]",
+      "needs_key": false
+    },
+    {
+      "category": "macro",
+      "name": "IMF DataMapper API (India real GDP growth)",
+      "url": "https://www.imf.org/external/datamapper/api/v1/NGDP_RPCH/IND",
+      "status": "OK",
+      "detail": "HTTP 200",
+      "sample": "{\"values\": {\"NGDP_RPCH\": {\"SDN\": {\"1980\": 2.5, \"1981\": 6.3, \"1982\": 4.1, \"1983\": -1.5, \"1984\": -5.6, \"1985\": -0.6, \"1986\": 9.9, \"1987\": 6.5, \"1988\": 4.3, \"1989\": 1.4, \"1990\": 0.8, \"1991\": 7, \"1992\": 5.5, \"1993\": 2.8, \"1994\": 3.5, \"1995\": 8.9, \"1996\": 5.5, \"1997\": 6.1, \"1998\": 8.2, \"1999\": 4.2, \"2000\": 8.4, \"2001\": 10.9, \"2002\": 5.9, \"2003\": 6.3, \"2004\": 5.1, \"2005\": 5.6, \"2006\": 6.5, \"2007\": 5.7, ",
+      "needs_key": false
+    },
+    {
+      "category": "macro",
+      "name": "FRED API",
+      "url": "https://api.stlouisfed.org/fred/series/observations",
+      "status": "NEEDS_KEY",
+      "detail": "FRED_KEY not set (optional) - free to register at fred.stlouisfed.org.",
+      "sample": null,
+      "needs_key": true
+    },
+    {
+      "category": "macro",
+      "name": "NSE corporate announcements",
+      "url": "https://www.nseindia.com/api/corporate-announcements",
+      "status": "FAIL",
+      "detail": "ReadTimeout: HTTPSConnectionPool(host='www.nseindia.com', port=443): Read timed out. (read timeout=20)",
+      "sample": null,
+      "needs_key": false
+    }
+  ]
+}

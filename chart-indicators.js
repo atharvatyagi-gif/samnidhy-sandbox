@@ -335,8 +335,8 @@ export const IND = Object.fromEntries(INDICATORS.map(d => [d.id, d]));
 export const defaults = id => Object.fromEntries(IND[id].params.map(p => [p.k, p.def]));
 
 // ---------------- TradingView-style "Technicals" summary (educational rule counts) ----------------
-// Moving averages: price above the MA = buy, below = sell. Oscillators: the usual overbought/oversold and
-// cross rules. Score = (buys - sells) / signals: > 0.5 strong buy, > 0.1 buy, < -0.1 sell, < -0.5 strong sell.
+// Moving averages: price above the MA = bullish, below = bearish. Oscillators: the usual overbought/oversold and
+// cross rules. Score = (bullish - bearish) / signals: > 0.5 strongly bullish, > 0.1 bullish, < -0.1 bearish, < -0.5 strongly bearish.
 export function technicals(b) {
   if (!b || b.length < 60) return null;
   const c = b.map(x => x.c), n = b.length - 1, last = c[n], rows = [];
@@ -355,14 +355,14 @@ export function technicals(b) {
   const md = macdA(c, 12, 26, 9); if (md.m[n] != null && md.sig[n] != null) add("osc", "MACD (12, 26)", md.m[n], md.m[n] > md.sig[n] ? 1 : md.m[n] < md.sig[n] ? -1 : 0);
   const w = willrA(b, 14); if (w[n] != null) add("osc", "Williams %R (14)", w[n], w[n] < -80 && w[n] > w[n - 1] ? 1 : w[n] > -20 && w[n] < w[n - 1] ? -1 : 0);
   const score = list => { const bu = list.filter(x => x.sig > 0).length, se = list.filter(x => x.sig < 0).length, ne = list.length - bu - se, s = list.length ? (bu - se) / list.length : 0;
-    return { buy: bu, sell: se, neutral: ne, score: s, label: s > 0.5 ? "Strong buy" : s > 0.1 ? "Buy" : s < -0.5 ? "Strong sell" : s < -0.1 ? "Sell" : "Neutral" }; };
+    return { buy: bu, sell: se, neutral: ne, score: s, label: s > 0.5 ? "Strongly bullish" : s > 0.1 ? "Bullish" : s < -0.5 ? "Strongly bearish" : s < -0.1 ? "Bearish" : "Neutral" }; };
   return { rows, ma: score(rows.filter(x => x.group === "ma")), osc: score(rows.filter(x => x.group === "osc")), all: score(rows) };
 }
 
-// ---------------- "Recommended indicators" for one stock, from its own past ----------------
+// ---------------- "Suggested indicators" for one stock, from its own past ----------------
 // Each candidate turns an indicator into a simple long-only rule (in the market or in cash), the way the
 // indicator is usually read. It is tested on the stock's daily history: a signal on a day's close is acted on
-// at the next day's close, 0.1% cost per buy and per sell. Chosen on the first 70% of the history
+// at the next day's close, 0.1% cost per entry and per exit. Chosen on the first 70% of the history
 // ("training"), then checked on the last 30% it never saw ("test"). Ranked by a robust score that needs both
 // parts to hold up. Past results only: educational, not advice.
 const RULES = [
@@ -376,9 +376,9 @@ const RULES = [
   { key: "psar", name: "Parabolic SAR", family: "Trend", add: [["psar", {}]], sig: b => { const s = psarA(b, 0.02, 0.2); return b.map((x, i) => s[i] == null ? null : x.c > s[i]); } },
   { key: "adx", name: "ADX > 25 with +DI above −DI", family: "Trend", add: [["adx", { len: 14 }]], sig: b => { const r = adxA(b, 14); return b.map((_, i) => r.adx[i] == null ? null : r.adx[i] > 25 && r.pdi[i] > r.mdi[i]); } },
   { key: "ichimoku", name: "Ichimoku: price above cloud", family: "Trend", add: [["ichimoku", {}]], sig: b => { const t = mid(b, 9), k = mid(b, 26), sb = mid(b, 52); return b.map((x, i) => { const j = i - 25; if (j < 0 || t[j] == null || k[j] == null || sb[j] == null) return null; const a = (t[j] + k[j]) / 2; return x.c > Math.max(a, sb[j]); }); } },
-  { key: "rsi_mr", name: "RSI 14: buy below 30, sell above 70", family: "Mean reversion", add: [["rsi", { len: 14 }]], sig: b => { const r = rsiA(b.map(x => x.c), 14); let on = false; return b.map((_, i) => { if (r[i] == null) return null; if (!on && r[i] < 30) on = true; else if (on && r[i] > 70) on = false; return on; }); } },
-  { key: "rsi2", name: "RSI 2: buy below 10, sell above 70 (short-term)", family: "Mean reversion", add: [["rsi", { len: 2 }]], sig: b => { const r = rsiA(b.map(x => x.c), 2), s = smaA(b.map(x => x.c), 200); let on = false; return b.map((x, i) => { if (r[i] == null || s[i] == null) return null; if (!on && r[i] < 10 && x.c > s[i]) on = true; else if (on && r[i] > 70) on = false; return on; }); } },
-  { key: "bb_mr", name: "Bollinger: buy below lower band, sell at the middle", family: "Mean reversion", add: [["bb", { len: 20, mult: 2 }]], sig: b => { const c = b.map(x => x.c), m = smaA(c, 20), d = stdevA(c, 20); let on = false; return c.map((v, i) => { if (m[i] == null) return null; if (!on && v < m[i] - 2 * d[i]) on = true; else if (on && v > m[i]) on = false; return on; }); } },
+  { key: "rsi_mr", name: "RSI 14: in below 30, out above 70", family: "Mean reversion", add: [["rsi", { len: 14 }]], sig: b => { const r = rsiA(b.map(x => x.c), 14); let on = false; return b.map((_, i) => { if (r[i] == null) return null; if (!on && r[i] < 30) on = true; else if (on && r[i] > 70) on = false; return on; }); } },
+  { key: "rsi2", name: "RSI 2: in below 10, out above 70 (short-term)", family: "Mean reversion", add: [["rsi", { len: 2 }]], sig: b => { const r = rsiA(b.map(x => x.c), 2), s = smaA(b.map(x => x.c), 200); let on = false; return b.map((x, i) => { if (r[i] == null || s[i] == null) return null; if (!on && r[i] < 10 && x.c > s[i]) on = true; else if (on && r[i] > 70) on = false; return on; }); } },
+  { key: "bb_mr", name: "Bollinger: in below lower band, out at the middle", family: "Mean reversion", add: [["bb", { len: 20, mult: 2 }]], sig: b => { const c = b.map(x => x.c), m = smaA(c, 20), d = stdevA(c, 20); let on = false; return c.map((v, i) => { if (m[i] == null) return null; if (!on && v < m[i] - 2 * d[i]) on = true; else if (on && v > m[i]) on = false; return on; }); } },
   { key: "stoch", name: "Stochastic: %K crosses up below 20, out above 80", family: "Mean reversion", add: [["stoch", {}]], sig: b => { const r = stochA(b, 14, 3, 3); let on = false; return b.map((_, i) => { if (r.k[i] == null || r.d[i] == null || r.k[i - 1] == null || r.d[i - 1] == null) return null; if (!on && r.k[i] < 20 && r.k[i - 1] <= r.d[i - 1] && r.k[i] > r.d[i]) on = true; else if (on && r.k[i] > 80) on = false; return on; }); } },
   { key: "cci", name: "CCI 20: in on cross above −100, out on cross below +100", family: "Mean reversion", add: [["cci", { len: 20 }]], sig: b => { const r = cciA(b, 20); let on = false; return b.map((_, i) => { if (r[i] == null || r[i - 1] == null) return null; if (!on && r[i - 1] < -100 && r[i] >= -100) on = true; else if (on && r[i - 1] > 100 && r[i] <= 100) on = false; return on; }); } },
 ];

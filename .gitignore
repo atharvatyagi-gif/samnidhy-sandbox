@@ -5,6 +5,7 @@ __pycache__/
 # Secrets: API keys live in .env locally and in GitHub repository secrets, never in git
 .env
 .env.*
+!.env.example
 
 # Raw price downloads: a cache the daily job rebuilds (new stocks every day would bloat git)
 data/raw/
@@ -30,3 +31,9 @@ data/news/
 
 # NSE's own live numbers (unofficial poll); refreshed every run, not stored
 data/nse_live/
+
+# ALADIN: caches rebuilt by the workflows, and live ticks that are for the operator's own screen only (NSE's
+# website terms restrict redistributing them) - never committed, never published
+data/aladin_cache/
+data/live_extra/
+site_old/

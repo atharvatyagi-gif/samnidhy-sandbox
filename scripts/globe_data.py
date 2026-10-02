@@ -1,34 +1,43 @@
 """
-Globe: real-time flights, real geopolitical news and the shipping/oil chokepoints they move through.
--> data/globe/latest.json, published every ~45-60 minutes (not tied to NSE market hours: geopolitics runs
-24/7). Two free, no-account sources, used directly, nothing in between:
+Globe: real-time flights, real shipping traffic, real hazards, and real geopolitical news around the world's
+shipping/oil chokepoints. -> data/globe/latest.json, published every ~45-60 minutes (not tied to NSE market
+hours: geopolitics runs 24/7). Free, no-account sources, used directly, nothing in between:
 
-  OpenSky Network  https://opensky-network.org/apidoc/  - real live ADS-B aircraft positions, a bounding-box
-                   query per chokepoint. Anonymous use has a daily request budget, so this script only makes
-                   one small bounding-box call per chokepoint (8 calls/run), never a global query.
-  GDELT DOC 2.0    https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/ - a free global news/event index,
-                   updated every 15 minutes, searchable by keyword. GDELT asks for at least ~1 request per
-                   several seconds; this script waits GDELT_GAP seconds between every call and retries once
-                   on a 429 before giving up on that one query (keeping whatever ran before it).
+  OpenSky Network    https://opensky-network.org/apidoc/  - real live ADS-B aircraft positions, a bounding-box
+                     query per chokepoint. Anonymous use has a daily request budget, so this script only makes
+                     one small bounding-box call per chokepoint (8 calls/run), never a global query.
+  IMF PortWatch      https://portwatch.imf.org (ArcGIS FeatureServer, no key) - REAL daily vessel-transit
+                     counts by type (tanker/container/dry-bulk/general-cargo/RoRo) for each chokepoint, and
+                     real active disruption events (storms/quakes/conflict) with their port impact. This is
+                     real cargo-ship *traffic data*, not invented ship icons - PortWatch itself lags a few
+                     days (it's not live AIS), and that lag is shown on screen, never hidden.
+  USGS / NASA EONET / GDACS   Real earthquakes (M4.5+, 7 days), natural-hazard events (storms, wildfires,
+                     volcanoes, floods - last 7 days only, EONET's own `days` filter, not a client-side guess)
+                     and disaster alerts (Green/Orange/Red), all free, no key.
+  Google News RSS    Primary source for chokepoint/world news. GDELT DOC 2.0 (below) is attempted as a bonus
+                     only when Google News comes up short - confirmed via a real GitHub Actions run (not just
+                     claimed) that GDELT returns 429 from Actions' runner IPs, so it is no longer load-bearing.
+  GDELT DOC 2.0      https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/ - kept as an opportunistic extra
+                     only (see above). Paced at GDELT_GAP seconds between calls, one retry on 429.
 
-What this can't do: there is no free, reliable source of real-time cargo-ship positions (AIS data is sold by
-MarineTraffic/VesselFinder and similar). So "cargo" here means real news about each chokepoint, not invented
-ship icons. Nor does OpenSky's anonymous tier give a flight's route (origin/destination airport) - its
-/flights/aircraft endpoint returns 403 "You cannot access historical flights" without a registered account, so
-that field is left out rather than guessed; everything else per aircraft (speed, altitude, heading, climb rate,
-squawk, position age) is real, straight from /states/all. Chokepoint "why it matters" lines are widely-cited
-reference facts (EIA, UNCTAD), not live data, and are clearly separate from the live flight counts and live
-news next to them.
+What this can't do: there is no free, reliable source of real-time (second-by-second) cargo-ship positions
+(AIS data is sold by MarineTraffic/VesselFinder and similar) - PortWatch's daily counts are the real, free
+alternative, clearly labelled with their own as-of date. Nor does OpenSky's anonymous tier give a flight's
+route (origin/destination airport) - its /flights/aircraft endpoint returns 403 "You cannot access historical
+flights" without a registered account, so that field is left out rather than guessed. Chokepoint "why it
+matters" lines are widely-cited reference facts (EIA, UNCTAD), not live data.
 
-If a chokepoint's flights or news can't be fetched this run, that one field is simply left out (not
-invented); if nothing at all could be fetched, the previous file is kept untouched.
+If any one field can't be fetched this run, that field is simply left out (not invented); if nothing at all
+could be fetched, the previous file is kept untouched.
 
   python scripts/globe_data.py
 """
 
+import email.utils
 import json
 import sys
 import time
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -39,24 +48,39 @@ OUT = ROOT / "data" / "globe" / "latest.json"
 GDELT_GAP = 6          # seconds between GDELT calls (they ask for >= ~5s)
 UA = {"User-Agent": "Mozilla/5.0 (Samnidhy B-Lab globe; educational; contact via github.com/atharvatyagi-gif)"}
 IST = timezone(timedelta(hours=5, minutes=30))
+PW = "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services"
 
-# id, display name, centre lat/lon, half-width of the OpenSky bounding box (degrees), search keywords for
-# GDELT, and a short, widely-cited reference fact (not live data).
+
+def pw_query(layer, params):
+    """ArcGIS FeatureServer query, with a real safety net: a malformed query returns HTTP 200 with an
+    {"error": ...} body (confirmed live - found by a real bug here: a date filter in the wrong literal syntax
+    silently came back as "0 results" instead of an error). raise_for_status() alone misses that entirely, so
+    this checks for the error body too and raises - a real failure must never be mistaken for real zero data."""
+    r = requests.get(f"{PW}/{layer}/FeatureServer/0/query", params={**params, "f": "json"}, timeout=20)
+    r.raise_for_status()
+    j = r.json()
+    if "error" in j:
+        raise RuntimeError(f"ArcGIS query error on {layer}: {j['error']}")
+    return j
+
+# id, display name, centre lat/lon, half-width of the OpenSky bounding box (degrees), search keywords, a
+# short widely-cited reference fact (not live data), and the matching IMF PortWatch chokepoint id (verified
+# against PortWatch_chokepoints_database directly - see docs/TERMINAL_PLAN.md).
 CHOKEPOINTS = [
     ("hormuz", "Strait of Hormuz", 26.6, 56.3, 1.3, '"Strait of Hormuz" OR Hormuz',
-     "The narrow gap between Iran and Oman that oil tankers from Saudi Arabia, Iraq, the UAE, Kuwait and Qatar sail through — commonly cited as around a fifth of the world's oil consumption."),
+     "The narrow gap between Iran and Oman that oil tankers from Saudi Arabia, Iraq, the UAE, Kuwait and Qatar sail through — commonly cited as around a fifth of the world's oil consumption.", "chokepoint6"),
     ("bab_el_mandeb", "Bab-el-Mandeb", 12.6, 43.4, 0.8, '"Bab-el-Mandeb" OR "Bab el-Mandeb" OR "Red Sea shipping"',
-     "The strait between Yemen and Djibouti linking the Red Sea to the Gulf of Aden; the route to and from the Suez Canal for Asia-Europe trade and Gulf oil."),
+     "The strait between Yemen and Djibouti linking the Red Sea to the Gulf of Aden; the route to and from the Suez Canal for Asia-Europe trade and Gulf oil.", "chokepoint4"),
     ("suez", "Suez Canal", 30.5, 32.3, 0.7, '"Suez Canal"',
-     "Egypt's canal linking the Mediterranean to the Red Sea; commonly cited as carrying over a tenth of world trade by volume."),
+     "Egypt's canal linking the Mediterranean to the Red Sea; commonly cited as carrying over a tenth of world trade by volume.", "chokepoint1"),
     ("malacca", "Strait of Malacca", 2.8, 101.2, 1.5, '"Strait of Malacca" OR "Malacca Strait"',
-     "The main sea route between the Indian Ocean and the South China Sea, between Indonesia, Malaysia and Singapore — one of the world's busiest shipping lanes."),
+     "The main sea route between the Indian Ocean and the South China Sea, between Indonesia, Malaysia and Singapore — one of the world's busiest shipping lanes.", "chokepoint5"),
     ("taiwan", "Taiwan Strait", 24.0, 119.5, 1.3, '"Taiwan Strait" OR "Taiwan Strait tension" OR "China Taiwan military"',
-     "Separates Taiwan from mainland China; a flashpoint for semiconductor supply chains (Taiwan makes most of the world's advanced chips) and regional security."),
+     "Separates Taiwan from mainland China; a flashpoint for semiconductor supply chains (Taiwan makes most of the world's advanced chips) and regional security.", "chokepoint11"),
     ("panama", "Panama Canal", 9.1, -79.7, 0.6, '"Panama Canal"',
-     "Links the Atlantic and Pacific; a shortcut for trade between Asia and the US East Coast, avoiding the trip around South America."),
+     "Links the Atlantic and Pacific; a shortcut for trade between Asia and the US East Coast, avoiding the trip around South America.", "chokepoint2"),
     ("bosphorus", "Bosphorus Strait", 41.1, 29.1, 0.5, '"Bosphorus Strait" OR Bosporus',
-     "Istanbul's strait linking the Black Sea to the Mediterranean — the route for Russian and other Black Sea oil and grain exports."),
+     "Istanbul's strait linking the Black Sea to the Mediterranean — the route for Russian and other Black Sea oil and grain exports.", "chokepoint3"),
 ]
 GENERAL_QUERY = '(tariff OR sanctions OR "trade war" OR embargo OR "supply chain" OR "oil price" OR OPEC OR pipeline OR "military build" OR "shipping disruption") sourcelang:english'
 
@@ -79,6 +103,109 @@ def flights(lat, lon, half):
     return {"count": len(states), "sample": sample}
 
 
+def portwatch_vessels(pw_id):
+    """Real daily vessel-transit counts by type for one chokepoint, plus a 90-day sparkline and a real
+    7-day-average vs prior-90-day-average % (both computed only from real daily records, never estimated)."""
+    # orderByFields date ASC + a resultRecordCount cap would return the OLDEST 90 records in the whole table
+    # (confirmed live: that returned 2019 data for Hormuz, years stale) - DESC gets the real most-recent ones,
+    # then reversed here for the sparkline's chronological order.
+    j = pw_query("Daily_Chokepoints_Data", {
+        "where": f"portid='{pw_id}'", "outFields": "date,n_total,n_tanker,n_container,n_dry_bulk,n_general_cargo,n_roro",
+        "orderByFields": "date DESC", "resultRecordCount": 90,
+    })
+    feats = [f["attributes"] for f in j.get("features", [])][::-1]
+    if not feats:
+        return None
+    last = feats[-1]
+    last7, prior = feats[-7:], feats[:-7]
+    avg7 = sum(f["n_total"] for f in last7) / len(last7)
+    avg_prior = (sum(f["n_total"] for f in prior) / len(prior)) if prior else None
+    return {
+        "date": str(last["date"])[:10], "n_total": last["n_total"], "n_tanker": last["n_tanker"],
+        "n_container": last["n_container"], "n_dry_bulk": last["n_dry_bulk"],
+        "n_general_cargo": last["n_general_cargo"], "n_roro": last["n_roro"],
+        "sparkline_90d": [f["n_total"] for f in feats],
+        "avg7_vs_prior90_pct": round((avg7 - avg_prior) / avg_prior * 100, 1) if avg_prior else None,
+    }
+
+
+def portwatch_industries():
+    """One batched query for all 7 chokepoints' top industries (static-ish reference field, cheap to refresh)."""
+    ids = ",".join(f"'{c[-1]}'" for c in CHOKEPOINTS)
+    j = pw_query("PortWatch_chokepoints_database", {"where": f"portid IN ({ids})", "outFields": "portid,industry_top1,industry_top2,industry_top3"})
+    return {f["attributes"]["portid"]: [f["attributes"].get(k) for k in ("industry_top1", "industry_top2", "industry_top3") if f["attributes"].get(k)]
+            for f in j.get("features", [])}
+
+
+def portwatch_disruptions(limit=25, recent_days=90):
+    """Real disruption events (storms/quakes/conflict etc.) with real port impact counts, either still ongoing
+    (todate in the future) or recent enough to still matter (a point event like a quake has fromdate==todate,
+    so "still ongoing" alone would exclude it the moment it happens - recency is the more useful real signal).
+    90 days, not 30: checked live, this specific feed's newest record is itself ~6 weeks old at any given
+    time (it just doesn't update often) - a tighter window would leave the layer empty most of the time by
+    chance, not because nothing real happened. Each event's own real date is shown on screen either way."""
+    # fromdate/todate are esriFieldTypeDate fields: ArcGIS's WHERE clause needs the SQL `timestamp '...'`
+    # literal syntax for date comparisons, not a raw epoch-ms number (confirmed live: the numeric form gets a
+    # silent HTTP-200 {"error":...} body - no exception, just an empty "features" list - the real bug here).
+    now_ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    since_ts = (datetime.now(timezone.utc) - timedelta(days=recent_days)).strftime("%Y-%m-%d %H:%M:%S")
+    j = pw_query("portwatch_disruptions_database", {
+        "where": f"todate >= timestamp '{now_ts}' OR fromdate >= timestamp '{since_ts}'",
+        "outFields": "eventtype,eventname,alertlevel,country,fromdate,todate,severitytext,n_affectedports,lat,long",
+        "orderByFields": "n_affectedports DESC", "resultRecordCount": limit,
+    })
+    out = []
+    for f in j.get("features", []):
+        a = f["attributes"]
+        out.append({"type": a.get("eventtype"), "name": a.get("eventname"), "alert": a.get("alertlevel"),
+                    "country": a.get("country"), "severity": a.get("severitytext"), "n_ports": a.get("n_affectedports"),
+                    "lat": a.get("lat"), "lon": a.get("long"),
+                    "from_utc": datetime.fromtimestamp(a["fromdate"] / 1000, tz=timezone.utc).isoformat(timespec="seconds") if a.get("fromdate") else None,
+                    "to_utc": datetime.fromtimestamp(a["todate"] / 1000, tz=timezone.utc).isoformat(timespec="seconds") if a.get("todate") else None})
+    return out
+
+
+def usgs_quakes(min_mag=4.5, limit=40):
+    r = requests.get(f"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/{min_mag}_week.geojson", timeout=20)
+    r.raise_for_status()
+    feats = sorted(r.json().get("features", []), key=lambda f: f["properties"]["mag"], reverse=True)[:limit]
+    return [{"mag": f["properties"]["mag"], "place": f["properties"]["place"], "tsunami": bool(f["properties"].get("tsunami")),
+             "alert": f["properties"].get("alert"), "time_utc": datetime.fromtimestamp(f["properties"]["time"] / 1000, tz=timezone.utc).isoformat(timespec="seconds"),
+             "lat": f["geometry"]["coordinates"][1], "lon": f["geometry"]["coordinates"][0], "url": f["properties"].get("url")} for f in feats]
+
+
+def eonet_events(days=7, limit=60):
+    r = requests.get("https://eonet.gsfc.nasa.gov/api/v3/events", params={"status": "open", "days": days}, timeout=20)
+    r.raise_for_status()
+    out = []
+    for e in r.json().get("events", [])[:limit]:
+        geo = (e.get("geometry") or [])
+        if not geo or "coordinates" not in geo[-1]:
+            continue
+        g = geo[-1]  # most recent position for a moving event (storms etc.)
+        out.append({"title": e.get("title"), "category": (e.get("categories") or [{}])[0].get("title"),
+                    "lat": g["coordinates"][1], "lon": g["coordinates"][0], "date": g.get("date"), "url": e.get("link")})
+    return out
+
+
+def gdacs_events(limit=40):
+    r = requests.get("https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH", timeout=20)
+    r.raise_for_status()
+    out = []
+    for f in r.json().get("features", []):
+        p = f["properties"]
+        if str(p.get("iscurrent")).lower() != "true":
+            continue
+        g = f.get("geometry") or {}
+        if g.get("type") != "Point":
+            continue
+        out.append({"type": p.get("eventtype"), "name": p.get("eventname") or p.get("name"), "alert": p.get("alertlevel"),
+                    "country": p.get("country"), "lat": g["coordinates"][1], "lon": g["coordinates"][0],
+                    "url": (p.get("url") or {}).get("report")})
+    out.sort(key=lambda e: {"Red": 0, "Orange": 1, "Green": 2}.get(e["alert"], 3))
+    return out[:limit]
+
+
 _last_gdelt = 0.0
 
 
@@ -88,9 +215,12 @@ def gdelt(query, n=6):
     if wait > 0:
         time.sleep(wait)
     for attempt in range(2):
-        r = requests.get("https://api.gdeltproject.org/api/v2/doc/doc",
-                         params={"query": query, "mode": "artlist", "maxrecords": n, "format": "json", "sort": "datedesc"},
-                         headers=UA, timeout=25)
+        try:
+            r = requests.get("https://api.gdeltproject.org/api/v2/doc/doc",
+                             params={"query": query, "mode": "artlist", "maxrecords": n, "format": "json", "sort": "datedesc"},
+                             headers=UA, timeout=25)
+        except requests.RequestException:
+            return None             # connection-level failure (timeout, DNS, refused) - GDELT is opportunistic only, never fatal
         _last_gdelt = time.time()
         if r.status_code == 200:
             try:
@@ -110,45 +240,107 @@ def gdelt(query, n=6):
     return None
 
 
+def google_news(query, n=6):
+    try:
+        r = requests.get("https://news.google.com/rss/search", params={"q": query, "hl": "en-IN", "gl": "IN", "ceid": "IN:en"}, headers=UA, timeout=20)
+        r.raise_for_status()
+        root = ET.fromstring(r.content)
+        out = []
+        for item in root.findall(".//item")[:n]:
+            title, link, pub = item.findtext("title") or "", item.findtext("link") or "", item.findtext("pubDate") or ""
+            src_el = item.find("source")
+            try:
+                iso = email.utils.parsedate_to_datetime(pub).astimezone(timezone.utc).isoformat(timespec="seconds")
+            except Exception:
+                iso = None
+            if title and link:
+                out.append({"title": title, "url": link, "source": (src_el.text if src_el is not None else None), "country": None, "seen_utc": iso})
+        return out
+    except Exception:
+        return None
+
+
+def news_for(query, n=6):
+    """Google News RSS first (confirmed reliable from GitHub Actions); GDELT only tops up if that came up
+    short, since GDELT is confirmed to 429 from Actions' runner IPs most of the time."""
+    primary = google_news(query, n) or []
+    if len(primary) >= n:
+        return primary
+    extra = gdelt(query, n - len(primary))
+    if extra:
+        seen = {a["url"] for a in primary}
+        primary += [a for a in extra if a["url"] not in seen]
+    return primary or None
+
+
 def main():
     now = datetime.now(timezone.utc)
     points, errors = [], []
-    for cid, name, lat, lon, half, kw, why in CHOKEPOINTS:
+
+    try:
+        industries = portwatch_industries()
+    except Exception as exc:
+        industries = {}
+        errors.append(f"PortWatch industries: {type(exc).__name__} {exc}")
+
+    for cid, name, lat, lon, half, kw, why, pw_id in CHOKEPOINTS:
         p = {"id": cid, "name": name, "lat": lat, "lon": lon, "why": why}
         try:
             p["flights"] = flights(lat, lon, half)
         except Exception as exc:
             errors.append(f"{name} flights: {type(exc).__name__} {exc}")
-        news = gdelt(kw)
+        try:
+            v = portwatch_vessels(pw_id)
+            if v:
+                if industries.get(pw_id):
+                    v["industries"] = industries[pw_id]
+                p["vessels"] = v
+        except Exception as exc:
+            errors.append(f"{name} vessels (PortWatch): {type(exc).__name__} {exc}")
+        news = news_for(kw)
         if news is not None:
             p["news"] = news
         else:
-            errors.append(f"{name} news: GDELT unavailable")
+            errors.append(f"{name} news: unavailable (Google News + GDELT both failed)")
         points.append(p)
-        time.sleep(0.5)
+        time.sleep(0.3)
 
-    events = gdelt(GENERAL_QUERY, n=20)
+    events = news_for(GENERAL_QUERY, n=20)
     if events is None:
-        errors.append("general events: GDELT unavailable")
+        errors.append("general events: unavailable (Google News + GDELT both failed)")
 
-    got_anything = any("flights" in p or "news" in p for p in points) or events is not None
+    hazards = {}
+    for key, fn in [("disruptions", portwatch_disruptions), ("earthquakes", usgs_quakes), ("natural_events", eonet_events), ("alerts", gdacs_events)]:
+        try:
+            hazards[key] = fn()
+        except Exception as exc:
+            errors.append(f"hazards.{key}: {type(exc).__name__} {exc}")
+
+    got_anything = any("flights" in p or "news" in p or "vessels" in p for p in points) or events is not None or hazards
     if not got_anything:
-        raise RuntimeError("Neither OpenSky nor GDELT returned anything this run: " + "; ".join(errors))
+        raise RuntimeError("Nothing could be fetched this run: " + "; ".join(errors))
 
     res = {
         "generated_utc": now.isoformat(timespec="seconds"),
         "generated_ist": now.astimezone(IST).strftime("%d %b %Y, %I:%M %p IST"),
-        "sources": {"flights": "OpenSky Network (opensky-network.org), free public ADS-B data",
-                   "news": "GDELT Project (gdeltproject.org), free global news index, updated every 15 min"},
+        "sources": {
+            "flights": "OpenSky Network (opensky-network.org), free public ADS-B data",
+            "vessels": "IMF PortWatch (portwatch.imf.org), free daily vessel-transit counts - not live AIS, see each chokepoint's own date",
+            "news": "Google News RSS, primary; GDELT Project tops up when available",
+            "hazards": "IMF PortWatch disruptions, USGS (earthquakes), NASA EONET (natural events), GDACS (disaster alerts) - all free, no key",
+        },
         "chokepoints": points,
         "events": events or [],
+        "hazards": hazards,
         "partial_errors": errors,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(res, allow_nan=False), encoding="utf-8")
     fcount = sum(p.get("flights", {}).get("count", 0) for p in points)
+    vcount = sum(p.get("vessels", {}).get("n_total", 0) for p in points if p.get("vessels"))
     ncount = sum(len(p.get("news", [])) for p in points)
-    print(f"globe: {fcount} live flights across {len(points)} chokepoints, {ncount} chokepoint headlines, {len(events or [])} general headlines"
+    print(f"globe: {fcount} live flights, {vcount} real vessel transits (most recent day), {ncount} chokepoint headlines, "
+         f"{len(events or [])} general headlines, {sum(len(v) for v in hazards.values())} hazard records across {len(points)} chokepoints"
          + (f"; partial errors: {errors}" if errors else ""))
     return 0
 

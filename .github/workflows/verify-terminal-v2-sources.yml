@@ -1,0 +1,52 @@
+# One-off: verifies every data source in the terminal-v2 plan (docs/TERMINAL_PLAN.md) from GitHub's own
+# runners, not a developer's machine - this project has already seen one real case (OpenSky, 30 Sep 2026)
+# where a source worked locally but failed from GitHub's shared runner IPs, so local results aren't trusted
+# as a stand-in here. Writes data/terminal_v2/source_verification.json + .md and commits them to this branch
+# only (never to main). Delete this workflow once terminal-v2 is done with it.
+name: Verify terminal-v2 sources
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [terminal-v2]
+    paths: [".github/workflows/verify-terminal-v2-sources.yml", "scripts/verify_terminal_v2_sources.py"]
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: terminal-v2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Call every terminal-v2 data source for real and record the result
+        env:
+          AISSTREAM_KEY: ${{ secrets.AISSTREAM_KEY }}
+          ACLED_KEY: ${{ secrets.ACLED_KEY }}
+          ACLED_EMAIL: ${{ secrets.ACLED_EMAIL }}
+          FRED_KEY: ${{ secrets.FRED_KEY }}
+        run: python scripts/verify_terminal_v2_sources.py
+
+      - name: Commit the results to terminal-v2
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/terminal_v2
+          if git diff --cached --quiet; then
+            echo "No change in results."
+          else
+            git commit -q -m "terminal-v2: source verification from a GitHub Actions runner"
+            git push origin HEAD:terminal-v2
+          fi

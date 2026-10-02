@@ -1,16 +1,19 @@
-# Samnidhy Sandbox - Globe: real live flights (OpenSky) + real geopolitical news (GDELT) around 7 shipping
-# and oil chokepoints, for the Expert terminal's Globe tab.
-# Runs about once an hour, all day (flights and geopolitics aren't tied to NSE market hours, unlike the rest
-# of the site), triggered by the market-clock heartbeat - not GitHub's own scheduler, which has proven
-# unreliable for this project. Both APIs are free and need no account, but ask not to be hit too often:
-# OpenSky has a daily request budget per IP, and GDELT asks for gaps between calls (scripts/globe_data.py
-# already paces itself); running this once an hour, not every 15 minutes like the price workflow, respects both.
+# Samnidhy Sandbox - Globe: real live flights (OpenSky), real daily vessel traffic + disruptions (IMF
+# PortWatch), real hazards (USGS/NASA EONET/GDACS) and real news (Google News RSS, GDELT as a bonus) around 7
+# shipping and oil chokepoints, for the Expert terminal's Globe tab. Also the slow-changing map layers
+# (shipping lanes, submarine cables, power plants, scripts/globe_layers.py) - that script only actually
+# fetches anything when its own output is more than a week old, so calling it every run here is cheap; it
+# no-ops almost every time.
+# Runs about once an hour, all day (none of this is tied to NSE market hours, unlike the rest of the site),
+# triggered by the market-clock heartbeat - not GitHub's own scheduler, which has proven unreliable for this
+# project. The free APIs ask not to be hit too often: OpenSky has a daily request budget per IP, GDELT asks
+# for gaps between calls (scripts/globe_data.py already paces both); running this once an hour respects that.
 #
-# This job only WRITES data/globe/latest.json and commits it - it deliberately does not rebuild or publish
-# the site itself. A fresh checkout here has none of the other workflows' cached/ephemeral data (the terminal
-# cache, live.json, etc.), and a Pages deploy replaces the whole site, so building here would wipe out
-# everything those other workflows already published. Live prices (every 15-30 min) picks the new file up
-# and publishes it on its own next run, same as the daily screen already does for its own data.
+# This job only WRITES data/globe/** and commits it - it deliberately does not rebuild or publish the site
+# itself. A fresh checkout here has none of the other workflows' cached/ephemeral data (the terminal cache,
+# live.json, etc.), and a Pages deploy replaces the whole site, so building here would wipe out everything
+# those other workflows already published. Live prices (every 5 min) picks the new files up and publishes
+# them on its own next run, same as the daily screen already does for its own data.
 name: Globe data
 
 on:
@@ -19,7 +22,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [".github/workflows/globe-data.yml", "scripts/globe_data.py"]
+    paths: [".github/workflows/globe-data.yml", "scripts/globe_data.py", "scripts/globe_layers.py", "scripts/geo_tension.py", "data/config/geo_exposure.json"]
 
 permissions:
   contents: write
@@ -43,14 +46,21 @@ jobs:
       - name: Install Python packages
         run: pip install -r requirements.txt
 
-      - name: Live flights (OpenSky) and geopolitical news (GDELT) around 7 chokepoints
+      - name: Live flights, real vessel traffic + hazards, and news around 7 chokepoints
         run: python scripts/globe_data.py
+
+      - name: Slow map layers (shipping lanes, cables, power plants) - no-ops unless >7 days stale
+        run: python scripts/globe_layers.py
+
+      - name: Geopolitical news-attention index for the Globe layer (Google News RSS; skips itself if data/aladin/geo.json is under 55 min old)
+        continue-on-error: true
+        run: python scripts/geo_tension.py
 
       - name: Save it to the repository (the next Live prices run publishes it)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/globe
+          git add data/globe data/aladin/geo.json data/aladin/geo_history.json
           if git diff --cached --quiet; then
             echo "Nothing new to save."
           else

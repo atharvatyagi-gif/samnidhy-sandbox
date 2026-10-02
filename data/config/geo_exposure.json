@@ -1,0 +1,350 @@
+{
+ "version": 1,
+ "note": "Exposure lines are widely stated rules of thumb about how a region's news tends to relate to Indian companies, not measured relationships and not forecasts. dir '+' = tends to gain when attention on the region rises, '-' = tends to lose.",
+ "regions": [
+  {
+   "id": "hormuz",
+   "name": "Iran / Strait of Hormuz",
+   "kind": "chokepoint",
+   "lat": 26.6,
+   "lon": 56.3,
+   "news_query": "(intitle:Hormuz OR intitle:Iran OR intitle:\"Persian Gulf\")",
+   "keywords": [
+    "hormuz",
+    "iran",
+    "persian gulf",
+    "tehran"
+   ],
+   "exposure": [
+    {
+     "sym": "ONGC",
+     "dir": "+",
+     "why": "Earns more when crude prices rise"
+    },
+    {
+     "sym": "OIL",
+     "dir": "+",
+     "why": "Earns more when crude prices rise"
+    },
+    {
+     "sym": "IOC",
+     "dir": "-",
+     "why": "Crude is a main input: dearer oil squeezes margins"
+    },
+    {
+     "sym": "BPCL",
+     "dir": "-",
+     "why": "Crude is a main input: dearer oil squeezes margins"
+    },
+    {
+     "sym": "HINDPETRO",
+     "dir": "-",
+     "why": "Crude is a main input: dearer oil squeezes margins"
+    },
+    {
+     "sym": "INDIGO",
+     "dir": "-",
+     "why": "Jet fuel is a large cost"
+    },
+    {
+     "sym": "ASIANPAINT",
+     "dir": "-",
+     "why": "Crude-linked raw materials"
+    },
+    {
+     "ind": "Chemicals",
+     "dir": "-",
+     "why": "Crude-linked input costs"
+    }
+   ]
+  },
+  {
+   "id": "redsea",
+   "name": "Red Sea / Bab el-Mandeb",
+   "kind": "chokepoint",
+   "lat": 13.5,
+   "lon": 43.3,
+   "news_query": "(intitle:\"Red Sea\" OR intitle:Houthi OR intitle:Houthis OR intitle:\"Bab el-Mandeb\")",
+   "keywords": [
+    "red sea",
+    "houthi",
+    "bab el-mandeb",
+    "suez"
+   ],
+   "exposure": [
+    {
+     "sym": "SCI",
+     "dir": "+",
+     "why": "Longer routes and higher freight rates help shipping lines"
+    },
+    {
+     "ind": "Textiles",
+     "dir": "-",
+     "why": "Exports to Europe face delays and costlier freight"
+    },
+    {
+     "ind": "Chemicals",
+     "dir": "-",
+     "why": "Freight and delivery delays on exports"
+    }
+   ]
+  },
+  {
+   "id": "israel",
+   "name": "Israel / Gaza / Lebanon",
+   "kind": "conflict",
+   "lat": 31.5,
+   "lon": 34.8,
+   "news_query": "(intitle:Israel OR intitle:Gaza OR intitle:Lebanon OR intitle:Hezbollah)",
+   "keywords": [
+    "israel",
+    "gaza",
+    "lebanon",
+    "hezbollah"
+   ],
+   "exposure": [
+    {
+     "sym": "HAL",
+     "dir": "+",
+     "why": "Defence order flow tends to draw attention in tense periods"
+    },
+    {
+     "sym": "BEL",
+     "dir": "+",
+     "why": "Defence order flow tends to draw attention in tense periods"
+    },
+    {
+     "sym": "BDL",
+     "dir": "+",
+     "why": "Defence order flow tends to draw attention in tense periods"
+    },
+    {
+     "sym": "ONGC",
+     "dir": "+",
+     "why": "Earns more when crude prices rise"
+    }
+   ]
+  },
+  {
+   "id": "ukraine",
+   "name": "Russia / Ukraine",
+   "kind": "conflict",
+   "lat": 49.0,
+   "lon": 32.0,
+   "news_query": "(intitle:Ukraine OR intitle:Kyiv OR intitle:Russia)",
+   "keywords": [
+    "ukraine",
+    "kyiv",
+    "russia",
+    "moscow"
+   ],
+   "exposure": [
+    {
+     "sym": "ONGC",
+     "dir": "+",
+     "why": "Earns more when crude prices rise"
+    },
+    {
+     "sym": "OIL",
+     "dir": "+",
+     "why": "Earns more when crude prices rise"
+    },
+    {
+     "sym": "CHAMBLFERT",
+     "dir": "-",
+     "why": "Fertiliser makers depend on imported gas and inputs"
+    }
+   ]
+  },
+  {
+   "id": "indpak",
+   "name": "India / Pakistan",
+   "kind": "conflict",
+   "lat": 32.0,
+   "lon": 74.8,
+   "news_query": "(intitle:Pakistan AND india) -cricket -hockey -football -\"asia cup\" -\"live streaming\" -kabaddi -T20 -ODI",
+   "keywords": [
+    "pakistan",
+    "kashmir",
+    "line of control"
+   ],
+   "exposure": [
+    {
+     "sym": "HAL",
+     "dir": "+",
+     "why": "Defence order flow tends to draw attention in tense periods"
+    },
+    {
+     "sym": "BEL",
+     "dir": "+",
+     "why": "Defence order flow tends to draw attention in tense periods"
+    },
+    {
+     "sym": "BDL",
+     "dir": "+",
+     "why": "Defence order flow tends to draw attention in tense periods"
+    },
+    {
+     "ind": "Financial Services",
+     "dir": "-",
+     "why": "Domestic risk-off weighs on banks, the heaviest index group"
+    }
+   ]
+  },
+  {
+   "id": "indchina",
+   "name": "India / China border (LAC)",
+   "kind": "conflict",
+   "lat": 34.0,
+   "lon": 78.5,
+   "news_query": "(intitle:LAC OR (intitle:China AND intitle:India AND border))",
+   "keywords": [
+    "lac",
+    "ladakh",
+    "galwan",
+    "arunachal"
+   ],
+   "exposure": [
+    {
+     "sym": "DIXON",
+     "dir": "-",
+     "why": "Electronics assembly depends on Chinese components"
+    },
+    {
+     "ind": "Healthcare",
+     "dir": "-",
+     "why": "Drug makers import many active ingredients from China"
+    }
+   ]
+  },
+  {
+   "id": "taiwan",
+   "name": "Taiwan Strait / South China Sea",
+   "kind": "chokepoint",
+   "lat": 23.7,
+   "lon": 121.0,
+   "news_query": "(intitle:Taiwan OR intitle:\"South China Sea\")",
+   "keywords": [
+    "taiwan",
+    "south china sea",
+    "taipei"
+   ],
+   "exposure": [
+    {
+     "ind": "Information Technology",
+     "dir": "-",
+     "why": "Global tech demand and hardware supply chains"
+    },
+    {
+     "sym": "DIXON",
+     "dir": "-",
+     "why": "Chip and component supply"
+    }
+   ]
+  },
+  {
+   "id": "ustariff",
+   "name": "US tariffs on India",
+   "kind": "policy",
+   "lat": 38.9,
+   "lon": -77.0,
+   "news_query": "(intitle:tariff AND (india OR indian))",
+   "keywords": [
+    "tariff",
+    "trade deal",
+    "duties"
+   ],
+   "exposure": [
+    {
+     "ind": "Textiles",
+     "dir": "-",
+     "why": "Large US export share"
+    },
+    {
+     "ind": "Healthcare",
+     "dir": "-",
+     "why": "US is the biggest generics market"
+    },
+    {
+     "ind": "Automobile and Auto Components",
+     "dir": "-",
+     "why": "Auto parts exports"
+    },
+    {
+     "ind": "Information Technology",
+     "dir": "-",
+     "why": "US clients are the main revenue source"
+    }
+   ]
+  },
+  {
+   "id": "malacca",
+   "name": "Strait of Malacca",
+   "kind": "chokepoint",
+   "lat": 2.5,
+   "lon": 101.5,
+   "news_query": "(intitle:\"Strait of Malacca\" OR (intitle:Malacca -polls -election -Melaka -state -Umno -BN -PAS))",
+   "keywords": [
+    "malacca",
+    "singapore strait"
+   ],
+   "exposure": [
+    {
+     "ind": "Metals & Mining",
+     "dir": "-",
+     "why": "East Asia trade routes"
+    },
+    {
+     "ind": "Chemicals",
+     "dir": "-",
+     "why": "East Asia trade routes"
+    }
+   ]
+  },
+  {
+   "id": "opec",
+   "name": "OPEC+ policy",
+   "kind": "policy",
+   "lat": 48.2,
+   "lon": 16.4,
+   "news_query": "(intitle:OPEC)",
+   "keywords": [
+    "opec",
+    "output cut",
+    "oil output"
+   ],
+   "exposure": [
+    {
+     "sym": "ONGC",
+     "dir": "+",
+     "why": "Earns more when crude prices rise"
+    },
+    {
+     "sym": "OIL",
+     "dir": "+",
+     "why": "Earns more when crude prices rise"
+    },
+    {
+     "sym": "IOC",
+     "dir": "-",
+     "why": "Crude is a main input: dearer oil squeezes margins"
+    },
+    {
+     "sym": "BPCL",
+     "dir": "-",
+     "why": "Crude is a main input: dearer oil squeezes margins"
+    },
+    {
+     "sym": "HINDPETRO",
+     "dir": "-",
+     "why": "Crude is a main input: dearer oil squeezes margins"
+    },
+    {
+     "sym": "INDIGO",
+     "dir": "-",
+     "why": "Jet fuel is a large cost"
+    }
+   ]
+  }
+ ]
+}

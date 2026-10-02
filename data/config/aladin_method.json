@@ -1,0 +1,97 @@
+{
+ "version": 1,
+ "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.",
+ "sections": [
+  {
+   "h": "What ALADIN is",
+   "p": [
+    "ALADIN gives each NSE security a probability that its price will be higher after 5, 10 or 20 trading days. It combines three views of the stock, each shown on its own so you can see where a number comes from: a Technical view (price and market patterns), a Fundamental view (company accounts and filings) and a Sentiment view (news, retail chatter and institutional flows). A fourth input, liquidity sweeps, is added during market hours when the local tick feed is running."
+   ]
+  },
+  {
+   "h": "The question it answers",
+   "p": [
+    "Will the stock's close be higher than today's close after 5, 10 or 20 trading days? That is raw direction, not performance against the index. Every accuracy figure is placed next to the base rate, the share of past cases that really did go up, because always saying \"up\" would already be right about half the time."
+   ]
+  },
+  {
+   "h": "Technical view",
+   "p": [
+    "About 80 inputs per stock per day feed three gradient-boosted tree models (LightGBM, three random seeds) for each horizon: returns over several windows, distance from moving averages, RSI, ADX, MACD, Bollinger bands, volatility, 52-week highs and lows, volume, beta to the NIFTY, sector-relative returns, market breadth and dispersion, and where each stock ranks among all stocks that day.",
+    "Extra inputs: the part of each NIFTY 500 stock's recent return left over after removing the common market factors (principal-component residuals); the gap between the stock and its most similar same-industry peer when the two are cointegrated (Engle-Granger test, followed by a Kalman filter); the probability that the market is in a turbulent regime (a two-state hidden Markov model, fitted only on training data and used only in its forward-filtered form); and jump statistics (how often and how large the stock's unusual daily moves have been).",
+    "Separate calm-market and turbulent-market model sets are trained and used only if they scored better than a single model on years the models never saw. Probabilities are then calibrated (isotonic regression) on the pooled results from those unseen years. The technical score T is 200 times (p minus 0.5), limited to the range -100 to +100."
+   ]
+  },
+  {
+   "h": "Fundamental view",
+   "p": [
+    "From Yahoo Finance statements: Value (earnings before interest and tax over enterprise value, free cash flow over market value, book to price, enterprise value over assets, and the growth rate the price implies), Quality (return on invested capital, gross profit over assets, accruals, return on equity, earnings stability) and Fundamental momentum (revenue acceleration, operating-margin change). Each metric is trimmed at the 2.5th and 97.5th percentiles, standardised across stocks, and averaged. The composites are then made independent of company size and industry, and Quality is removed from Value, and Quality and Value from momentum, so the three do not repeat each other.",
+    "Banks, finance companies and insurers use only book to price, return on equity, earnings stability and momentum. A distress band is the worse of the Merton distance to default and the Altman Z'' score; it is not applied to financials or to companies with no debt. There is no free labelled data set of Indian defaults, so no machine-learned default model is used. Announcements on NSE are scored for tone (FinBERT) and hedging; earnings-call transcripts are read by a cloud language model when a key is configured, otherwise by a local fallback. Delivery percentage trend and bulk and block deals are shown as context.",
+    "The fundamental score is F = 100 times tanh(z / 1.5), where z = 0.35 Value + 0.35 Quality + 0.20 Fundamental momentum + 0.10 filings tone, minus a penalty for a Moderate (0.4) or High (1.0) distress band. A missing part is left out and the weights of the others are rescaled; coverage shows how much was present."
+   ]
+  },
+  {
+   "h": "Sentiment view",
+   "p": [
+    "Headlines from Mint, Economic Times, Business Standard and Google News (Moneycontrol headlines, found through Google News) are scored by FinBERT and matched to stocks by symbol, company name or alias. A headline that names no company counts for its business group. Sector and market-wide headlines only add a little context. Retail sentiment from Reddit counts only when at least five different authors mention the stock in 24 hours. Market-wide net inflows or outflows of foreign and domestic institutional money are added to every scored stock with weight 0.15. A stock with no specific headline in 72 hours shows NO NEWS and has no sentiment score; it is not treated as neutral.",
+    "The score runs from -100 to +100: BAD (up to -60), POOR (-60 to -20), NEUTRAL (-20 to +20), GOOD (+20 to +60), EXCELLENT (+60 and above). A small adjustment of at most 20 points reflects regions in the news-attention index that are known to affect the stock's sector."
+   ]
+  },
+  {
+   "h": "Liquidity sweeps",
+   "p": [
+    "When the local tick program is running on a PC during market hours, 15-minute bars are built from NSE's free website feed and compared with nearby price levels: yesterday's high and low, the 20-day extremes and clusters of equal highs and lows. A sweep is a short break through such a level on unusually heavy volume (above 1.8 times the normal volume for that time of day, or the recent average when that is missing) that closes back inside with a long wick. A sweep above a level leans down and a sweep below leans up. The score fades with a 45-minute half-life and resets each day. The free feed covers only index levels and the stocks on NSE's own movers and most-active lists, so most stocks have no sweep reading. The sweep weight is a prior; it has not been validated against past data."
+   ]
+  },
+  {
+   "h": "How the views are combined",
+   "p": [
+    "logit(p) = logit(p_technical) + 0.20 x F/100 + 0.12 x S/100 + 0.18 x S_sweep/100. A missing view adds nothing. p is limited to the range 0.02 to 0.98. Confidence is Low when p is within 0.03 of 0.5, Medium within 0.07 and High beyond that. Agreement counts how many of the available views (Fundamental, Technical, Sentiment) lean the same way as p; a view leans up above +10 and down below -10.",
+    "These weights are priors chosen in advance. Every night the model saves its predictions. Once at least 120 trading days of them have matured, a logistic stacker is fitted on them and replaces the priors only if it is better on days it was not fitted on."
+   ]
+  },
+  {
+   "h": "How it was tested",
+   "p": [
+    "Walk-forward: each test year from 2013 onward is predicted by models trained only on earlier years, with a gap of 10, 15 or 25 trading days (for the 5, 10 and 20-day horizons) between training and test so no answer leaks across. All accuracy, AUC, Brier score and decile figures on this page come from those unseen years. The training universe is the NIFTY 500 plus main-board stocks trading at least Rs 5 crore a day on average; other securities are scored with the same models. Securities with fewer than 250 daily bars get no probability.",
+    "Out of sample, the model's edge over the base rate is small. The yearly table shows that it varies from year to year and is sometimes no better than chance."
+   ]
+  },
+  {
+   "h": "Not measured, and why",
+   "p": [
+    "Satellite imagery and card-spend data (no free source), job postings (the sites' terms forbid scraping), ESG scores (no free source), order-book models (no free NSE order-book history), reinforcement-learning execution (it improves trade execution, not direction), Heston option-model calibration (no free options history), EPS surprise and analyst revisions (Yahoo has none for NSE names), and an LSTM neural network (optional, not tried). Yahoo returns only about four annual and five quarterly periods, so earnings stability and quarter-on-quarter revenue acceleration are usually missing, and annual figures are used instead where that is stated."
+   ]
+  },
+  {
+   "h": "Paper trading",
+   "p": [
+    "A simulated long-only portfolio takes only the strongest cases: 10-day P(up) above 0.60, High confidence and 3 of 3 views agreeing, in the NIFTY 500 or a liquid main-board stock. Entry is at the open of the next session, never at the close that produced the signal; exit is at the close of the 10th trading day after entry. Costs of 0.5% for the round trip are deducted. Each position is Rs 1,00,000, one position per symbol, at most 10 open. Returns are compared with the NIFTY 50 over the same days. The thresholds are not lowered to create activity, so expect long stretches with no trades. Simulated. Not real trades."
+   ]
+  },
+  {
+   "h": "Limits",
+   "p": [
+    "Markets are mostly noise over days and weeks; a 55% chance still fails 45% of the time. Figures are before costs and taxes. Past accuracy is no promise of future accuracy. Data from free sources can be late, missing or wrong, and each panel shows how old its data is."
+   ]
+  }
+ ],
+ "not_measured": [
+  [
+   "Satellite imagery",
+   "No free source."
+  ],
+  [
+   "Card-spend data",
+   "No free source."
+  ],
+  [
+   "Job postings",
+   "The sites' terms forbid scraping."
+  ],
+  [
+   "ESG scores",
+   "No free source."
+  ]
+ ]
+}
