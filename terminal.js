@@ -201,7 +201,10 @@ function go(v, quiet) {
   $$("#tabs [data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === v && !b.dataset.side));
   history.replaceState(null, "", `#v=${v}${sec ? "&s=" + encodeURIComponent(sec) : ""}`);
   if (v === "terminal") requestAnimationFrame(() => { if (!eng.chart) drawChart(); });
-  if (v === "globe") { const gm = ensureGlobeMap(); if (gm && S.globe) gm.update(S.globe); requestAnimationFrame(() => gm && gm.resize()); }
+  if (v === "globe") {
+    const gm = ensureGlobeMap(); if (gm && S.globe) gm.update(S.globe);
+    requestAnimationFrame(() => { gm && gm.resize(); if (gm && sec) { lastFootprintSym = sec; renderCompanyFootprint(gm, sec); } });
+  }
   if (!quiet) $("#v-" + v).scrollTop = 0;
 }
 document.addEventListener("click", e => {
@@ -1266,6 +1269,17 @@ function activityFlag(pts) {
 }
 // A Brief-tab-style summary strip for the Globe tab: scannable, click-to-jump insights computed from today's
 // real numbers (flight counts, real news counts, real sector moves) - never a forecast, just what's true right now.
+// The currently open stock's real physical footprint (Wikidata, scripts/globe_layers.py) - flies the map to
+// it when there's a match; otherwise says plainly there's nothing mapped, never silently shows nothing.
+async function renderCompanyFootprint(gm, sym) {
+  const el = $("#globe-assets"); if (!el) return;
+  const s = S.map.get(sym);
+  const hits = gm.showCompanyAssets ? await gm.showCompanyAssets(s ? s.n : sym) : [];
+  if (!hits.length) { el.hidden = false; el.innerHTML = `<p class="empty">No mapped physical assets on Wikidata for ${esc(s ? s.n : sym)}.</p>`; return; }
+  el.hidden = false;
+  el.innerHTML = `<div class="ga-h">Real physical footprint — ${esc(s ? s.n : sym)} <span class="mut">(Wikidata, ${hits.length} mapped)</span></div>
+    <ul>${hits.map(a => `<li><b>${esc(a.facility)}</b>${a.type ? ` <span class="mut">· ${esc(a.type)}</span>` : ""}</li>`).join("")}</ul>`;
+}
 function renderGlobeBrief(G) {
   const el = $("#globe-brief"); if (!el) return;
   if (!G) { el.innerHTML = ""; return; }
@@ -1302,12 +1316,16 @@ function renderGlobeBrief(G) {
   el.innerHTML = cards.join("") || '<p class="empty">Not enough data yet for a brief - check back after the next hourly refresh.</p>';
   $$("#globe-brief [data-choke]").forEach(bt => bt.onclick = () => { selectChoke(bt.dataset.choke); $("#globe-map").scrollIntoView({ behavior: "smooth", block: "center" }); });
 }
+let lastFootprintSym = null;        // only fly the map to a company's assets when the open stock actually changes, not on every poll refresh
 function renderGlobe() {
   const G = S.globe;
   // The Leaflet map sizes itself from its container when built; while the Globe tab is hidden that container is
   // 0x0 (display:none), which leaves the map broken (one tile, pins bunched in a corner) until resize() runs.
   // So it's only touched while the tab is actually visible - go() builds/updates/resizes it on switching in.
-  if (view === "globe") { const gm = ensureGlobeMap(); if (gm && G) gm.update(G); }
+  if (view === "globe") {
+    const gm = ensureGlobeMap(); if (gm && G) gm.update(G);
+    if (gm && sec && sec !== lastFootprintSym) { lastFootprintSym = sec; renderCompanyFootprint(gm, sec); }
+  }
   renderGlobeBrief(G);
   renderGlobeCards();
   const el = $("#globe-events");

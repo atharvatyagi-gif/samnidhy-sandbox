@@ -224,11 +224,40 @@ export class GlobeMap {
         .bindPopup(hazardPopup(p.name, [["Fuel", p.fuel], ["Capacity", `${p.capacity_mw.toLocaleString("en-IN")} MW`], ["Commissioned", p.commissioning_year], ["Data vintage", p.data_vintage]], "WRI Global Power Plant Database - not real-time"), { className: "globe-popup" })
         .addTo(this.plantLayer);
     } catch (e) { /* optional layer */ }
+    this.assetLayer = L.layerGroup();
+    this.assetsByCompany = {};
+    try {
+      const assets = await fetch("globe/layers/company_assets.json").then(r => r.ok ? r.json() : null);
+      if (assets) for (const a of assets.assets || []) {
+        (this.assetsByCompany[a.company] = this.assetsByCompany[a.company] || []).push(a);
+        L.marker([a.lat, a.lon], { icon: dotIcon("diamond") })
+          .bindPopup(hazardPopup(a.facility, [["Company", a.company], ["Type", a.type]], "Wikidata - real but thin coverage, not every company is mapped"), { className: "globe-popup" })
+          .addTo(this.assetLayer);
+      }
+    } catch (e) { /* optional layer */ }
     if (this.layerControl) {
       this.layerControl.addOverlay(this.laneLayer, "Shipping lanes");
       this.layerControl.addOverlay(this.cableLayer, "Submarine cables");
       this.layerControl.addOverlay(this.plantLayer, "Power plants, India ≥100MW");
+      this.layerControl.addOverlay(this.assetLayer, "Company facilities (Wikidata)");
     }
+  }
+  /* Called from terminal.js when a stock is opened: flies to and highlights that company's real mapped
+     facilities, if Wikidata has any - returns the match count so the caller can show an honest "none mapped"
+     state instead of a silent no-op when it's 0. Matches by company name substring (NSE universe has no
+     direct Wikidata QID mapping today), case-insensitive, both directions to catch "Reliance Industries" vs
+     "Reliance Industries Limited". */
+  async showCompanyAssets(companyName) {
+    await this.ready;                                      // the slow layers (incl. these assets) finish loading inside buildBase()
+    if (!this.map || !this.assetsByCompany) return [];
+    const q = String(companyName || "").toLowerCase();
+    const hits = Object.entries(this.assetsByCompany).filter(([name]) => name.toLowerCase().includes(q) || q.includes(name.toLowerCase()));
+    const pts = hits.flatMap(([, list]) => list);
+    if (!pts.length) return [];
+    if (!this.map.hasLayer(this.assetLayer)) this.assetLayer.addTo(this.map);
+    if (pts.length === 1) this.map.setView([pts[0].lat, pts[0].lon], 6);
+    else this.map.fitBounds(pts.map(p => [p.lat, p.lon]), { padding: [40, 40], maxZoom: 6 });
+    return pts;
   }
   async update(data) {
     await this.ready;

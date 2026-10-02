@@ -25,6 +25,7 @@ scripts/globe_data.py) - never partially written or guessed.
 import csv
 import io
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -113,7 +114,35 @@ def power_plants_india(min_mw=100):
     return {"source": "WRI Global Power Plant Database, CC BY 4.0 - not real-time; see each plant's own data_vintage", "plants": out}
 
 
-LAYERS = {"shipping_lanes.json": shipping_lanes, "cables.json": submarine_cables, "power_plants_india.json": power_plants_india}
+def company_assets():
+    """Real facilities ('owned by', P127) of NSE-listed companies (P414 = NSE, wd:Q638740), from Wikidata.
+    Checked live before building this: a single-company query ("Reliance Industries" by name) came back with
+    zero results - not because the data doesn't exist, but because that query's property path was wrong. The
+    right approach is this one broad query across every NSE-listed company at once, grouped to one row per
+    real facility. Coverage is genuinely thin (checked live: ~24 facilities across ~17 of the NIFTY 500's 500
+    companies) - shown as what it is, not padded out, and the terminal's own UI says plainly when a company
+    has none mapped rather than leaving a blank space that looks broken."""
+    query = """SELECT ?companyLabel ?facilityLabel ?coord (SAMPLE(?typeLabel) AS ?type) WHERE {
+      ?company wdt:P414 wd:Q638740 .
+      ?facility wdt:P127 ?company .
+      ?facility wdt:P625 ?coord .
+      OPTIONAL { ?facility wdt:P31 ?type0 . ?type0 rdfs:label ?typeLabel . FILTER(LANG(?typeLabel)="en") }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+    } GROUP BY ?companyLabel ?facilityLabel ?coord LIMIT 300"""
+    r = requests.get("https://query.wikidata.org/sparql", params={"query": query, "format": "json"},
+                     headers={**UA, "Accept": "application/sparql-results+json"}, timeout=30)
+    r.raise_for_status()
+    out = []
+    for b in r.json().get("results", {}).get("bindings", []):
+        m = re.match(r"Point\(([-\d.]+) ([-\d.]+)\)", (b.get("coord") or {}).get("value", ""))
+        if not m:
+            continue
+        out.append({"company": (b.get("companyLabel") or {}).get("value"), "facility": (b.get("facilityLabel") or {}).get("value"),
+                    "type": (b.get("type") or {}).get("value"), "lon": round(float(m.group(1)), 3), "lat": round(float(m.group(2)), 3)})
+    return {"source": "Wikidata (query.wikidata.org/sparql), CC0 - real but thin coverage, not every company has mapped facilities", "assets": out}
+
+
+LAYERS = {"shipping_lanes.json": shipping_lanes, "cables.json": submarine_cables, "power_plants_india.json": power_plants_india, "company_assets.json": company_assets}
 
 
 def main():
