@@ -80,7 +80,7 @@ jobs:
       - name: Fundamental front (Yahoo statements, rotating batch)
         continue-on-error: true
         timeout-minutes: 30
-        run: python scripts/aladin_fund.py
+        run: python scripts/aladin_fund.py --max-minutes 22
 
       - name: Filings tone and alternative data
         continue-on-error: true
@@ -89,7 +89,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python scripts/aladin_filings.py
+        run: python scripts/aladin_filings.py --max-minutes 15
 
       - name: Probabilities (technical front, combiner inputs, data/aladin/latest.json)
         continue-on-error: true
