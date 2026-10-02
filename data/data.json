@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-02T02:56:52+00:00",
+  "generated_on": "2026-10-02T03:31:15+00:00",
   "session_date": "2026-10-01",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -69,7 +69,7 @@
         "turnover_crore": 133.85
       },
       "latest_close": 2168.3,
-      "trailing_pe": 77.57782,
+      "trailing_pe": 77.32881,
       "market_cap": 197147164672,
       "history": {
         "first_date": "2023-12-21",
@@ -107,7 +107,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.118222,
-      "total_return": 0.364129,
+      "total_return": 0.364128,
       "annualised_volatility": 0.454913,
       "max_drawdown": -0.469873,
       "beta": 1.5158
@@ -127,7 +127,7 @@
         "turnover_crore": 1403.29
       },
       "latest_close": 980.0,
-      "trailing_pe": 65.77181,
+      "trailing_pe": 60.60606,
       "market_cap": 452857888768,
       "history": {
         "first_date": "2021-11-15",
@@ -157,7 +157,7 @@
       },
       "latest_close": 10045.0,
       "trailing_pe": 25.839893,
-      "market_cap": 2760404631552,
+      "market_cap": 2758133153792,
       "history": {
         "first_date": "2021-09-24",
         "trading_days": 1239,
@@ -185,7 +185,7 @@
         "turnover_crore": 252.22
       },
       "latest_close": 1346.4,
-      "trailing_pe": 5.1228976,
+      "trailing_pe": 4.8022256,
       "market_cap": 200494301184,
       "history": {
         "first_date": "2021-09-24",
@@ -298,14 +298,14 @@
       "SCHNEIDER.NS": 0.066421,
       "INOXINDIA.NS": 0.047518,
       "IDBI.NS": 0.206946,
-      "POLICYBZR.NS": 0.035977,
+      "POLICYBZR.NS": 0.035976,
       "BAJAJ-AUTO.NS": 0.023113,
-      "CHENNPETRO.NS": 0.05184
+      "CHENNPETRO.NS": 0.051839
     },
     "POLICYBZR.NS": {
       "SCHNEIDER.NS": 0.041492,
       "INOXINDIA.NS": 0.029085,
-      "IDBI.NS": 0.035977,
+      "IDBI.NS": 0.035976,
       "POLICYBZR.NS": 0.21749,
       "BAJAJ-AUTO.NS": 0.025505,
       "CHENNPETRO.NS": 0.037526
@@ -321,7 +321,7 @@
     "CHENNPETRO.NS": {
       "SCHNEIDER.NS": 0.037071,
       "INOXINDIA.NS": 0.04509,
-      "IDBI.NS": 0.05184,
+      "IDBI.NS": 0.051839,
       "POLICYBZR.NS": 0.037526,
       "BAJAJ-AUTO.NS": 0.02566,
       "CHENNPETRO.NS": 0.262957
