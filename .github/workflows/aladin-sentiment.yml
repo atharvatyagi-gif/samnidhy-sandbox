@@ -43,6 +43,7 @@ jobs:
 
       - name: Restore the FinBERT model, the scored-headline store and the terminal's NSE data
         uses: actions/cache/restore@v4
+        continue-on-error: true
         with:
           path: |
             ~/.cache/huggingface
@@ -70,6 +71,7 @@ jobs:
 
       - name: Save the model and headline store for the next run
         uses: actions/cache/save@v4
+        continue-on-error: true
         if: always()
         with:
           path: |

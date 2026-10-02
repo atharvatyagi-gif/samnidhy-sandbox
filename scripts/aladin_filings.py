@@ -15,7 +15,7 @@ read by scripts/aladin_model.py (`load_alt`). Every figure is either measured or
 * Earnings-call transcripts: when an announcement's text mentions a transcript, the PDF is read and sent to the cloud model through
   aladin_sentiment_engine.score_transcript (Groq or Gemini key, else a local split). At most 40 per night, cached by URL.
 * Delivery %: the 20-day average against the 120-day average, from the saved bhavcopy files.
-* Bulk / block deals: NSE publishes only the latest day, so each run saves a copy and the 30-day net value (buys minus sells, Rs crore) is
+* Bulk / block deals: NSE publishes only the latest day, so each run saves a copy and the 30-day net value (money in minus money out, Rs crore) is
   built from the copies; it grows from the day this first runs.
 """
 
@@ -178,7 +178,7 @@ def save_deals(deals_dir, today_rows):
 
 
 def net_deal_value(deals_dir, days=30, today=None):
-    """{sym: net buy value in Rs crore over the last `days` calendar days} from the saved daily copies (buys minus sells)."""
+    """{sym: net value in Rs crore over the last `days` calendar days} from the saved daily copies (incoming minus outgoing deals)."""
     today = today or now_utc().date()
     out = {}
     for f in Path(deals_dir).glob("*.json"):
@@ -334,6 +334,8 @@ def main(argv=None):
     ap.add_argument("--alt-only", action="store_true")
     ap.add_argument("--no-transcripts", action="store_true")
     a = ap.parse_args(argv)
+    import aladin_env
+    aladin_env.announce("aladin_filings")
     uni = json.loads((TERM / "universe.json").read_text(encoding="utf-8"))["stocks"]
     syms = [s.strip() for s in a.symbols.split(",") if s.strip()] or [s["s"] for s in sorted((x for x in uni if x.get("n500")), key=lambda x: -(x.get("avgv20") or 0) * (x.get("c") or 0))]
     doc = run(syms, use_nse=not a.alt_only, transcripts=not a.no_transcripts)

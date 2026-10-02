@@ -267,13 +267,13 @@ def winsorise_z(df, cols, p=(0.025, 0.975)):
     return out
 
 
-def orthogonalise(df, target, controls):
-    """OLS residual of `target` on `controls` (rows with all values present), re-z-scored. Returns (residual Series aligned to df.index, R^2)."""
-    d = df[[target] + controls].dropna()
+def orthogonalise(df, y_col, controls):
+    """OLS residual of `y_col` on `controls` (rows with all values present), re-z-scored. Returns (residual Series aligned to df.index, R^2)."""
+    d = df[[y_col] + controls].dropna()
     if len(d) < len(controls) + 10:
         return pd.Series(np.nan, index=df.index), None
     X = np.column_stack([np.ones(len(d))] + [d[c].values for c in controls])
-    y = d[target].values
+    y = d[y_col].values
     beta, *_ = np.linalg.lstsq(X, y, rcond=None)
     res = y - X @ beta
     ss_tot = ((y - y.mean()) ** 2).sum()

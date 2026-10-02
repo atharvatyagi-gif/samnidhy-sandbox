@@ -638,11 +638,15 @@ async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=Non
 
 
 def main(argv=None):
+    import aladin_env
+    aladin_env.load_env()                                  # so ALADIN_WS_PORT / ALADIN_SOURCE in .env apply to the defaults below
     ap = argparse.ArgumentParser(description="ALADIN local tick daemon (loopback only)")
     ap.add_argument("--source", default=os.environ.get("ALADIN_SOURCE", "auto"), choices=["auto", "nse-web", "angel"])
     ap.add_argument("--port", type=int, default=int(os.environ.get("ALADIN_WS_PORT", 0)) or None)
     ap.add_argument("--interval", type=float, default=3.0, help="seconds between poll rounds (min 2)")
     a = ap.parse_args(argv)
+    import aladin_env
+    aladin_env.announce("aladin_ticker_daemon")
     cfg = load_cfg()
     port = a.port or cfg["ws_port"]
     if a.source == "angel":

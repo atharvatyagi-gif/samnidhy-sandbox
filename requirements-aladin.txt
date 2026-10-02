@@ -1,15 +1,16 @@
-# ALADIN local tick daemon (scripts/aladin_ticker_daemon.py), sentiment engine (scripts/aladin_sentiment_engine.py), and their tests
-requests>=2.31
-brotli>=1.1
-websockets>=13
-pytest>=8
-feedparser>=6
-transformers>=4.40
-statsmodels>=0.14      # Engle-Granger cointegration tests (aladin_quant.py)
-pypdf>=4            # reads earnings-call transcript PDFs (aladin_filings.py)
-lightgbm>=4
-scikit-learn>=1.3
-scipy>=1.11
-# FinBERT also needs PyTorch. CPU build is enough:  pip install torch --index-url https://download.pytorch.org/whl/cpu
-# Optional: Reddit through its official API (otherwise the subreddit RSS is tried, which Reddit often rate-limits)
-# praw>=7
+--extra-index-url https://download.pytorch.org/whl/cpu
+# ALADIN: tick daemon, sentiment engine, filings, model, paper trader and their tests. Install with:  pip install -r requirements.txt -r requirements-aladin.txt
+# Pins are the versions these scripts were built and tested with (Python 3.14 on Windows). They are NOT yet confirmed on Python 3.12 / ubuntu-latest:
+# the first run of the "ALADIN nightly" workflow is that check, and each install step there is allowed to fail without stopping the site.
+# hmmlearn is deliberately absent: the market-turbulence HMM is a small numpy implementation (scripts/aladin_quant.py) because hmmlearn has no
+# wheel for every Python and its default output is a smoothed (look-ahead) probability.
+torch==2.14.0
+transformers==5.18.0
+statsmodels==0.15.0
+pypdf==6.19.0
+feedparser==6.0.14
+websockets==17.1
+brotli==1.2.0
+python-dotenv>=1.0
+praw>=7.7
+pytest==9.1.1

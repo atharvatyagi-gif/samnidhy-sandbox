@@ -5,7 +5,7 @@ ALADIN technical front + combiner + data/aladin/latest.json (the file the ALADIN
   python scripts/aladin_model.py --nightly    final models + today's probabilities, re-using the saved walk-forward record  (nightly)
   options: --limit N (use only N training stocks: quick check)   --horizons 5,10,20   --no-regime
 
-Target     the stock's forward close-to-close return over 5 / 10 / 20 trading days is > 0 (raw direction, not excess over NIFTY).
+Question   the stock's forward close-to-close return over 5 / 10 / 20 trading days is > 0 (raw direction, not excess over NIFTY).
 Honesty    Walk-forward: each test year is predicted by models trained only on earlier data, with a purge gap of 10 / 15 / 25
            trading days between the last training day and the first test day. Every accuracy figure is from those unseen years and
            is compared with the BASE RATE (the share of up moves), not with 50%. Probabilities are calibrated (isotonic) on the pooled
@@ -56,6 +56,7 @@ SEEDS = [7, 21, 42]
 MIN_BARS = 250
 MIN_VALUE_CR = 5.0
 REGIME_MIN_ROWS = 30000
+MIN_TRAIN_ROWS = 20000                      # a fold with fewer training rows than this is skipped
 NOT_MEASURED = [
     ["Satellite imagery", "No free source"], ["Card-spend data", "No free source"], ["Job postings", "Terms forbid scraping"], ["ESG scores", "No free source"],
     ["Order book (L2/L3)", "No free NSE history"], ["RL execution", "Optimises execution, not direction"], ["Heston calibration", "No free options history"],
@@ -320,6 +321,18 @@ def score_horizon(models, D, feats):
     return p, (1 - pi) * predict(models["calm"], D, feats) + pi * predict(models["stress"], D, feats)
 
 
+def purge_cut(cal, first_test_date, h, gap=None):
+    """The first day that may NOT be used for training a model that predicts `h` days ahead on a test period starting at `first_test_date`.
+    Training rows are those strictly before the returned date. The purge gap must be at least the horizon (a training label looks h days ahead),
+    and the last training row's label must end before the first test day: both are asserted, so a change that would leak fails loudly."""
+    gap = GAPS[h] if gap is None else gap
+    assert gap >= h, f"purge gap {gap} is shorter than the {h}-day horizon: training labels would overlap the test period"
+    i_test = int(cal.searchsorted(first_test_date))
+    cut = cal[max(0, i_test - gap)]
+    assert cal.get_loc(cut) + h < i_test or i_test - gap < 0, "the last training label would reach into the test period"
+    return cut
+
+
 def walk_forward(X, cal, obs, feats, horizons, regime=True, log=print):
     """Predict each test year with models trained on strictly earlier data (purge gap per horizon). -> {h: DataFrame(date, sym, y, p, p_reg)}"""
     T = X[X["tr"]]
@@ -334,10 +347,10 @@ def walk_forward(X, cal, obs, feats, horizons, regime=True, log=print):
         start_i = int(cal.searchsorted(test_all["date"].min()))
         hp = hmm_series(obs, cal, cal[max(0, start_i - max(GAPS.values()))])     # one HMM per test year, fitted before the longest purge gap: safe for every horizon
         for h in horizons:
-            cut = cal[max(0, start_i - GAPS[h])]
+            cut = purge_cut(cal, test_all["date"].min(), h)
             tr = T[T["date"] < cut].assign(hmm_p_highvol=lambda d: hp.reindex(d["date"]).values)
             te = test_all[test_all[f"fwd{h}"].notna()].assign(hmm_p_highvol=lambda d: hp.reindex(d["date"]).values)
-            if len(tr) < 20000 or te.empty:
+            if len(tr) < MIN_TRAIN_ROWS or te.empty:
                 continue
             models = fit_horizon(tr, h, feats, hp, regime)
             p, pr = score_horizon(models, te, feats)
@@ -548,6 +561,8 @@ def main(argv=None):
     if not (a.full or a.nightly or a.reeval):
         ap.error("choose --full, --nightly or --reeval")
     horizons = [int(h) for h in a.horizons.split(",")]
+    import aladin_env
+    aladin_env.announce("aladin_model")
     t0 = time.time()
     cfg = load_cfg()
     X, cal, nc, nlr, prices, tails, ind, train = build_dataset(a.limit)

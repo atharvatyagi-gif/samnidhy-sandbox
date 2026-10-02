@@ -47,7 +47,7 @@ FIIDII = ROOT / "data" / "institutional" / "fii_dii.json"
 GEO = ROOT / "data" / "aladin" / "geo.json"
 OUT = ROOT / "data" / "aladin" / "sentiment.json"
 CACHE = ROOT / "data" / "aladin_cache"
-UA = {"User-Agent": "samnidhy-blab-sentiment/1.0 (educational; contact github.com/atharvatyagi-gif)"}
+UA = {"User-Agent": os.environ.get("REDDIT_USER_AGENT") or "samnidhy-blab-sentiment/1.0 (educational; contact github.com/atharvatyagi-gif)"}
 RETENTION_DAYS, EVIDENCE_H = 7, 72
 LEVELS = [(-60, "BAD"), (-20, "POOR"), (20, "NEUTRAL"), (60, "GOOD")]
 MINT_FEEDS = ["https://www.livemint.com/rss/companies", "https://www.livemint.com/rss/markets"]
@@ -417,7 +417,12 @@ LLM_PROMPT = ("You are analysing an earnings-call transcript. Reply with STRICT 
 
 
 def _llm_cfg():
-    return load_json(CFG, {}).get("llm", {"groq_model": "llama-3.3-70b-versatile", "gemini_model": "gemini-1.5-flash"})
+    cfg = {"groq_model": "llama-3.3-70b-versatile", "gemini_model": "gemini-1.5-flash", **load_json(CFG, {}).get("llm", {})}
+    if os.environ.get("GROQ_MODEL"):
+        cfg["groq_model"] = os.environ["GROQ_MODEL"]
+    if os.environ.get("GEMINI_MODEL"):
+        cfg["gemini_model"] = os.environ["GEMINI_MODEL"]
+    return cfg
 
 
 def call_llm(text, post=None, env=None, sleep=time.sleep):
@@ -547,6 +552,8 @@ def main(argv=None):
     ap.add_argument("--no-reddit", action="store_true")
     ap.add_argument("--dry", action="store_true")
     a = ap.parse_args(argv)
+    import aladin_env
+    aladin_env.announce("aladin_sentiment_engine")
     while True:
         doc = run_cycle(a)
         txt = json.dumps(doc, separators=(",", ":"), ensure_ascii=False)

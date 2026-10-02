@@ -1,0 +1,128 @@
+# ALADIN nightly: fundamentals -> filings and alternative data -> probabilities -> paper trader, saved into the repository.
+# Starts when "Daily update" has finished successfully (NSE's end-of-day files are then in the cache), or by hand.
+#   Fundamental front   scripts/aladin_fund.py       Yahoo statements, ~400 stocks refreshed a night, NIFTY 500 first
+#   Filings + alt data  scripts/aladin_filings.py    NSE announcements (FinBERT), delivery trend, bulk/block deals
+#   Probabilities       scripts/aladin_model.py      --nightly: retrain + score using the saved walk-forward record in data/aladin/model_state.json
+#                                                    (--full redoes the walk-forward test; about 3 hours on a 2-core runner, so it is a manual choice)
+#   Paper trader        scripts/paper_trader.py      virtual portfolio, "Simulated. Not real trades."
+# Every step may fail without stopping the run; a failed step leaves the previous files in place and the site shows their age.
+# There is no deploy step: the next "Live prices" run (every 5 minutes) publishes whatever has been committed.
+name: ALADIN nightly
+
+on:
+  workflow_run:
+    workflows: ["Daily update"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "nightly = retrain and score (default); full = also redo the walk-forward test (slow)"
+        type: choice
+        options: [nightly, full]
+        default: nightly
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aladin
+  cancel-in-progress: false
+
+jobs:
+  aladin:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages (CPU-only PyTorch for FinBERT)
+        continue-on-error: true
+        run: pip install -r requirements.txt -r requirements-aladin.txt
+
+      - name: Restore the terminal's NSE data cache
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: data/terminal
+          key: terminal-${{ github.run_id }}
+          restore-keys: terminal-
+
+      - name: Older price history (history branch)
+        continue-on-error: true
+        run: |
+          mkdir -p data/terminal/archive
+          git fetch -q --depth=1 origin history && git archive FETCH_HEAD | tar -x -C data/terminal/archive
+
+      - name: Restore the FinBERT model and ALADIN's own caches
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: |
+            data/aladin_cache
+            ~/.cache/huggingface
+          key: aladin-cache-${{ github.run_id }}
+          restore-keys: |
+            aladin-cache-
+            hf-finbert-v1
+
+      - name: NSE universe (only if the cache has none)
+        continue-on-error: true
+        run: '[ -f data/terminal/universe.json ] || python scripts/nse_eod.py'
+
+      - name: Fundamental front (Yahoo statements, rotating batch)
+        continue-on-error: true
+        timeout-minutes: 30
+        run: python scripts/aladin_fund.py
+
+      - name: Filings tone and alternative data
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python scripts/aladin_filings.py
+
+      - name: Probabilities (technical front, combiner inputs, data/aladin/latest.json)
+        continue-on-error: true
+        timeout-minutes: 90
+        run: |
+          if [ "${{ inputs.mode }}" = "full" ]; then python scripts/aladin_model.py --full --workers 2; else python scripts/aladin_model.py --nightly --workers 2; fi
+
+      - name: Paper trader
+        continue-on-error: true
+        run: python scripts/paper_trader.py
+
+      - name: Save ALADIN's caches for the next run
+        if: always()
+        uses: actions/cache/save@v4
+        continue-on-error: true
+        with:
+          path: |
+            data/aladin_cache
+            ~/.cache/huggingface
+          key: aladin-cache-${{ github.run_id }}
+
+      - name: Save the results in the repository (the next Live prices run publishes them)
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/aladin data/paper_trades
+          if git diff --cached --quiet; then
+            echo "Nothing new to save."
+          else
+            git commit -q -m "ALADIN nightly: $(date -u +%Y-%m-%d\ %H:%M) UTC [skip ci]"
+            for i in 1 2 3; do
+              git pull --rebase --autostash origin main && git push origin HEAD:main && break
+              sleep $((i * 5))
+            done
+          fi
