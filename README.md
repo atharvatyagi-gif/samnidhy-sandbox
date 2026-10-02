@@ -232,3 +232,18 @@ The Excel file and `private/` are never committed or published; `firestore.rules
   main-board stocks; prices that disagree with NSE's own close are rejected. SME stocks show NSE end-of-day prices.
 - `scripts/terminal_fund.py` (daily): fundamentals for the NIFTY 500.
 - Developer preview without signing in (local only): `python scripts/dev_preview.py` → `expert-dev.html`.
+
+### Local tick feed (optional, runs on your own PC)
+
+`scripts/aladin_ticker_daemon.py` polls NSE's free website feed about every 3 seconds (index levels plus the stocks on NSE's own movers / most-active lists, a few hundred at most) and serves it only to your own browser at `ws://127.0.0.1:8787/ws/ticks`.
+
+1. `scripts/start_aladin_local.bat` (Windows) or `scripts/start_aladin_local.sh` (Mac/Linux). Leave it running.
+2. In the desk's command line type `TICKS ON`. The top-right chip then reads "LIVE · NSE WEB (THIS PC, ~3 s)". `TICKS OFF` stops it.
+
+Things to know:
+- It is a polled website feed, not an exchange feed: other stocks keep their delayed price (the age is shown). It only runs Mon-Fri 09:00-15:45 IST.
+- Chrome and Edge allow a secure page to talk to `127.0.0.1` (they may ask once). Safari blocks it.
+- The ticks stay on your machine: `data/live_extra/` is gitignored and never published (NSE's website terms restrict redistributing this data).
+- If NSE blocks the connection the daemon backs off and says so; it does not try to get around a block.
+- Sub-second prices for every stock would need an Angel One SmartAPI login (the existing relay in `relay/`). That source is not part of this daemon.
+- Tests: `python -m pytest tests -q` (no network needed).

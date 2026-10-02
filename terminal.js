@@ -203,7 +203,7 @@ setInterval(() => {
 // desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
 // while a file hasn't been produced yet.
 const DESK_FILES = { sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json" };
-function deskCtx() { return { S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
+function deskCtx() { return { S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
 function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks]) m.init(c); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
@@ -248,7 +248,7 @@ function renderMast() {
   const open = S.qmeta.market === "open", b = breadthNow();
   $("#livechip").classList.toggle("on", open);
   $("#livechip").classList.toggle("rt", LIVE.ok);
-  $("#live-txt").textContent = RP.on ? `REPLAY · ${dayLbl(RP.day)}` : LIVE.ok ? "REAL-TIME · NSE" : open ? "LIVE · DELAYED" : "MARKET CLOSED";
+  $("#live-txt").textContent = RP.on ? `REPLAY · ${dayLbl(RP.day)}` : LIVE.ok ? "REAL-TIME · NSE" : Ticks.active() ? "LIVE · NSE WEB (THIS PC, ~3 s)" : open ? "LIVE · DELAYED" : "MARKET CLOSED";
   $("#ms-stocks").textContent = S.uni.count.toLocaleString("en-IN");
   $("#ms-live").textContent = (S.qmeta.covered || 0).toLocaleString("en-IN");
   $("#ms-ad").textContent = `${b.a.toLocaleString("en-IN")} / ${b.d.toLocaleString("en-IN")}`;
@@ -732,6 +732,7 @@ function onLive(m) {
   else if (m.type === "candles") { const cb = LIVE.pend.get(m.id); if (cb) { LIVE.pend.delete(m.id); cb(m.bars); } }
 }
 function sendFocus() {
+  Ticks.sendFocus([sec, ...loadWatch()]);
   if (!LIVE.ok) return;
   const syms = [...new Set([sec, ...loadWatch(), ...cmp.map(c => c.sym)].filter(Boolean))].slice(0, 50);
   LIVE.ws.send(JSON.stringify({ type: "focus", syms }));
@@ -744,14 +745,14 @@ function liveCandles(sym, interval) {
     setTimeout(() => { if (LIVE.pend.has(id)) { LIVE.pend.delete(id); res(null); } }, 15000);
   });
 }
-function applyTicks(qmap) {
+function applyTicks(qmap, local) {
   const day = todayIST();
   let mine = null;
   for (const [sym, r] of Object.entries(qmap)) {
     const [p, o, h, l, pc, v, ms] = r;
-    if (sym.startsWith("^")) { S.idxLive[sym] = { p, pc, pct: pc ? (p / pc - 1) * 100 : null, rt: true }; continue; }
+    if (sym.startsWith("^")) { S.idxLive[sym] = { p, pc, pct: pc ? (p / pc - 1) * 100 : null, rt: !local }; continue; }
     const t = ms ? new Date(ms).toLocaleTimeString("en-GB", { timeZone: IST, hour12: false }) : "";
-    S.quotes[sym] = { p, chg: +(p - pc).toFixed(2), pct: pc ? +((p / pc - 1) * 100).toFixed(2) : null, o, h, l, v, t, d: day, rt: true };
+    S.quotes[sym] = { p, chg: +(p - pc).toFixed(2), pct: pc ? +((p / pc - 1) * 100).toFixed(2) : null, o, h, l, v, t, d: day, rt: !local, loc: !!local };
     if (ms && (sym === sec || S.ticks[sym])) { const T = (S.ticks[sym] ||= []); if (!T.length || T[T.length - 1][0] <= ms) T.push([ms, p, v]); if (T.length > 30000) T.splice(0, 5000); feedRtc(sym, p, v, ms); }
     if (sym === sec) mine = { p, o, h, l, v, ms };
   }
@@ -1545,6 +1546,7 @@ function commitCmd(opt) {
     $("#cmd").value = ""; closeCmd(); return;
   }
   // free text with no dropdown selection: try the grammar directly
+  if (/^TICKS( ON| OFF)?$/i.test(raw)) { const w = raw.toUpperCase().split(/\s+/)[1]; if (w) Ticks.setEnabled(w === "ON"); else toast(`Local ticks are ${Ticks.enabled() ? "on" : "off"} (TICKS ON / TICKS OFF)`); $("#cmd").value = ""; closeCmd(); return; }
   const Q = raw.toUpperCase(), words = Q.split(/\s+/).filter(Boolean);
   if (words.length >= 2 && words[0] === "ALADIN" && !FUNC_CODES[words[words.length - 1]]) {          // "ALADIN TCS" (the SYMBOL ALADIN form is handled below)
     const symQ = words.slice(1).join(" "), hit = S.map.has(symQ.replace(/\s+/g, "")) ? symQ.replace(/\s+/g, "") : (scoreStocks(symQ, "all")[0] || {}).s;

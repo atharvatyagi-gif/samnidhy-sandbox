@@ -1,0 +1,5 @@
+# ALADIN local tick daemon (scripts/aladin_ticker_daemon.py) and its tests
+requests>=2.31
+brotli>=1.1
+websockets>=13
+pytest>=8

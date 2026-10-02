@@ -35,7 +35,25 @@ page = page.replace("<!--TERMINAL-BODY-START-->", '<div style="position:fixed;ri
 (SITE / "expert-dev.html").write_text(page, encoding="utf-8")
 url = f"http://127.0.0.1:{PORT}/expert-dev.html"
 print(f"Developer preview: {url}   (Ctrl+C to stop)")
-handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(SITE))
+class Handler(http.server.SimpleHTTPRequestHandler):
+    """Static site plus /ticks.json: the operator-only live-tick file from the local daemon (never built into site/).
+    Answers an empty 200 when the daemon is not running, so the browser console stays clean."""
+
+    def do_GET(self):
+        if self.path.split("?")[0] == "/ticks.json":
+            f = ROOT / "data" / "live_extra" / "ticks.json"
+            body = f.read_bytes() if f.exists() else b'{"q":{}}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        super().do_GET()
+
+
+handler = functools.partial(Handler, directory=str(SITE))
 with http.server.ThreadingHTTPServer(("127.0.0.1", PORT), handler) as srv:
     if "--no-browser" not in sys.argv:
         webbrowser.open(url)
