@@ -265,3 +265,14 @@ Things to know:
 - Retail sentiment needs at least 5 different authors in 24 hours, so on most days it is "not measured". Reddit's RSS often answers HTTP 429; with `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` set it uses the official API.
 - Earnings-call transcripts (`score_transcript`) use Groq (`GROQ_API_KEY`) or Gemini (`GEMINI_API_KEY`) if a key exists, otherwise a local FinBERT split at the Q&A marker.
 - FinBERT needs PyTorch (`pip install torch --index-url https://download.pytorch.org/whl/cpu`) and about 440 MB of model download the first time. Without it the engine falls back to a word list and says so (`method: "lexicon"`).
+
+### ALADIN model (probabilities)
+
+`scripts/aladin_model.py --full` (by hand or weekly) runs the walk-forward test and the final models; `--nightly` re-uses the saved test record in `data/aladin/model_state.json` and just retrains and scores. Both write `data/aladin/latest.json` (published as `aladin.json`) and a snapshot in `data/aladin/history/`.
+
+- **Question asked:** will the stock's close be higher in 5 / 10 / 20 trading days? Accuracy is always shown next to the base rate (the share of up moves), because "always say up" is already right a bit over half the time.
+- **Technical front:** LightGBM (3 seeds) on about 80 price and market inputs, plus PCA residual returns, a cointegrated-peer spread (Engle-Granger, Kalman filter), a 2-state market-turbulence HMM (forward-filtered, fitted on training data only) and jump statistics. Calm/stress model sets are used only if they beat the single model out of sample. Probabilities are isotonic-calibrated on the pooled out-of-sample years (2013 onwards, with a 10 / 15 / 25-day purge gap).
+- **Fundamental front** (`scripts/aladin_fund.py`): Value, Quality and Fundamental-momentum composites (winsorised, orthogonalised to size and industry), a distress band (worse of Merton distance-to-default and Altman Z''), filing tone and hedging from NSE announcements (`scripts/aladin_filings.py`), delivery % trend and bulk/block deals. Yahoo gives only about 4 annual and 5 quarterly periods, so earnings stability and quarterly revenue acceleration are usually "not measured".
+- **Combiner:** `logit(p) = logit(p_tech) + 0.20 F/100 + 0.12 S/100 + 0.18 S_sweep/100` with `combine_py` (Python) and `combine()` (`desk-aladin.js`) both tested against `tests/fixtures/combiner_cases.json`. These weights are priors until 120 trading days of saved predictions have matured; a fitted stacker then replaces them only if it wins out of sample.
+- **Not done:** LSTM (optional, not tried), order-book models, RL execution and Heston calibration (no free data).
+- The data/aladin/*.json files are generated; the nightly workflow (added with the paper-trader phase) is what keeps them current.

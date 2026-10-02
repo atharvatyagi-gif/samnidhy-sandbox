@@ -204,7 +204,7 @@ setInterval(() => {
 // desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
 // while a file hasn't been produced yet.
 const DESK_FILES = { sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json" };
-const DESK_LAZY = new Set(["houses", "geo"]);
+const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
 function deskCtx() { return { renderRegimeBrief, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
 function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks]) m.init(c); }

@@ -1,0 +1,38 @@
+"""Regenerates tests/fixtures/combiner_cases.json for the ALADIN combiner.
+
+The cases are the contract both implementations (combine_py in scripts/aladin_model.py, combine() in desk-aladin.js) must meet:
+  python tests/make_combiner_cases.py
+The `hand` cases carry numbers worked out by hand (see the comments) and are asserted independently in tests/test_aladin_model.py, so the
+file is not just the Python function's output echoed back. The `grid` cases are a systematic sweep of the inputs, taken from combine_py.
+"""
+import itertools
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+import aladin_model as am  # noqa: E402
+
+W = {"wF": 0.20, "wS": 0.12, "wSweep": 0.18}
+cases = []
+
+# worked by hand: logit(0.6) = ln(1.5) = 0.405465; + 0.2 * 0.5 = 0.505465; p = 1/(1+e^-0.505465) = 0.6238
+def add(name, p_tech, F=None, S=None, sweep=None, w=None, expect=None):
+    r = am.combine_py(p_tech, F, S, sweep, w or W)
+    cases.append({"name": name, "in": {"p_tech": p_tech, "F": F, "S": S, "sweep": sweep, "w": w or W}, "out": {k: r[k] for k in ("p", "q", "T", "conf", "agree")}, **({"hand": expect} if expect else {})})
+
+add("no other fronts, p=0.5", 0.5, expect={"p": 0.5, "conf": "Low", "agree": "0/1"})
+add("only technical, p=0.55 (T=10 is not above +10)", 0.55, expect={"p": 0.55, "conf": "Medium", "agree": "0/1"})
+add("fundamental +50 on p=0.6", 0.6, F=50, expect={"p": 0.6238})
+add("everything bullish", 0.62, F=60, S=40, sweep=50, expect=None)
+add("sentiment -100 pulls a bullish stock down", 0.6, S=-100, expect={"p": 0.5709})      # 0.405465 - 0.12 = 0.285465 -> 1/(1+e^-0.285465) = 0.5709
+add("clip high", 0.97, F=100, S=100, sweep=100, expect={"p": 0.98})
+add("clip low", 0.03, F=-100, S=-100, sweep=-100, expect={"p": 0.02})
+add("agreement 3/3 high confidence", 0.7, F=40, S=30, expect={"conf": "High", "agree": "3/3"})
+add("fronts disagree with p", 0.4, F=30, S=20, expect={"agree": "1/3"})
+for p, F, S, sw in itertools.product([0.1, 0.35, 0.5, 0.52, 0.58, 0.9], [None, -80, 0, 11, 80], [None, -60, 5, 70], [None, -100, 40]):
+    add(f"grid p={p} F={F} S={S} sweep={sw}", p, F, S, sw)
+add("custom weights", 0.55, F=50, S=50, sweep=50, w={"wF": 0.4, "wS": 0.0, "wSweep": 0.1})
+out = Path(__file__).resolve().parent / "fixtures" / "combiner_cases.json"
+out.write_text(json.dumps({"note": "Contract for combine_py (Python) and combine() (JavaScript). 'hand' values were worked out independently.", "cases": cases}, indent=0), encoding="utf-8")
+print("wrote", out, len(cases), "cases")
