@@ -962,7 +962,7 @@ function renderWatch() {
     : '<div class="empty">Your watchlist is empty. Open any stock and press + Watchlist, or use Set up desk.</div>';
   $$("#watch .wl-row").forEach(r => { flash(r.querySelector(".p"), "w:" + r.dataset.s, q(r.dataset.s)?.p); r.onclick = e => { if (e.target.dataset.rm) { toggleWatch(e.target.dataset.rm); return; } openSec(r.dataset.s); }; });
 }
-const REC = { strong_buy: "Strong buy", buy: "Buy", hold: "Hold", underperform: "Underperform", sell: "Sell" };
+const REC = { strong_buy: "Strongly positive", buy: "Positive", hold: "Neutral", underperform: "Negative", sell: "Strongly negative" };
 function perfFrom(sym) {
   const x = q(sym); if (!x) return null;
   const h = dailyOf(sym).filter(r => r[0] < x.d); if (!h.length) return null;          // history before today
@@ -975,27 +975,27 @@ S.tech = {}; S.rec = {};
 const dailyBars = sym => dailyOf(sym).map(r => ({ time: r[0], o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], day: r[0] }));
 const pctS = v => v == null ? "--" : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + "%";
 function analysisHtml(sym) {
-  if (S.daily[sym] === undefined) return `<div class="sec-t">Technicals &amp; recommended indicators</div><p class="note">Loading ${esc(sym)}'s price history…</p>`;
+  if (S.daily[sym] === undefined) return `<div class="sec-t">Technicals &amp; suggested indicators</div><p class="note">Loading ${esc(sym)}'s price history…</p>`;
   const bars = dailyBars(sym);
   const T = S.tech[sym] !== undefined ? S.tech[sym] : (S.tech[sym] = technicals(bars));
   const R = S.rec[sym] !== undefined ? S.rec[sym] : (S.rec[sym] = recommend(bars));
   eng.recommended = R ? R.top.map(r => ({ name: r.name, add: r.add })) : [];
   const gauge = (lbl, sc) => `<div class="tg"><div class="tg-top"><span class="mut">${lbl}</span><b class="${sc.score > 0.1 ? "up" : sc.score < -0.1 ? "down" : ""}">${sc.label}</b></div>
-    <div class="tg-bar"><i style="left:calc(${((sc.score + 1) / 2 * 100).toFixed(1)}% - 2px)"></i></div><div class="tg-n">${sc.sell} sell · ${sc.neutral} neutral · ${sc.buy} buy</div></div>`;
+    <div class="tg-bar"><i style="left:calc(${((sc.score + 1) / 2 * 100).toFixed(1)}% - 2px)"></i></div><div class="tg-n">${sc.sell} bearish · ${sc.neutral} neutral · ${sc.buy} bullish</div></div>`;
   let h = `<div class="sec-t">Technicals · daily</div>`;
   h += T ? gauge("Summary", T.all) + `<div class="tg2">${gauge("Moving averages", T.ma)}${gauge("Oscillators", T.osc)}</div>
-    <details class="tg-rows"><summary>All ${T.rows.length} signals</summary><table class="prints"><tbody>${T.rows.map(r => `<tr><td>${esc(r.name)}</td><td class="num">${inr(r.value)}</td><td class="${r.sig > 0 ? "up" : r.sig < 0 ? "down" : "mut"}">${r.sig > 0 ? "Buy" : r.sig < 0 ? "Sell" : "Neutral"}</td></tr>`).join("")}</tbody></table></details>
+    <details class="tg-rows"><summary>All ${T.rows.length} signals</summary><table class="prints"><tbody>${T.rows.map(r => `<tr><td>${esc(r.name)}</td><td class="num">${inr(r.value)}</td><td class="${r.sig > 0 ? "up" : r.sig < 0 ? "down" : "mut"}">${r.sig > 0 ? "Bullish" : r.sig < 0 ? "Bearish" : "Neutral"}</td></tr>`).join("")}</tbody></table></details>
     <p class="note">Counts simple rules (price vs 12 moving averages; RSI, Stochastic, CCI, ADX, Momentum, MACD, Williams %R), the way TradingView's Technicals gauge does. Not advice.</p>`
     : `<p class="note">Needs at least 60 days of history.</p>`;
-  h += `<div class="sec-t">Recommended indicators for ${esc(sym)}</div>`;
+  h += `<div class="sec-t">Suggested indicators for ${esc(sym)}</div>`;
   if (!R) h += `<p class="note">Needs about 1.6 years of daily history to test indicators on this stock.</p>`;
   else if (!R.top.length) h += `<p class="note">None of the ${R.list.length} indicator rules tested held up on ${esc(sym)}: none made money after costs in both the earlier years and the recent test period. For this stock, no indicator has had a reliable edge.</p>`;
   else h += R.top.map((r, k) => `<div class="rec"><div class="rec-h"><b>${k + 1}. ${esc(r.name)}</b></div>
       <div class="rec-t"><span class="tag">${esc(r.family)}</span>${r.now ? '<span class="tag acc">rule says: in</span>' : '<span class="tag">rule says: out</span>'}</div>
-      <div class="rec-s">Unseen test period: <b class="${ud(r.te.ret)}">${pctS(r.te.ret)}</b> vs buy &amp; hold <b class="${ud(R.buyHold.te.ret)}">${pctS(R.buyHold.te.ret)}</b><br>
-        Whole period: ${pctS(r.all.ret)} (buy &amp; hold ${pctS(R.buyHold.all.ret)}) · worst drop ${pctS(r.all.dd)} · ${r.all.trades} trades${r.all.win != null ? ` · ${Math.round(r.all.win * 100)}% profitable` : ""} · in the market ${Math.round(r.all.exposure * 100)}% of days</div>
+      <div class="rec-s">Unseen test period: <b class="${ud(r.te.ret)}">${pctS(r.te.ret)}</b> vs holding throughout <b class="${ud(R.buyHold.te.ret)}">${pctS(R.buyHold.te.ret)}</b><br>
+        Whole period: ${pctS(r.all.ret)} (holding throughout ${pctS(R.buyHold.all.ret)}) · worst drop ${pctS(r.all.dd)} · ${r.all.trades} trades${r.all.win != null ? ` · ${Math.round(r.all.win * 100)}% profitable` : ""} · in the market ${Math.round(r.all.exposure * 100)}% of days</div>
       <button class="btn-line sm" data-rec="${k}">+ Add to chart</button></div>`).join("")
-    + `<p class="note">How it works: each indicator is turned into its usual buy/sell rule and tested on ${esc(sym)}'s own daily prices from ${esc(R.from)} to ${esc(R.to)} (acted on the next day, 0.1% cost per trade).
+    + `<p class="note">How it works: each indicator is turned into its usual entry/exit rule and tested on ${esc(sym)}'s own daily prices from ${esc(R.from)} to ${esc(R.to)} (acted on the next day, 0.1% cost per trade).
       Rules are ranked on the first 70% of that history and checked on the last 30% (from ${esc(R.testFrom)}), which the ranking never saw. ${R.style ? `On this stock, <b>${esc(R.style.toLowerCase())}</b> rules have worked best.` : ""} Past results are not a forecast. Educational only, not advice.</p>`;
   return h;
 }
@@ -1017,9 +1017,9 @@ function renderDetails() {
   if (perf) html += `<div class="sec-t">Performance</div><div class="perf">${perf.map(([k, v]) => `<div class="${v == null ? "" : v >= 0 ? "pu" : "pd"}"><span>${k}</span><b class="${ud(v)}">${v == null ? "--" : sg(v, 1) + "%"}</b></div>`).join("")}</div>`;
   if (f && (f.rec || f.tgt)) {
     const pos = { strong_buy: 95, buy: 75, hold: 50, underperform: 25, sell: 5 }[f.rec] ?? 50, up = f.tgt ? (f.tgt / x.p - 1) * 100 : null;
-    html += `<div class="sec-t">Analyst view</div><div class="gauge"><i style="left:calc(${pos}% - 2px)"></i></div><div class="g-l"><span>Sell</span><span>Hold</span><span>Buy</span></div>
-      <div class="stats" style="margin-top:10px">${stat("Consensus", f.rec ? REC[f.rec] || f.rec : "--")}${stat("Analysts", f.an ?? "--")}${stat("Target", f.tgt ? "₹" + inr(f.tgt, 0) : "--")}${stat("Upside", up == null ? "--" : `<span class="${ud(up)}">${sg(up, 1)}%</span>`)}</div>
-      <p class="note">12-month brokerage targets (Yahoo Finance). On average analysts are too optimistic.</p>`;
+    html += `<div class="sec-t">Analyst view</div><div class="gauge"><i style="left:calc(${pos}% - 2px)"></i></div><div class="g-l"><span>Negative</span><span>Neutral</span><span>Positive</span></div>
+      <div class="stats" style="margin-top:10px">${stat("Consensus", f.rec ? REC[f.rec] || f.rec : "--")}${stat("Analysts", f.an ?? "--")}${stat("Price estimate", f.tgt ? "₹" + inr(f.tgt, 0) : "--")}${stat("Upside", up == null ? "--" : `<span class="${ud(up)}">${sg(up, 1)}%</span>`)}</div>
+      <p class="note">12-month analyst price estimates (Yahoo Finance). On average analysts are too optimistic.</p>`;
   }
   if (pick) html += `<div class="sec-t">B-Lab screen</div><div class="stats">${stat("Magic rank", "#" + pick.magic_rank + " of " + pick.of)}${stat("F-Score", pick.fscore + "/9")}${stat("Ret. on capital", pctF(pick.roc))}${stat("Earn. yield", pctF(pick.earnings_yield))}</div>`;
   html += `<div class="sec-t">Profile</div>`;
