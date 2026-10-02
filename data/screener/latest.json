@@ -130,7 +130,7 @@
    -0.15089,
    -0.14983,
    -0.14925,
-   -0.14859,
+   -0.1486,
    -0.14849,
    -0.1473,
    -0.14618,
@@ -1437,9 +1437,9 @@
    1.10954
   ]
  },
- "generated_utc": "2026-10-02T13:33:38+00:00",
- "generated_ist": "02 Oct 2026, 07:03 PM IST",
- "screened_ist": "02 Oct 2026, 07:03 PM IST",
+ "generated_utc": "2026-10-02T17:44:55+00:00",
+ "generated_ist": "02 Oct 2026, 11:14 PM IST",
+ "screened_ist": "02 Oct 2026, 11:14 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1469,11 +1469,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 281
+   "count": 278
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 160
+   "count": 159
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1495,6 +1495,9 @@
    "INFY"
   ],
   "download failed (YFRateLimitError)": [
+   "STLTECH",
+   "SUNPHARMA",
+   "SUNTV",
    "SUPREMEIND",
    "SWANCORP",
    "SWIGGY",
@@ -1604,7 +1607,7 @@
    "magic_rank": 1,
    "rank_roc": 9,
    "rank_ey": 9,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "BLS",
@@ -1657,7 +1660,7 @@
    "magic_rank": 2,
    "rank_roc": 11,
    "rank_ey": 13,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "NBCC",
@@ -1710,7 +1713,7 @@
    "magic_rank": 3,
    "rank_roc": 10,
    "rank_ey": 25,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "CASTROLIND",
@@ -1763,7 +1766,7 @@
    "magic_rank": 4,
    "rank_roc": 5,
    "rank_ey": 31,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1816,7 +1819,7 @@
    "magic_rank": 5,
    "rank_roc": 18,
    "rank_ey": 20,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "HINDZINC",
@@ -1869,7 +1872,7 @@
    "magic_rank": 6,
    "rank_roc": 29,
    "rank_ey": 19,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "NATIONALUM",
@@ -1922,7 +1925,7 @@
    "magic_rank": 7,
    "rank_roc": 41,
    "rank_ey": 8,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "ENGINERSIN",
@@ -1975,7 +1978,7 @@
    "magic_rank": 8,
    "rank_roc": 6,
    "rank_ey": 45,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "FORCEMOT",
@@ -2028,7 +2031,7 @@
    "magic_rank": 9,
    "rank_roc": 27,
    "rank_ey": 26,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "ESCORTS",
@@ -2081,7 +2084,7 @@
    "magic_rank": 10,
    "rank_roc": 34,
    "rank_ey": 23,
-   "of": 160
+   "of": 159
   }
  ]
 }
