@@ -34,3 +34,7 @@ export function isConfigured() {
 // Real-time relay (relay/README.md): the wss:// address printed by relay/setup.sh on your server.
 // Empty = the terminal uses the delayed prices only.
 export const LIVE_RELAY_URL = "";
+
+// Local tick daemon (scripts/aladin_ticker_daemon.py): serves only the person running it, on their own machine
+// (a GitHub Pages site cannot reach anyone else's 127.0.0.1). The browser connects quietly and only if it's there.
+export const LOCAL_TICKS_URL = "ws://127.0.0.1:8787/ws/ticks";

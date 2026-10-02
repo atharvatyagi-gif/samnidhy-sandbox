@@ -724,3 +724,15 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .gc-card .src { font: 10.5px var(--mono); color: var(--ink-4); }
 .gc-card .none { color: var(--ink-4); font-style: italic; }
 @media (max-width: 700px) { .globe-cards { grid-template-columns: 1fr; } }
+
+/* ---------- tabs: ten of them now; scroll sideways rather than wrap or overflow the page ---------- */
+@media (max-width: 1280px) { .tabs { overflow-x: auto; scrollbar-width: none; } .tabs::-webkit-scrollbar { display: none; } .tabs button { flex: none; padding: 0 11px; } }
+
+/* ---------- HOUSES ---------- */
+#houses .empty, #aladin .empty { padding: 18px 0; color: var(--ink-3); }
+
+/* ---------- MAP ---------- */
+/* (geo-tension is a Globe layer; its styles join the Globe block above when the MAP phase lands) */
+
+/* ---------- ALADIN ---------- */
+#aladin .note { margin: 0; color: var(--ink-4); font: 12px var(--sans); }

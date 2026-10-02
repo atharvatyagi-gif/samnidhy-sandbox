@@ -14,6 +14,7 @@ site/ is a build output: it is not stored in git; GitHub Actions rebuilds and pu
 """
 
 import hashlib
+import json
 import re
 import shutil
 from pathlib import Path
@@ -24,12 +25,13 @@ ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
 STATIC = ["index.html", "landing.css", "landing.js", "auth.html", "auth-check.js", "config.js",
           "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js",
-          "chart-engine.js", "chart-indicators.js", "mode-dock.js", "globe-map.js"]
+          "chart-engine.js", "chart-indicators.js", "mode-dock.js", "globe-map.js",
+          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js"]
 TERMINAL = ROOT / "data" / "terminal"
 # Scripts/styles that pages load. Browsers keep these for a while (GitHub Pages: 10 min, some longer), so an
 # update could mix a new page with an old script. Every reference gets ?v=<hash of the file>, which changes
 # only when the file does. Leaves first: auth-check.js imports config.js, so its own hash covers that version.
-ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "terminal.js", "auth-check.js"]
+ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "terminal.js", "auth-check.js"]
 
 
 def version_assets() -> None:
@@ -103,6 +105,18 @@ def main() -> None:
         shutil.copyfile(DATA / "status.json", SITE / "status.json")
     if (DATA / "news" / "wire.json").exists():   # the terminal's News tab (scripts/news_wire.py)
         shutil.copyfile(DATA / "news" / "wire.json", SITE / "news.json")
+    # ALADIN / Houses / geo tension / paper trades: each file is copied only if it exists, and desk_data.json lists
+    # which ones do, so the page requests only those (no console 404s while a file hasn't been produced yet).
+    # data/live_extra/ticks.json is deliberately NEVER copied: it's the operator's own live feed (NSE's website
+    # terms restrict redistributing it) and must not be published.
+    desk = {"aladin": DATA / "aladin" / "latest.json", "sentiment": DATA / "aladin" / "sentiment.json", "geo": DATA / "aladin" / "geo.json",
+            "houses": DATA / "config" / "business_houses.json", "paper": DATA / "paper_trades" / "portfolio.json"}
+    present = {}
+    for key, src in desk.items():
+        present[key] = src.exists()
+        if src.exists():
+            shutil.copyfile(src, SITE / {"aladin": "aladin.json", "sentiment": "sentiment.json", "geo": "geo.json", "houses": "houses.json", "paper": "paper.json"}[key])
+    (SITE / "desk_data.json").write_text(json.dumps(present), encoding="utf-8")
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
         (SITE / "screener.json").write_text((SCREENER / "latest.json").read_text(encoding="utf-8"), encoding="utf-8")
 

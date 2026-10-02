@@ -61,10 +61,12 @@
     <button data-go="terminal">Terminal</button>
     <button data-go="movers">Movers</button>
     <button data-go="sectors">Sectors</button>
+    <button data-go="houses">Houses</button>
     <button data-go="world">World</button>
     <button data-go="outlook">Outlook</button>
     <button data-go="news">News</button>
     <button data-go="globe">Globe</button>
+    <button data-go="lab">Tools</button>
     <span class="grow"></span>
     <button class="tab-side" data-go="terminal" data-side="watch">Watchlist <b id="wl-count">0</b></button>
     <button class="tab-side" id="setup-btn" title="Choose the stocks on your watchlist">Set up desk</button>
@@ -210,7 +212,7 @@
       </div>
     </section>
 
-    <!-- ================= NEWS ================= -->
+    <!-- ================= OUTLOOK ================= -->
     <section class="view" id="v-outlook">
       <div class="page">
         <div class="page-head"><p class="kick">— Model outlook · next 20 trading days · NIFTY 500</p><h2>Which stocks are likely to <span class="acc">beat the NIFTY.</span></h2><p class="asof" data-asof="outlook"></p></div>
@@ -226,6 +228,7 @@
       </div>
     </section>
 
+    <!-- ================= NEWS ================= -->
     <section class="view" id="v-news">
       <div class="page">
         <div class="page-head"><p class="kick">— Financial wire · India markets + <a href="https://brutalist.report/topic/business" target="_blank" rel="noopener noreferrer">brutalist.report</a></p><h2>All the money news, <span class="acc">one page.</span></h2><p class="asof" data-asof="news"></p></div>
@@ -238,6 +241,22 @@
         </div>
         <p class="news-meta" id="news-meta"></p>
         <div class="brutal-grid" id="news"></div>
+      </div>
+    </section>
+
+    <!-- ================= HOUSES ================= -->
+    <section class="view" id="v-houses">
+      <div class="page">
+        <div class="page-head"><p class="kick">— Business houses · NSE · live</p><h2>Who owns <span class="acc">India's market.</span></h2><p class="asof" data-asof="houses"></p></div>
+        <div id="houses"></div>
+      </div>
+    </section>
+
+    <!-- ================= TOOLS (ALADIN) ================= -->
+    <section class="view" id="v-lab">
+      <div class="page">
+        <div class="page-head"><p class="kick">— Tools · B-Lab quant desk</p><h2>Models you can <span class="acc">question.</span></h2><p class="asof" data-asof="aladin"></p></div>
+        <div id="aladin"></div>
       </div>
     </section>
 

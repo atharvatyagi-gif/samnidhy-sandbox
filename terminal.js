@@ -12,6 +12,10 @@ import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
 import { technicals, recommend } from "./chart-indicators.js";
 import { LIVE_RELAY_URL } from "./config.js";
 import { GlobeMap } from "./globe-map.js";
+import * as Houses from "./desk-houses.js";
+import * as GeoDesk from "./desk-map.js";
+import * as Aladin from "./desk-aladin.js";
+import * as Ticks from "./desk-ticks.js";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -80,6 +84,7 @@ async function boot() {
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
     S.nseLive = await getJSON("nse_live.json").catch(() => null);
     applyNseLive();
+    initDesk(); await loadDeskData().catch(() => {});
   } catch (e) {
     $("#st-data").textContent = "Data not available: the NSE stock list could not be loaded. Nothing is shown in its place.";
     $("#brief-cards").innerHTML = '<div class="empty">Data not available.</div>'; return;
@@ -121,6 +126,7 @@ async function poll() {
       getJSON("institutional.json").catch(() => S.inst), getJSON("news.json").catch(() => null), getJSON("screener.json").catch(() => null),
       getJSON("t/universe.json").catch(() => null), getJSON("predict.json").catch(() => null)]);
     lastCheck = Date.now(); checkOk = true;
+    loadDeskData().catch(() => {});
     if (news && news.generated_utc !== S.news.generated_utc) S.news = news;
     renderNews(); renderCrawl();                              // ages move on even when the wire hasn't changed
     let changed = quotes.generated_utc !== S.qmeta.generated_utc || live.generated_utc !== S.live.generated_utc;
@@ -192,6 +198,24 @@ setInterval(() => {
   el.classList.toggle("bad", !checkOk);
 }, 1000);
 
+/* ================= desk modules (Houses / Map layer / Tools-ALADIN / local ticks) ================= */
+// Each module gets the same ctx and renders only after its tab is first opened. Optional data files are listed in
+// desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
+// while a file hasn't been produced yet.
+const DESK_FILES = { sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json" };
+function deskCtx() { return { S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
+function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks]) m.init(c); }
+async function loadDeskData() {
+  const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
+  let changed = false;
+  for (const [k, file] of Object.entries(DESK_FILES)) {
+    if (!man[k]) continue;
+    const j = await getJSON(file).catch(() => null);
+    if (j && (!S[k] || j.generated_utc !== S[k].generated_utc)) { S[k] = j; changed = true; }
+  }
+  if (changed) { if (view === "houses") Houses.renderHouses(); if (view === "lab") Aladin.renderAladin(); }
+}
+
 /* ================= navigation ================= */
 function go(v, quiet) {
   if (!document.getElementById("v-" + v)) v = "brief";
@@ -205,6 +229,8 @@ function go(v, quiet) {
     const gm = ensureGlobeMap(); if (gm && S.globe) gm.update(S.globe);
     requestAnimationFrame(() => { gm && gm.resize(); if (gm && sec) { lastFootprintSym = sec; renderCompanyFootprint(gm, sec); } });
   }
+  if (v === "houses") Houses.renderHouses();
+  if (v === "lab") Aladin.renderAladin();
   if (!quiet) $("#v-" + v).scrollTop = 0;
 }
 document.addEventListener("click", e => {
@@ -1392,7 +1418,7 @@ async function openSec(sym) {
 }
 
 /* ================= search ================= */
-const FUNCS = { BRIEF: "Brief", TERMINAL: "Terminal", MOVERS: "Movers", SECTORS: "Sectors", WORLD: "World", OUTLOOK: "Outlook", NEWS: "News", WATCHLIST: "Watchlist", SETUP: "Set up desk", BACK: "Back to B-Lab", LOGOFF: "Log off" };
+const FUNCS = { BRIEF: "Brief", TERMINAL: "Terminal", MOVERS: "Movers", SECTORS: "Sectors", WORLD: "World", OUTLOOK: "Outlook", NEWS: "News", WATCHLIST: "Watchlist", HOUSES: "Business houses", TOOLS: "Tools (ALADIN)", ALADIN: "ALADIN probabilities", SETUP: "Set up desk", BACK: "Back to B-Lab", LOGOFF: "Log off" };
 // shared fuzzy symbol/company scorer (lower = better) used by both the "+ Add to watchlist" picker (modal,
 // below) and the command line's autocomplete (further down) - one matching algorithm, not two to keep in sync.
 function scoreStocks(Q, filter) {
@@ -1436,6 +1462,7 @@ function chooseQ(o) {
   else if (f === "LOGOFF") $("#logout").click();
   else if (f === "SETUP") openOnboard();
   else if (f === "WATCHLIST") { go("terminal"); setSide("watch"); }
+  else if (f === "TOOLS" || f === "ALADIN") { Aladin.setAladinFilter(null); go("lab"); }
   else go(f.toLowerCase());
 }
 $("#q").addEventListener("input", runSearch);
@@ -1472,6 +1499,9 @@ const FUNC_CODES = {
   CORR: { label: "Correlation matrix", run: () => notBuilt("CORR") },
   WATCH: { label: "Watchlist", run: () => { go("terminal"); setSide("watch"); } },
   MAP: { label: "World map: flights, chokepoints, real news", run: () => go("globe") },
+  HOUSES: { label: "Business houses", run: () => go("houses") },
+  TOOLS: { label: "Tools (ALADIN)", run: () => { Aladin.setAladinFilter(null); go("lab"); } },
+  ALADIN: { label: "ALADIN probabilities (SYMBOL ALADIN to filter)", run: sym => { Aladin.setAladinFilter(sym || null); go("lab"); } },
   HELP: { label: "Function directory", run: () => openHelp() },
 };
 let cmdOpts = [], cmdAct = -1, cmdHist = [], cmdHistAt = -1;
@@ -1516,6 +1546,10 @@ function commitCmd(opt) {
   }
   // free text with no dropdown selection: try the grammar directly
   const Q = raw.toUpperCase(), words = Q.split(/\s+/).filter(Boolean);
+  if (words.length >= 2 && words[0] === "ALADIN" && !FUNC_CODES[words[words.length - 1]]) {          // "ALADIN TCS" (the SYMBOL ALADIN form is handled below)
+    const symQ = words.slice(1).join(" "), hit = S.map.has(symQ.replace(/\s+/g, "")) ? symQ.replace(/\s+/g, "") : (scoreStocks(symQ, "all")[0] || {}).s;
+    if (hit) { FUNC_CODES.ALADIN.run(hit); $("#cmd").value = ""; closeCmd(); return; }
+  }
   if (words.length >= 2 && FUNC_CODES[words[words.length - 1]]) {
     const code = words[words.length - 1], symQ = words.slice(0, -1).join(" ");
     const hit = S.map.has(symQ.replace(/\s+/g, "")) ? symQ.replace(/\s+/g, "") : (scoreStocks(symQ, "all")[0] || {}).s;
