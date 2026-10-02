@@ -194,6 +194,16 @@ export class GlobeMap {
       this.msg.textContent = "The map couldn't load (needs an internet connection the first time). Chokepoint cards below still work.";
     }
   }
+  /* Adds an overlay the layer control can switch on; `onFirstOn` runs each time it is switched on (the caller loads its data
+     lazily). Used by desk-map.js for the geopolitical news-attention layer. */
+  async addLazyOverlay(name, onOn) {
+    await this.ready;
+    if (!this.map || !this.layerControl) return null;
+    const lg = window.L.layerGroup();
+    this.layerControl.addOverlay(lg, name);
+    this.map.on("overlayadd", e => { if (e.layer === lg) onOn(lg); });
+    return lg;
+  }
   async loadSlowLayers() {
     const L = window.L;
     this.laneLayer = L.layerGroup();

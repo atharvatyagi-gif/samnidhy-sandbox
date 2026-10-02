@@ -247,3 +247,11 @@ Things to know:
 - If NSE blocks the connection the daemon backs off and says so; it does not try to get around a block.
 - Sub-second prices for every stock would need an Angel One SmartAPI login (the existing relay in `relay/`). That source is not part of this daemon.
 - Tests: `python -m pytest tests -q` (no network needed).
+
+### Geopolitical news attention (Globe layer)
+
+`scripts/geo_tension.py` scores ten regions (Hormuz, Red Sea, Israel/Gaza/Lebanon, Russia/Ukraine, India/Pakistan, India/China border, Taiwan Strait, US tariffs, Malacca, OPEC+) by how much and in what tone the news is talking about them, compared with each region's own 30-day history. It measures news attention, not events. Switch it on in the Globe's layer control. The exposure lists are in `data/config/geo_exposure.json` (checked by `scripts/check_geo.py`).
+
+- Source is Google News RSS (no key). GDELT, the usual choice, answers HTTP 429 from GitHub Actions and from a home PC, so it is not used.
+- Google returns at most 100 items per query and has no history, so the baseline is collected by the hourly Globe workflow itself (`data/aladin/geo_history.json`). A region shows "Building baseline" and no score until it has 48 samples over 3 days. Busy regions that hit the 100-item cap are marked as a lower bound.
+- Tone is a transparent word-list count over headlines (`data/config/tone_words.json`), not a language model.

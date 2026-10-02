@@ -85,6 +85,7 @@ async function boot() {
     S.nseLive = await getJSON("nse_live.json").catch(() => null);
     applyNseLive();
     initDesk(); await loadDeskData().catch(() => {});
+    setTimeout(() => GeoDesk.preload().then(j => { if (j) renderRegimeBrief(); }).catch(() => {}), 4000);   // after the desk is up: the regime strip and Brief read the geo index, but it never delays opening
   } catch (e) {
     $("#st-data").textContent = "Data not available: the NSE stock list could not be loaded. Nothing is shown in its place.";
     $("#brief-cards").innerHTML = '<div class="empty">Data not available.</div>'; return;
@@ -204,12 +205,14 @@ setInterval(() => {
 // while a file hasn't been produced yet.
 const DESK_FILES = { sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json" };
 const DESK_LAZY = new Set(["houses", "geo"]);
-function deskCtx() { return { S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
+function renderRegimeBrief() { renderRegime(); renderBrief(); }
+function deskCtx() { return { renderRegimeBrief, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
 function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks]) m.init(c); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
   let changed = false;
+  if (S.geo) GeoDesk.refresh();                                  // lazy file, but once it has been opened keep it current
   for (const [k, file] of Object.entries(DESK_FILES)) {
     if (!man[k] || DESK_LAZY.has(k)) continue;                  // lazy files are fetched by their own tab on first open
     const j = await getJSON(file).catch(() => null);
@@ -296,6 +299,7 @@ function renderRegime() {
   const c = climate();
   $("#regime").innerHTML = `<span class="lbl">Market regime · today</span><span class="verdict ${c.tone}">${esc(c.verdict)}</span><span class="mut">${c.good}/${c.n} favourable</span><span class="rg-scroll">`
     + c.f.map(x => `<span class="f"><i style="background:${x.ok ? "var(--up)" : "var(--down)"}"></i>${esc(x.t)}</span>`).join("")
+    + (GeoDesk.regimeItem() ? `<span class="f"><i style="background:var(--gold)"></i>${esc(GeoDesk.regimeItem())}</span>` : "")      // not part of the favourable/total tally
     + `</span><button class="btn-line sm" data-go="world">Open world →</button>`;
 }
 
@@ -327,6 +331,7 @@ function renderBrief() {
   if (lead) cards.push(bcard(lead.avg >= 0 ? "pos" : "neg", "Sectors · NIFTY 500", `${esc(lead.k)} leads (${sg(lead.avg)}%), ${esc(lag.k)} lags (${sg(lag.avg)}%)`, `${secs.filter(s2 => s2.avg > 0).length} of ${secs.length} sectors up on average today.`, "Open sectors", 'data-go="sectors"'));
   if (fl) cards.push(bcard(fl.fii.net_cr >= 0 ? "pos" : "neg", "Institutional flows · NSE", `FII ${crS(fl.fii.net_cr)}, DII ${crS(fl.dii.net_cr)}`, `Cash market, provisional, ${dt(fl.date, { weekday: "short", day: "numeric", month: "short" })}.`, "Open world", 'data-go="world"'));
   if (pick) { const x = q(pick.symbol); cards.push(bcard("pos", "B-Lab screen · rank #1", `${esc(pick.symbol)} · F-Score ${pick.fscore}/9`, `Return on capital ${pctF(pick.roc, 0)}, earnings yield ${pctF(pick.earnings_yield)}${x ? ` · ₹${inr(x.p)} (${sg(x.pct)}%)` : ""}`, "Open chart", `data-open="${esc(pick.symbol)}"`)); }
+  { const geo = GeoDesk.briefCard(bcard); if (geo) cards.push(geo); }
   if (wl.length) cards.push(bcard(wl[0].x.pct >= 0 ? "pos" : "neg", "Your watchlist", `Best ${esc(wl[0].sym)} ${sg(wl[0].x.pct)}% · worst ${esc(wl[wl.length - 1].sym)} ${sg(wl[wl.length - 1].x.pct)}%`, `${wl.filter(r => r.x.pct > 0).length} of ${wl.length} up today.`, "Open watchlist", 'data-go="terminal" data-side="watch"'));
   $("#brief-cards").innerHTML = cards.join("");
   $$("#brief-cards [data-open]").forEach(bt => bt.onclick = () => { openSec(bt.dataset.open); go("terminal"); });
@@ -1278,6 +1283,7 @@ function ensureGlobeMap() {
   if (globeMap) return globeMap;
   const host = $("#globe-map"); if (!host) return null;
   globeMap = new GlobeMap(host, { onSelect: id => { globeSel = id; renderGlobeCards(); } });
+  GeoDesk.attach(globeMap);
   return globeMap;
 }
 function selectChoke(id) {                                // one entry point: the map and the cards both go through this
@@ -1357,6 +1363,7 @@ function renderGlobe() {
   }
   renderGlobeBrief(G);
   renderGlobeCards();
+  GeoDesk.renderGeo();
   const el = $("#globe-events");
   if (el) el.innerHTML = G && (G.events || []).length ? G.events.map(n => `<li><span class="t">${esc(newsTimeAgo(n.seen_utc))}</span><div>${n.url ? `<a href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a>` : esc(n.title || "")}
       <div class="meta"><span>${esc(n.source || "")}</span>${n.country ? `<span class="tag">${esc(n.country)}</span>` : ""}</div></div></li>`).join("")
