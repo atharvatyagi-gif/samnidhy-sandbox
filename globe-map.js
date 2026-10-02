@@ -199,7 +199,7 @@ export class GlobeMap {
     this.laneLayer = L.layerGroup();
     this.cableLayer = L.layerGroup();
     this.plantLayer = L.layerGroup();
-    const FUEL_COLOR = { Coal: "#8a8a8a", Gas: "#ffa028", Hydro: "#4fc3f7", Solar: "#ffd400", Wind: "#2ecc71", Nuclear: "#a78bfa", Oil: "#ff4d4d" };
+    const FUEL_COLOR = { Coal: "#8a8a8a", Gas: "#f0c674", Hydro: "#4fc3f7", Solar: "#ffd400", Wind: "#2ecc71", Nuclear: "#a78bfa", Oil: "#ff4d4d" };
     try {
       const lanes = await fetch("globe/layers/shipping_lanes.json").then(r => r.ok ? r.json() : null);
       if (lanes) for (const lane of lanes.lanes || []) {
@@ -212,9 +212,9 @@ export class GlobeMap {
     try {
       const cables = await fetch("globe/layers/cables.json").then(r => r.ok ? r.json() : null);
       if (cables) {
-        for (const c of cables.cables || []) for (const line of c.lines) L.polyline(line.map(([x, y]) => [y, x]), { color: "#ffa028", weight: 0.8, opacity: 0.3 })
+        for (const c of cables.cables || []) for (const line of c.lines) L.polyline(line.map(([x, y]) => [y, x]), { color: "#f0c674", weight: 0.8, opacity: 0.3 })
           .bindTooltip(esc(c.name || "Submarine cable")).addTo(this.cableLayer);
-        for (const lp of cables.landing_points || []) L.circleMarker([lp.lat, lp.lon], { radius: lp.india ? 4 : 2.5, weight: 0, fillColor: lp.india ? "#ffa028" : "#8a8a8a", fillOpacity: 0.8 })
+        for (const lp of cables.landing_points || []) L.circleMarker([lp.lat, lp.lon], { radius: lp.india ? 4 : 2.5, weight: 0, fillColor: lp.india ? "#f0c674" : "#8a8a8a", fillOpacity: 0.8 })
           .bindTooltip(esc(lp.name)).addTo(this.cableLayer);
       }
     } catch (e) { /* optional layer */ }

@@ -1,33 +1,32 @@
 /* B-LAB TERMINAL (expert-terminal.html only).
-   v2: Bloomberg-genre design system - dense monospace, black background, amber primary text, function
-   codes, command line. This is a LOOK (the genre), not the brand: no Bloomberg name, logo, wordmark or
+   v2 layout: dense monospace, function codes, command line - on the original dark pine/beige colour scheme. This is a LOOK (the genre), not the brand: no Bloomberg name, logo, wordmark or
    screen layouts anywhere in this codebase. All colour tokens below are this site's own.
    A light theme (the project's original warm-beige "desk" palette) remains available as an accessibility
    option via [data-theme="light"] on <html> - see the override block further down - but dark is the default. */
 :root {
-  --paper: #000000;          /* page: true black */
-  --sunken: #000000;         /* recessed wells blend into the page */
-  --card: #0a0a0a;           /* raised panels */
-  --card-hover: #141414;
-  --ink: #e6e6e6;            /* body/reading text: off-white */
-  --ink-2: #c7c7c7;
-  --ink-3: #8a8a8a;          /* muted labels */
-  --ink-4: #5a5a5a;
-  --rule: rgba(42, 42, 42, 0.7);     /* hairline #2a2a2a */
-  --rule-2: #2a2a2a;
-  --acc: #ffa028;            /* amber: primary data/accent text, the terminal's signature colour */
-  --acc-soft: rgba(255, 160, 40, 0.12);
-  --acc-edge: rgba(255, 160, 40, 0.4);
-  --up: #2ecc71;
-  --up-soft: rgba(46, 204, 113, 0.12);
-  --down: #ff4d4d;
-  --down-soft: rgba(255, 77, 77, 0.12);
-  --gold: #ffd400;           /* warnings */
-  --olive: #8a6d1a;
-  --hl: #4fc3f7;              /* highlight/selection/focus-ring - distinct from the amber accent */
+  --paper: #061a10;          /* page: dark pine */
+  --sunken: #081f14;
+  --card: #0a2317;
+  --card-hover: #0f2e1f;
+  --ink: #e8dcc3;            /* beige ink */
+  --ink-2: #c9bd9f;
+  --ink-3: #a39679;
+  --ink-4: #83795f;
+  --rule: rgba(181,166,130,0.14);
+  --rule-2: rgba(181,166,130,0.28);
+  --acc: #00e060;            /* green accent */
+  --acc-soft: rgba(0,224,96,0.1);
+  --acc-edge: rgba(0,224,96,0.45);
+  --up: #00e060;
+  --up-soft: rgba(0,224,96,0.1);
+  --down: #ff7a59;
+  --down-soft: rgba(255,122,89,0.12);
+  --gold: #f0c674;
+  --olive: #b5a682;
+  --hl: #7fe3b0;              /* focus ring */
   --sans: "IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
-  --r: 0px;                  /* square corners throughout */
+  --r: 0px;                  /* square corners kept */
   color-scheme: dark;
 }
 :root[data-theme="light"] {
@@ -98,7 +97,7 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .mstats b { color: var(--ink); font-weight: 600; }
 .livechip { display: inline-flex; align-items: center; gap: 6px; } .livechip i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-4); }
 .livechip.on i { background: var(--up); animation: pulse 1.6s infinite; } .livechip.on b { color: var(--up); }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(46,204,113,0.5); } 70% { box-shadow: 0 0 0 7px rgba(46,204,113,0); } 100% { box-shadow: none; } }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0,224,96,0.5); } 70% { box-shadow: 0 0 0 7px rgba(0,224,96,0); } 100% { box-shadow: none; } }
 .clock { color: var(--ink); }
 .fresh { display: inline-flex; align-items: center; gap: 4px; }
 .fresh i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); }
@@ -378,16 +377,16 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 #v-terminal .term { gap: 1px; padding: 0; background: var(--rule); }
 #v-terminal .tools, #v-terminal .chartcard, #v-terminal .rail { border: 0; border-radius: 0; background: var(--sunken); }
 #v-terminal .chartcard { background: var(--card); }
-#v-terminal .tools button.on { background: var(--acc); color: #000; }
-#v-terminal .seg button.on, #v-terminal .btn-ink { background: var(--acc); color: #000; border-color: var(--acc); }
+#v-terminal .tools button.on { background: var(--acc); color: #061a10; }
+#v-terminal .seg button.on, #v-terminal .btn-ink { background: var(--acc); color: #061a10; border-color: var(--acc); }
 #v-terminal .cc-head { padding: 8px 14px 6px; background: var(--sunken); }
 #v-terminal .cc-head .sym { font-size: 18px; } #v-terminal .cc-head .px { font-size: 20px; }
 #v-terminal .cc-bar { padding: 6px 10px; }
 #v-terminal .tag { border-color: var(--rule-2); color: var(--ink-2); }
 #v-terminal .tag.acc { color: var(--acc); border-color: var(--acc-edge); }
 #v-terminal .ind-menu, #v-terminal .hint, #v-terminal .measure { background: var(--card-hover); color: var(--ink); border-color: var(--rule-2); }
-#v-terminal .chart-msg { background: rgba(0,0,0,0.92); color: var(--ink-2); }
-#v-terminal ::-webkit-scrollbar { width: 8px; height: 8px; } #v-terminal ::-webkit-scrollbar-thumb { background: #333; }
+#v-terminal .chart-msg { background: rgba(6,26,16,0.92); color: var(--ink-2); }
+#v-terminal ::-webkit-scrollbar { width: 8px; height: 8px; } #v-terminal ::-webkit-scrollbar-thumb { background: #11352a; }
 /* rail: watchlist always on top (like the old terminal), Details / Prints below */
 .rail-h { flex: none; display: flex; align-items: center; justify-content: space-between; height: 38px; padding: 0 10px 0 12px;
   font: 600 11.5px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); border-bottom: 1px solid var(--rule-2); }
@@ -428,8 +427,8 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .brutal-grid mark { background: rgba(154,122,32,0.22); color: inherit; }
 
 /* ---------- layering/elevation (not a palette - the palette is the single :root block up top) ---------- */
-.btn-ink { background: var(--acc); color: #000; } .btn-ink:hover { background: #ffb954; }
-.seg button.on, .tools button.on { background: var(--acc); color: #000; }
+.btn-ink { background: var(--acc); color: #061a10; } .btn-ink:hover { background: #3dff8f; }
+.seg button.on, .tools button.on { background: var(--acc); color: #061a10; }
 .dd-menu, .modal .m-box, .toast { box-shadow: 0 18px 50px rgba(0,0,0,0.55); }
 
 /* ---------- chart engine ---------- */
@@ -487,7 +486,7 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .tg { margin: 6px 0 10px; }
 .tg-top { display: flex; justify-content: space-between; align-items: baseline; font: 12px var(--mono); }
 .tg-top b { font-size: 14px; } .tg-top b.up { color: var(--up); } .tg-top b.down { color: var(--down); }
-.tg-bar { position: relative; height: 8px; margin: 6px 0 4px; border-radius: 0; background: linear-gradient(90deg, var(--down), rgba(255,77,77,0.35) 30%, rgba(138,138,138,0.3) 50%, rgba(46,204,113,0.35) 70%, var(--up)); }
+.tg-bar { position: relative; height: 8px; margin: 6px 0 4px; border-radius: 0; background: linear-gradient(90deg, var(--down), rgba(255,122,89,0.35) 30%, rgba(181,166,130,0.3) 50%, rgba(0,224,96,0.35) 70%, var(--up)); }
 .tg-bar i { position: absolute; top: -3px; width: 4px; height: 14px; border-radius: 0; background: var(--ink); box-shadow: 0 0 0 2px var(--paper); }
 .tg-n { font: 11px var(--mono); color: var(--ink-4); }
 .tg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -552,12 +551,12 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 @media (max-width: 1100px) { .rp-note { display: none; } }
 .wl-row.off { opacity: 0.5; }
 /* timeframe menu (TradingView-style) */
-#iv-dd { position: relative; display: inline-flex; } #iv-more { min-width: 28px; } #iv-more.on { background: var(--acc); color: #000; }
+#iv-dd { position: relative; display: inline-flex; } #iv-more { min-width: 28px; } #iv-more.on { background: var(--acc); color: #061a10; }
 .iv-menu { width: 300px; left: auto; right: 0; padding: 8px 10px 10px; }
 .iv-menu h6 { margin: 8px 2px 4px; }
 .iv-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
 .iv-row button { height: 28px; border: 1px solid var(--rule-2); border-radius: 0; font: 12px var(--mono); color: var(--ink); }
-.iv-row button:hover { border-color: var(--acc); } .iv-row button.on { background: var(--acc); color: #000; border-color: var(--acc); }
+.iv-row button:hover { border-color: var(--acc); } .iv-row button.on { background: var(--acc); color: #061a10; border-color: var(--acc); }
 .iv-row button.na { color: var(--ink-4); border-style: dashed; }
 #rp-loop.on { border-color: #ffb347; color: #ffb347; }
 

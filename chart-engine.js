@@ -16,17 +16,17 @@ const fmt = (v, d) => v == null || isNaN(v) ? "—" : Math.abs(v) >= 1e7 ? (v / 
   : Number(v).toLocaleString("en-IN", { minimumFractionDigits: d === "vol" ? 0 : Math.abs(v) >= 1000 ? 1 : 2, maximumFractionDigits: d === "vol" ? 0 : Math.abs(v) >= 1000 ? 1 : 2 });
 const uid = () => "i" + Math.random().toString(36).slice(2, 9);
 
-export const THEME = { bg: "#0a0a0a", text: "#8a8a8a", grid: "rgba(255,255,255,0.05)", border: "rgba(42,42,42,0.7)", up: "#2ecc71", down: "#ff4d4d",
-  upFill: "rgba(46,204,113,0.9)", cross: "rgba(255,160,40,0.5)", label: "#141414", ink: "#e6e6e6", acc: "#ffa028" };
+export const THEME = { bg: "#061a10", text: "#a39679", grid: "rgba(181,166,130,0.07)", border: "rgba(181,166,130,0.25)", up: "#00e060", down: "#e0a060",
+  upFill: "rgba(0,224,96,0.9)", cross: "rgba(181,166,130,0.5)", label: "#11352a", ink: "#e8dcc3", acc: "#00e060" };
 export const CHART_TYPES = [["candle", "Candles"], ["hollow", "Hollow candles"], ["heikin", "Heikin-Ashi"], ["bars", "Bars"], ["line", "Line"], ["area", "Area"], ["baseline", "Baseline"]];
 export const TOOLS = {
   cursor: { name: "Cursor", pts: 0 }, trend: { name: "Trend line", pts: 2 }, ray: { name: "Ray", pts: 2 }, ext: { name: "Extended line", pts: 2 },
   hline: { name: "Horizontal line", pts: 1 }, hray: { name: "Horizontal ray", pts: 1 }, vline: { name: "Vertical line", pts: 1 },
   rect: { name: "Rectangle", pts: 2 }, fib: { name: "Fib retracement", pts: 2 }, range: { name: "Price range", pts: 2 }, text: { name: "Text", pts: 1 },
 };
-const SWATCH = ["#4fd1c5", "#2ecc71", "#ffd400", "#ffa028", "#ff6b6b", "#6fa8ff", "#a78bfa", "#e6e6e6"];
-const FIB = [[0, "#8a8a8a"], [0.236, "#ff6b6b"], [0.382, "#ffa028"], [0.5, "#2ecc71"], [0.618, "#4fd1c5"], [0.786, "#6fa8ff"], [1, "#8a8a8a"]];
-const DEFAULT_INDS = [{ id: "vol", params: defaults("vol") }, { id: "sma", params: { len: 50, src: "close" } }, { id: "sma", params: { len: 200, src: "close" }, colors: { v: "#ffa028" } }];
+const SWATCH = ["#4fd1c5", "#00e060", "#f0c674", "#e0a060", "#ff6b6b", "#6fa8ff", "#a78bfa", "#e8dcc3"];
+const FIB = [[0, "#a39679"], [0.236, "#ff6b6b"], [0.382, "#e0a060"], [0.5, "#00e060"], [0.618, "#4fd1c5"], [0.786, "#6fa8ff"], [1, "#a39679"]];
+const DEFAULT_INDS = [{ id: "vol", params: defaults("vol") }, { id: "sma", params: { len: 50, src: "close" } }, { id: "sma", params: { len: 200, src: "close" }, colors: { v: "#e0a060" } }];
 const ICON = {
   eye: '<svg viewBox="0 0 16 16" width="13" height="13"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>',
   set: '<svg viewBox="0 0 16 16" width="13" height="13"><circle cx="8" cy="8" r="2.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 1v2.2M8 12.8V15M1 8h2.2M12.8 8H15M3 3l1.6 1.6M11.4 11.4 13 13M13 3l-1.6 1.6M4.6 11.4 3 13" stroke="currentColor" stroke-width="1.4"/></svg>',
@@ -528,7 +528,7 @@ export class ChartEngine {
         ctx.setLineDash([4, 4]); ctx.strokeStyle = d.color; ctx.beginPath(); ctx.moveTo(g.pts[0][0], g.pts[0][1]); ctx.lineTo(g.pts[1][0], g.pts[1][1]); ctx.stroke(); ctx.setLineDash([]);
       }
       if (d.type === "range") {
-        const [x1, y1, x2, y2] = g.box, dp = d.b.p - d.a.p, pc = dp / d.a.p * 100, bars = Math.round(Math.abs(this.tToL(d.b.t) - this.tToL(d.a.t))), up = dp >= 0, col = up ? THEME.up : THEME.down;
+        const [x1, y1, x2, y2] = g.box, dp = d.b.p - d.a.p, pc = dp / d.a.p * 100, bars = Math.round(Math.abs(this.tToL(d.b.t) - this.tToL(d.a.t))), up = dp >= 0, col = up ? "#00e060" : "#ff6b6b";
         ctx.fillStyle = up ? "rgba(0,224,96,0.12)" : "rgba(255,107,107,0.12)"; ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
         ctx.strokeStyle = col; ctx.lineWidth = 1.4; ctx.beginPath(); const xm = (x1 + x2) / 2; ctx.moveTo(xm, g.pts[0][1]); ctx.lineTo(xm, g.pts[1][1]); ctx.stroke();
         label(`${up ? "+" : "−"}${fmt(Math.abs(dp))} (${up ? "+" : "−"}${Math.abs(pc).toFixed(2)}%) · ${bars} bar${bars === 1 ? "" : "s"}`, xm, (up ? y1 : y2 + 16) - 4, col, "center");
