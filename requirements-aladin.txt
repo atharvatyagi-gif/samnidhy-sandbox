@@ -1,5 +1,10 @@
-# ALADIN local tick daemon (scripts/aladin_ticker_daemon.py) and its tests
+# ALADIN local tick daemon (scripts/aladin_ticker_daemon.py), sentiment engine (scripts/aladin_sentiment_engine.py), and their tests
 requests>=2.31
 brotli>=1.1
 websockets>=13
 pytest>=8
+feedparser>=6
+transformers>=4.40
+# FinBERT also needs PyTorch. CPU build is enough:  pip install torch --index-url https://download.pytorch.org/whl/cpu
+# Optional: Reddit through its official API (otherwise the subreddit RSS is tried, which Reddit often rate-limits)
+# praw>=7

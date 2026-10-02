@@ -11,6 +11,8 @@
 #       every GitHub Actions workflow on the runner's IP range, not just this one. This job already uses about
 #       7 of those per run; at 5-minute intervals (288 runs/day) that's ~2,000/day, which would blow through the
 #       budget and break the feature it's meant to keep working. Hourly (~168/day) comfortably fits.
+#   - "ALADIN sentiment" (headlines scored by FinBERT, blended into data/aladin/sentiment.json): every 30 minutes
+#       during NSE hours (09:00-16:00 IST), hourly otherwise.
 # Just before GitHub's 6-hour limit it starts its own replacement, so the chain never stops. The hourly schedule
 # below is only a safety net that restarts the chain if it ever breaks; extra copies wait in the queue.
 name: Market clock
@@ -45,7 +47,7 @@ jobs:
           now() { TZ=Asia/Kolkata date +%H:%M; }
           mins() { local t; t=$(now); echo $((10#${t%:*} * 60 + 10#${t#*:})); }
           fire() { echo "$(now) IST: triggering $1"; gh workflow run "$1" --ref main || echo "  trigger failed, retrying next round"; }
-          last_live=0; last_globe=0; daily_done=""
+          last_live=0; last_globe=0; last_sent=0; daily_done=""
           # starting in the morning before 10:30: make sure the morning daily update happens
           m=$(mins); if [ "$m" -ge $((7 * 60 + 15)) ] && [ "$m" -lt $((10 * 60 + 30)) ]; then fire daily-update.yml; daily_done="$(TZ=Asia/Kolkata date +%F)-am"; fi
           while :; do
@@ -53,6 +55,8 @@ jobs:
             gap=300
             if [ $((t - last_live)) -ge "$gap" ]; then fire live-prices.yml; last_live=$t; fi
             if [ $((t - last_globe)) -ge 3600 ]; then fire globe-data.yml; last_globe=$t; fi
+            sgap=3600; if [ "$m" -ge $((9 * 60)) ] && [ "$m" -lt $((16 * 60)) ]; then sgap=1800; fi
+            if [ $((t - last_sent)) -ge "$sgap" ]; then fire aladin-sentiment.yml; last_sent=$t; fi
             for slot in "07:30 am1" "09:00 am2" "19:00 pm"; do
               hhmm=${slot% *}; tag=${slot#* }; sm=$((10#${hhmm%:*} * 60 + 10#${hhmm#*:}))
               if [ "$m" -ge "$sm" ] && [ "$m" -lt $((sm + 20)) ] && [ "$daily_done" != "$day-$tag" ]; then fire daily-update.yml; daily_done="$day-$tag"; fi

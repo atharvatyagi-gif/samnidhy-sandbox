@@ -1,0 +1,92 @@
+# ALADIN sentiment (Module B): headlines from Mint, ET, Business Standard (the site's news wire) and Google News,
+# scored by FinBERT, matched to NSE stocks, blended with retail chatter (Reddit, when reachable) and FII/DII flow
+# -> data/aladin/sentiment.json. The next Live prices run copies it into the site (build_site.py).
+# Triggered by the market-clock heartbeat: every 30 minutes during NSE hours, hourly otherwise (headlines move
+# slowly and Google News rate-limits). The cron below is only a safety net if the heartbeat ever stops.
+# Every step is allowed to fail: on a failed run the site keeps the previous sentiment.json and its own timestamp
+# shows how old it is. Commits end in "[skip ci]" and touch nothing but data/aladin/sentiment.json.
+name: ALADIN sentiment
+
+on:
+  schedule:
+    - cron: "40 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/aladin-sentiment.yml", "scripts/aladin_sentiment_engine.py", "data/config/news_aliases.json", "data/config/tone_words.json"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aladin-sentiment
+  cancel-in-progress: false
+
+jobs:
+  sentiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages (CPU-only PyTorch for FinBERT)
+        continue-on-error: true
+        run: |
+          pip install -r requirements.txt
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements-aladin.txt
+
+      - name: Restore the FinBERT model, the scored-headline store and the terminal's NSE data
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            data/aladin_cache
+            data/terminal
+          key: aladin-sentiment-${{ github.run_id }}
+          restore-keys: |
+            aladin-sentiment-
+            terminal-
+
+      - name: NSE universe (only if the cache has none)
+        continue-on-error: true
+        run: '[ -f data/terminal/universe.json ] || python scripts/nse_eod.py'
+
+      - name: News wire (ET, Business Standard, Mint)
+        continue-on-error: true
+        run: python scripts/news_wire.py
+
+      - name: Score headlines and build data/aladin/sentiment.json
+        continue-on-error: true
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+        run: python scripts/aladin_sentiment_engine.py --once
+
+      - name: Save the model and headline store for the next run
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            ~/.cache/huggingface
+            data/aladin_cache
+          key: aladin-sentiment-${{ github.run_id }}
+
+      - name: Save sentiment.json to the repository (the next Live prices run publishes it)
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/aladin/sentiment.json
+          if git diff --cached --quiet; then
+            echo "Nothing new to save."
+          else
+            git commit -q -m "ALADIN sentiment: $(date -u +%Y-%m-%d\ %H:%M) UTC [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

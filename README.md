@@ -255,3 +255,13 @@ Things to know:
 - Source is Google News RSS (no key). GDELT, the usual choice, answers HTTP 429 from GitHub Actions and from a home PC, so it is not used.
 - Google returns at most 100 items per query and has no history, so the baseline is collected by the hourly Globe workflow itself (`data/aladin/geo_history.json`). A region shows "Building baseline" and no score until it has 48 samples over 3 days. Busy regions that hit the 100-item cap are marked as a lower bound.
 - Tone is a transparent word-list count over headlines (`data/config/tone_words.json`), not a language model.
+
+### ALADIN sentiment engine
+
+`scripts/aladin_sentiment_engine.py --once` (or `--loop 900` on your PC) scores headlines from Mint, the news wire (ET, Business Standard) and Google News (Moneycontrol headlines, queried per company) with FinBERT, matches them to NSE stocks, and blends in retail chatter (Reddit) and FII/DII flow into `data/aladin/sentiment.json`. The "ALADIN sentiment" workflow runs it every 30 minutes in market hours and hourly otherwise, started by the heartbeat.
+
+- A stock is scored only if a headline in the last 72 hours names it (symbol, company name or alias) or, when no company is named, its business group. Sector and market-wide headlines only add low-weight context. A stock with nothing specific is "NO NEWS" with no score, never "neutral".
+- The score is -100 to +100: BAD, POOR, NEUTRAL, GOOD, EXCELLENT. FII/DII flow applies to every scored stock, so a heavy-selling week pulls all scores down together.
+- Retail sentiment needs at least 5 different authors in 24 hours, so on most days it is "not measured". Reddit's RSS often answers HTTP 429; with `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` set it uses the official API.
+- Earnings-call transcripts (`score_transcript`) use Groq (`GROQ_API_KEY`) or Gemini (`GEMINI_API_KEY`) if a key exists, otherwise a local FinBERT split at the Q&A marker.
+- FinBERT needs PyTorch (`pip install torch --index-url https://download.pytorch.org/whl/cpu`) and about 440 MB of model download the first time. Without it the engine falls back to a word list and says so (`method: "lexicon"`).

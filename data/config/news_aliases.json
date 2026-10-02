@@ -1,0 +1,42 @@
+{
+ "note": "Used to match headlines to NSE stocks. `manual` adds names the automatic alias builder (company name minus Limited/Ltd) would miss or get wrong; `symbol_stoplist` are all-caps words that must never be read as a ticker; `groups` are phrases for business-house stories; `sector_keywords` and `market_terms` give low-weight context only and never count as stock-specific evidence.",
+ "manual": {
+  "TCS": ["tcs", "tata consultancy services"],
+  "RELIANCE": ["reliance industries", "ril", "reliance jio"],
+  "HDFCBANK": ["hdfc bank"], "ICICIBANK": ["icici bank"], "SBIN": ["state bank of india", "sbi"],
+  "INFY": ["infosys"], "LT": ["larsen & toubro", "larsen and toubro", "l&t"], "M&M": ["mahindra & mahindra", "mahindra and mahindra"],
+  "BHARTIARTL": ["bharti airtel", "airtel"], "HINDUNILVR": ["hindustan unilever", "hul"], "KOTAKBANK": ["kotak mahindra bank", "kotak bank"],
+  "AXISBANK": ["axis bank"], "MARUTI": ["maruti suzuki", "maruti"], "SUNPHARMA": ["sun pharma", "sun pharmaceutical"],
+  "TATASTEEL": ["tata steel"], "TMPV": ["tata motors passenger", "tata motors pv"], "ADANIENT": ["adani enterprises"], "ADANIPORTS": ["adani ports"],
+  "HCLTECH": ["hcl tech", "hcltech", "hcl technologies"], "TECHM": ["tech mahindra"], "ASIANPAINT": ["asian paints"], "NESTLEIND": ["nestle india"],
+  "ULTRACEMCO": ["ultratech cement", "ultratech"], "BAJFINANCE": ["bajaj finance"], "BAJAJFINSV": ["bajaj finserv"], "JSWSTEEL": ["jsw steel"],
+  "COALINDIA": ["coal india"], "IOC": ["indian oil", "indian oil corporation", "iocl"], "DRREDDY": ["dr reddys", "dr reddy's", "dr reddy"],
+  "EICHERMOT": ["eicher motors", "royal enfield"], "HEROMOTOCO": ["hero motocorp"], "DIVISLAB": ["divis laboratories", "divi's laboratories", "divis labs"],
+  "APOLLOHOSP": ["apollo hospitals"], "INDIGO": ["interglobe aviation", "indigo airlines"], "SHRIRAMFIN": ["shriram finance"], "BEL": ["bharat electronics"],
+  "HAL": ["hindustan aeronautics"], "VEDL": ["vedanta"], "PNB": ["punjab national bank"], "BANKBARODA": ["bank of baroda"], "IDEA": ["vodafone idea"],
+  "POWERGRID": ["power grid", "powergrid"], "ONGC": ["ongc", "oil and natural gas corporation"], "NTPC": ["ntpc"], "ITC": ["itc ltd", "itc share", "itc stock"],
+  "TITAN": ["titan company", "titan share"], "WIPRO": ["wipro"], "CIPLA": ["cipla"], "BPCL": ["bpcl", "bharat petroleum"], "HINDALCO": ["hindalco"],
+  "GRASIM": ["grasim"], "BRITANNIA": ["britannia"], "TRENT": ["trent share", "trent limited"], "HDFCLIFE": ["hdfc life"], "SBILIFE": ["sbi life"],
+  "TATACONSUM": ["tata consumer"], "TATAPOWER": ["tata power"], "TATAMOTORS": ["tata motors"], "ZOMATO": ["zomato"], "PAYTM": ["paytm", "one97"]
+ },
+ "groups": {
+  "tata": ["tata group", "tata sons"], "reliance": ["reliance group", "mukesh ambani"], "adani": ["adani group", "gautam adani"],
+  "aditya-birla": ["aditya birla group", "kumar mangalam birla"], "mahindra": ["mahindra group"], "bajaj": ["bajaj group"], "godrej": ["godrej group"],
+  "jsw": ["jsw group", "sajjan jindal"], "vedanta": ["vedanta group", "anil agarwal"], "murugappa": ["murugappa group"], "tvs": ["tvs group"],
+  "hinduja": ["hinduja group"], "bharti": ["bharti group", "sunil mittal"], "kalyani": ["kalyani group", "baba kalyani"], "rpg": ["rpg group"],
+  "piramal": ["piramal group"], "torrent": ["torrent group"], "zydus": ["zydus group"], "emami": ["emami group"], "wadia": ["wadia group"],
+  "ck-birla": ["ck birla group"], "max": ["max group", "analjit singh"], "adag": ["anil ambani", "adag"]
+ },
+ "sector_keywords": {
+  "Financial Services": ["banks", "banking", "nbfc", "lenders", "insurers"], "Information Technology": ["it stocks", "it services", "it sector"],
+  "Oil Gas & Consumable Fuels": ["crude oil", "oil marketing", "refiners", "oil prices"], "Automobile and Auto Components": ["auto sales", "automakers", "auto stocks"],
+  "Metals & Mining": ["metal stocks", "steel prices", "metals"], "Healthcare": ["pharma stocks", "pharma sector", "drugmakers"],
+  "Fast Moving Consumer Goods": ["fmcg"], "Realty": ["realty", "real estate stocks"], "Power": ["power stocks", "power demand"],
+  "Telecommunication": ["telecom"], "Capital Goods": ["capital goods", "infra stocks", "defence stocks"], "Chemicals": ["chemical stocks", "specialty chemicals"],
+  "Consumer Durables": ["consumer durables"], "Textiles": ["textile"], "Construction Materials": ["cement"], "Construction": ["construction"]
+ },
+ "market_terms": ["sensex", "nifty", "rbi", "fii", "fpi", "rupee", "dalal street", "repo rate", "sebi", "gift nifty"],
+ "symbol_stoplist": ["ALL", "ONE", "GAS", "NEW", "IPO", "RBI", "SEBI", "NSE", "BSE", "FII", "DII", "FPI", "CEO", "CFO", "GDP", "USD", "INR", "ETF", "SIP", "EPS", "IT", "AI", "US", "UK", "EU", "OIL", "BANK", "GOLD", "STEEL", "POWER", "TOP", "BIG", "LIVE", "NEWS", "BUY", "SELL", "HOLD", "FY", "Q1", "Q2", "Q3", "Q4", "AGM", "EGM", "MF", "PSU", "NPA", "CPI", "WPI", "PMI", "IMF", "OPEC", "FDI", "GST", "NIFTY", "SENSEX", "NRI", "LTD", "PVT", "INC", "PLC", "PAGE", "BEST", "GOOD", "CASH", "FUND", "RATE", "RATES", "MARKET", "STOCK", "STOCKS", "SHARE", "SHARES", "WATCH", "TODAY", "WEEK", "DAY", "ALERT", "TARGET", "RESULTS", "UPDATE", "UPDATES", "LATEST", "HERE", "WHY", "HOW", "WHAT", "WHEN", "CRORE", "LAKH", "NOW", "OUT", "UP", "DOWN", "HIGH", "LOW", "OPEN", "CLOSE"],
+ "reddit_subs": ["IndianStreetBets", "IndiaInvestments", "DalalStreetTalks"],
+ "indian_publishers": ["livemint", "mint", "economictimes", "economic times", "et markets", "et now", "business-standard", "business standard", "moneycontrol", "thehindubusinessline", "hindu businessline", "financial express", "financialexpress", "ndtv profit", "cnbctv18", "zeebiz", "the hindu", "times of india", "timesofindia", "hindustan times", "india today", "firstpost", "news18", "informist", "bloomberg quint", "bqprime", "taxscan", "business today", "outlook business"]
+}
