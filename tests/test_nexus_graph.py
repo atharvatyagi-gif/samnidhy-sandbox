@@ -324,3 +324,9 @@ def test_groups_of_companies_are_not_counterparties(label, kept):
     q = "Our largest customer, Tata Motors Limited, accounted for 24% of our revenue"
     e, _, dropped = validate([edge(counterparty_name=None if label == "Customer A" else label, counterparty_anon_label="Customer A" if label == "Customer A" else None, quote=q)])
     assert bool(e) == kept, (label, dropped)
+
+
+@pytest.mark.parametrize("label", ["parent company", "holding company", "its subsidiaries", "Siemens Group", "promoter group", "associates"])
+def test_parents_and_related_groups_are_not_counterparties(label):
+    e, _, dropped = validate([edge(counterparty_name=label)])
+    assert e == [] and "group" in dropped[0]

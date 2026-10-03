@@ -22,7 +22,7 @@ def test_combiner_meets_every_shared_fixture_case():
     assert len(CASES) > 300
     for c in CASES:
         i = c["in"]
-        r = am.combine_py(i["p_tech"], i["F"], i["S"], i["sweep"], i["w"])
+        r = am.combine_py(i["p_tech"], i["F"], i["S"], i["sweep"], i["w"], I=i.get("I"))
         assert {k: r[k] for k in c["out"]} == c["out"], c["name"]
 
 
@@ -36,6 +36,27 @@ def test_combiner_hand_worked_numbers_are_independent_of_the_code():
     assert am.combine_py(0.4, F=30, S=20)["agree"] == "1/3"                    # p leans down; only the technical front agrees
     for x in CASES:
         assert 0.02 <= x["out"]["p"] <= 0.98 and abs(x["out"]["p"] + x["out"]["q"] - 1) < 2e-4
+
+
+def test_impact_score_is_subtracted_from_the_fundamental_front_and_clipped():
+    L = math.log(1.5)                                                           # logit(0.6)
+    sig = lambda z: 1 / (1 + math.exp(-z))                                      # noqa: E731
+    assert am.combine_py(0.6, F=0, I=50)["p"] == pytest.approx(sig(L - 0.2 * 0.5), abs=1e-4)
+    assert am.combine_py(0.6, F=80, I=-50)["p"] == pytest.approx(sig(L + 0.2 * 1.0), abs=1e-4)        # 80 - (-50) = 130 -> 100
+    assert am.combine_py(0.6, I=100)["p"] == pytest.approx(sig(L - 0.2), abs=1e-4)                    # a missing F counts as 0 there
+    assert am.combine_py(0.6, F=40, S=10, I=0) == am.combine_py(0.6, F=40, S=10)                      # zero or missing impact changes nothing
+    assert am.combine_py(0.6, I=100)["agree"] == "1/1"                                                # F missing: not counted as a front (only T=+20 is)
+    assert am.combine_py(0.7, F=30, S=30, I=40)["agree"] == "2/3"                                     # F_adj = -10 no longer leans up
+
+
+def test_impact_enters_the_stock_entries_only_for_the_same_close(tmp_path, monkeypatch):
+    monkeypatch.setattr(am, "OUT_DIR", tmp_path)
+    doc = {"as_of": "2026-09-29", "validation": {"validated": False}, "stocks": {"AAA": {"i": 40.0, "n": 1, "top": [["BBB", "supplies", 0.3, -2.0, 0.9]]}}}
+    (tmp_path / "impact.json").write_text(json.dumps(doc), encoding="utf-8")
+    assert am.load_impact("2026-09-29")["stocks"]["AAA"]["i"] == 40.0
+    assert am.load_impact("2026-09-30") is None                                  # another day's score is not mixed in
+    (tmp_path / "impact.json").write_text("not json", encoding="utf-8")
+    assert am.load_impact("2026-09-29") is None
 
 
 def test_confidence_boundaries_and_missing_fronts():

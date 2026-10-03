@@ -173,7 +173,7 @@ def share_in_quote(w, quote):
 # they carry is a share of a category, so such edges are rejected (a single anonymised "Customer A" / "a leading semiconductor player" is fine).
 GROUP_WORDS = re.compile(r"\b(suppliers|vendors|partners|clients|customers|producers|msmes?|oems|players|sources|distributors|dealers|retailers|farmers|"
                          r"contractors|manufacturers|sellers|companies|firms|brands|institutions|banks|governments|utilities|agencies|operators|"
-                         r"tier[- ]?\d|small|key)\b", re.I)
+                         r"tier[- ]?\d|small|key|parent|holding|subsidiar(?:y|ies)|associates?|promoters?|group|affiliates?)\b", re.I)
 
 def validate_answer(raw, pages_by_no, meta, now, schema):
     """raw: parsed JSON from the model. -> (edges, facilities, dropped: list[str]). Never raises on bad content."""

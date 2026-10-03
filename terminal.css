@@ -793,6 +793,8 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .al-g, .al-zt { position: relative; display: inline-block; width: 60px; height: 8px; background: var(--card); border: 1px solid var(--rule-2); vertical-align: middle; }
 .al-g .mid, .al-zt .mid { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink-3); }
 .al-g b, .al-zt b { position: absolute; top: -3px; width: 4px; height: 12px; margin-left: -2px; background: var(--ink-3); }
+.al-imp { margin: 6px 0; } .al-imp td, .al-imp th { padding: 3px 8px 3px 0; font-size: 12px; }
+.lnk { background: none; border: 0; padding: 0; font: inherit; color: var(--acc); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .al-g b.up, .al-zt b.up { background: var(--up); } .al-g b.down, .al-zt b.down { background: var(--down); }
 .al-gv { margin-left: 6px; font: 11px var(--mono); } .al-gv.up { color: var(--up); } .al-gv.down { color: var(--down); }
 .al-zt { width: 120px; margin: 0 8px; }
@@ -822,3 +824,28 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 #al-table .sent[open] > .sent-list { position: absolute; z-index: 6; left: 0; top: 100%; box-shadow: 0 6px 18px var(--paper); }
 .sent-list a { color: var(--ink); text-decoration: none; } .sent-list a:hover { color: var(--acc); text-decoration: underline; }
 @media (max-width: 1000px) { .al-hide, .al-hide2 { display: none; } .al-x3 { grid-template-columns: 1fr; } .al-tools { grid-template-columns: 1fr; } }
+
+/* ---------- NEXUS ---------- */
+body.nx-open { overflow: hidden; }
+#nx-root[hidden] { display: none; }
+.nx-back { position: fixed; inset: 0; background: var(--paper); opacity: 0.7; z-index: 80; }
+.nx-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 100vw); z-index: 81; background: var(--paper); color: var(--ink); border-left: 1px solid var(--rule-2); display: flex; flex-direction: column; outline: none; }
+.nx-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px 18px 8px; border-bottom: 1px solid var(--rule); }
+.nx-head h2 { margin: 2px 0; font: 600 18px var(--sans); }
+.nx-tabs { display: flex; gap: 2px; padding: 8px 18px 0; overflow-x: auto; scrollbar-width: none; }
+.nx-tabs button { white-space: nowrap; }
+.nx-body { flex: 1; overflow-y: auto; padding: 14px 18px 24px; }
+.nx-foot { border-top: 1px solid var(--rule); padding: 8px 18px; }
+.nx-foot .note { margin: 0; font-size: 11px; }
+.nx-gwrap { position: relative; border: 1px solid var(--rule-2); background: var(--card); margin: 8px 0; }
+.nx-gwrap canvas { display: block; max-width: 100%; }
+.nx-tip { position: absolute; max-width: 230px; background: var(--card-hover); border: 1px solid var(--rule-2); padding: 6px 8px; font-size: 11.5px; line-height: 1.4; pointer-events: none; z-index: 2; }
+.nx-ctl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 8px; }
+.nx-chk input { width: 16px; height: 16px; margin: 0; padding: 0; }
+.nx-chk { font-size: 12px; color: var(--ink-2); display: inline-flex; gap: 6px; align-items: center; }
+.nx-ul { margin: 6px 0; padding-left: 18px; font-size: 12.5px; line-height: 1.5; } .nx-ul li { margin: 4px 0; }
+.nx-q summary { cursor: pointer; color: var(--acc); font-size: 12px; } .nx-q p { margin: 4px 0; font-size: 12px; max-width: 360px; }
+.nx-quote { margin: 6px 0; padding: 8px 12px; border-left: 2px solid var(--acc-edge); background: var(--sunken); font-size: 12.5px; line-height: 1.5; }
+.nx-skel i { display: block; height: 14px; margin: 12px 0; background: var(--sunken); }
+.nx-alt { margin-top: 10px; }
+@media (max-width: 700px) { .nx-drawer { top: auto; height: 88vh; width: 100vw; border-left: 0; border-top: 1px solid var(--rule-2); } }

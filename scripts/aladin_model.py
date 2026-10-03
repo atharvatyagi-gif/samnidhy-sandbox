@@ -16,7 +16,8 @@ Coverage   Every security with >= 250 daily bars gets a probability. Training us
 Not done   LSTM (optional in the brief) was not tried. Order-book models, RL execution and Heston calibration have no free data: shown as
            "not measured" with the reason. The sweep weight stays a prior until a sweep validation exists.
 
-Combiner   logit(p) = logit(p_tech) + wF F/100 + wS S/100 + wSweep S_sweep/100  (see combine_py; desk-aladin.js has the identical combine()).
+Combiner   logit(p) = logit(p_tech) + wF F_adj/100 + wS S/100 + wSweep S_sweep/100, F_adj = clip(F - I, -100, 100), I = NEXUS impact score (positive = adverse;
+           see combine_py; desk-aladin.js has the identical combine()).
 """
 
 import argparse
@@ -456,15 +457,18 @@ def logit(p):
     return math.log(p / (1 - p))
 
 
-def combine_py(p_tech, F=None, S=None, S_sweep=None, w=None, agreement_scores=None):
+def combine_py(p_tech, F=None, S=None, S_sweep=None, w=None, agreement_scores=None, I=None):
     """The ALADIN combiner. Missing fronts contribute 0. p is clipped to [0.02, 0.98].
+    I is the NEXUS supply-chain impact score in [-100, 100], positive = adverse; it is subtracted from the fundamental front: F_adj = clip(F - I, -100, 100)
+    (a missing F counts as 0 there, a missing I as 0). The fundamental front is judged for agreement on F_adj, and only when F itself exists.
     confidence: Low if |p-0.5| < 0.03, Medium if < 0.07, else High.
     agreement: of the AVAILABLE fronts (F, T, S) how many lean the same way as p (a front leans up above +10, down below -10): 'k/n'."""
     w = w or {"wF": 0.20, "wS": 0.12, "wSweep": 0.18}
     T = max(-100.0, min(100.0, 200 * (p_tech - 0.5)))
-    z = logit(min(0.999999, max(1e-6, p_tech))) + w["wF"] * (F or 0) / 100 + w["wS"] * (S or 0) / 100 + w["wSweep"] * (S_sweep or 0) / 100
+    F_adj = max(-100.0, min(100.0, (F or 0) - (I or 0))) if (F is not None or I is not None) else 0
+    z = logit(min(0.999999, max(1e-6, p_tech))) + w["wF"] * F_adj / 100 + w["wS"] * (S or 0) / 100 + w["wSweep"] * (S_sweep or 0) / 100
     p = min(0.98, max(0.02, 1 / (1 + math.exp(-z))))
-    fronts = [x for x in (F, T, S) if x is not None]
+    fronts = [x for x in ((F_adj if F is not None else None), T, S) if x is not None]
     lean_up = p > 0.5
     EPS = 1e-9                                                    # 200*(0.55-0.5) is 10.000000000000009 in floating point: "above +10" must mean above 10 by more than rounding noise
     k = sum(1 for x in fronts if (x > 10 + EPS and lean_up) or (x < -10 - EPS and not lean_up))
@@ -530,8 +534,9 @@ def live_scores(X, feats, models, iso, hp_final, nc, ind, extras):
     return L, per, drv
 
 
-def build_stock_entries(L, per, drv, fund, sentiment, cfg, hmm_last, jumps, pairs_live, alt=None):
+def build_stock_entries(L, per, drv, fund, sentiment, cfg, hmm_last, jumps, pairs_live, alt=None, impact=None):
     alt = alt or {}
+    imp = (impact or {}).get("stocks", {})
     w = cfg["weights"]
     prim = cfg.get("primary_horizon", 10)
     syms = L["sym"].tolist()
@@ -570,10 +575,26 @@ def build_stock_entries(L, per, drv, fund, sentiment, cfg, hmm_last, jumps, pair
                 e["f"]["alt"] = al["alt"]
             if row.get("tr"):
                 e["f"]["raw"] = fd.get("raw")
-        comb = {str(h): combine_py(float(per[h][i]), Fsc, S, None, w) for h in per}
+        xi = imp.get(sym)
+        I = xi["i"] if xi else None
+        if xi:                                                         # supply-chain impact: [score, counterparties used, top rows, as of]
+            e["x"] = {"i": xi["i"], "n": xi["n"], "top": xi["top"], "asof": (impact or {}).get("as_of")}
+            e["cov"]["x"] = 1
+        comb = {str(h): combine_py(float(per[h][i]), Fsc, S, None, w, I=I) for h in per}
         e["comb"] = {k: [v["p"], v["conf"], v["agree"]] for k, v in comb.items()}
         entries[sym] = e
     return entries
+
+
+def load_impact(as_of):
+    """data/aladin/impact.json (written by graph_impact.py just before the model runs). Used only when it is for the same close as the model:
+    an impact score from another day is not mixed in (those stocks then show 'not measured')."""
+    p = OUT_DIR / "impact.json"
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return d if d.get("as_of") == as_of else None
 
 
 def jump_table(prices_by_sym, syms):
@@ -684,9 +705,11 @@ def main(argv=None):
     pairs_live = {r.sym: {"peer": r.peer, "hl": r.coint_hl, "beta": r.beta} for r in pairf[pairf["date"] == cal[-1]].itertuples()}
     jumps = jump_table(tails, L["sym"].tolist())
     alt = af_filings.load_alt()
-    entries = build_stock_entries(L, per, drv, fund, sentiment, cfg, float(hp_final.iloc[-1]), jumps, pairs_live, alt)
+    impact = load_impact(str(cal[-1].date()))
+    entries = build_stock_entries(L, per, drv, fund, sentiment, cfg, float(hp_final.iloc[-1]), jumps, pairs_live, alt, impact)
     doc = {"generated_utc": now_utc().isoformat(timespec="seconds"), "as_of": str(cal[-1].date()), "horizons": horizons, "primary": cfg.get("primary_horizon", 10),
-           "weights": {"mode": "prior", **cfg["weights"], "fit": None, "sweep_validated": False},
+           "weights": {"mode": "prior", **cfg["weights"], "fit": None, "sweep_validated": False,
+                       "impact_validated": bool(((impact or {}).get("validation") or {}).get("validated")), "impact": (impact or {}).get("validation")},
            "model": {"type": "LightGBM x3 seeds per horizon, isotonic-calibrated; regime blend where it beat the pooled model out of sample", "features": len(feats),
                      "regime_blend": bool(any(regime_use.values())), "lstm": {"used": False, "tested": False, "auc_gain": None}, "pca_k": pca_k, "pairs": int(pairf[pairf["date"] == cal[-1]]["sym"].nunique()),
                      "names": {f: NAMES[f] for f in feats if f in NAMES}, "trained_stocks": int(X.loc[X["tr"], "sym"].nunique()), "scored_stocks": len(entries)},

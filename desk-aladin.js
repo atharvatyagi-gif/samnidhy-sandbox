@@ -16,17 +16,20 @@ const MATCH = { symbol: "symbol", name: "company name", group: "business group" 
 const FETCHED = { aladin: 0, sentiment: 0 };
 
 /* The ALADIN combiner. Identical to combine_py() in scripts/aladin_model.py: both must pass tests/fixtures/combiner_cases.json.
-   logit(p) = logit(p_tech) + wF F/100 + wS S/100 + wSweep S_sweep/100. A missing front (null/undefined) contributes 0. p is clipped to [0.02, 0.98].
+   logit(p) = logit(p_tech) + wF F_adj/100 + wS S/100 + wSweep S_sweep/100, where F_adj = clip(F - I, -100, 100) and I is the NEXUS supply-chain impact score
+   (positive = adverse; a missing F or I counts as 0 there). A missing front (null/undefined) contributes 0. p is clipped to [0.02, 0.98].
    confidence: Low if |p-0.5| < 0.03, Medium if < 0.07, else High.
-   agreement: of the AVAILABLE fronts (F, T, S) how many lean the same way as p (a front leans up above +10, down below -10, with 1e-9 of slack so
+   agreement: of the AVAILABLE fronts (F_adj if F exists, T, S) how many lean the same way as p (a front leans up above +10, down below -10, with 1e-9 of slack so
    floating-point noise like 200*(0.55-0.5) = 10.000000000000009 does not count as "above 10"): "k/n". */
-export function combine(pTech, F, S, sSweep, w) {
+export function combine(pTech, F, S, sSweep, w, I) {
   w = w || { wF: 0.20, wS: 0.12, wSweep: 0.18 };
   const T = Math.max(-100, Math.min(100, 200 * (pTech - 0.5)));
   const q = Math.min(0.999999, Math.max(1e-6, pTech));
-  const z = Math.log(q / (1 - q)) + w.wF * (F ?? 0) / 100 + w.wS * (S ?? 0) / 100 + w.wSweep * (sSweep ?? 0) / 100;
+  const has = x => x !== null && x !== undefined;
+  const Fadj = has(F) || has(I) ? Math.max(-100, Math.min(100, (F ?? 0) - (I ?? 0))) : 0;
+  const z = Math.log(q / (1 - q)) + w.wF * Fadj / 100 + w.wS * (S ?? 0) / 100 + w.wSweep * (sSweep ?? 0) / 100;
   const p = Math.min(0.98, Math.max(0.02, 1 / (1 + Math.exp(-z))));
-  const fronts = [F, T, S].filter(x => x !== null && x !== undefined);
+  const fronts = [has(F) ? Fadj : null, T, S].filter(has);
   const up = p > 0.5, EPS = 1e-9, k = fronts.filter(x => (x > 10 + EPS && up) || (x < -10 - EPS && !up)).length, d = Math.abs(p - 0.5);
   return { p: Math.round(p * 1e4) / 1e4, q: Math.round((1 - p) * 1e4) / 1e4, T: Math.round(T * 10) / 10,
     conf: d < 0.03 ? "Low" : d < 0.07 ? "Medium" : "High", agree: `${k}/${fronts.length}`, agree_k: k, agree_n: fronts.length };
@@ -128,14 +131,29 @@ function calc(sym, h) {
   const a = (ctx.S.aladin || {}).stocks && ctx.S.aladin.stocks[sym];
   if (!a || !a.t || !a.t.p || a.t.p[h] == null) return null;
   const F = a.f && a.f.sc != null ? a.f.sc : null, sn = sentOf(sym), S = sn ? sn.sc : null, sw = sweepOf(sym);
-  const r = combine(a.t.p[h], F, S, sw == null ? null : sw, W());
-  return { ...r, F, S, sw, Th: r.T };
+  const I = a.x && a.x.i != null ? a.x.i : null;
+  const r = combine(a.t.p[h], F, S, sw == null ? null : sw, W(), I);
+  return { ...r, F, S, sw, I, Fadj: F == null && I == null ? null : Math.max(-100, Math.min(100, (F ?? 0) - (I ?? 0))), Th: r.T };
 }
 
 function gauge(sc, why) {
   if (sc == null) return `<span class="mut al-na" title="${ctx.esc(why || "Not measured")}">—</span>`;
   const v = Math.max(-100, Math.min(100, sc));
   return `<span class="al-g" title="${v > 0 ? "+" : ""}${Math.round(v)} on a scale of -100 to +100"><i class="mid"></i><b class="${v > 5 ? "up" : v < -5 ? "down" : "flat"}" style="left:${50 + v / 2}%"></b></span><span class="al-gv ${ctx.ud(v)}">${v > 0 ? "+" : ""}${Math.round(v)}</span>`;
+}
+/* the impact score is adverse when positive: same track as the other gauges, but a high value is drawn in the "down" colour */
+function igauge(v, asof) {
+  const x = Math.max(-100, Math.min(100, v));
+  return `<span class="al-g" title="Supply-chain impact ${x > 0 ? "+" : ""}${Math.round(x)} (positive = adverse), as of ${ctx.esc(asof || "?")}"><i class="mid"></i><b class="${x > 5 ? "down" : x < -5 ? "up" : "flat"}" style="left:${50 + x / 2}%"></b></span><span class="al-gv ${ctx.ud(-x)}">${x > 0 ? "+" : ""}${Math.round(x)}</span>`;
+}
+const REL = { supplies: "supplies", equipment_for: "equipment for", raw_material_from: "raw material from", logistics_for: "logistics for", related_party: "related party", customer_of: "customer of" };
+function impactBlock(sym, a) {
+  const { esc } = ctx, w = (ctx.S.aladin || {}).weights || {}, x = a && a.x;
+  if (!x) return `<div class="sec-t">Supply-chain impact</div><p class="mut">Not measured: no disclosed dependency of this company on a listed company, or the supply-chain data does not cover it yet.</p>`;
+  const rows = (x.top || []).map(([cp, rel, sh, z, cf]) => `<tr><td><button class="lnk" data-nexus="company:${esc(cp)}">${esc(cp)}</button></td><td>${esc(REL[rel] || rel)}</td><td class="r">${Math.round(sh * 100)}%</td><td class="r ${ctx.ud(z)}">${z > 0 ? "+" : ""}${num(z, 1)}</td><td class="r">${num(cf, 2)}</td></tr>`).join("");
+  return `<div class="sec-t">Supply-chain impact</div><p>Impact ${x.i > 0 ? "+" : ""}${num(x.i, 1)} (positive = adverse) from ${x.n} disclosed dependenc${x.n === 1 ? "y" : "ies"}, as of ${esc(x.asof || "?")}. <span class="mut">${w.impact_validated ? "Impact term: validated" : "Impact term: prior, unvalidated"}</span></p>
+    <table class="tbl sm al-imp"><thead><tr><th>Counterparty</th><th>Link</th><th class="r">Share</th><th class="r">z</th><th class="r">Conf</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="mut">Association, not proof of cause: a linked move is not a reason this stock will follow.</p>`;
 }
 function dots(k, n) { return n ? "●".repeat(k) + "○".repeat(n - k) : "—"; }
 function covHtml(a) {
@@ -208,7 +226,7 @@ function visibleRows() {
   if (st.conf) rows = rows.filter(r => r.c && r.c.conf === st.conf);
   const withP = rows.filter(r => r.c), noP = rows.filter(r => !r.c);
   const by = (f, dir = 1) => (a, b) => dir * ((f(a) ?? -1e9) - (f(b) ?? -1e9));
-  const keys = { sym: r => r.sym, n: r => r.u.n, last: r => (ctx.q(r.sym) || {}).p, chg: r => (ctx.q(r.sym) || {}).pct, pup: r => r.c && r.c.p, pdn: r => r.c && r.c.q, F: r => r.c && r.c.F,
+  const keys = { sym: r => r.sym, n: r => r.u.n, last: r => (ctx.q(r.sym) || {}).p, chg: r => (ctx.q(r.sym) || {}).pct, pup: r => r.c && r.c.p, pdn: r => r.c && r.c.q, F: r => r.c && r.c.Fadj, I: r => r.c && r.c.I,
     T: r => r.c && r.c.T, S: r => r.c && r.c.S, sw: r => sweepOf(r.sym), agree: r => r.c && r.c.agree_k, conf: r => r.c && ({ Low: 0, Medium: 1, High: 2 })[r.c.conf], cov: r => r.a && ((r.a.cov.f || 0) + (r.a.cov.t || 0) + (r.a.cov.s || 0)) };
   let list;
   if (st.sort) {
@@ -230,10 +248,11 @@ function rowHtml(r, i) {
   const first = `<tr class="al-r${open ? " on" : ""}" data-s="${esc(r.sym)}"><td class="mut">${i + 1}</td><td class="sym"><button class="al-tg" aria-expanded="${open}" aria-label="${open ? "Hide" : "Show"} details for ${esc(r.sym)}">${open ? "▾" : "▸"}</button> ${esc(r.sym)}${tag}</td><td class="co al-hide2">${esc(u.n || "")}</td>
     <td class="num al-last">${x ? inr(x.p) : "—"}</td><td class="num al-chg ${x ? ud(x.pct) : "mut"}">${x && x.pct != null ? sg(x.pct) + "%" : "—"}</td>
     <td class="num al-pup">${pup}</td><td class="num al-pdn al-hide">${c ? pctTxt(c.q) : "—"}</td>
-    <td class="al-gc">${ft ? `<span class="mut" title="${esc(ft.why)}">${esc(ft.t)}</span>` : gauge(a.f.sc)}</td><td class="al-gc">${c ? gauge(c.T) : '<span class="mut">—</span>'}</td>
+    <td class="al-gc">${ft ? `<span class="mut" title="${esc(ft.why)}">${esc(ft.t)}</span>` : c && c.I != null ? `<span title="F ${Math.round(c.F ?? 0)} · I ${Math.round(c.I)}">${gauge(c.Fadj)}</span>` : gauge(a.f.sc)}</td>
+    <td class="al-gc al-hide">${a && a.x ? igauge(a.x.i, a.x.asof) : '<span class="mut al-na" title="No disclosed dependency on a listed company">—</span>'}</td><td class="al-gc">${c ? gauge(c.T) : '<span class="mut">—</span>'}</td>
     <td class="al-sc">${sentHtml(r.sym, true)}</td><td class="al-sw al-hide">${sweepHtml(r.sym)}</td><td class="al-ag al-hide" title="How many of the available views lean the same way as P(up)">${c ? dots(c.agree_k, c.agree_n) : "—"}</td>
     <td class="al-hide">${c ? `<span class="tag${c.conf === "High" ? " acc" : ""}">${c.conf}</span>` : "—"}</td><td class="al-hide">${covHtml(a)}</td></tr>`;
-  return first + (open ? `<tr class="al-x"><td colspan="14">${detailHtml(r)}</td></tr>` : "");
+  return first + (open ? `<tr class="al-x"><td colspan="15">${detailHtml(r)}</td></tr>` : "");
 }
 
 /* ---------- row expansion ---------- */
@@ -266,11 +285,11 @@ function detailHtml(r) {
   const evs = (ctx.S.sweepEv || []).filter(e => e.sym === r.sym).slice(-5).reverse();
   const sent = `${sentHtml(r.sym, false, true)}
       <div class="sec-t">Liquidity sweeps</div>${evs.length ? evs.map(e => `<p>${e.dir > 0 ? "▲" : "▼"} ${esc(e.lvl)} at ${num(e.px)} · volume ${num(e.rvol, 1)}× normal · wick ${Math.round(e.wick * 100)}% · ${e.confirmed ? "confirmed" : "forming"} · score ${e.score > 0 ? "+" : ""}${e.score}</p>`).join("") : `<p class="mut">No sweep seen. Needs the local tick program; the free feed covers only index levels and NSE's movers lists.</p>`}`;
-  return `<div class="al-x3"><div><div class="sec-t">Fundamental</div>${fund}<ul class="al-nm">${nm}</ul></div><div><div class="sec-t">Technical · ${st.h}D</div>${tech}</div><div><div class="sec-t">Sentimental</div>${sent}<div class="sec-t">Geopolitical exposure (the Globe)</div>${geoBlock(r.sym)}</div></div>${actions(r.sym)}`;
+  return `<div class="al-x3"><div><div class="sec-t">Fundamental</div>${fund}${impactBlock(r.sym, a)}<ul class="al-nm">${nm}</ul></div><div><div class="sec-t">Technical · ${st.h}D</div>${tech}</div><div><div class="sec-t">Sentimental</div>${sent}<div class="sec-t">Geopolitical exposure (the Globe)</div>${geoBlock(r.sym)}</div></div>${actions(r.sym)}`;
 }
 function actions(sym) {
   const on = ctx.loadWatch().includes(sym);
-  return `<div class="al-act"><button class="btn-line sm" data-open="${ctx.esc(sym)}">Open chart</button> <button class="btn-line sm${on ? " on" : ""}" data-wl="${ctx.esc(sym)}">${on ? "✓ In watchlist" : "+ Watchlist"}</button></div>`;
+  return `<div class="al-act"><button class="btn-line sm" data-open="${ctx.esc(sym)}">Open chart</button> <button class="btn-line sm" data-nexus="company:${ctx.esc(sym)}">Open in NEXUS</button> <button class="btn-line sm${on ? " on" : ""}" data-wl="${ctx.esc(sym)}">${on ? "✓ In watchlist" : "+ Watchlist"}</button></div>`;
 }
 
 /* ---------- the tab ---------- */
@@ -297,7 +316,7 @@ function modelCard() {
       <div class="ol-stat"><b>${live}</b><span>live track record<br><small>${dc.matured_days ? `${dc.matured_days} days scored, spread ${(dc.spread * 100).toFixed(2)}% (top minus bottom 10%)` : "first results about two weeks after the nightly run starts saving predictions"}</small></span></div>
     </div>
     <p class="note"><b>Read these figures with care:</b> the probabilities were calibrated year by year using only earlier years, so they are not flattered by the test years themselves. They are still likely a little optimistic: the saved price history contains only stocks that are listed today (companies that were delisted are missing), and the Fundamental, Sentiment and sweep adjustments below have not yet been tested against outcomes.${m.years_evaluated ? ` Years evaluated: ${m.years_evaluated[0]}–${m.years_evaluated[1]}.` : ""}</p>
-    <p class="note">${nAll.toLocaleString("en-IN")} securities · ${nP.toLocaleString("en-IN")} with a probability. Weights: <b>${esc(w.mode)}</b> (Fundamental ${w.wF}, Sentiment ${w.wS}, sweeps ${w.wSweep}${w.sweep_validated ? "" : ", sweep weight unvalidated"}). Regime blend: ${m.regime && m.regime.used ? "used" : m.regime && m.regime.tested ? "tested, not better, not used" : "not tested"}. Model data as of ${esc(A.as_of)} · ${esc(A.model.features)} inputs · trained on ${A.model.trained_stocks} stocks.</p>
+    <p class="note">${nAll.toLocaleString("en-IN")} securities · ${nP.toLocaleString("en-IN")} with a probability. Weights: <b>${esc(w.mode)}</b> (Fundamental ${w.wF}, Sentiment ${w.wS}, sweeps ${w.wSweep}${w.sweep_validated ? "" : ", sweep weight unvalidated"}; supply-chain impact subtracted from Fundamental: ${w.impact_validated ? "validated" : "prior, unvalidated"}). Regime blend: ${m.regime && m.regime.used ? "used" : m.regime && m.regime.tested ? "tested, not better, not used" : "not tested"}. Model data as of ${esc(A.as_of)} · ${esc(A.model.features)} inputs · trained on ${A.model.trained_stocks} stocks.</p>
     <details class="ol-more"><summary>How good is this model? (tested ${esc(m.from)} → ${esc(m.to)}, ${m.n.toLocaleString("en-IN")} predictions it never saw) and how it works</summary>
       <div class="ol-two"><div><h6>By year (each year predicted by models trained only on earlier years)</h6>
         <table class="tbl sm"><thead><tr><th>Year</th><th class="r">AUC</th><th class="r">Right</th><th class="r">Base rate</th><th class="r">Top 10% up</th><th class="r">Bottom 10% up</th></tr></thead><tbody>${yrs}</tbody></table></div>
@@ -323,7 +342,7 @@ function paperLog() {
     <p class="note">As of ${esc(P.meta.updated_utc ? ctx.istUtc(P.meta.updated_utc) : "—")} · model data ${esc(P.meta.aladin_as_of || "—")}</p>`;
 }
 
-const SORTS = [["sym", "Symbol"], ["n", "Company"], ["last", "Last"], ["chg", "Chg %"], ["pup", "P(up)"], ["pdn", "P(down)"], ["F", "Fundamental"], ["T", "Technical"], ["S", "Sentiment"], ["sw", "Sweep"], ["agree", "Agree"], ["conf", "Conf"], ["cov", "Cov"]];
+const SORTS = [["sym", "Symbol"], ["n", "Company"], ["last", "Last"], ["chg", "Chg %"], ["pup", "P(up)"], ["pdn", "P(down)"], ["F", "Fundamental"], ["I", "Impact"], ["T", "Technical"], ["S", "Sentiment"], ["sw", "Sweep"], ["agree", "Agree"], ["conf", "Conf"], ["cov", "Cov"]];
 
 export function setAladinFilter(sym) {
   filterSym = sym || null;
@@ -365,7 +384,7 @@ function draw() {
       ${sel("al-conf", [["", "Any confidence"], ["High", "High"], ["Medium", "Medium"], ["Low", "Low"]], st.conf)}
       <input id="al-q" type="search" placeholder="Filter by symbol or name" aria-label="Filter ALADIN" value="${esc(st.q)}">
     </div>
-    <div class="tablecard"><table class="tbl" id="al-table"><thead><tr><th>#</th>${SORTS.map(([k, l]) => `<th data-sort="${k}" tabindex="0" class="${["last", "chg", "pup", "pdn"].includes(k) ? "r " : ""}${st.sort && st.sort[0] === k ? "sorted " : ""}${["pdn", "sw", "agree", "conf", "cov"].includes(k) ? "al-hide " : ""}${k === "n" ? "al-hide2" : ""}" aria-sort="${st.sort && st.sort[0] === k ? (st.sort[1] > 0 ? "ascending" : "descending") : "none"}">${l}</th>`).join("")}</tr></thead>
+    <div class="tablecard"><table class="tbl" id="al-table"><thead><tr><th>#</th>${SORTS.map(([k, l]) => `<th data-sort="${k}" tabindex="0" class="${["last", "chg", "pup", "pdn"].includes(k) ? "r " : ""}${st.sort && st.sort[0] === k ? "sorted " : ""}${["pdn", "I", "sw", "agree", "conf", "cov"].includes(k) ? "al-hide " : ""}${k === "n" ? "al-hide2" : ""}" aria-sort="${st.sort && st.sort[0] === k ? (st.sort[1] > 0 ? "ascending" : "descending") : "none"}">${l}</th>`).join("")}</tr></thead>
       <tbody>${show.map((r, i) => rowHtml(r, i)).join("") || '<tr><td colspan="15" class="empty">No stocks match these filters.</td></tr>'}</tbody></table></div>
     <div class="more-row"><span class="mut" id="al-count">Showing ${show.length.toLocaleString("en-IN")} of ${rows.length.toLocaleString("en-IN")} securities</span>${rows.length > show.length ? '<button class="btn-line" id="al-more">Show 50 more</button>' : ""}</div>
     ${paperLog()}${foot()}`;
@@ -452,11 +471,11 @@ export function renderAladinMini(sym) {
   const pct = Math.round(c.p * 100);
   return head + `<div class="ol-mini"><div class="tg-top"><span class="mut">P(up) in ${ph} trading days</span><b class="${c.p >= 0.55 ? "up" : c.p <= 0.45 ? "down" : ""}">${pct}%</b></div>
     <div class="tg-bar"><i style="left:calc(${pct}% - 2px)"></i></div>
-    <div class="al-mini-g"><span>Fundamental ${ft ? `<span class="mut" title="${ctx.esc(ft.why)}">${ft.t}</span>` : gauge(a.f.sc)}</span><span>Technical ${gauge(c.T)}</span></div>
+    <div class="al-mini-g"><span>Fundamental ${ft ? `<span class="mut" title="${ctx.esc(ft.why)}">${ft.t}</span>` : c.I != null ? `<span title="F ${Math.round(c.F ?? 0)} · I ${Math.round(c.I)}">${gauge(c.Fadj)}</span>` : gauge(a.f.sc)}</span><span>Technical ${gauge(c.T)}</span>${a.x ? `<span>Impact ${igauge(a.x.i, a.x.asof)}</span>` : ""}</div>
     <div class="al-mini-s">${sentHtml(sym, true)}</div>
     <div class="tg-n">Confidence ${c.conf} · ${c.agree} views agree</div>
     <p class="note">${ctx.esc(reliabilityText(a.t.p[ph], ph))}</p>
-    <p class="note">${DISCLAIMER} <a href="#" data-aladin="${ctx.esc(sym)}">Open in ALADIN →</a></p></div>`;
+    <p class="note">${DISCLAIMER} <a href="#" data-aladin="${ctx.esc(sym)}">Open in ALADIN →</a> · <a href="#" data-nexus="company:${ctx.esc(sym)}">Open in NEXUS →</a></p></div>`;
 }
 export function briefCard(bcard) {
   const A = ctx && ctx.S.aladin; if (!A) return "";
