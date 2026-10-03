@@ -134,9 +134,12 @@ def stock_frame(df, nlr, nc, keep_dates, tail=None):
     return F[F.index.isin(keep_dates)]
 
 
-def build_dataset(limit=None, log=print):
+def build_dataset(limit=None, log=print, point_in_time=True, calendar=True):
+    """Stock-day rows. POINT-IN-TIME universe: a row is a training row if the stock is a main-board equity whose OWN 20-day average traded value on that
+    day was at least Rs 5 crore. (Before, the training stocks were chosen by today's NIFTY 500 membership and today's volume, which quietly used the
+    future.) Securities that are not main-board equities (SME, ETFs) or that are thin on the last day are still scored on the last day, with the same models."""
     t0 = time.time()
-    stocks, train = universe(limit)
+    stocks, train_today = universe(limit)
     ind = {s["s"]: s.get("ind") or "none" for s in stocks}
     nifty = load_prices("^NSEI", 300)
     if nifty is None:
@@ -145,29 +148,40 @@ def build_dataset(limit=None, log=print):
     nlr = np.log(nc).diff()
     cal = nc.index
     keep = sample_dates(cal)
-    prices, tails, frames = {}, {}, []
-    n500 = {x["s"] for x in stocks if x.get("n500")}
+    last = cal[-1]
+    log_min = math.log(MIN_VALUE_CR * 1e7)
+    eligible = {s["s"] for s in stocks if s.get("board") == "Main" and s.get("series") == "EQ" and not s.get("etf")}
+    if limit:
+        eligible &= train_today                                                    # quick checks use a small, liquid subset
+    closes, vals, tails, frames = {}, {}, {}, []
     for s in stocks:
         sym = s["s"]
         if sym.startswith("^") or sym.startswith("DUMMY"):
             continue
-        in_train = sym in train
+        is_el = sym in eligible
         df = load_prices(sym)
         if df is None or (df.index[-1] < cal[-1] - pd.Timedelta(days=10)):          # delisted / suspended: not scored
             continue
-        F = stock_frame(df if in_train else df.iloc[-420:], nlr, nc, keep, tail=None if in_train else 1)
+        F = stock_frame(df if is_el else df.iloc[-420:], nlr, nc, keep, tail=None if is_el else 1)
         if F.empty:
             continue
-        F["sym"], F["ind"], F["tr"] = sym, ind[sym], in_train
+        F["sym"], F["ind"] = sym, ind[sym]
+        F["tr"] = (F["turn"] >= log_min) if is_el else False                        # point-in-time liquidity, from the row's own trailing 20 days
+        if not point_in_time and is_el:
+            F["tr"] = sym in train_today                                            # the old, look-ahead rule (kept only so the effect can be measured)
+        F = F[F["tr"] | (F.index == last)]
+        if F.empty:
+            continue
         frames.append(F)
         tails[sym] = df["c"].iloc[-300:]
-        if in_train and sym in n500:
-            prices[sym] = df["c"]
+        if is_el and len(df) >= 300:
+            closes[sym] = df["c"]
+            vals[sym] = (df["c"] * df["v"]).rolling(20).mean()
     X = pd.concat(frames)
     X.index.name = "date"
     X = X.reset_index()
-    log(f"features: {len(X):,} stock-days, {X['sym'].nunique()} stocks ({(X['tr']).sum():,} training rows) ({time.time() - t0:.0f}s)")
-    # market-wide inputs from the training universe
+    log(f"features: {len(X):,} stock-days, {X['sym'].nunique()} stocks ({(X['tr']).sum():,} training rows, {X.loc[X['tr'], 'sym'].nunique()} different stocks) ({time.time() - t0:.0f}s)")
+    # market-wide inputs from the (point-in-time) training rows
     m = pd.DataFrame(index=cal)
     for n in (5, 20, 60):
         m[f"m_r{n}"] = np.log(nc / nc.shift(n))
@@ -185,26 +199,30 @@ def build_dataset(limit=None, log=print):
         X[col + "_rk"] = np.nan
         trm = X["tr"]
         X.loc[trm, col + "_rk"] = X[trm].groupby("date")[col].rank(pct=True)
-    last = cal[-1]
     ref = X[(X["date"] == last) & X["tr"]]
-    for col in pm.RANKED:                                    # non-training stocks (last day only): rank among the training stocks that day
+    for col in pm.RANKED:                                    # non-training rows (last day only): rank among the training stocks that day
         srt = np.sort(ref[col].dropna().values)
         rows = (~X["tr"]) & X[col].notna()
         if len(srt):
             X.loc[rows, col + "_rk"] = np.searchsorted(srt, X.loc[rows, col].values) / len(srt)
+    if calendar:                                              # calendar position of the day (month, day of month): tested walk-forward, improved 8 of 13 years
+        X["moy"], X["dom"] = X["date"].dt.month, X["date"].dt.day
     X["ind"] = X["ind"].astype("category")
     X = X.replace([np.inf, -np.inf], np.nan)
-    return X, cal, nc, nlr, prices, tails, ind, train
+    train = set(X.loc[(X["date"] == last) & X["tr"], "sym"])
+    return X, cal, nc, nlr, (pd.DataFrame(closes), pd.DataFrame(vals)), tails, ind, train
 
 
 # ------------------------------------------------------------------ PCA / pairs features
 
 def _refit_job(args):
     """One cointegration refit (runs in a worker process): pairs on the trailing window, then Kalman spreads forward to the next refit."""
-    i, j, logpx_values, cols, dates, by_ind, turn, kal_warm = args
+    i, j, logpx_values, cols, dates, by_ind, turn, kal_warm, val_win = args
     lp = pd.DataFrame(logpx_values, index=dates, columns=cols)
     win = lp.iloc[i - 250:i + 1]
     win = win.loc[:, win.notna().all()]
+    if val_win is not None:                                  # point-in-time: rank each industry's stocks by their traded value in THIS window, not by today's
+        turn = dict(zip(cols, np.nan_to_num(np.nanmean(val_win, axis=0))))
     pairs = aq.engle_granger_pairs(win, by_ind, 40, 0.05, turn)
     out = []
     for s, pr in pairs.items():
@@ -228,18 +246,20 @@ def _refit_job(args):
 
 def pair_features(prices, ind, turnover, workers=None, refit_every=63, kal_warm=120, log=print):
     """coint_z / coint_hl / coint_p per (date, symbol). Partner and its Engle-Granger p refit every `refit_every` days (and on the last day);
-    between refits the Kalman filter keeps updating. Quarterly rather than weekly refits keep the history affordable; the last day uses a fresh refit."""
+    between refits the Kalman filter keeps updating. Quarterly rather than weekly refits keep the history affordable; the last day uses a fresh refit.
+    `turnover` is either a DataFrame of traded value (date x symbol: point-in-time, preferred) or a plain {symbol: value} dict."""
     t0 = time.time()
     lp = np.log(pd.DataFrame(prices)).sort_index()
     dates = lp.index
     T = len(dates)
+    val = turnover.reindex(index=lp.index, columns=lp.columns).values if isinstance(turnover, pd.DataFrame) else None
     cuts = list(range(250, T - 1, refit_every)) + [T - 1]
     jobs = []
     for n, i in enumerate(cuts):
         j = cuts[n + 1] if n + 1 < len(cuts) else T
         if i == T - 1 and n > 0:
             j = T
-        jobs.append((i, j, lp.values, list(lp.columns), dates, ind, turnover, kal_warm))
+        jobs.append((i, j, lp.values, list(lp.columns), dates, ind, {} if val is not None else turnover, kal_warm, None if val is None else val[i - 250:i + 1]))
     rows = []
     if workers and workers > 1:
         with ProcessPoolExecutor(max_workers=workers) as ex:
@@ -254,11 +274,12 @@ def pair_features(prices, ind, turnover, workers=None, refit_every=63, kal_warm=
     return df
 
 
-def pca_frame(prices, log=print):
+def pca_frame(prices, log=print, liquid=None):
+    """PCA residual features. `liquid` (date x symbol booleans, from each stock's own trailing traded value) limits every refit to the stocks that were liquid then."""
     t0 = time.time()
     lp = np.log(pd.DataFrame(prices)).sort_index()
     ret = lp.diff()
-    resid, ks = aq.pca_residuals(ret)
+    resid, ks = aq.pca_residuals(ret, liquid=liquid)
     z, r2 = aq.pca_features(ret, resid)
     f = pd.concat({"pca_z": z.stack(dropna=False), "pca_r2": r2.stack(dropna=False)}, axis=1)
     f.index.names = ["date", "sym"]
@@ -368,7 +389,10 @@ def brier(p, y):
 
 
 def evaluate(O, h):
-    """Metrics from the pooled out-of-sample record. Chooses the regime blend only if its Brier score beats the pooled model's."""
+    """Metrics from the pooled out-of-sample record. Chooses the regime blend only if its Brier score beats the pooled model's.
+    HONEST CALIBRATION: every reported probability for test year Y is calibrated (isotonic) using only the unseen-year results BEFORE Y, so the figures
+    do not benefit from a correction fitted on the very years they describe. (The first two test years have no earlier record and are excluded from the
+    headline numbers.) The calibration used for tomorrow's live probabilities is fitted on all unseen years: that is the future, not part of this record."""
     # Regime sets only exist for folds whose training window had enough calm AND stress rows, so p_reg is missing for the early years.
     # The two models are compared on exactly the rows where both exist; if the blend wins there it is used where available (pooled elsewhere).
     have = O["p_reg"].notna()
@@ -377,27 +401,44 @@ def evaluate(O, h):
     b_reg = brier(O.loc[have, "p_reg"], O.loc[have, "y"]) if has_reg else None
     use_reg = bool(has_reg and b_reg < b_pool)
     raw = O["p_reg"].where(have, O["p"]) if use_reg else O["p"]
-    y = O["y"].values
-    iso = IsotonicRegression(out_of_bounds="clip", y_min=0.02, y_max=0.98).fit(raw.values, y)
-    p = iso.predict(raw.values)
-    O = O.assign(pc=p)
-    O = O.assign(rank=O.groupby("date")["pc"].rank(pct=True))
-    O["dec"] = np.minimum(9, (O["rank"] * 10).astype(int)) + 1
+    O = O.assign(raw=raw.values, year=O["date"].dt.year.values)
+    mk = lambda: IsotonicRegression(out_of_bounds="clip", y_min=0.02, y_max=0.98)
+    iso = mk().fit(O["raw"].values, O["y"].values)                      # the live calibration
+    O["pc_in"] = iso.predict(O["raw"].values)                          # in-sample version, only used where no earlier years exist
+    ys = sorted(O["year"].unique())
+    O["pc"] = np.nan
+    base_prior = {}
+    for yr in ys[2:]:
+        prior = O[O["year"] < yr]
+        te = O["year"] == yr
+        O.loc[te, "pc"] = mk().fit(prior["raw"].values, prior["y"].values).predict(O.loc[te, "raw"].values)
+        base_prior[yr] = float(prior["y"].mean())
+    nested = O["pc"].notna().any()
+    if not nested:                                                      # too few years for the nested scheme (only in tiny tests)
+        O["pc"] = O["pc_in"]
+    H = O[O["pc"].notna()].copy()
+    H["base_prior"] = H["year"].map(base_prior) if nested else float(H["y"].mean())
+    H = H.assign(rank=H.groupby("date")["pc"].rank(pct=True))
+    H["dec"] = np.minimum(9, (H["rank"] * 10).astype(int)) + 1
+    y = H["y"].values
     base = float(y.mean())
     def daily_ic(d):                                          # rank correlation of the day's probabilities with what happened (0/1)
         return np.corrcoef(d["pc"].rank(), d["y"])[0, 1] if d["y"].nunique() > 1 and d["pc"].nunique() > 1 else np.nan
-    ic = O.groupby("date")[["pc", "y"]].apply(daily_ic).dropna()
+    ic = H.groupby("date")[["pc", "y"]].apply(daily_ic).dropna()
+    O = O.assign(pcy=np.where(O["pc"].notna(), O["pc"], O["pc_in"]))
     years = []
-    for yr, d in O.groupby(O["date"].dt.year):
-        top, bot = d[d["dec"] == 10], d[d["dec"] == 1]
-        years.append({"year": int(yr), "auc": round(float(roc_auc_score(d["y"], d["pc"])), 3) if d["y"].nunique() > 1 else None, "n": int(len(d)),
-                      "base": round(float(d["y"].mean()), 3), "acc": round(float(((d["pc"] > 0.5) == d["y"]).mean()), 3),
+    for yr, d in O.groupby("year"):
+        dd = d.assign(r=d.groupby("date")["pcy"].rank(pct=True))
+        top, bot = dd[dd["r"] > 0.9], dd[dd["r"] <= 0.1]
+        years.append({"year": int(yr), "auc": round(float(roc_auc_score(d["y"], d["pcy"])), 3) if d["y"].nunique() > 1 else None, "n": int(len(d)),
+                      "base": round(float(d["y"].mean()), 3), "acc": round(float(((d["pcy"] > 0.5) == d["y"]).mean()), 3), "nested": bool(d["pc"].notna().any()),
                       "top_hit": round(float(top["y"].mean()), 3) if len(top) else None, "bot_hit": round(float(bot["y"].mean()), 3) if len(bot) else None})
-    cal = O.assign(bin=pd.qcut(O["pc"].rank(method="first"), 10, labels=False)).groupby("bin").agg(pred=("pc", "mean"), actual=("y", "mean"), n=("y", "size"))
-    metrics = {"auc": round(float(roc_auc_score(y, O["pc"])), 3), "accuracy": round(float(((O["pc"] > 0.5) == y).mean()), 3), "base_rate": round(base, 3),
-               "always_up_accuracy": round(max(base, 1 - base), 3), "brier": round(brier(O["pc"], y), 4), "brier_base": round(brier(np.full(len(y), base), y), 4),
-               "n": int(len(O)), "from": str(O["date"].min().date()), "to": str(O["date"].max().date()),
-               "top_decile_hit": round(float(O.loc[O["dec"] == 10, "y"].mean()), 3), "bottom_decile_hit": round(float(O.loc[O["dec"] == 1, "y"].mean()), 3),
+    cal = H.assign(bin=pd.qcut(H["pc"].rank(method="first"), 10, labels=False)).groupby("bin").agg(pred=("pc", "mean"), actual=("y", "mean"), n=("y", "size"))
+    metrics = {"auc": round(float(roc_auc_score(y, H["pc"])), 3), "accuracy": round(float(((H["pc"] > 0.5) == y).mean()), 3), "base_rate": round(base, 3),
+               "always_up_accuracy": round(max(base, 1 - base), 3), "brier": round(brier(H["pc"], y), 4), "brier_base": round(brier(H["base_prior"], y), 4),
+               "n": int(len(H)), "from": str(H["date"].min().date()), "to": str(H["date"].max().date()), "nested_calibration": bool(nested),
+               "years_evaluated": [int(H["year"].min()), int(H["year"].max())], "auc_all_years_raw": round(float(roc_auc_score(O["y"], O["raw"])), 3),
+               "top_decile_hit": round(float(H.loc[H["dec"] == 10, "y"].mean()), 3), "bottom_decile_hit": round(float(H.loc[H["dec"] == 1, "y"].mean()), 3),
                "ic_mean": round(float(ic.mean()), 4), "ic_t": round(float(ic.mean() / ic.std() * math.sqrt(len(ic) / h)), 2) if ic.std() else None,
                "regime": {"tested": has_reg, "rows_compared": int(have.sum()), "brier_pooled": round(b_pool, 4), "brier_regime": None if b_reg is None else round(b_reg, 4), "used": use_reg}}
     calib = [{"pred": round(float(r.pred), 3), "actual": round(float(r.actual), 3), "n": int(r.n)} for _, r in cal.iterrows()]
@@ -557,23 +598,53 @@ def main(argv=None):
     ap.add_argument("--horizons", default="5,10,20")
     ap.add_argument("--no-regime", action="store_true")
     ap.add_argument("--workers", type=int, default=0)
+    ap.add_argument("--universe", choices=["pit", "today"], default="pit", help="pit = training stocks chosen point in time (default); today = the old look-ahead rule, only to measure its effect")
+    ap.add_argument("--no-calendar", action="store_true", help="leave out the month-of-year and day-of-month inputs (on by default: they improved 8 of 13 test years, mean AUC +0.025)")
+    ap.add_argument("--experiment", action="store_true", help="quick walk-forward (10-day, 1 seed, from 2018) that prints its result and writes nothing")
+    ap.add_argument("--compare", action="store_true", help="with --experiment --calendar: compare no calendar inputs / month / day-of-month / both, 2 seeds, from 2014")
     a = ap.parse_args(argv)
-    if not (a.full or a.nightly or a.reeval):
-        ap.error("choose --full, --nightly or --reeval")
+    if not (a.full or a.nightly or a.reeval or a.experiment):
+        ap.error("choose --full, --nightly, --reeval or --experiment")
     horizons = [int(h) for h in a.horizons.split(",")]
     import aladin_env
     aladin_env.announce("aladin_model")
     t0 = time.time()
     cfg = load_cfg()
-    X, cal, nc, nlr, prices, tails, ind, train = build_dataset(a.limit)
-    turn = {s["s"]: (s.get("avgv20") or 0) * (s.get("c") or 0) for s in json.loads((TERM / "universe.json").read_text(encoding="utf-8"))["stocks"]}
-    pcaf, pca_k = pca_frame(prices)
-    pairf = pair_features(prices, ind, turn, workers=a.workers)
+    global SEEDS, FIRST_TEST_YEAR
+    if a.experiment:
+        SEEDS, FIRST_TEST_YEAR, horizons = [7], 2018, [10]
+        a.no_regime = True
+    X, cal, nc, nlr, (closes, vals), tails, ind, train = build_dataset(a.limit, point_in_time=(a.universe == "pit"), calendar=not a.no_calendar or a.compare)
+    liquid = vals >= MIN_VALUE_CR * 1e7                                    # each stock's own trailing traded value: who was liquid ON THAT DAY
+    pcaf, pca_k = pca_frame(closes, liquid=liquid)
+    pairf = pair_features(closes, ind, vals, workers=a.workers)
     X = attach_extras(X, pcaf, pairf)
     X["hmm_p_highvol"] = np.nan
     base_feats = [c for c in X.columns if c not in ("date", "sym", "tr") and not c.startswith("fwd")]
     feats = base_feats
     obs = market_obs(nc, nlr)
+    if a.experiment and a.compare:
+        SEEDS, FIRST_TEST_YEAR = [7, 21], 2014
+        variants = {"base": [f for f in feats if f not in ("moy", "dom")], "+month": [f for f in feats if f != "dom"], "+day-of-month": [f for f in feats if f != "moy"], "+both": feats}
+        yrs = {}
+        for name, fs in variants.items():
+            O = walk_forward(X, cal, obs, fs, [10], False, log=lambda *x: None)
+            ev, st, _ = evaluate(O[10], 10)
+            m = ev["metrics"]
+            yrs[name] = {y["year"]: y["auc"] for y in ev["years"]}
+            print(f"VARIANT {name:14s} features={len(fs)}: AUC {m['auc']} (raw all years {m['auc_all_years_raw']}), accuracy {m['accuracy']} vs base {m['base_rate']}, Brier {m['brier']} vs {m['brier_base']}, "
+                  f"top/bottom {m['top_decile_hit']}/{m['bottom_decile_hit']}, IC {m['ic_mean']} (t {m['ic_t']}), years {m['years_evaluated']} ({time.time() - t0:.0f}s)", flush=True)
+        print("PER-YEAR AUC (raw model ranking is in the 'auc_all_years_raw'; these are nested-calibrated):")
+        for y in sorted(set().union(*[set(v) for v in yrs.values()])):
+            print(f"   {y}: " + "  ".join(f"{n}={yrs[n].get(y)}" for n in yrs), flush=True)
+        return 0
+    if a.experiment:
+        O = walk_forward(X, cal, obs, feats, horizons, False, log=lambda *x: None)
+        ev, st, _ = evaluate(O[10], 10)
+        m = ev["metrics"]
+        print(f"EXPERIMENT universe={a.universe} calendar={not a.no_calendar} features={len(feats)}: AUC {m['auc']} (raw all years {m['auc_all_years_raw']}), accuracy {m['accuracy']} vs base {m['base_rate']}, "
+              f"Brier {m['brier']} vs {m['brier_base']}, top/bottom decile {m['top_decile_hit']}/{m['bottom_decile_hit']}, IC {m['ic_mean']} (t {m['ic_t']}), years {m['years_evaluated']}, n {m['n']:,} ({time.time() - t0:.0f}s)")
+        return 0
     state_path = OUT_DIR / "model_state.json"
     state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {}
     oos_out, iso, regime_use = {}, {}, {}
@@ -618,7 +689,7 @@ def main(argv=None):
            "weights": {"mode": "prior", **cfg["weights"], "fit": None, "sweep_validated": False},
            "model": {"type": "LightGBM x3 seeds per horizon, isotonic-calibrated; regime blend where it beat the pooled model out of sample", "features": len(feats),
                      "regime_blend": bool(any(regime_use.values())), "lstm": {"used": False, "tested": False, "auc_gain": None}, "pca_k": pca_k, "pairs": int(pairf[pairf["date"] == cal[-1]]["sym"].nunique()),
-                     "names": {f: NAMES[f] for f in feats if f in NAMES}, "trained_stocks": len(train), "scored_stocks": len(entries)},
+                     "names": {f: NAMES[f] for f in feats if f in NAMES}, "trained_stocks": int(X.loc[X["tr"], "sym"].nunique()), "scored_stocks": len(entries)},
            "oos": oos_out, "live": {str(h): {"scored": int(len(per[h])), "mean_p": round(float(np.mean(per[h])), 3)} for h in per}, "sweep_eval": None,
            "not_measured": NOT_MEASURED, "stocks": entries}
     txt = json.dumps(doc, separators=(",", ":"), allow_nan=False, default=lambda o: None)

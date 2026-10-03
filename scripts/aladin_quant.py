@@ -160,26 +160,31 @@ def half_life(s):
 
 # ------------------------------------------------------------------ PCA residuals
 
-def pca_residuals(ret, var_share=0.55, kmax=15, window=250, refit_every=5, min_obs=240):
+def pca_residuals(ret, var_share=0.55, kmax=15, window=250, refit_every=5, min_obs=240, liquid=None):
     """ret: DataFrame (date x symbol) of daily log returns. Every `refit_every` days the principal components are re-estimated on the
-    trailing `window` days (only stocks with >= min_obs observations in it); the days until the next refit are projected on those
-    components. Returns (residual returns DataFrame, k per refit Series). Residual_t = r_t - V V' r_t, using only components fitted
-    on data up to a date <= t, so there is no look-ahead."""
-    R = ret.fillna(0.0)
+    trailing `window` days (only stocks with >= min_obs observations in it, and, if `liquid` is given, only stocks that are liquid ON THAT DAY:
+    `liquid` is a boolean DataFrame aligned with `ret`, so the stock list never depends on how a stock traded later); the days until the next
+    refit are projected on those components. Returns (residual returns DataFrame, k per refit Series). Residual_t = r_t - V V' r_t, using only
+    components fitted on data up to a date <= t, so there is no look-ahead."""
     cols = list(ret.columns)
-    out = pd.DataFrame(np.nan, index=ret.index, columns=cols)
+    pos = {c: k for k, c in enumerate(cols)}
+    R = ret.fillna(0.0).values
+    N = ret.shape[1]
+    outv = np.full(ret.shape, np.nan)
     ks = {}
-    V = None
-    members = None
+    V, idx = None, None
+    counts = ret.notna().rolling(window, min_periods=1).sum().values if len(ret) > window else None
+    liq = None if liquid is None else liquid.reindex(index=ret.index, columns=cols).fillna(False).values
     for i in range(window, len(ret)):
         if V is None or (i - window) % refit_every == 0:
-            win = ret.iloc[i - window + 1:i + 1]
-            ok = win.notna().sum() >= min_obs
-            members = [c for c, good in zip(cols, ok) if good]
-            if len(members) < 30:
+            ok = counts[i] >= min_obs
+            if liq is not None:
+                ok = ok & liq[i]
+            idx = np.where(ok)[0]
+            if len(idx) < 30:
                 V = None
                 continue
-            W = win[members].fillna(0.0).values
+            W = R[i - window + 1:i + 1][:, idx]
             W = W - W.mean(0)
             u, s, vt = np.linalg.svd(W, full_matrices=False)
             share = np.cumsum(s ** 2) / (s ** 2).sum()
@@ -188,9 +193,9 @@ def pca_residuals(ret, var_share=0.55, kmax=15, window=250, refit_every=5, min_o
             ks[ret.index[i]] = k
         if V is None:
             continue
-        r = R.iloc[i][members].values
-        out.iloc[i, [cols.index(m) for m in members]] = r - V @ (V.T @ r)
-    return out, pd.Series(ks, dtype=float)
+        r = R[i, idx]
+        outv[i, idx] = r - V @ (V.T @ r)
+    return pd.DataFrame(outv, index=ret.index, columns=cols), pd.Series(ks, dtype=float)
 
 
 def pca_features(ret, resid):

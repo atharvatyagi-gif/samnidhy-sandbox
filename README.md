@@ -303,7 +303,7 @@ About 80 inputs per stock per day feed three gradient-boosted tree models (Light
 
 Extra inputs: the part of each NIFTY 500 stock's recent return left over after removing the common market factors (principal-component residuals); the gap between the stock and its most similar same-industry peer when the two are cointegrated (Engle-Granger test, followed by a Kalman filter); the probability that the market is in a turbulent regime (a two-state hidden Markov model, fitted only on training data and used only in its forward-filtered form); and jump statistics (how often and how large the stock's unusual daily moves have been).
 
-Separate calm-market and turbulent-market model sets are trained and used only if they scored better than a single model on years the models never saw. Probabilities are then calibrated (isotonic regression) on the pooled results from those unseen years. The technical score T is 200 times (p minus 0.5), limited to the range -100 to +100.
+Separate calm-market and turbulent-market model sets are trained and used only if they scored better than a single model on years the models never saw. Probabilities are then calibrated (isotonic regression): in the tests, each year is calibrated only on earlier years, so the test is not flattered; the live model uses all unseen years pooled. The technical score T is 200 times (p minus 0.5), limited to the range -100 to +100.
 
 **Fundamental view**
 
@@ -331,7 +331,7 @@ These weights are priors chosen in advance. Every night the model saves its pred
 
 **How it was tested**
 
-Walk-forward: each test year from 2013 onward is predicted by models trained only on earlier years, with a gap of 10, 15 or 25 trading days (for the 5, 10 and 20-day horizons) between training and test so no answer leaks across. All accuracy, AUC, Brier score and decile figures on this page come from those unseen years. The training universe is the NIFTY 500 plus main-board stocks trading at least Rs 5 crore a day on average; other securities are scored with the same models. Securities with fewer than 250 daily bars get no probability.
+Walk-forward: each test year from 2013 onward is predicted by models trained only on earlier years, with a gap of 10, 15 or 25 trading days (for the 5, 10 and 20-day horizons) between training and test so no answer leaks across. All accuracy, AUC, Brier score and decile figures on this page come from those unseen years. A stock is in the training set on a given day only if its own trailing 20-day traded value was at least Rs 5 crore that day (point in time, so today's liquidity does not leak into the past); other securities are scored with the same models. Month-of-year and day-of-month are model inputs: they improved 8 of 13 test years but not all, so treat that gain as modest. Caveat: the saved price history holds only stocks listed today (delisted companies are missing), so the figures are likely a little optimistic. Securities with fewer than 250 daily bars get no probability.
 
 Out of sample, the model's edge over the base rate is small. The yearly table shows that it varies from year to year and is sometimes no better than chance.
 
