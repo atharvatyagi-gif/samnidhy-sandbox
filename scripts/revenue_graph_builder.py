@@ -169,6 +169,12 @@ def share_in_quote(w, quote):
 
 # ------------------------------------------------------------------ validation of one LLM answer
 
+# A dependency is on ONE company. "key suppliers", "MSMEs / small producers", "supply chain partners", "large mining OEMs" are groups: the share
+# they carry is a share of a category, so such edges are rejected (a single anonymised "Customer A" / "a leading semiconductor player" is fine).
+GROUP_WORDS = re.compile(r"\b(suppliers|vendors|partners|clients|customers|producers|msmes?|oems|players|sources|distributors|dealers|retailers|farmers|"
+                         r"contractors|manufacturers|sellers|companies|firms|brands|institutions|banks|governments|utilities|agencies|operators|"
+                         r"tier[- ]?\d|small|key)\b", re.I)
+
 def validate_answer(raw, pages_by_no, meta, now, schema):
     """raw: parsed JSON from the model. -> (edges, facilities, dropped: list[str]). Never raises on bad content."""
     import jsonschema
@@ -211,6 +217,9 @@ def validate_answer(raw, pages_by_no, meta, now, schema):
         anon = (e.get("counterparty_anon_label") or "").strip()
         if not named and not anon:
             dropped.append("edge names no counterparty")
+            continue
+        if GROUP_WORDS.search((e.get("counterparty_name") or "") + " " + (e.get("counterparty_anon_label") or "")):
+            dropped.append("counterparty is a group, not one company")
             continue
         basis = e.get("w_basis") if w is not None else None
         if w is not None and basis not in ("revenue", "purchases"):
@@ -285,52 +294,98 @@ class LLMBudget(Exception):
     pass
 
 
-class LLM:
-    """Groq or Gemini through their plain REST APIs (no SDK). `complete(system, user) -> str` is the only thing the builder uses."""
+class LLMBadRequest(Exception):
+    """The provider refused this one request (too long, invalid JSON from the model...). Other chunks can still be tried."""
 
-    def __init__(self, provider=None, max_calls=120, sleep=time.sleep):
+
+class LLM:
+    """Free-tier models through their plain REST APIs (no SDK). `complete(system, user) -> str` is the only thing the builder uses.
+
+    Candidates are tried in order and a model whose DAILY quota is used up is skipped for the rest of the run: Groq's free models each have their own
+    daily token allowance (openai/gpt-oss-120b, then openai/gpt-oss-20b, then qwen), and Gemini is added when GEMINI_API_KEY is set. Override the
+    first Groq model with GROQ_MODEL, the Gemini one with GEMINI_MODEL, the whole Groq list with GROQ_FALLBACK_MODELS (comma separated)."""
+
+    def __init__(self, provider=None, max_calls=120, sleep=time.sleep, clock=time.monotonic):
         env = os.environ
         want = (provider or env.get("LLM_PROVIDER") or "auto").lower()
+        self.cands = []
         if want in ("auto", "groq") and env.get("GROQ_API_KEY"):
-            self.provider = "groq"
-        elif want in ("auto", "gemini") and env.get("GEMINI_API_KEY"):
-            self.provider = "gemini"
-        else:
-            self.provider = None
-        self.calls, self.max_calls, self.sleep = 0, max_calls, sleep
-        # model names move; override them with GROQ_MODEL / GEMINI_MODEL. The defaults are checked against the provider's model list at the start of a real run.
-        self.model = {"groq": env.get("GROQ_MODEL", "llama-3.3-70b-versatile"), "gemini": env.get("GEMINI_MODEL", "gemini-2.5-flash")}.get(self.provider)
+            first = env.get("GROQ_MODEL") or "openai/gpt-oss-120b"
+            rest = [m.strip() for m in (env.get("GROQ_FALLBACK_MODELS") or "openai/gpt-oss-20b,qwen/qwen3.8-27b").split(",") if m.strip()]
+            self.cands += [("groq", m) for m in dict.fromkeys([first] + rest)]
+        if want in ("auto", "gemini") and env.get("GEMINI_API_KEY"):
+            gem = [env["GEMINI_MODEL"]] if env.get("GEMINI_MODEL") else ["gemini-flash-latest", "gemini-flash-lite-latest"]   # aliases: Google retires fixed names
+            self.cands += [("gemini", m) for m in gem]
+        self.provider = self.cands[0][0] if self.cands else None
+        self.model = self.cands[0][1] if self.cands else None
+        self.calls, self.max_calls, self.sleep, self.clock = 0, max_calls, sleep, clock
+        self.dead = set()                                  # candidates whose daily quota is used up (or that keep failing)
+        self.fails = {}
+        self._ready = {}                                   # per-candidate earliest next call (free-tier pacing: ~7,000 tokens a minute on Groq)
 
     @property
     def tag(self):
-        return f"{self.provider}:{self.model}"
+        live = [c for c in self.cands if c not in self.dead]
+        return "%s:%s" % (live[0] if live else self.cands[0])
+
+    def _call(self, cand, system, user):
+        import requests
+        prov, model = cand
+        if prov == "groq":
+            body = {"model": model, "temperature": 0, "response_format": {"type": "json_object"}, "max_completion_tokens": 3500,
+                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+            if model.startswith("openai/gpt-oss"):
+                body["reasoning_effort"] = "low"
+            return requests.post("https://api.groq.com/openai/v1/chat/completions", timeout=90, json=body,
+                                 headers={"Authorization": "Bearer " + os.environ["GROQ_API_KEY"], "User-Agent": UA})
+        return requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", timeout=90,
+                             headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"], "User-Agent": UA},
+                             json={"systemInstruction": {"parts": [{"text": system}]}, "contents": [{"role": "user", "parts": [{"text": user}]}],
+                                   "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}})
 
     def complete(self, system, user):
         import requests
         if self.calls >= self.max_calls:
             raise LLMBudget(f"the run's limit of {self.max_calls} model calls is used up")
-        for attempt in range(5):
-            self.calls += 1
-            if self.provider == "groq":
-                r = requests.post("https://api.groq.com/openai/v1/chat/completions", timeout=90,
-                                  headers={"Authorization": "Bearer " + os.environ["GROQ_API_KEY"], "User-Agent": UA},
-                                  json={"model": self.model, "temperature": 0, "response_format": {"type": "json_object"},
-                                        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]})
-            else:
-                r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent", timeout=90,
-                                  headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"], "User-Agent": UA},
-                                  json={"systemInstruction": {"parts": [{"text": system}]}, "contents": [{"role": "user", "parts": [{"text": user}]}],
-                                        "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}})
-            if r.status_code == 429 or r.status_code >= 500:
-                wait = min(60, float(r.headers.get("retry-after", 2 ** (attempt + 1))))
+        for attempt in range(8):
+            live = [c for c in self.cands if c not in self.dead]
+            if not live:
+                raise LLMBudget("the free daily quota is used up on every configured model; the run resumes tomorrow from where it stopped")
+            cand = live[0]
+            wait = self._ready.get(cand, 0.0) - self.clock()
+            if wait > 0:
                 self.sleep(wait)
+            try:
+                r = self._call(cand, system, user)
+            except (requests.ConnectionError, requests.Timeout):          # a network blip: wait and try again
+                self.sleep(min(60, 5 * 2 ** min(attempt, 4)))
                 continue
+            if r.status_code == 429:
+                if "per day" in r.text.lower() or "(tpd)" in r.text.lower() or "daily" in r.text.lower():
+                    self.dead.add(cand)                                    # this model's day is over: use the next one
+                    continue
+                self.sleep(min(90, float(r.headers.get("retry-after", 2 ** (attempt + 1)))))
+                continue
+            if r.status_code >= 500:
+                self.fails[cand] = self.fails.get(cand, 0) + 1
+                if self.fails[cand] >= 3:                                  # persistently overloaded: use the next model
+                    self.dead.add(cand)
+                self.sleep(min(30, 2 ** (attempt + 1)))
+                continue
+            if r.status_code in (400, 413):
+                raise LLMBadRequest(f"{r.status_code}: {r.text[:160]}")
             r.raise_for_status()
+            self.calls += 1                                   # only answered requests use up the budget; retries do not
+            self.fails[cand] = 0
             js = r.json()
-            if self.provider == "groq":
+            used = (js.get("usage") or {}).get("total_tokens") or (js.get("usageMetadata") or {}).get("totalTokenCount") or 0
+            tpm, gap = (7000, 1.0) if cand[0] == "groq" else (200000, 6.5)
+            self._ready[cand] = self.clock() + max(gap, used / tpm * 60.0)
+            self.provider, self.model = cand
+            if cand[0] == "groq":
                 return js["choices"][0]["message"]["content"]
             return js["candidates"][0]["content"]["parts"][0]["text"]
-        raise RuntimeError("model API kept refusing (rate limit); stopping this filing")
+        raise RuntimeError("model API unreachable or rate-limited after several tries; stopping this filing")
 
 
 def parse_json_text(s):
@@ -424,31 +479,38 @@ def discover(session, sym, src, now=None, get=None):
 # ------------------------------------------------------------------ one company
 
 def extract_filing(doc, fetcher, llm, src, now, llm_cache, log=print):
-    """-> (edges, facilities, notes). LLM answers are cached per (filing hash, chunk hash, prompt version)."""
+    """-> (edges, facilities, notes, answered). `answered` = number of chunks the model actually answered (0 means nothing was learned from this
+    filing, so the company must not be recorded as done). LLM answers are cached per (filing hash, chunk hash, prompt version)."""
     sh, pages = fetcher.pages(doc["url"])
     if not pages:
-        return [], [], [f"{doc['kind']}: no readable text"]
+        return [], [], [f"{doc['kind']}: no readable text"], 0
     if doc["kind"] == "transcript" and sum(len(t) for _, t in pages) < src.get("min_transcript_chars", 6000):
-        return [], [], ["transcript: too short to be a transcript (a notice); skipped"]
+        return [], [], ["transcript: too short to be a transcript (a notice); skipped"], 0
     sel = select_pages(pages, src["keywords"], src["min_keyword_hits"], src["max_pages_per_filing"], src["max_chunks_per_filing"] * src["max_chunk_chars"])
     chunks = chunk_pages(sel, src["max_chunk_chars"])[: src["max_chunks_per_filing"]]
     edges, facs, notes = [], [], [f"{doc['kind']}: {len(pages)} pages, {len(sel)} relevant, {len(chunks)} sent"]
+    answered = 0
     for text, pmap in chunks:
         key = sha(f"{sh}|{sha(text)}|{src['prompt_version']}")
         cp = llm_cache / f"{key}.json"
         ans = load_json(cp) if cp.exists() else None
         if ans is None:
-            raw = llm.complete(src["system_prompt"], f"Filing text follows.\n\n{text}")
+            try:
+                raw = llm.complete(src["system_prompt"], f"Filing text follows.\n\n{text}")
+            except LLMBadRequest as ex:
+                notes.append(f"chunk refused by the model API ({str(ex)[:90]})")
+                continue
             ans = parse_json_text(raw)
             if ans is None:
                 notes.append("model answer was not JSON")
                 continue
             cp.write_text(json.dumps(ans), encoding="utf-8")
+        answered += 1
         e, f, dr = validate_answer(ans, pmap, {**doc, "period": doc.get("period")}, now, src["schema"])
         edges += e
         facs += f
         notes += dr
-    return edges, facs, notes
+    return edges, facs, notes, answered
 
 
 def to_graph_edges(owner, items, index):
@@ -580,12 +642,12 @@ def run(symbols, limit, refresh, dry, session, llm, fetcher, now=None, log=print
             results[sym] = {"edges": [], "fac": [], "at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "notes": ["no filing found"]}
             report.append((sym, "no filing found"))
             continue
-        edges, facs, notes, stop, got_tr = [], [], [], False, 0
+        edges, facs, notes, stop, got_tr, answered = [], [], [], False, 0, 0
         for doc in docs:
             if doc["kind"] == "transcript" and got_tr >= src["transcripts_per_company"]:
                 continue
             try:
-                e, f, n = extract_filing(doc, fetcher, llm, src, now, llm_cache, log)
+                e, f, n, a = extract_filing(doc, fetcher, llm, src, now, llm_cache, log)
             except LLMBudget as b:
                 notes.append(str(b))
                 stop = True
@@ -596,18 +658,23 @@ def run(symbols, limit, refresh, dry, session, llm, fetcher, now=None, log=print
             edges += e
             facs += f
             notes += n
+            answered += a
             if doc["kind"] == "transcript" and not any("skipped" in x or "no readable" in x for x in n):
                 got_tr += 1
         if stop and not edges:
             report.append((sym, "stopped: " + notes[-1]))
             break
+        if answered == 0:                                  # nothing learned (rate limits, refusals): leave the company for the next run
+            report.append((sym, "NOT recorded, will be retried: " + "; ".join(notes[:3])))
+            continue
         results[sym] = {"edges": to_graph_edges(sym, edges, index), "fac": facs, "at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "notes": notes}
         report.append((sym, f"{len(edges)} edges, {len(facs)} facilities; " + "; ".join(notes[:2])))
+        log("  %-12s %s" % report[-1])
+        if not dry:                                        # saved after every company: a stopped or crashed run loses nothing
+            OUT.write_text(json.dumps(assemble(old, results, stocks, houses, cfg["anon_resolve_min_conf"], now), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         if stop:
             break
     doc = assemble(old, results, stocks, houses, load_cfg()["anon_resolve_min_conf"], now)
-    for r in report:
-        log("  %-12s %s" % r)
     if not dry:
         OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         log(f"wrote {OUT.name}: {doc['coverage']}")

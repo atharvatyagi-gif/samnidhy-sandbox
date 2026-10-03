@@ -215,8 +215,8 @@ def test_extract_filing_end_to_end_with_cache_and_pre_filter(tmp_path):
     llm = FakeLLM({"edges": [edge(), edge(quote="invented sentence about a 99% customer", w=0.99)], "facilities": []})
     (tmp_path / "llm").mkdir()
     doc = {"kind": "annual", "url": "u", "period": "FY2024-25"}
-    e, f, notes = rb.extract_filing(doc, FakeFetcher(pages), llm, SRC, NOW, tmp_path / "llm")
-    assert len(e) == 1 and llm.calls == 1 and notes[0].startswith("annual: 12 pages, 1 relevant")
+    e, f, notes, answered = rb.extract_filing(doc, FakeFetcher(pages), llm, SRC, NOW, tmp_path / "llm")
+    assert answered == 1 and len(e) == 1 and llm.calls == 1 and notes[0].startswith("annual: 12 pages, 1 relevant")
     rb.extract_filing(doc, FakeFetcher(pages), llm, SRC, NOW, tmp_path / "llm")
     assert llm.calls == 1                                                # second time comes from the cache
 
@@ -236,6 +236,8 @@ def test_discover_reads_annual_report_and_transcripts_and_survives_failures():
 
 
 def test_run_without_a_key_does_nothing_and_budget_stops_the_run(monkeypatch, capsys):
+    import aladin_env
+    monkeypatch.setattr(aladin_env, "load_env", lambda *a, **k: None)      # never read the real .env in a test
     for k in ("GROQ_API_KEY", "GEMINI_API_KEY", "LLM_PROVIDER"):
         monkeypatch.delenv(k, raising=False)
     assert rb.LLM().provider is None and rb.main([]) == 0
@@ -252,7 +254,7 @@ def test_llm_retries_on_429_then_succeeds(monkeypatch):
 
     class R:
         def __init__(self, code):
-            self.status_code, self.headers = code, {"retry-after": "0"}
+            self.status_code, self.headers, self.text = code, {"retry-after": "0"}, "slow down"
 
         def raise_for_status(self):
             pass
@@ -281,3 +283,44 @@ def test_geocode_rules():
     assert n == 1 and doc["fac"]["F1"]["geo_prec"] == "locality" and doc["fac"]["F2"]["lat"] is None and doc["nodes"][0]["lat"] == 18.76
     assert gf.geocode(doc, lambda a: pytest.fail("cached"), cache, sleep=lambda s: None) == 0
     assert gf.geocode({"fac": {"F3": {"addr": "Nowhere", "lat": None}}}, lambda a: None, {}, sleep=lambda s: None) == 1   # no match: stays without coordinates
+
+
+def test_daily_quota_moves_to_the_next_model_and_ends_the_run_when_all_are_used(monkeypatch):
+    import requests
+    monkeypatch.setenv("GROQ_API_KEY", "x")
+    monkeypatch.setenv("GROQ_MODEL", "m-big")
+    monkeypatch.setenv("GROQ_FALLBACK_MODELS", "m-small")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    seen = []
+
+    class R:
+        def __init__(self, code, text=""):
+            self.status_code, self.headers, self.text = code, {}, text
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"message": {"content": "{}"}}], "usage": {"total_tokens": 100}}
+
+    def post(url, json=None, **k):
+        seen.append(json["model"])
+        if json["model"] == "m-big":
+            return R(429, "Rate limit reached on tokens per day (TPD): Limit 200000")
+        return R(200)
+    monkeypatch.setattr(requests, "post", post)
+    llm = rb.LLM(sleep=lambda s: None, clock=lambda: 0.0)
+    assert llm.complete("s", "u") == "{}" and seen == ["m-big", "m-small"] and llm.tag == "groq:m-small"
+    assert llm.complete("s", "u") == "{}" and seen[-1] == "m-small"          # the big model is not tried again today
+    monkeypatch.setattr(requests, "post", lambda url, json=None, **k: R(429, "tokens per day (TPD)"))
+    with pytest.raises(rb.LLMBudget):
+        rb.LLM(sleep=lambda s: None, clock=lambda: 0.0).complete("s", "u")
+
+
+@pytest.mark.parametrize("label,kept", [("Tata Motors Limited", True), ("Customer A", True), ("a leading semiconductor player", True),
+                                         ("key suppliers", False), ("MSMEs / small producers", False), ("supply chain partners", False),
+                                         ("large mining OEMs", False), ("North American recreational off-highway vehicle OEM", True)])
+def test_groups_of_companies_are_not_counterparties(label, kept):
+    q = "Our largest customer, Tata Motors Limited, accounted for 24% of our revenue"
+    e, _, dropped = validate([edge(counterparty_name=None if label == "Customer A" else label, counterparty_anon_label="Customer A" if label == "Customer A" else None, quote=q)])
+    assert bool(e) == kept, (label, dropped)
