@@ -233,85 +233,112 @@ def load_alt():
     return load_json(OUT, {}).get("stocks", {})
 
 
-def run(symbols, use_nse=True, transcripts=True, now=None, session=None, scorer=None, http_get=None):
-    """-> alt_scores document. `scorer(list[str]) -> list[float]` defaults to FinBERT; session defaults to the daemon's NseSession."""
+def priority_order(symbols, prev):
+    """Stocks with no filing score yet first (in the order given, i.e. most traded first), then the ones whose score is oldest. A run that is cut short
+    by its time budget therefore always moves the coverage forward instead of re-doing the same stocks."""
+    def key(item):
+        i, s = item
+        n = (prev.get(s) or {}).get("nlp")
+        return (0, "", i) if not n else (1, n.get("at") or "", i)
+    return [s for _, s in sorted(enumerate(symbols), key=key)]
+
+
+def run(symbols, use_nse=True, transcripts=True, now=None, session=None, scorer=None, http_get=None, max_seconds=None, clock=time.monotonic, save=None, log=print):
+    """-> alt_scores document.  `scorer(list[str]) -> list[float]` defaults to FinBERT; `session` to the daemon's NseSession.
+    Order of work (so a time-out can never lose the cheap part): 1) delivery trend and bulk/block deals, saved at once; 2) NSE announcements, most-needed
+    stocks first, saved every 25 stocks and at the end, stopping politely when `max_seconds` is used up (each run adds to what earlier runs found)."""
     now = now or now_utc()
+    t0 = clock()
     tone = load_json(TONE, {"hedge": [], "confident": []})
     hedge, confident = set(tone.get("hedge", [])), set(tone.get("confident", []))
-    old = load_alt()
-    prev = {s: v for s, v in old.items()}
-    notes, per = [], {}
-    cache_p = CACHE / "filings_scores.json"
-    scache = load_json(cache_p, {})
-    tcache = load_json(CACHE / "transcripts.json", {})
-    if use_nse:
-        if session is None:
-            import aladin_ticker_daemon as d
-            session = d.NseSession()
-        if scorer is None:
-            import aladin_sentiment_engine as se
-            scorer = se.Finbert.get().score
-        fails = 0
-        done_transcripts = 0
-        for i, sym in enumerate(symbols):
-            anns = fetch_announcements(session, sym, today=now.date())
-            if anns is None:
-                fails += 1
-                if fails >= 10 and fails == i + 1:
-                    notes.append("NSE corporate announcements were unreachable from here (the first 10 requests failed): filing text is not measured this run.")
-                    break
-                continue
-            fails = 0
-            new = [a for a in anns if usable(a) and str(a.get("seq_id")) not in scache and parse_ts(a.get("an_dt") or "") and (now - parse_ts(a["an_dt"])).days <= WINDOW_DAYS]
-            if new:
-                for a, s in zip(new, scorer([f"{a.get('desc', '')}. {a.get('attchmntText', '')}"[:600] for a in new])):
-                    scache[str(a["seq_id"])] = s
-            r = filing_nlp(anns, scache, hedge, confident, now)
-            if r:
-                per[sym] = r
-            if transcripts and done_transcripts < TRANSCRIPT_CAP:
-                for t in find_transcripts(anns)[:1]:
-                    url = t["attchmntFile"]
-                    if url in tcache:
-                        res = tcache[url]
-                    else:
-                        raw = (http_get or _download)(url)
-                        txt = pdf_text(raw) if raw else None
-                        import aladin_sentiment_engine as se
-                        res = se.score_transcript(txt, sym, cache=tcache, key=url) if txt else None
-                        done_transcripts += 1
-                    if res and res.get("qa_gap") is not None and sym in per:
-                        per[sym]["qa"], per[sym]["src"] = res["qa_gap"], url
-        scache = {k: v for k, v in scache.items()}
-        CACHE.mkdir(parents=True, exist_ok=True)
-        cache_p.write_text(json.dumps(scache, separators=(",", ":")), encoding="utf-8")
-        (CACHE / "transcripts.json").write_text(json.dumps(tcache, separators=(",", ":")), encoding="utf-8")
-        for s, r in list(per.items()):
-            prev_s = prev.get(s, {})
-            prev_s["nlp"] = r
-            prev[s] = prev_s
+    prev = dict(load_alt())
+    notes = []
+    cache_p, tcache_p = CACHE / "filings_scores.json", CACHE / "transcripts.json"
+    scache, tcache = load_json(cache_p, {}), load_json(tcache_p, {})
+
+    def doc():
         zs = nlp_z({s: v.get("nlp") for s, v in prev.items()})
         for s in prev:
             if s in zs:
                 prev[s]["nlp_z"] = zs[s]
-    # alt data
-    deliv = load_delivery()
-    for s, series in deliv.items():
+        return {"generated_utc": now.isoformat(timespec="seconds"), "notes": list(notes), "stocks": prev}
+
+    def persist():
+        d = doc()
+        if save:
+            save(d)
+        CACHE.mkdir(parents=True, exist_ok=True)
+        cache_p.write_text(json.dumps(scache, separators=(",", ":")), encoding="utf-8")
+        tcache_p.write_text(json.dumps(tcache, separators=(",", ":")), encoding="utf-8")
+        return d
+
+    # 1) the cheap part
+    for s, series in load_delivery().items():
         tr = delivery_trend(series)
         if tr is not None:
             prev.setdefault(s, {}).setdefault("alt", {})["deliv"] = tr
     deals_dir = CACHE / "deals"
-    get = http_get or _download_text
-    rows = fetch_deals(get) if use_nse else []
+    rows = fetch_deals(http_get or _download_text) if use_nse else []
     if rows:
         save_deals(deals_dir, rows)
     elif use_nse:
         notes.append("Bulk/block deal files could not be fetched today.")
-    nets = net_deal_value(deals_dir, 30, now.date())
-    for s, v in nets.items():
+    for s, v in net_deal_value(deals_dir, 30, now.date()).items():
         prev.setdefault(s, {}).setdefault("alt", {})["bulk_cr"] = v
     notes.append(f"Bulk/block history: {len(list(deals_dir.glob('*.json'))) if deals_dir.exists() else 0} day(s) saved so far; the 30-day net value builds up from the first run.")
-    return {"generated_utc": now.isoformat(timespec="seconds"), "notes": notes, "stocks": prev}
+    persist()
+    log(f"filings: delivery trend for {sum(1 for v in prev.values() if (v.get('alt') or {}).get('deliv') is not None)} stocks and deals saved ({clock() - t0:.0f} s)")
+    if not use_nse:
+        return doc()
+
+    # 2) announcements
+    if session is None:
+        import aladin_ticker_daemon as d
+        session = d.NseSession()
+    if scorer is None:
+        import aladin_sentiment_engine as se
+        scorer = se.Finbert.get().score
+        log(f"filings: scoring model ready ({clock() - t0:.0f} s)")
+    order = priority_order(symbols, prev)
+    fails, done_transcripts, done = 0, 0, 0
+    for i, sym in enumerate(order):
+        if max_seconds and clock() - t0 > max_seconds:
+            notes.append(f"Stopped after {done} of {len(order)} stocks: the time budget ({max_seconds // 60:.0f} min) ran out. The next run continues with the stocks not yet scored.")
+            break
+        anns = fetch_announcements(session, sym, today=now.date())
+        if anns is None:
+            fails += 1
+            if fails >= 10 and fails == i + 1:
+                notes.append("NSE corporate announcements were unreachable from here (the first 10 requests failed): filing text is not measured this run.")
+                break
+            continue
+        fails = 0
+        done += 1
+        new = [a for a in anns if usable(a) and str(a.get("seq_id")) not in scache and parse_ts(a.get("an_dt") or "") and (now - parse_ts(a["an_dt"])).days <= WINDOW_DAYS]
+        if new:
+            for a, s in zip(new, scorer([f"{a.get('desc', '')}. {a.get('attchmntText', '')}"[:600] for a in new])):
+                scache[str(a["seq_id"])] = s
+        r = filing_nlp(anns, scache, hedge, confident, now)
+        if r:
+            r["at"] = now.date().isoformat()
+            prev.setdefault(sym, {})["nlp"] = r
+        if transcripts and done_transcripts < TRANSCRIPT_CAP:
+            for tr_ann in find_transcripts(anns)[:1]:
+                url = tr_ann["attchmntFile"]
+                if url in tcache:
+                    res = tcache[url]
+                else:
+                    raw = (http_get or _download)(url)
+                    txt = pdf_text(raw) if raw else None
+                    import aladin_sentiment_engine as se
+                    res = se.score_transcript(txt, sym, cache=tcache, key=url) if txt else None
+                    done_transcripts += 1
+                if res and res.get("qa_gap") is not None and (prev.get(sym) or {}).get("nlp"):
+                    prev[sym]["nlp"]["qa"], prev[sym]["nlp"]["src"] = res["qa_gap"], url
+        if done % 25 == 0:
+            persist()
+            log(f"filings: {done}/{len(order)} stocks, {sum(1 for v in prev.values() if v.get('nlp'))} with a score ({clock() - t0:.0f} s)")
+    return persist()
 
 
 def _download(url):
@@ -333,14 +360,17 @@ def main(argv=None):
     ap.add_argument("--symbols", default="")
     ap.add_argument("--alt-only", action="store_true")
     ap.add_argument("--no-transcripts", action="store_true")
+    ap.add_argument("--max-minutes", type=float, default=0, help="stop the announcement loop after this many minutes (the delivery / deals part is always done first)")
     a = ap.parse_args(argv)
     import aladin_env
     aladin_env.announce("aladin_filings")
     uni = json.loads((TERM / "universe.json").read_text(encoding="utf-8"))["stocks"]
     syms = [s.strip() for s in a.symbols.split(",") if s.strip()] or [s["s"] for s in sorted((x for x in uni if x.get("n500")), key=lambda x: -(x.get("avgv20") or 0) * (x.get("c") or 0))]
-    doc = run(syms, use_nse=not a.alt_only, transcripts=not a.no_transcripts)
-    CACHE.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
+    def save(d):
+        CACHE.mkdir(parents=True, exist_ok=True)
+        OUT.write_text(json.dumps(d, separators=(",", ":")), encoding="utf-8")
+    doc = run(syms, use_nse=not a.alt_only, transcripts=not a.no_transcripts, max_seconds=a.max_minutes * 60 if a.max_minutes else None, save=save)
+    save(doc)
     nn = sum(1 for v in doc["stocks"].values() if v.get("nlp"))
     nd = sum(1 for v in doc["stocks"].values() if (v.get("alt") or {}).get("deliv") is not None)
     print(f"filings: {nn} stocks with filing text scored, {nd} with a delivery trend; notes: {doc['notes']}")

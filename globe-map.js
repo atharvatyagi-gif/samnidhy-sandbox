@@ -132,6 +132,33 @@ const BASEMAPS = {
 };
 const ZOOM_PRESETS = { world: [[20, 25], 2], india: [[22, 80], 5] };
 
+/* FRESHNESS RULE for everything the Globe shows: nothing older than 7 days, undated items are dropped, and flight positions are only used while the
+   snapshot they came from is under 2 hours old. Applied in the browser every time the page checks for new data, so an item that turns 8 days old
+   disappears by itself even if the published file has not been refreshed. `hidden` says how much was left out, so the page can tell the user. */
+export const GLOBE_MAX_AGE_MS = 7 * 864e5, GLOBE_FLIGHTS_MAX_SNAPSHOT_MIN = 120;
+export function freshGlobe(G, now = Date.now()) {
+  if (!G || !G.chokepoints) return G;
+  const lim = now - GLOBE_MAX_AGE_MS, ms = s => { const d = Date.parse(s); return Number.isFinite(d) ? d : null; };
+  const ok = s => { const d = ms(s); return d !== null && d >= lim; };
+  const hidden = { news: 0, events: 0, hazards: 0, vessels: 0, flights: 0 };
+  const snapMin = G.generated_utc && ms(G.generated_utc) !== null ? (now - ms(G.generated_utc)) / 60000 : Infinity;
+  const keep = (arr, f, k) => { const out = (arr || []).filter(f); hidden[k] += (arr || []).length - out.length; return out; };
+  const out = { ...G };
+  out.chokepoints = G.chokepoints.map(p => {
+    const q = { ...p };
+    if (q.news) q.news = keep(q.news, a => ok(a.seen_utc), "news");
+    if (q.vessels) { const d = ms(q.vessels.date + "T00:00:00Z"); if (d === null || d < lim) { hidden.vessels++; delete q.vessels; } }
+    if (q.flights && snapMin > GLOBE_FLIGHTS_MAX_SNAPSHOT_MIN) { hidden.flights += q.flights.count || 0; delete q.flights; }
+    return q;
+  });
+  out.events = keep(G.events, a => ok(a.seen_utc), "events");
+  const H = G.hazards || {};
+  out.hazards = { disruptions: keep(H.disruptions, d => ok(d.to_utc) || ok(d.from_utc), "hazards"), earthquakes: keep(H.earthquakes, q => ok(q.time_utc), "hazards"),
+    natural_events: keep(H.natural_events, n => ok(n.date), "hazards"), alerts: keep(H.alerts, a => ok(a.to_utc) || ok(a.from_utc), "hazards") };
+  out.hidden = hidden; out.snapshot_age_min = Number.isFinite(snapMin) ? Math.round(snapMin) : null;
+  return out;
+}
+
 export class GlobeMap {
   constructor(host, hooks = {}) {
     this.host = host; this.hooks = hooks; this.sel = null; this.markers = new Map();

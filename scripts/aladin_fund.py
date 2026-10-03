@@ -97,9 +97,11 @@ def load_cached(sym):
         return None
 
 
-def refresh_batch(symbols, n500, batch=400, now=None, fetch=fetch_statements, workers=6):
-    """NIFTY 500 first, then everything else; within each group the stalest (or never-fetched) first. Fetches at most `batch`."""
+def refresh_batch(symbols, n500, batch=400, now=None, fetch=fetch_statements, workers=6, max_seconds=None, clock=time.monotonic):
+    """NIFTY 500 first, then everything else; within each group the stalest (or never-fetched) first. Fetches at most `batch`, and stops submitting new
+    work once `max_seconds` has passed (what was fetched is kept: the cache is written per stock, so a cut-off run still moves the coverage forward)."""
     now = now or now_utc()
+    t0 = clock()
     def age(s):
         c = load_cached(s)
         return (now - datetime.fromisoformat(c["fetched"])).total_seconds() / 86400 if c else 1e9
@@ -115,9 +117,14 @@ def refresh_batch(symbols, n500, batch=400, now=None, fetch=fetch_statements, wo
                 return s, True
             time.sleep(1.5 * (attempt + 1))
         return s, False
+    res, stopped = [], False
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        res = list(ex.map(one, todo))
-    return {"due": len(due), "tried": len(todo), "ok": sum(1 for _, ok in res if ok)}
+        for k in range(0, len(todo), workers * 4):
+            if max_seconds and clock() - t0 > max_seconds:
+                stopped = True
+                break
+            res += list(ex.map(one, todo[k:k + workers * 4]))
+    return {"due": len(due), "tried": len(res), "ok": sum(1 for _, ok in res if ok), "stopped_on_time_budget": stopped}
 
 
 # ------------------------------------------------------------------ raw metrics
@@ -397,12 +404,13 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-fetch", action="store_true")
     ap.add_argument("--batch", type=int, default=400)
+    ap.add_argument("--max-minutes", type=float, default=0, help="stop fetching statements after this many minutes (scoring of what is cached always follows)")
     a = ap.parse_args(argv)
     uni = json.loads((TERM / "universe.json").read_text(encoding="utf-8"))["stocks"]
     syms = [s["s"] for s in uni if s.get("series") == "EQ" and not s.get("etf") and s.get("board") == "Main"]
     if not a.no_fetch:
         n500 = {s["s"] for s in uni if s.get("n500")}
-        print("statements:", refresh_batch(syms, n500, a.batch))
+        print("statements:", refresh_batch(syms, n500, a.batch, max_seconds=a.max_minutes * 60 if a.max_minutes else None))
     res = score_all()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(res, separators=(",", ":")), encoding="utf-8")

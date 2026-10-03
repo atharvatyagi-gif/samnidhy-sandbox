@@ -46,9 +46,41 @@ import requests
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "globe" / "latest.json"
 GDELT_GAP = 6          # seconds between GDELT calls (they ask for >= ~5s)
+MAX_AGE_DAYS = 7       # FRESHNESS RULE: nothing older than this is published (items with no date can not be checked, so they are dropped too)
+FLIGHT_MAX_AGE_S = 900 # a flight position older than 15 minutes at fetch time is not shown
 UA = {"User-Agent": "Mozilla/5.0 (Samnidhy B-Lab globe; educational; contact via github.com/atharvatyagi-gif)"}
 IST = timezone(timedelta(hours=5, minutes=30))
 PW = "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services"
+
+
+def parse_iso(s):
+    """ISO-ish timestamp (with or without a zone, 'Z' ok) -> aware UTC datetime, or None."""
+    if not s:
+        return None
+    try:
+        d = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+
+
+def fresh(ts, now, days=MAX_AGE_DAYS):
+    """True if `ts` (ISO string or datetime) is within `days` of `now`. Undated -> False: an age that can not be checked is not shown."""
+    d = ts if isinstance(ts, datetime) else parse_iso(ts)
+    return d is not None and d >= now - timedelta(days=days)
+
+
+def gdacs_recent(fromdate, todate, now, short_days=30):
+    """A GDACS alert is shown if the event STARTED within the freshness window, or it is a short episode (<= `short_days` long: a cyclone, flood,
+    quake sequence) that ENDED within the window. A months-long drought that GDACS still lists as current is not news for a market decision."""
+    f, t = parse_iso(fromdate), parse_iso(todate)
+    if f is not None and fresh(f, now):
+        return True
+    return t is not None and f is not None and fresh(t, now) and (t - f) <= timedelta(days=short_days)
+
+
+def only_fresh(items, key, now):
+    return [a for a in (items or []) if fresh(a.get(key), now)]
 
 
 def pw_query(layer, params):
@@ -99,8 +131,9 @@ def flights(lat, lon, half):
         "lat": s[6], "lon": s[5], "alt_m": s[7], "geo_alt_m": s[13], "on_ground": s[8],
         "velocity_ms": s[9], "heading": s[10], "vrate_ms": s[11], "squawk": s[14],
         "src": s[16], "age_s": round(now - s[4]) if s[4] else None,
-    } for s in states if s[5] is not None and s[6] is not None][:60]
-    return {"count": len(states), "sample": sample}
+    } for s in states if s[5] is not None and s[6] is not None and s[4] and now - s[4] <= FLIGHT_MAX_AGE_S][:60]
+    live = [s for s in states if s[4] and now - s[4] <= FLIGHT_MAX_AGE_S]
+    return {"count": len(live), "sample": sample, "fetched_utc": datetime.fromtimestamp(now, tz=timezone.utc).isoformat(timespec="seconds")}
 
 
 def portwatch_vessels(pw_id):
@@ -117,6 +150,8 @@ def portwatch_vessels(pw_id):
     if not feats:
         return None
     last = feats[-1]
+    if not fresh(str(last["date"])[:10] + "T00:00:00+00:00", datetime.now(timezone.utc)):
+        return None                                   # PortWatch's newest day is older than a week: not shown (the chokepoint card says so)
     last7, prior = feats[-7:], feats[:-7]
     avg7 = sum(f["n_total"] for f in last7) / len(last7)
     avg_prior = (sum(f["n_total"] for f in prior) / len(prior)) if prior else None
@@ -137,13 +172,12 @@ def portwatch_industries():
             for f in j.get("features", [])}
 
 
-def portwatch_disruptions(limit=25, recent_days=90):
+def portwatch_disruptions(limit=25, recent_days=MAX_AGE_DAYS):
     """Real disruption events (storms/quakes/conflict etc.) with real port impact counts, either still ongoing
     (todate in the future) or recent enough to still matter (a point event like a quake has fromdate==todate,
     so "still ongoing" alone would exclude it the moment it happens - recency is the more useful real signal).
-    90 days, not 30: checked live, this specific feed's newest record is itself ~6 weeks old at any given
-    time (it just doesn't update often) - a tighter window would leave the layer empty most of the time by
-    chance, not because nothing real happened. Each event's own real date is shown on screen either way."""
+    Window = the 7-day freshness rule (it was 90 days: that let weeks-old events sit on the map). An empty layer
+    simply means nothing was reported in the last week. Each event's own real date is shown on screen."""
     # fromdate/todate are esriFieldTypeDate fields: ArcGIS's WHERE clause needs the SQL `timestamp '...'`
     # literal syntax for date comparisons, not a raw epoch-ms number (confirmed live: the numeric form gets a
     # silent HTTP-200 {"error":...} body - no exception, just an empty "features" list - the real bug here).
@@ -162,7 +196,8 @@ def portwatch_disruptions(limit=25, recent_days=90):
                     "lat": a.get("lat"), "lon": a.get("long"),
                     "from_utc": datetime.fromtimestamp(a["fromdate"] / 1000, tz=timezone.utc).isoformat(timespec="seconds") if a.get("fromdate") else None,
                     "to_utc": datetime.fromtimestamp(a["todate"] / 1000, tz=timezone.utc).isoformat(timespec="seconds") if a.get("todate") else None})
-    return out
+    now = datetime.now(timezone.utc)
+    return [e for e in out if fresh(e["to_utc"], now) or fresh(e["from_utc"], now)]
 
 
 def usgs_quakes(min_mag=4.5, limit=40):
@@ -183,6 +218,8 @@ def eonet_events(days=7, limit=60):
         if not geo or "coordinates" not in geo[-1]:
             continue
         g = geo[-1]  # most recent position for a moving event (storms etc.)
+        if not fresh(g.get("date"), datetime.now(timezone.utc)):
+            continue                                   # still "open" in EONET but its latest report is older than a week
         out.append({"title": e.get("title"), "category": (e.get("categories") or [{}])[0].get("title"),
                     "lat": g["coordinates"][1], "lon": g["coordinates"][0], "date": g.get("date"), "url": e.get("link")})
     return out
@@ -199,9 +236,12 @@ def gdacs_events(limit=40):
         g = f.get("geometry") or {}
         if g.get("type") != "Point":
             continue
+        now = datetime.now(timezone.utc)
+        if not gdacs_recent(p.get("fromdate"), p.get("todate"), now):
+            continue                                   # "current" in GDACS but not a new event or a short one that ended in the last week (e.g. a drought running since last winter)
         out.append({"type": p.get("eventtype"), "name": p.get("eventname") or p.get("name"), "alert": p.get("alertlevel"),
                     "country": p.get("country"), "lat": g["coordinates"][1], "lon": g["coordinates"][0],
-                    "url": (p.get("url") or {}).get("report")})
+                    "from_utc": p.get("fromdate"), "to_utc": p.get("todate"), "url": (p.get("url") or {}).get("report")})
     out.sort(key=lambda e: {"Red": 0, "Orange": 1, "Green": 2}.get(e["alert"], 3))
     return out[:limit]
 
@@ -231,6 +271,8 @@ def gdelt(query, n=6):
             for a in arts:
                 sd = a.get("seendate", "")     # GDELT's own format: YYYYMMDDHHMMSSZ (UTC)
                 iso = f"{sd[0:4]}-{sd[4:6]}-{sd[6:8]}T{sd[8:10]}:{sd[10:12]}:{sd[12:14]}+00:00" if len(sd) >= 14 else None
+                if not fresh(iso, datetime.now(timezone.utc)):
+                    continue
                 out.append({"title": a.get("title"), "url": a.get("url"), "source": a.get("domain"), "country": a.get("sourcecountry"), "seen_utc": iso})
             return out
         if r.status_code == 429 and attempt == 0:
@@ -242,20 +284,20 @@ def gdelt(query, n=6):
 
 def google_news(query, n=6):
     try:
-        r = requests.get("https://news.google.com/rss/search", params={"q": query, "hl": "en-IN", "gl": "IN", "ceid": "IN:en"}, headers=UA, timeout=20)
+        r = requests.get("https://news.google.com/rss/search", params={"q": f"{query.replace(' sourcelang:english', '')} when:{MAX_AGE_DAYS}d", "hl": "en-IN", "gl": "IN", "ceid": "IN:en"}, headers=UA, timeout=20)
         r.raise_for_status()
         root = ET.fromstring(r.content)
         out = []
-        for item in root.findall(".//item")[:n]:
+        for item in root.findall(".//item")[:n * 3]:
             title, link, pub = item.findtext("title") or "", item.findtext("link") or "", item.findtext("pubDate") or ""
             src_el = item.find("source")
             try:
                 iso = email.utils.parsedate_to_datetime(pub).astimezone(timezone.utc).isoformat(timespec="seconds")
             except Exception:
                 iso = None
-            if title and link:
+            if title and link and fresh(iso, datetime.now(timezone.utc)):
                 out.append({"title": title, "url": link, "source": (src_el.text if src_el is not None else None), "country": None, "seen_utc": iso})
-        return out
+        return out[:n]
     except Exception:
         return None
 
@@ -329,6 +371,8 @@ def main():
             "news": "Google News RSS, primary; GDELT Project tops up when available",
             "hazards": "IMF PortWatch disruptions, USGS (earthquakes), NASA EONET (natural events), GDACS (disaster alerts) - all free, no key",
         },
+        "max_age_days": MAX_AGE_DAYS,
+        "freshness_rule": f"Nothing older than {MAX_AGE_DAYS} days is published; undated items are dropped; flights are positions from this run (each at most {FLIGHT_MAX_AGE_S // 60} minutes old when fetched).",
         "chokepoints": points,
         "events": events or [],
         "hazards": hazards,

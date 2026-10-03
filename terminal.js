@@ -11,7 +11,7 @@
 import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
 import { technicals, recommend } from "./chart-indicators.js";
 import { LIVE_RELAY_URL } from "./config.js";
-import { GlobeMap } from "./globe-map.js";
+import { GlobeMap, freshGlobe } from "./globe-map.js";
 import * as Houses from "./desk-houses.js";
 import * as GeoDesk from "./desk-map.js";
 import * as Aladin from "./desk-aladin.js";
@@ -80,7 +80,7 @@ async function boot() {
     S.news = await getJSON("news.json").catch(() => ({}));
     S.uni = uni; uni.stocks.forEach(s => S.map.set(s.s, s)); lastCheck = Date.now();
     S.pred = await getJSON("predict.json").catch(() => null);
-    S.globe = await getJSON("globe.json").catch(() => null);
+    S.globeRaw = await getJSON("globe.json").catch(() => null); S.globe = freshGlobe(S.globeRaw);          // 7-day freshness rule, see globe-map.js
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
     S.nseLive = await getJSON("nse_live.json").catch(() => null);
     applyNseLive();
@@ -146,7 +146,11 @@ async function poll() {
     const rt = Object.fromEntries(Object.entries(S.quotes).filter(([, v]) => v.rt));
     S.quotes = { ...(quotes.quotes || {}), ...rt }; S.qmeta = quotes; S.live = live; S.inst = inst;
     getJSON("nse_live.json").then(nl => { if (nl && nl.generated_utc !== (S.nseLive || {}).generated_utc) { S.nseLive = nl; applyNseLive(); renderTape(); renderRegime(); if (["movers", "brief", "sectors"].includes(view)) renderAll(); renderHead(); } }).catch(() => {});
-    getJSON("globe.json").then(g => { if (g && g.generated_utc !== (S.globe || {}).generated_utc) { S.globe = g; renderGlobe(); renderAsOf(); } }).catch(() => {});
+    getJSON("globe.json").then(g => {
+      if (g) S.globeRaw = g;
+      const f = freshGlobe(S.globeRaw), sig = x => x ? x.generated_utc + JSON.stringify(x.hidden) : "";
+      if (f && sig(f) !== sig(S.globe)) { S.globe = f; renderGlobe(); renderAsOf(); } else if (f) S.globe = f;      // items age out by themselves even when no new file was published
+    }).catch(() => {});
     if (!changed) return;
     await loadIntra(shard(sec), true).catch(() => null);
     renderAll(); renderHead(); renderDetails(); if (side === "prints") renderPrints(); if (typeof renderOutlook === "function") renderOutlook(); drawChart(true);
@@ -180,7 +184,11 @@ function renderAsOf() {
   const P = S.pred;
   $$('[data-asof="outlook"]').forEach(el => { el.innerHTML = P && P.as_of ? `Model as of the <b>${esc(dayLbl(P.as_of))}</b> close · published ${esc(istUtc(P.generated_utc))} · retrained after every NSE close` : "Model: not published yet"; });
   const gm = minsAgo(S.globe && S.globe.generated_utc);
-  $$('[data-asof="globe"]').forEach(el => { const st = gm != null && gm > 90; el.innerHTML = S.globe && S.globe.generated_utc ? `${st ? "⚠ Late: " : ""}Flights &amp; news updated <b>${esc(istUtc(S.globe.generated_utc))}</b> (${esc(agoTxt(gm))}) · refreshed about every hour` : "Globe data: not published yet"; el.classList.toggle("stale", st); });
+  $$('[data-asof="globe"]').forEach(el => {
+    const G = S.globe, st = gm != null && gm > 90, h = (G && G.hidden) || {}, hid = [["news", "headlines"], ["events", "world events"], ["hazards", "hazard records"], ["vessels", "vessel counts"]].filter(([k]) => h[k]).map(([k, l]) => `${h[k]} ${l}`);
+    el.innerHTML = G && G.generated_utc ? `${st ? "⚠ Late: " : ""}Live snapshot <b>${esc(istUtc(G.generated_utc))}</b> (${esc(agoTxt(gm))}) · refreshed about every hour · <b>only data from the last 7 days is shown</b>${h.flights ? ` · <b>flights hidden: this snapshot is over 2 hours old</b>` : ""}${hid.length ? ` · left out as older than 7 days: ${esc(hid.join(", "))}` : ""}` : "Globe data: not published yet";
+    el.classList.toggle("stale", st || !!h.flights);
+  });
   const ms = $("#ms-asof");
   if (ms) { ms.textContent = RP.on ? `REPLAY ${rpClock(RP.k).slice(0, 5)}` : LIVE.ok ? "REAL-TIME" : q.session_date ? `${priceStale ? "⚠ " : ""}${dayLbl(q.session_date)} · ${q.last_bar_ist || ""} IST` : "--"; ms.classList.toggle("stale", priceStale);
     ms.title = priceStale ? `Prices were last published ${agoTxt(pm)}: the next update is late` : `Prices as of ${dayLbl(q.session_date)} ${q.last_bar_ist || ""} IST, published ${agoTxt(pm)}`; }

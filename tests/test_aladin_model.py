@@ -283,3 +283,74 @@ def test_regime_blend_is_compared_only_where_it_exists():
     assert use2 is False and ev2["metrics"]["regime"]["brier_regime"] > ev2["metrics"]["regime"]["brier_pooled"]
     none = O.assign(p_reg=np.nan)
     assert am.evaluate(none, 10)[0]["metrics"]["regime"]["tested"] is False
+
+
+# ---------------------------------------------------------------- filings: time budget and "cheap part first" (the GitHub run timed out and saved nothing)
+def _fake_filings_env(monkeypatch, tmp_path):
+    monkeypatch.setattr(fl, "CACHE", tmp_path)
+    monkeypatch.setattr(fl, "OUT", tmp_path / "alt.json")
+    monkeypatch.setattr(fl, "load_delivery", lambda *a, **k: {"S0": [40.0] * 100 + [60.0] * 20, "S1": [50.0] * 120})
+    ist = timezone(timedelta(hours=5, minutes=30))
+    now = datetime(2026, 10, 2, 12, tzinfo=timezone.utc)
+    def anns(sym):
+        return [{"seq_id": f"{sym}{i}", "an_dt": (now - timedelta(days=i + 1)).astimezone(ist).strftime("%d-%b-%Y %H:%M:%S"), "desc": "Press Release", "attchmntText": "strong results"} for i in range(3)]
+    return now, anns
+
+
+def test_delivery_and_deals_are_saved_before_any_nse_announcement_is_requested(monkeypatch, tmp_path):
+    now, anns = _fake_filings_env(monkeypatch, tmp_path)
+    events = []
+    class Sess:
+        def get_json(self, path, params=None, referer=None, max_tries=2):
+            events.append("announcement")
+            return anns(params["symbol"])
+    saved = []
+    fl.run([f"S{i}" for i in range(4)], use_nse=True, transcripts=False, now=now, session=Sess(), scorer=lambda t: [0.1] * len(t), http_get=lambda u: None,
+           save=lambda d: (events.append("save"), saved.append(json.loads(json.dumps(d)))), log=lambda *a: None)     # serialised at once, like the real save
+    assert events[0] == "save" and "announcement" in events                          # the first save happens before the first announcement request
+    assert saved[0]["stocks"]["S0"]["alt"]["deliv"] is not None and "nlp" not in saved[0]["stocks"].get("S0", {})
+
+
+def test_time_budget_stops_the_loop_keeps_everything_found_and_says_so(monkeypatch, tmp_path):
+    now, anns = _fake_filings_env(monkeypatch, tmp_path)
+    clock = {"t": 0.0}
+    class Sess:
+        def get_json(self, path, params=None, referer=None, max_tries=2):
+            clock["t"] += 100                                                       # every request "takes" 100 s
+            return anns(params["symbol"])
+    saved = []
+    doc = fl.run([f"S{i}" for i in range(20)], use_nse=True, transcripts=False, now=now, session=Sess(), scorer=lambda t: [0.2] * len(t), http_get=lambda u: None,
+                 max_seconds=450, clock=lambda: clock["t"], save=saved.append, log=lambda *a: None)
+    scored = [s for s, v in doc["stocks"].items() if v.get("nlp")]
+    assert 3 <= len(scored) <= 6 and any("time budget" in n for n in doc["notes"])    # stopped well before 20, and said why
+    assert doc["stocks"]["S0"]["alt"]["deliv"] is not None                           # the cheap part is in the file regardless
+    assert (tmp_path / "filings_scores.json").exists()
+
+
+def test_next_run_continues_with_the_stocks_not_yet_scored_then_the_oldest(monkeypatch, tmp_path):
+    prev = {"A": {"nlp": {"tone": 0.1, "at": "2026-09-30"}}, "B": {"nlp": {"tone": 0.1, "at": "2026-09-25"}}}
+    order = fl.priority_order(["A", "B", "C", "D"], prev)
+    assert order == ["C", "D", "B", "A"]                                              # unscored in the given (most-traded-first) order, then oldest score first
+
+
+def test_a_failed_announcement_loop_still_leaves_a_valid_file(monkeypatch, tmp_path):
+    now, anns = _fake_filings_env(monkeypatch, tmp_path)
+    class Dead:
+        def get_json(self, *a, **k):
+            raise RuntimeError("timeout")
+    saved = []
+    doc = fl.run([f"S{i}" for i in range(12)], use_nse=True, transcripts=False, now=now, session=Dead(), scorer=lambda t: [0.0] * len(t), http_get=lambda u: None, save=saved.append, log=lambda *a: None)
+    assert any("unreachable" in n for n in doc["notes"]) and doc["stocks"]["S1"]["alt"]["deliv"] == 0.0 and saved
+
+
+def test_fundamentals_fetch_stops_on_its_time_budget_and_keeps_what_it_got(monkeypatch, tmp_path):
+    monkeypatch.setattr(af, "CACHE", tmp_path)
+    t = {"v": 0.0}
+    def fake_fetch(sym, now=None, tk=None):
+        t["v"] += 10
+        return {"sym": sym, "fetched": "2026-10-02T00:00:00+00:00", "ann": {"inc": {}, "bal": {}, "cf": {}}, "qtr": {"inc": {}, "bal": {}, "cf": {}}}
+    r = af.refresh_batch([f"S{i}" for i in range(200)], {f"S{i}" for i in range(200)}, batch=200, fetch=fake_fetch, workers=2, max_seconds=100, clock=lambda: t["v"])
+    assert r["stopped_on_time_budget"] is True and 0 < r["tried"] < 200 and r["ok"] == r["tried"]
+    assert len(list(tmp_path.glob("*.json"))) == r["ok"]                                  # every fetched stock was written to the cache already
+    r2 = af.refresh_batch([f"S{i}" for i in range(200)], {f"S{i}" for i in range(200)}, batch=200, fetch=fake_fetch, workers=2, max_seconds=None)
+    assert r2["stopped_on_time_budget"] is False and r2["tried"] == 200 - r["ok"]        # the next run continues with the stocks not fetched yet
