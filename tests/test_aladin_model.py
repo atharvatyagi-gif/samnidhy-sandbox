@@ -354,3 +354,37 @@ def test_fundamentals_fetch_stops_on_its_time_budget_and_keeps_what_it_got(monke
     assert len(list(tmp_path.glob("*.json"))) == r["ok"]                                  # every fetched stock was written to the cache already
     r2 = af.refresh_batch([f"S{i}" for i in range(200)], {f"S{i}" for i in range(200)}, batch=200, fetch=fake_fetch, workers=2, max_seconds=None)
     assert r2["stopped_on_time_budget"] is False and r2["tried"] == 200 - r["ok"]        # the next run continues with the stocks not fetched yet
+
+
+# ---------------------------------------------------------------- honest (nested) calibration
+def nested_frame(flip_last=True, n_years=7, per_year=3000, seed=3):
+    rng = np.random.default_rng(seed)
+    rows = []
+    for k in range(n_years):
+        yr = 2014 + k
+        dates = pd.bdate_range(f"{yr}-03-01", periods=per_year // 30)
+        for d in dates:
+            raw = rng.uniform(0.35, 0.65, 30)
+            up = rng.random(30) < (1 - raw if (flip_last and k == n_years - 1) else raw)       # the last year behaves the OPPOSITE way
+            rows.append(pd.DataFrame({"date": d, "sym": [f"S{i}" for i in range(30)], "y": up.astype(int), "p": raw, "p_reg": np.nan}))
+    return pd.concat(rows, ignore_index=True)
+
+
+def test_each_year_is_calibrated_only_with_earlier_years():
+    ev, iso, _ = am.evaluate(nested_frame(), 10)
+    last = ev["years"][-1]
+    assert last["year"] == 2020 and last["nested"] is True
+    assert last["auc"] < 0.45                                                  # calibrated on years that behaved the other way, so it is honestly bad here (in-sample calibration would hide this)
+    assert ev["metrics"]["nested_calibration"] is True and ev["metrics"]["years_evaluated"] == [2016, 2020]       # the first two years have no earlier record
+    assert [y["nested"] for y in ev["years"]] == [False, False, True, True, True, True, True]
+
+
+def test_brier_baseline_uses_the_base_rate_known_at_the_time():
+    ev, _, _ = am.evaluate(nested_frame(flip_last=False), 10)
+    m = ev["metrics"]
+    assert 0.245 < m["brier_base"] < 0.26 and m["brier"] <= m["brier_base"] + 0.002          # a calibrated, genuinely informative p is at least as good as the base rate
+
+
+def test_live_calibration_still_uses_all_unseen_years_and_is_monotone():
+    ev, iso, _ = am.evaluate(nested_frame(flip_last=False), 10)
+    assert np.all(np.diff(iso["x"]) >= 0) and np.all(np.diff(iso["y"]) >= 0) and len(ev["calibration"]) == 10

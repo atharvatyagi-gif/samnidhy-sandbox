@@ -8,7 +8,7 @@
 import { onTick } from "./desk-ticks.js";
 
 let ctx = null, opened = false, filterSym = null, loading = null, failed = null;
-const st = { h: 10, view: "up", board: "All", sector: "", house: "", sent: "", conf: "", q: "", sort: null, limit: 50 };
+const st = { h: 10, view: "up", board: "All", sector: "", house: "", region: "", sent: "", conf: "", q: "", sort: null, limit: 50 };
 const expanded = new Set();
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.";
 const LEVELS = ["BAD", "POOR", "NEUTRAL", "GOOD", "EXCELLENT"];
@@ -91,6 +91,38 @@ function fundText(u, a) {
   return { t: "—", why: "No Yahoo statements loaded for this stock yet (they rotate in about 400 a night)" };
 }
 
+/* ---------- the Globe's geopolitical analysis, as seen from a stock ---------- */
+async function loadGeo() {
+  if (ctx.S.geo || !files().geo) return;
+  try { ctx.S.geo = await ctx.getJSON("geo.json"); } catch (e) { /* the region filter simply stays empty */ }
+}
+/* every region that touches this stock: named in its exposure list, or through the stock's sector. -> [{ region, dir, why, via }] */
+function exposureOf(sym) {
+  const regs = (ctx.S.geo || {}).regions || [], ind = (ctx.S.map.get(sym) || {}).ind, out = [];
+  for (const r of regs) for (const e of r.exposure || []) {
+    if (e.sym === sym) out.push({ region: r, dir: e.dir, why: e.why, via: "named" });
+    else if (e.ind && ind && e.ind === ind) out.push({ region: r, dir: e.dir, why: e.why, via: "sector" });
+  }
+  return out;
+}
+function geoBlock(sym) {
+  const ex = exposureOf(sym), { esc } = ctx;
+  if (!ctx.S.geo) return `<p class="mut">${files().geo ? "Loading the Globe's geopolitical index…" : "The geopolitical index has not been published yet."}</p>`;
+  if (!ex.length) return '<p class="mut">No region in the Globe\'s news-attention index is linked to this stock.</p>';
+  return ex.map(x => `<p><span class="${x.dir === "+" ? "up" : "down"}" title="${x.dir === "+" ? "Tends to gain" : "Tends to lose"} when attention on this region rises">${x.dir === "+" ? "▲" : "▼"}</span> ${esc(x.region.name)} · ${x.region.score == null ? "building baseline" : esc(x.region.level) + " " + x.region.score} · <span class="mut">${esc(x.why)}${x.via === "sector" ? " (through its sector)" : ""}</span></p>`).join("");
+}
+
+/* What the Technical model's probability has actually meant: the unseen-year results for the calibration group nearest to p. */
+function reliability(p, h) {
+  const o = ((ctx.S.aladin || {}).oos || {})[h];
+  if (!o || !o.calibration || !o.calibration.length) return null;
+  return o.calibration.reduce((b, c) => !b || Math.abs(c.pred - p) < Math.abs(b.pred - p) ? c : b, null);
+}
+function reliabilityText(p, h) {
+  const r = reliability(p, h);
+  return r ? `Track record at this level: when the Technical model said about ${pctTxt(r.pred)}, stocks rose ${pctTxt(r.actual)} of the time (${r.n.toLocaleString("en-IN")} cases from unseen years).` : "";
+}
+
 /* the combined view of one stock for the chosen horizon */
 function calc(sym, h) {
   const a = (ctx.S.aladin || {}).stocks && ctx.S.aladin.stocks[sym];
@@ -145,8 +177,19 @@ function houseSet() {
   const h = ((ctx.S.houses || {}).houses || []).find(x => x.id === st.house);
   return h ? new Set(h.symbols) : null;
 }
+/* stocks a Globe region touches: those named in its exposure list plus every stock in a named sector */
+function regionSet(id) {
+  const r = ((ctx.S.geo || {}).regions || []).find(x => x.id === id), s = new Set();
+  if (!r) return s;
+  for (const e of r.exposure || []) {
+    if (e.sym) s.add(e.sym);
+    else for (const u of ctx.S.uni.stocks) if (u.ind === e.ind) s.add(u.s);
+  }
+  return s;
+}
 function visibleRows() {
   const hs = st.house ? houseSet() : null, q = st.q.trim().toUpperCase();
+  const rg = st.region ? regionSet(st.region) : null;
   let rows = allRows();
   rows = rows.filter(r => {
     const u = r.u;
@@ -156,6 +199,7 @@ function visibleRows() {
     if (st.board === "ETFs" && !u.etf) return false;
     if (st.sector && u.ind !== st.sector) return false;
     if (hs && !hs.has(r.sym)) return false;
+    if (rg && !rg.has(r.sym)) return false;
     if (q && !(r.sym.includes(q) || (u.n || "").toUpperCase().includes(q))) return false;
     return true;
   });
@@ -180,7 +224,8 @@ function visibleRows() {
 function rowHtml(r, i) {
   const { esc, inr, sg, ud } = ctx, u = r.u, x = ctx.q(r.sym), c = r.c, a = r.a, ft = fundText(u, a);
   const open = expanded.has(r.sym);
-  const tag = (u.board === "SME" ? ' <span class="tag warn">SME</span>' : "") + (u.etf ? ' <span class="tag">ETF</span>' : "");
+  const gx = st.region ? exposureOf(r.sym).find(x => x.region.id === st.region) : null;
+  const tag = (u.board === "SME" ? ' <span class="tag warn">SME</span>' : "") + (u.etf ? ' <span class="tag">ETF</span>' : "") + (gx ? ` <span class="${gx.dir === "+" ? "up" : "down"}" title="${gx.dir === "+" ? "Tends to gain" : "Tends to lose"} when attention on ${ctx.esc(gx.region.name)} rises">${gx.dir === "+" ? "▲" : "▼"}</span>` : "");
   const pup = c ? ctx.probBar(c.p) : `<span class="mut" title="${esc(reasonNoProb(u))}">no probability</span>`;
   const first = `<tr class="al-r${open ? " on" : ""}" data-s="${esc(r.sym)}"><td class="mut">${i + 1}</td><td class="sym"><button class="al-tg" aria-expanded="${open}" aria-label="${open ? "Hide" : "Show"} details for ${esc(r.sym)}">${open ? "▾" : "▸"}</button> ${esc(r.sym)}${tag}</td><td class="co al-hide2">${esc(u.n || "")}</td>
     <td class="num al-last">${x ? inr(x.p) : "—"}</td><td class="num al-chg ${x ? ud(x.pct) : "mut"}">${x && x.pct != null ? sg(x.pct) + "%" : "—"}</td>
@@ -213,7 +258,7 @@ function detailHtml(r) {
     .map(([n, w]) => `<li class="mut">${esc(n)}: not measured. ${esc(w)}</li>`).join("");
   const A = ctx.S.aladin, ph = Object.keys(t.p).sort((x, y) => x - y).map(h => `${h}D <b>${pctTxt(t.p[h])}</b>`).join(" · ");
   const jp = t.jump;
-  const tech = `<p>${ph}</p>
+  const tech = `<p>${ph}</p><p class="mut">${esc(reliabilityText(t.p[st.h], st.h))}</p>
       <p>Market-factor residual z ${t.pca_z == null ? "—" : num(t.pca_z)} · market turbulence ${pctTxt(t.hmm)}</p>
       <p>${t.coint ? `Peer ${esc(t.coint.peer)}: spread z ${num(t.coint.z)} · half-life ${t.coint.hl == null ? "—" : num(t.coint.hl, 1) + " d"} · Kalman β ${num(t.coint.beta)}` : '<span class="mut">No cointegrated peer found</span>'}</p>
       <p>${jp ? `Jumps: ${num(jp.lam, 1)} a year · average ${(jp.mj * 100).toFixed(1)}% · spread ${(jp.sj * 100).toFixed(1)}% · last ${jp.last == null ? "none in 250 days" : jp.last + " days ago"} · variance share ${jp.bv == null ? "—" : Math.round(jp.bv * 100) + "%"}` : '<span class="mut">Jump statistics not available</span>'}</p>
@@ -221,7 +266,7 @@ function detailHtml(r) {
   const evs = (ctx.S.sweepEv || []).filter(e => e.sym === r.sym).slice(-5).reverse();
   const sent = `${sentHtml(r.sym, false, true)}
       <div class="sec-t">Liquidity sweeps</div>${evs.length ? evs.map(e => `<p>${e.dir > 0 ? "▲" : "▼"} ${esc(e.lvl)} at ${num(e.px)} · volume ${num(e.rvol, 1)}× normal · wick ${Math.round(e.wick * 100)}% · ${e.confirmed ? "confirmed" : "forming"} · score ${e.score > 0 ? "+" : ""}${e.score}</p>`).join("") : `<p class="mut">No sweep seen. Needs the local tick program; the free feed covers only index levels and NSE's movers lists.</p>`}`;
-  return `<div class="al-x3"><div><div class="sec-t">Fundamental</div>${fund}<ul class="al-nm">${nm}</ul></div><div><div class="sec-t">Technical · ${st.h}D</div>${tech}</div><div><div class="sec-t">Sentimental</div>${sent}</div></div>${actions(r.sym)}`;
+  return `<div class="al-x3"><div><div class="sec-t">Fundamental</div>${fund}<ul class="al-nm">${nm}</ul></div><div><div class="sec-t">Technical · ${st.h}D</div>${tech}</div><div><div class="sec-t">Sentimental</div>${sent}<div class="sec-t">Geopolitical exposure (the Globe)</div>${geoBlock(r.sym)}</div></div>${actions(r.sym)}`;
 }
 function actions(sym) {
   const on = ctx.loadWatch().includes(sym);
@@ -251,6 +296,7 @@ function modelCard() {
       <div class="ol-stat"><b>${pctTxt(m.top_decile_hit)}</b><span>top 10% went up<br><small>bottom 10%: ${pctTxt(m.bottom_decile_hit)}</small></span></div>
       <div class="ol-stat"><b>${live}</b><span>live track record<br><small>${dc.matured_days ? `${dc.matured_days} days scored, spread ${(dc.spread * 100).toFixed(2)}% (top minus bottom 10%)` : "first results about two weeks after the nightly run starts saving predictions"}</small></span></div>
     </div>
+    <p class="note"><b>Read these figures with care:</b> the probabilities were calibrated year by year using only earlier years, so they are not flattered by the test years themselves. They are still likely a little optimistic: the saved price history contains only stocks that are listed today (companies that were delisted are missing), and the Fundamental, Sentiment and sweep adjustments below have not yet been tested against outcomes.${m.years_evaluated ? ` Years evaluated: ${m.years_evaluated[0]}–${m.years_evaluated[1]}.` : ""}</p>
     <p class="note">${nAll.toLocaleString("en-IN")} securities · ${nP.toLocaleString("en-IN")} with a probability. Weights: <b>${esc(w.mode)}</b> (Fundamental ${w.wF}, Sentiment ${w.wS}, sweeps ${w.wSweep}${w.sweep_validated ? "" : ", sweep weight unvalidated"}). Regime blend: ${m.regime && m.regime.used ? "used" : m.regime && m.regime.tested ? "tested, not better, not used" : "not tested"}. Model data as of ${esc(A.as_of)} · ${esc(A.model.features)} inputs · trained on ${A.model.trained_stocks} stocks.</p>
     <details class="ol-more"><summary>How good is this model? (tested ${esc(m.from)} → ${esc(m.to)}, ${m.n.toLocaleString("en-IN")} predictions it never saw) and how it works</summary>
       <div class="ol-two"><div><h6>By year (each year predicted by models trained only on earlier years)</h6>
@@ -289,10 +335,11 @@ export async function renderAladin() {
   if (!ctx.S.aladin) {
     if (!files().aladin) { el.innerHTML = `<p class="empty">ALADIN is not available: aladin.json has not been published yet. The model runs after each NSE close.</p>${foot()}`; return; }
     el.innerHTML = '<p class="empty">Loading ALADIN…</p>';
-    await Promise.all([preload(), loadHouses()]);
+    await Promise.all([preload(), loadHouses(), loadGeo()]);
     if (!ctx.S.aladin) { el.innerHTML = `<p class="empty">ALADIN could not be loaded${failed ? ": " + ctx.esc(failed) : ""}. Nothing is shown in its place.</p>${foot()}`; return; }
   }
   await loadHouses();
+  if (!ctx.S.geo) loadGeo().then(() => { if (opened) draw(); });
   opened = true;
   draw();
 }
@@ -313,6 +360,7 @@ function draw() {
       ${sel("al-board", [["All", "All boards"], ["NIFTY 500", "NIFTY 500"], ["Main", "Main board"], ["SME", "SME"], ["ETFs", "ETFs"]], st.board)}
       ${sel("al-sector", [["", "All sectors"], ...secs.map(s => [s, s])], st.sector)}
       ${sel("al-house", [["", "All business houses"], ...houses.map(h => [h.id, h.name])], st.house)}
+      ${sel("al-region", [["", "Any Globe region"], ...(((ctx.S.geo || {}).regions) || []).map(r => [r.id, "Exposed to: " + r.name])], st.region)}
       ${sel("al-sent", [["", "Any sentiment"], ["EXCELLENT", "Excellent"], ["GOOD", "Good"], ["NEUTRAL", "Neutral"], ["POOR", "Poor"], ["BAD", "Bad"], ["NO NEWS", "No news"]], st.sent)}
       ${sel("al-conf", [["", "Any confidence"], ["High", "High"], ["Medium", "Medium"], ["Low", "Low"]], st.conf)}
       <input id="al-q" type="search" placeholder="Filter by symbol or name" aria-label="Filter ALADIN" value="${esc(st.q)}">
@@ -330,7 +378,7 @@ function bind(el) {
   el.querySelectorAll("#al-h button").forEach(b => b.onclick = () => { st.h = +b.dataset.h; rd(); });
   el.querySelectorAll("#al-v button").forEach(b => b.onclick = () => { st.view = b.dataset.v; st.sort = null; st.limit = 50; rd(); });
   const on = (id, k) => { const s = el.querySelector("#" + id); if (s) s.onchange = () => { st[k] = s.value; st.limit = 50; rd(); }; };
-  on("al-board", "board"); on("al-sector", "sector"); on("al-house", "house"); on("al-sent", "sent"); on("al-conf", "conf");
+  on("al-board", "board"); on("al-sector", "sector"); on("al-house", "house"); on("al-region", "region"); on("al-sent", "sent"); on("al-conf", "conf");
   const q = el.querySelector("#al-q"); q.oninput = () => { st.q = q.value; st.limit = 50; const pos = q.selectionStart; rd(); const n = ctx.$("#al-q"); n.focus(); n.setSelectionRange(pos, pos); };
   const more = el.querySelector("#al-more"); if (more) more.onclick = () => { st.limit += 50; rd(); };
   el.querySelectorAll("#al-table th[data-sort]").forEach(th => { const go = () => { const k = th.dataset.sort; st.sort = st.sort && st.sort[0] === k ? [k, -st.sort[1]] : [k, ["sym", "n"].includes(k) ? 1 : -1]; rd(); }; th.onclick = go; th.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }; });
@@ -407,6 +455,7 @@ export function renderAladinMini(sym) {
     <div class="al-mini-g"><span>Fundamental ${ft ? `<span class="mut" title="${ctx.esc(ft.why)}">${ft.t}</span>` : gauge(a.f.sc)}</span><span>Technical ${gauge(c.T)}</span></div>
     <div class="al-mini-s">${sentHtml(sym, true)}</div>
     <div class="tg-n">Confidence ${c.conf} · ${c.agree} views agree</div>
+    <p class="note">${ctx.esc(reliabilityText(a.t.p[ph], ph))}</p>
     <p class="note">${DISCLAIMER} <a href="#" data-aladin="${ctx.esc(sym)}">Open in ALADIN →</a></p></div>`;
 }
 export function briefCard(bcard) {

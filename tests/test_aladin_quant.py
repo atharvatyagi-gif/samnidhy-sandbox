@@ -158,3 +158,17 @@ def test_rolling_jump_features_agree_with_the_point_functions_and_use_no_future(
     r2 = r.copy(); r2.iloc[550:] = 0.5
     f2 = q.jump_features(r2)
     assert np.allclose(f.iloc[:550].fillna(-9).values, f2.iloc[:550].fillna(-9).values)
+
+
+def test_pca_residuals_use_only_stocks_that_were_liquid_on_the_day_of_each_refit():
+    ret, _ = factor_returns(n=500, m=60)
+    liquid = pd.DataFrame(True, index=ret.index, columns=ret.columns)
+    liquid["S0"] = False                                                        # never liquid
+    liquid["S1"] = [i < 420 for i in range(len(ret))]                           # liquid until day 420, then not
+    res, _ = q.pca_residuals(ret, var_share=0.8, kmax=6, window=250, refit_every=5, min_obs=240, liquid=liquid)
+    assert res["S0"].isna().all()                                               # never a member: no residual at all
+    assert res["S1"].iloc[300:420].notna().all() and res["S1"].iloc[430:].isna().all()
+    # changing how S2 trades AFTER day 420 cannot change anything before it (the mask is looked at day by day)
+    later = liquid.copy(); later["S2"] = [i < 450 for i in range(len(ret))]
+    res2, _ = q.pca_residuals(ret, var_share=0.8, kmax=6, window=250, refit_every=5, min_obs=240, liquid=later)
+    assert np.allclose(res.iloc[:445].drop(columns="S2").values, res2.iloc[:445].drop(columns="S2").values, equal_nan=True)
