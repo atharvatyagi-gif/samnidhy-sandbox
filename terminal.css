@@ -675,7 +675,7 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .globe-dot.grey { background: var(--ink-4); }
 /* custom Leaflet controls: zoom presets, fullscreen, lat/lon readout - styled to match the icon-btn/btn-line language */
 .globe-presets, .globe-fs { background: none; border: none; }
-.globe-presets a, .globe-fs a { display: flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 8px; background: var(--card); color: var(--ink-2); border: 1px solid var(--rule-2); font: 600 10.5px var(--mono); text-decoration: none; }
+.globe-presets a, .globe-fs a { width: auto; line-height: 1; display: flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 8px; background: var(--card); color: var(--ink-2); border: 1px solid var(--rule-2); font: 600 10.5px var(--mono); text-decoration: none; }
 .globe-presets a:hover, .globe-fs a:hover { background: var(--acc-soft); color: var(--acc); }
 .globe-presets { display: flex; }
 .globe-coord { background: rgba(4,18,11,0.78); color: var(--ink-3); font: 11px var(--mono); padding: 2px 8px; border: 1px solid var(--rule-2); }
