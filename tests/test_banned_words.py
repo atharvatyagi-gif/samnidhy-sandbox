@@ -26,7 +26,7 @@ def hits(text):
 
 
 def test_new_javascript_modules():
-    for name in ("desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js"):
+    for name in ("desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js"):
         assert hits(strip_js_tokens((ROOT / name).read_text(encoding="utf-8"))) == [], name
 
 

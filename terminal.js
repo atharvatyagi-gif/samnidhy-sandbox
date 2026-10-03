@@ -16,6 +16,8 @@ import * as Houses from "./desk-houses.js";
 import * as GeoDesk from "./desk-map.js";
 import * as Aladin from "./desk-aladin.js";
 import * as Ticks from "./desk-ticks.js";
+import * as Nexus from "./desk-nexus.js";
+const NX_HASH = (/[#&]nx=([^&]+)/.exec(location.hash) || [])[1];     // a NEXUS deep link, read before the first navigation rewrites the address
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -84,7 +86,7 @@ async function boot() {
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
     S.nseLive = await getJSON("nse_live.json").catch(() => null);
     applyNseLive();
-    initDesk(); loadDeskData().catch(() => {});                  // not awaited: the desk draws first, the desk files (tiny) fill in right after
+    initDesk(); loadDeskData().then(() => Nexus.openFromHash(NX_HASH)).catch(() => {});                  // not awaited: the desk draws first, the desk files (tiny) fill in right after
     setTimeout(() => Aladin.preload().then(a => { if (a) { renderBrief(); renderDetails(); } }).catch(() => {}), 5000);   // ALADIN data for the Details rail and Brief card: after start, never before it
     // geo.json itself loads only when the Globe tab is opened; the regime strip and Brief read the tiny geo_summary.json instead
   } catch (e) {
@@ -212,11 +214,11 @@ setInterval(() => {
 // Each module gets the same ctx and renders only after its tab is first opened. Optional data files are listed in
 // desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
 // while a file hasn't been produced yet.
-const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json" };
-const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method"]);   // big or tab-specific files: fetched by their own tab, never at page start
+const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json" };
+const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
-function deskCtx() { return { renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE }; }
-function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks]) m.init(c); }
+function deskCtx() { return { renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a) }; }
+function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus]) m.init(c); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
@@ -238,7 +240,7 @@ function go(v, quiet) {
   $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-" + v));
   $(".desk").classList.toggle("on-terminal", v === "terminal");       // dark chart workspace: regime strip folds away
   $$("#tabs [data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === v && !b.dataset.side));
-  history.replaceState(null, "", `#v=${v}${sec ? "&s=" + encodeURIComponent(sec) : ""}`);
+  history.replaceState(null, "", `#v=${v}${sec ? "&s=" + encodeURIComponent(sec) : ""}${S.nx ? "&nx=" + encodeURIComponent(S.nx) : ""}`);
   if (v === "terminal") requestAnimationFrame(() => { if (!eng.chart) drawChart(); });
   if (v === "globe") {
     const gm = ensureGlobeMap(); if (gm && S.globe) gm.update(S.globe);

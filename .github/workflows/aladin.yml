@@ -91,6 +91,10 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python scripts/aladin_filings.py --max-minutes 15
 
+      - name: NEXUS supply-chain impact scores (data/aladin/impact.json, shocks.json; the model reads them next)
+        continue-on-error: true
+        timeout-minutes: 10
+        run: python scripts/graph_impact.py
       - name: Probabilities (technical front, combiner inputs, data/aladin/latest.json)
         continue-on-error: true
         timeout-minutes: 90

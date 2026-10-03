@@ -31,6 +31,7 @@ export async function refresh() {                       // called by the page's 
 export async function attach(globeMap) {
   gm = globeMap;
   layer = await gm.addLazyOverlay("Geopolitical news attention", async () => { await preload(); drawMarkers(); renderGeo(); });
+  if (layer && gm.map) layer.addTo(gm.map);   // on by default; adding it runs the loader above
   renderGeo();
 }
 
@@ -40,7 +41,7 @@ function drawMarkers() {
   for (const r of G.regions) {
     const size = r.score == null ? 14 : Math.round(10 + r.score / 5), cls = `geo-dot lv-${lvClass(r)} k-${r.kind}${r.stale ? " stale" : ""}${r.level === "Severe" ? " pulse" : ""}`;
     const m = window.L.marker([r.lat, r.lon], { icon: window.L.divIcon({ className: "geo-dot-wrap", html: `<span class="${cls}" style="width:${size}px;height:${size}px"></span>`, iconSize: [size, size] }), keyboard: true, alt: r.name, title: r.name });
-    m.bindTooltip(`${r.name} · ${r.score == null ? "building baseline" : r.level + " " + r.score}`);
+    m.bindTooltip(`${r.name} Â· ${r.score == null ? "building baseline" : r.level + " " + r.score}`);
     m.on("click", () => selectRegion(r.id));
     m.addTo(layer);
   }
@@ -56,9 +57,9 @@ const spark = vals => {
 
 export function selectRegion(id) { sel = id; drawPanel(); document.querySelectorAll('#geo-table tr.geo-row').forEach(x => x.classList.toggle('on', x.dataset.id === sel)); }
 
-const arrow = d => d === "+" ? '<span class="up" title="Tends to gain when attention on this region rises">▲</span>' : '<span class="down" title="Tends to lose when attention on this region rises">▼</span>';
+const arrow = d => d === "+" ? '<span class="up" title="Tends to gain when attention on this region rises">â–²</span>' : '<span class="down" title="Tends to lose when attention on this region rises">â–¼</span>';
 const SENT_CLS = { BAD: "warn", POOR: "warn", EXCELLENT: "acc", GOOD: "acc" };
-function sentTag(v) { return v ? `<span class="tag ${SENT_CLS[v.lvl] || ""}" title="${v.sc == null ? "No headline named this company in the last 72 hours" : "Sentiment score " + Math.round(v.sc)}">${ctx.esc(v.lvl)}</span>` : '<span class="mut">—</span>'; }
+function sentTag(v) { return v ? `<span class="tag ${SENT_CLS[v.lvl] || ""}" title="${v.sc == null ? "No headline named this company in the last 72 hours" : "Sentiment score " + Math.round(v.sc)}">${ctx.esc(v.lvl)}</span>` : '<span class="mut">â€”</span>'; }
 
 /* every listed company a region touches: named stocks, plus the 8 most-traded stocks of each named sector */
 function exposedNames(r) {
@@ -69,7 +70,7 @@ function exposedNames(r) {
   }
   return out;
 }
-/* ALADIN's current lean on the names a region tends to lift (▲) and to hurt (▼): the average combined P(up) over those that have a probability */
+/* ALADIN's current lean on the names a region tends to lift (â–²) and to hurt (â–¼): the average combined P(up) over those that have a probability */
 function lean(r) {
   const seen = new Set(), res = { "+": [], "-": [] };
   for (const x of exposedNames(r)) { if (seen.has(x.sym + x.dir)) continue; seen.add(x.sym + x.dir); const v = stockView(x.sym); if (v) res[x.dir].push(v.p); }
@@ -77,19 +78,19 @@ function lean(r) {
   return { up: { n: res["+"].length, avg: avg(res["+"]) }, down: { n: res["-"].length, avg: avg(res["-"]) } };
 }
 function leanText(l) {
-  const f = x => x.avg == null ? "—" : `${Math.round(x.avg * 100)}% up (${x.n})`;
-  return `<span class="up">▲</span> ${f(l.up)} · <span class="down">▼</span> ${f(l.down)}`;
+  const f = x => x.avg == null ? "â€”" : `${Math.round(x.avg * 100)}% up (${x.n})`;
+  return `<span class="up">â–²</span> ${f(l.up)} Â· <span class="down">â–¼</span> ${f(l.down)}`;
 }
 
 function exposureRows(r) {
   const { esc, S } = ctx, rows = [];
   const line = (s, d, why) => { const x = ctx.q(s), u = S.map.get(s); if (!u) return ""; const v = stockView(s);
-    return `<tr data-s="${esc(s)}"${why ? ` title="${esc(why)}"` : ""}><td>${arrow(d)}</td><td class="sym">${esc(s)}</td><td class="co">${esc(u.n)}</td><td class="num">${x ? ctx.inr(x.p) : "—"}</td><td class="num ${x ? ctx.ud(x.pct) : "mut"}">${x && x.pct != null ? ctx.sg(x.pct) + "%" : "—"}</td><td class="num">${v ? ctx.probBar(v.p) : '<span class="mut" title="No ALADIN probability for this stock">—</span>'}</td><td>${sentTag(v)}</td></tr>`; };
+    return `<tr data-s="${esc(s)}"${why ? ` title="${esc(why)}"` : ""}><td>${arrow(d)}</td><td class="sym">${esc(s)}</td><td class="co">${esc(u.n)}</td><td class="num">${x ? ctx.inr(x.p) : "â€”"}</td><td class="num ${x ? ctx.ud(x.pct) : "mut"}">${x && x.pct != null ? ctx.sg(x.pct) + "%" : "â€”"}</td><td class="num">${v ? ctx.probBar(v.p) : '<span class="mut" title="No ALADIN probability for this stock">â€”</span>'}</td><td>${sentTag(v)}</td></tr>`; };
   for (const e of r.exposure) {
     if (e.sym) rows.push(line(e.sym, e.dir, e.why));
     else {
       const top = S.uni.stocks.filter(s => s.ind === e.ind && s.board === "Main" && !s.etf && s.val_cr != null).sort((a, b) => b.val_cr - a.val_cr).slice(0, 8);
-      rows.push(`<tr class="geo-sec"><td>${arrow(e.dir)}</td><td colspan="6"><b>${esc(e.ind)}</b> sector <span class="mut">· ${esc(e.why)} · its 8 most-traded stocks:</span></td></tr>`);
+      rows.push(`<tr class="geo-sec"><td>${arrow(e.dir)}</td><td colspan="6"><b>${esc(e.ind)}</b> sector <span class="mut">Â· ${esc(e.why)} Â· its 8 most-traded stocks:</span></td></tr>`);
       for (const s of top) rows.push(line(s.s, e.dir, ""));
     }
   }
@@ -102,16 +103,16 @@ function drawPanel() {
   if (!r) { el.innerHTML = G ? '<p class="empty">Click a region on the map or in the table to see what is being reported and which listed companies it touches.</p>' : ""; return; }
   const b = r.baseline || {};
   const head = r.score == null
-    ? `<b class="geo-big">—</b><span class="tag">Building baseline</span><p class="note">${b.n || 0} of ${b.need || 48} samples over ${b.days || 0} of ${b.need_days || 3} days. The score appears once this region has its own normal to compare with.</p>`
+    ? `<b class="geo-big">â€”</b><span class="tag">Building baseline</span><p class="note">${b.n || 0} of ${b.need || 48} samples over ${b.days || 0} of ${b.need_days || 3} days. The score appears once this region has its own normal to compare with.</p>`
     : `<b class="geo-big">${r.score}</b><span class="tag ${r.score >= 50 ? "warn" : ""}">${esc(r.level)}</span><p class="note">Volume z ${r.z_vol >= 0 ? "+" : ""}${r.z_vol}, tone z ${r.z_tone >= 0 ? "+" : ""}${r.z_tone} versus the last 30 days of this index.</p>`;
-  const heads = (r.heads || []).map(h => `<li><a href="${esc(h.url)}" target="_blank" rel="noopener noreferrer">${esc(h.title)}</a><span class="mut"> · ${esc(h.source || "")}${h.seen_utc ? " · " + esc(ctx.agoTxt(ctx.minsAgo(h.seen_utc))) : ""}</span></li>`).join("") || '<li class="mut">No headlines in the last 24 hours.</li>';
+  const heads = (r.heads || []).map(h => `<li><a href="${esc(h.url)}" target="_blank" rel="noopener noreferrer">${esc(h.title)}</a><span class="mut"> Â· ${esc(h.source || "")}${h.seen_utc ? " Â· " + esc(ctx.agoTxt(ctx.minsAgo(h.seen_utc))) : ""}</span></li>`).join("") || '<li class="mut">No headlines in the last 24 hours.</li>';
   el.innerHTML = `<div class="geo-detail"><div class="geo-col"><h3>${esc(r.name)}</h3><p class="kick">${esc(r.kind)}</p>${head}
       <div class="geo-sp"><span class="mut">Headlines per hour, 30 days</span>${spark(r.spark || [])}</div>
-      <p class="mut">Last 24 h: ${r.n24 ?? "—"} headlines${r.capped ? " (busy: the feed's 100-item cap was hit, so volume is a lower bound)" : ""} · headline tone ${r.tone == null ? "—" : (r.tone > 0 ? "+" : "") + r.tone.toFixed(2)}${r.stale ? " · <b>stale: last fetch failed, showing the previous values</b>" : ""}</p></div>
+      <p class="mut">Last 24 h: ${r.n24 ?? "â€”"} headlines${r.capped ? " (busy: the feed's 100-item cap was hit, so volume is a lower bound)" : ""} Â· headline tone ${r.tone == null ? "â€”" : (r.tone > 0 ? "+" : "") + r.tone.toFixed(2)}${r.stale ? " Â· <b>stale: last fetch failed, showing the previous values</b>" : ""}</p></div>
     <div class="geo-col"><h3>Exposed on NSE, with ALADIN's view</h3>
       <p class="geo-lean">ALADIN's lean on these names (${ctx.S.aladin ? ctx.S.aladin.primary || 10 : 10}-day P(up), average): ${leanText(lean(r))}</p>
       <div class="tablecard"><table class="tbl geo-exp"><thead><tr><th></th><th>Symbol</th><th class="co">Company</th><th class="r">Last</th><th class="r">Chg %</th><th class="r">ALADIN P(up)</th><th>Sentiment</th></tr></thead><tbody>${exposureRows(r)}</tbody></table></div>
-      <p class="note">▲ tends to gain, ▼ tends to lose when attention on this region rises: a rule of thumb, not measured here and not a forecast. ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.</p></div>
+      <p class="note">â–² tends to gain, â–¼ tends to lose when attention on this region rises: a rule of thumb, not measured here and not a forecast. ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.</p></div>
     <div class="geo-col"><h3>Latest headlines</h3><ul class="geo-heads">${heads}</ul></div></div>`;
   el.querySelectorAll("tr[data-s]").forEach(tr => tr.onclick = () => { ctx.openSec(tr.dataset.s); ctx.go("terminal"); });
 }
@@ -125,7 +126,7 @@ export function renderGeo() {
     Promise.all([preload(), alPreload()]).then(() => { drawMarkers(); renderGeo(); });
   }
   if (!G) {
-    el.innerHTML = `<div class="page-head" style="margin-top:28px"><p class="kick">— Geopolitical news attention</p><h2 style="font-size:22px">News attention, <span class="acc">by region.</span></h2></div>
+    el.innerHTML = `<div class="page-head" style="margin-top:28px"><p class="kick">â€” Geopolitical news attention</p><h2 style="font-size:22px">News attention, <span class="acc">by region.</span></h2></div>
       <p class="lede">How much, and in what tone, the news is talking about ten regions that matter to Indian markets, against each region's own recent normal. It measures news, not events. Switch on <b>Geopolitical news attention</b> in the map's layer control, or load it here.</p>
       <p>${failed ? `<span class="mut">Could not load: ${esc(failed)} </span>` : ""}<button class="btn-line" id="geo-load">Load geopolitical news attention</button></p>`;
     const b = el.querySelector("#geo-load"); if (b) b.onclick = async () => { b.disabled = true; await preload(); if (layer && gm && gm.map && !gm.map.hasLayer(layer)) layer.addTo(gm.map); drawMarkers(); renderGeo(); };
@@ -135,17 +136,17 @@ export function renderGeo() {
   const scored = regs.filter(r => r.score != null).length;
   if (sel === null || !regs.some(r => r.id === sel)) sel = regs[0].id;                 // open the top region's analysis by default
   if (!ctx.S.aladin && ctx.S.deskMan && ctx.S.deskMan.aladin) alPreload().then(() => drawPanel());
-  document.querySelectorAll('[data-asof="geo"]').forEach(a => { a.innerHTML = `News index updated <b>${esc(ctx.istUtc(G.generated_utc))}</b> (${esc(ctx.agoTxt(ctx.minsAgo(G.generated_utc)))}) · source ${esc(G.source)} · refreshed about every hour`; });
-  el.innerHTML = `<div class="page-head" style="margin-top:28px"><p class="kick">— Geopolitical news attention · with ALADIN's view of the exposed stocks</p><h2 style="font-size:22px">News attention, <span class="acc">by region.</span></h2><p class="asof" data-asof="geo"></p></div>
+  document.querySelectorAll('[data-asof="geo"]').forEach(a => { a.innerHTML = `News index updated <b>${esc(ctx.istUtc(G.generated_utc))}</b> (${esc(ctx.agoTxt(ctx.minsAgo(G.generated_utc)))}) Â· source ${esc(G.source)} Â· refreshed about every hour`; });
+  el.innerHTML = `<div class="page-head" style="margin-top:28px"><p class="kick">â€” Geopolitical news attention Â· with ALADIN's view of the exposed stocks</p><h2 style="font-size:22px">News attention, <span class="acc">by region.</span></h2><p class="asof" data-asof="geo"></p></div>
     <p class="note">${esc(G.method)}</p>
     ${scored ? "" : `<p class="note"><b>No region has a score yet.</b> The index compares each region with its own history and has to collect that history first (${(regs[0].baseline || {}).need || 48} samples over ${(regs[0].baseline || {}).need_days || 3} days). Headlines and exposure are real now.</p>`}
     <div id="geo-panel"></div>
     <div class="tablecard"><table class="tbl" id="geo-table"><thead><tr><th>Region</th><th>Kind</th><th>Level</th><th class="r">Score</th><th class="r">24 h headlines</th><th class="r">Per hour</th><th class="r">Tone</th><th>Baseline</th><th>ALADIN lean on exposed names</th></tr></thead><tbody>${regs.map(r => {
       const b = r.baseline || {};
       return `<tr class="geo-row${sel === r.id ? " on" : ""}" data-id="${esc(r.id)}" tabindex="0"><td class="co"><b>${esc(r.name)}</b>${r.stale ? ' <span class="tag warn">stale</span>' : ""}</td><td class="mut">${esc(r.kind)}</td>
-        <td><span class="tag ${r.score != null && r.score >= 50 ? "warn" : ""}">${esc(r.level)}</span></td><td class="num">${r.score ?? "—"}</td><td class="num">${r.n24 ?? "—"}${r.capped ? "+" : ""}</td>
-        <td class="num">${r.rate_h == null ? "—" : r.rate_h.toFixed(1) + (r.capped ? "+" : "")}</td><td class="num">${r.tone == null ? "—" : (r.tone > 0 ? "+" : "") + r.tone.toFixed(2)}</td>
-        <td class="mut">${b.ready ? "ready" : `${b.n || 0}/${b.need || 48} samples`}</td><td class="al-lean">${ctx.S.aladin ? leanText(lean(r)) : '<span class="mut">loading…</span>'}</td></tr>`;
+        <td><span class="tag ${r.score != null && r.score >= 50 ? "warn" : ""}">${esc(r.level)}</span></td><td class="num">${r.score ?? "â€”"}</td><td class="num">${r.n24 ?? "â€”"}${r.capped ? "+" : ""}</td>
+        <td class="num">${r.rate_h == null ? "â€”" : r.rate_h.toFixed(1) + (r.capped ? "+" : "")}</td><td class="num">${r.tone == null ? "â€”" : (r.tone > 0 ? "+" : "") + r.tone.toFixed(2)}</td>
+        <td class="mut">${b.ready ? "ready" : `${b.n || 0}/${b.need || 48} samples`}</td><td class="al-lean">${ctx.S.aladin ? leanText(lean(r)) : '<span class="mut">loadingâ€¦</span>'}</td></tr>`;
     }).join("")}</tbody></table></div>`;
   el.querySelectorAll("tr.geo-row").forEach(tr => { const go = () => { selectRegion(tr.dataset.id); el.querySelectorAll("tr.geo-row").forEach(x => x.classList.toggle("on", x.dataset.id === sel)); }; tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }; });
   drawPanel();
@@ -161,10 +162,10 @@ function topRegion() {
 export function regimeItem() {
   if (!ctx || !(ctx.S.geo || ctx.S.geo_summary)) return null;
   const top = topRegion();
-  return top ? `Geo news attention: ${top.level} · ${top.name}` : "Geo news attention: building baseline";
+  return top ? `Geo news attention: ${top.level} Â· ${top.name}` : "Geo news attention: building baseline";
 }
 export function briefCard(bcard) {
   const top = topRegion(); if (!top) return "";
   const { esc } = ctx;
-  return bcard(top.score >= 65 ? "neg" : "neutral", "Geopolitics · news attention", `${esc(top.name)}: ${esc(top.level)} (${top.score})`, `${esc(top.head || "No headlines in the last 24 hours")}`, "Open globe", 'data-go="globe"');
+  return bcard(top.score >= 65 ? "neg" : "neutral", "Geopolitics Â· news attention", `${esc(top.name)}: ${esc(top.level)} (${top.score})`, `${esc(top.head || "No headlines in the last 24 hours")}`, "Open globe", 'data-go="globe"');
 }

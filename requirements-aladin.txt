@@ -14,3 +14,6 @@ brotli==1.2.0
 python-dotenv>=1.0
 praw>=7.7
 pytest==9.1.1
+jsonschema>=4.23
+rapidfuzz>=3.9
+requests>=2.32

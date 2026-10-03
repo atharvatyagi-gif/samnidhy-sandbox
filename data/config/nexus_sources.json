@@ -1,0 +1,246 @@
+{
+  "version": 1,
+  "prompt_version": "v3",
+  "endpoints": {
+    "annual_reports": {
+      "path": "/api/annual-reports",
+      "params": {
+        "index": "equities"
+      },
+      "referer": "/companies-listing/corporate-filings-annual-reports"
+    },
+    "announcements": {
+      "path": "/api/corporate-announcements",
+      "params": {
+        "index": "equities"
+      },
+      "referer": "/companies-listing/corporate-filings-announcements"
+    }
+  },
+  "transcript_pattern": "transcript|earnings call|analyst.{0,12}(meet|call)|investor.{0,12}call|con(ference)? call",
+  "transcripts_per_company": 2,
+  "transcript_candidates": 5,
+  "min_transcript_chars": 6000,
+  "transcript_lookback_days": 400,
+  "keywords": [
+    "segment",
+    "ind as 108",
+    "customer",
+    "customers",
+    "10%",
+    "ten percent",
+    "major customer",
+    "supplier",
+    "suppliers",
+    "procure",
+    "procurement",
+    "sole source",
+    "single source",
+    "raw material",
+    "capacity",
+    "utilisation",
+    "utilization",
+    "plant",
+    "manufacturing facility",
+    "related party",
+    "value chain",
+    "brsr",
+    "purchases from",
+    "dependence on",
+    "dependent on"
+  ],
+  "min_keyword_hits": 2,
+  "max_pages_per_filing": 24,
+  "max_chunk_chars": 10000,
+  "max_chunks_per_filing": 4,
+  "system_prompt": "You extract supply-chain and revenue-dependency facts from company filings. Extract ONLY what the text states. Never use outside knowledge. Use null for anything not stated. Copy every quote exactly as written in the text (verbatim, no paraphrase, no ellipses, at least 12 characters). Include an edge ONLY when the text says the filing company sells goods or services to a named or anonymised customer, or buys from a named supplier (supply relationships). Do not include partnerships, investments, awards, lenders, regulators or competitors. If the text has none, return empty lists. 'direction' is 'customer' when the counterparty buys from the filing company, and 'supplier' when the counterparty sells to the filing company. 'w' is a fraction between 0 and 1 (24% -> 0.24), written only when the quote shows the percentage; 'w_basis' is 'revenue' when w is the counterparty's share of the filing company's revenue, 'purchases' when w is the supplier's share of the filing company's purchases, otherwise null. If a customer is anonymised (for example 'Customer A'), set counterparty_name to null and put the label in counterparty_anon_label. 'rel' is one of supplies, equipment_for, raw_material_from, logistics_for. 'kind' of a facility is one of plant, mine, port, warehouse, office; list a facility only when the text names it. Each page in the text starts with a line [[PAGE n]]; 'page' is the page the quote came from. Reply with ONE JSON object in exactly this shape and nothing else: {\"edges\":[{\"counterparty_name\":\"Acme Ltd\",\"counterparty_anon_label\":null,\"direction\":\"customer\",\"rel\":\"supplies\",\"w\":0.24,\"w_basis\":\"revenue\",\"period\":\"FY2024-25\",\"component\":null,\"page\":12,\"quote\":\"exact sentence from the page\"}],\"facilities\":[{\"name\":\"Pune plant\",\"kind\":\"plant\",\"address_text\":null,\"capacity\":{\"value\":null,\"unit\":null},\"utilisation_pct\":null,\"period\":null,\"products\":[],\"equipment\":[],\"page\":12,\"quote\":\"exact sentence from the page\"}]}",
+  "schema": {
+    "type": "object",
+    "required": [
+      "edges",
+      "facilities"
+    ],
+    "properties": {
+      "edges": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "rel",
+            "direction",
+            "page",
+            "quote"
+          ],
+          "properties": {
+            "counterparty_name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "counterparty_anon_label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "direction": {
+              "enum": [
+                "customer",
+                "supplier"
+              ]
+            },
+            "rel": {
+              "enum": [
+                "supplies",
+                "equipment_for",
+                "raw_material_from",
+                "logistics_for"
+              ]
+            },
+            "w": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "exclusiveMinimum": 0,
+              "maximum": 1
+            },
+            "w_basis": {
+              "enum": [
+                "revenue",
+                "purchases",
+                null
+              ]
+            },
+            "period": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "component": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "page": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "quote": {
+              "type": "string",
+              "minLength": 12
+            }
+          }
+        }
+      },
+      "facilities": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "kind",
+            "page",
+            "quote"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 2
+            },
+            "kind": {
+              "enum": [
+                "plant",
+                "mine",
+                "port",
+                "warehouse",
+                "office"
+              ]
+            },
+            "address_text": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "capacity": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "value": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "unit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "utilisation_pct": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            },
+            "period": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "equipment": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "item",
+                  "quote"
+                ],
+                "properties": {
+                  "item": {
+                    "type": "string"
+                  },
+                  "vendor": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "quote": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "page": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "quote": {
+              "type": "string",
+              "minLength": 12
+            }
+          }
+        }
+      }
+    }
+  }
+}

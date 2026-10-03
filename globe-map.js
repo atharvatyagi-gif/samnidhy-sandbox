@@ -240,8 +240,8 @@ export class GlobeMap {
     try {
       const lanes = await fetch("globe/layers/shipping_lanes.json").then(r => r.ok ? r.json() : null);
       if (lanes) for (const lane of lanes.lanes || []) {
-        const w = lane.type === "Major" ? 1.4 : lane.type === "Middle" ? 1 : 0.6;
-        const op = lane.type === "Major" ? 0.55 : lane.type === "Middle" ? 0.4 : 0.25;
+        const w = lane.type === "Major" ? 2.2 : lane.type === "Middle" ? 1.6 : 1;
+        const op = lane.type === "Major" ? 0.85 : lane.type === "Middle" ? 0.7 : 0.5;
         for (const line of lane.lines) L.polyline(line.map(([x, y]) => [y, x]), { color: "#4fc3f7", weight: w, opacity: op })
           .bindTooltip(`${esc(lane.type)} shipping lane`).addTo(this.laneLayer);
       }
@@ -249,7 +249,7 @@ export class GlobeMap {
     try {
       const cables = await fetch("globe/layers/cables.json").then(r => r.ok ? r.json() : null);
       if (cables) {
-        for (const c of cables.cables || []) for (const line of c.lines) L.polyline(line.map(([x, y]) => [y, x]), { color: "#f0c674", weight: 0.8, opacity: 0.3 })
+        for (const c of cables.cables || []) for (const line of c.lines) L.polyline(line.map(([x, y]) => [y, x]), { color: "#f0c674", weight: 1.4, opacity: 0.6 })
           .bindTooltip(esc(c.name || "Submarine cable")).addTo(this.cableLayer);
         for (const lp of cables.landing_points || []) L.circleMarker([lp.lat, lp.lon], { radius: lp.india ? 4 : 2.5, weight: 0, fillColor: lp.india ? "#f0c674" : "#8a8a8a", fillOpacity: 0.8 })
           .bindTooltip(esc(lp.name)).addTo(this.cableLayer);
@@ -277,6 +277,7 @@ export class GlobeMap {
       this.layerControl.addOverlay(this.cableLayer, "Submarine cables");
       this.layerControl.addOverlay(this.plantLayer, "Power plants, India ≥100MW");
       this.layerControl.addOverlay(this.assetLayer, "Company facilities (Wikidata)");
+      this.laneLayer.addTo(this.map); this.cableLayer.addTo(this.map);   // on by default so the map shows them without a click
     }
   }
   /* Called from terminal.js when a stock is opened: flies to and highlights that company's real mapped
