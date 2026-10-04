@@ -29,9 +29,10 @@
     </div>
     <div class="cmdline" id="cmdline">
       <span class="cmd-k">/</span>
-      <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="SYMBOL FUNCTION, e.g. RELIANCE CH · HELP for the list" aria-label="Command line" aria-autocomplete="list" aria-expanded="false" role="combobox">
+      <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="SYMBOL FUNCTION, e.g. RELIANCE CH · HELP for the list" aria-label="Command line" aria-autocomplete="list" aria-controls="cmd-list" aria-expanded="false" role="combobox">
+      <button type="button" class="cmd-go" id="cmd-go" aria-label="Run the command (same as Enter)">GO</button>
       <kbd>Esc</kbd>
-      <ul class="cmd-list" id="cmd-list" role="listbox" hidden></ul>
+      <ul class="cmd-list" id="cmd-list" role="listbox" aria-label="Command suggestions" hidden></ul>
     </div>
     <div class="mstats">
       <span class="livechip" id="livechip"><i></i><b id="live-txt">LIVE</b></span>

@@ -17,6 +17,7 @@ import * as GeoDesk from "./desk-map.js";
 import * as Aladin from "./desk-aladin.js";
 import * as Ticks from "./desk-ticks.js";
 import * as Nexus from "./desk-nexus.js";
+import * as Cmd from "./desk-cmd.js";
 const NX_HASH = (/[#&]nx=([^&]+)/.exec(location.hash) || [])[1];     // a NEXUS deep link, read before the first navigation rewrites the address
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -1444,7 +1445,8 @@ async function openSec(sym) {
 const FUNCS = { BRIEF: "Brief", TERMINAL: "Terminal", MOVERS: "Movers", SECTORS: "Sectors", WORLD: "World", OUTLOOK: "Outlook", NEWS: "News", WATCHLIST: "Watchlist", HOUSES: "Business houses", TOOLS: "Tools (ALADIN)", ALADIN: "ALADIN probabilities", SETUP: "Set up desk", BACK: "Back to B-Lab", LOGOFF: "Log off" };
 // shared fuzzy symbol/company scorer (lower = better) used by both the "+ Add to watchlist" picker (modal,
 // below) and the command line's autocomplete (further down) - one matching algorithm, not two to keep in sync.
-function scoreStocks(Q, filter) {
+function scoreStocks(Q, filter) { return scoreStocksRaw(Q, filter).map(r => r[2]); }
+function scoreStocksRaw(Q, filter) {
   const words = Q.split(/\s+/).filter(Boolean), joined = words.join("");
   const out = [];
   for (const s of S.uni.stocks) {
@@ -1459,7 +1461,7 @@ function scoreStocks(Q, filter) {
     if (sc < 9) out.push([sc, -((s.v || 0) * (s.c || 0)), s]);
   }
   out.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  return out.map(r => r[2]);
+  return out;
 }
 let qFilter = "all", qOpts = [], qAct = 0;
 let qAdd = false;                                       // search opened from "+ Add": the pick goes on the watchlist
@@ -1524,10 +1526,76 @@ const FUNC_CODES = {
   MAP: { label: "World map: flights, chokepoints, real news", run: () => go("globe") },
   HOUSES: { label: "Business houses", run: () => go("houses") },
   TOOLS: { label: "Tools (ALADIN)", run: () => { Aladin.setAladinFilter(null); go("lab"); } },
-  ALADIN: { label: "ALADIN probabilities (SYMBOL ALADIN to filter)", run: sym => { Aladin.setAladinFilter(sym || null); go("lab"); } },
+  ALADIN: { label: "ALADIN probabilities (ALADIN SYMBOL or SYMBOL ALADIN to filter)", run: sym => { Aladin.setAladinFilter(sym || null); go("lab"); } },
   HELP: { label: "Function directory", run: () => openHelp() },
+  SPLC: { label: "Supply chain: SYMBOL SPLC [TIER1|TIER2|TIER3]", run: sym => runText(`SPLC ${sym || ""}`) },
+  SWEEP: { label: "Stocks with a liquidity sweep today (needs the local tick program)", run: () => runText("SWEEP") },
+  FLIGHT: { label: "Find a flight in the current snapshot: FLIGHT <callsign|digits>", run: () => runText("FLIGHT") },
+  VESSEL: { label: "Find a vessel in the current snapshot: VESSEL <name|MMSI>", run: () => runText("VESSEL") },
+  HOUSE: { label: "Jump to a business house: HOUSE <name>", run: () => runText("HOUSE") },
+  SECTOR: { label: "Jump to a sector: SECTOR <name>", run: () => runText("SECTOR") },
+  GEO: { label: "Jump to a Globe region: GEO <region>", run: () => runText("GEO") },
+  MOVERS: { label: "Movers: MOVERS [PRICE|ALADIN|SHOCK]", run: () => runText("MOVERS") },
 };
 let cmdOpts = [], cmdAct = -1, cmdHist = [], cmdHistAt = -1;
+/* ---- the new grammar (desk-cmd.js): parse the text first; old forms fall through to the code below unchanged ---- */
+function resolveSym(q) {
+  const j = q.replace(/\s+/g, "").toUpperCase();
+  if (S.map.has(j)) return { sym: j };
+  const hits = scoreStocksRaw(q.toUpperCase(), "all");
+  if (!hits.length) return null;
+  const top = hits[0][0], tied = hits.filter(h => h[0] === top);
+  if (top >= 1 && tied.length > 1) return { matches: tied.slice(0, 3).map(h => h[2].s) };         // several equally good matches and no exact symbol ("TATA"): ask which one
+  return { sym: hits[0][2].s };
+}
+function cmdCtx() {
+  return { resolve: resolveSym, suggest: (q, n) => scoreStocks(q.toUpperCase(), "all").slice(0, n).map(s => s.s), selected: sec || null,
+    houses: S.houseList || [], sectors: sectorStats().map(s => s.k), regions: ((S.geo || {}).regions || []).map(r => ({ id: r.id, name: r.name })),
+    legacy: new Set([...Object.keys(FUNC_CODES), "TICKS"]),                                       // the parser checks its own commands first
+    flights: null, vessels: null, snapAge: "no snapshot published",                              // the transport snapshot arrives with the Globe update
+    sweepAvailable: Ticks.active() || Object.keys(S.sweep || {}).length > 0 };
+}
+function cmdMessage(error, hints) {
+  $("#cmd-list").innerHTML = `<li class="empty" role="status">${esc(error)}${hints && hints.length ? ` <span class="mut">Closest:</span> ${hints.map(h => `<b>${esc(h)}</b>`).join(", ")}` : ""}</li>`;
+  $("#cmd-list").hidden = false; $("#cmd").setAttribute("aria-expanded", "true");
+}
+function focusHouse(id) {
+  let n = 0;
+  const t = setInterval(() => {
+    const b = $(`#hh-table tr.hh-row[data-h="${CSS.escape(id)}"] .hh-tg`);
+    if (b) { clearInterval(t); if (b.getAttribute("aria-expanded") !== "true") b.click(); const nb = $(`#hh-table tr.hh-row[data-h="${CSS.escape(id)}"] .hh-tg`) || b; nb.scrollIntoView({ block: "center" }); nb.focus(); }
+    else if (++n > 40) clearInterval(t);
+  }, 100);
+}
+function execCmd(p) {
+  const a = p.args || {};
+  switch (p.action) {
+    case "splc": openAndGo(a.sym, "terminal"); Nexus.openNexus({ type: "company", id: a.sym, tab: "chain", tier: a.tier }); break;
+    case "aladin": Aladin.setAladinFilter(a.sym || null); go("lab"); break;
+    case "sweep": Aladin.setAladinSweepOnly(true); go("lab"); break;
+    case "house": go("houses"); focusHouse(a.id); break;
+    case "sector": heatSel = a.name; go("sectors"); renderSectors(); break;
+    case "geo": go("globe"); GeoDesk.preload().then(() => GeoDesk.selectRegion(a.id)).catch(() => {}); break;
+    case "map": go("globe"); break;
+    case "movers": go("movers"); if (a.mode !== "PRICE") toast(`MOVERS ${a.mode} is not built yet: showing the price movers.`); break;
+    case "help": openHelp(a.filter || ""); break;
+    case "flight": case "vessel": go("globe"); Nexus.openNexus({ type: a.kind || p.action, id: a.id }); break;
+    case "pick": cmdMessage(`Several ${a.kind}s match: type the full ${a.kind === "flight" ? "callsign" : "name"}.`, a.matches.map(m => m.label)); return false;
+    default: return false;
+  }
+  $("#cmd").value = ""; closeCmd();
+  return true;
+}
+/* runs typed text through the grammar; houses.json / geo.json are fetched first when HOUSE / GEO need them. Returns true when it handled the text. */
+function runText(raw, quiet) {
+  const first = raw.trim().split(/\s+/)[0].toUpperCase();
+  if (first === "HOUSE" && !S.houseList) { S.houseList = []; getJSON("houses.json", false).then(j => { S.houseList = (j.houses || []).map(h => ({ id: h.id, name: h.name })); runText(raw, quiet); }).catch(() => runText(raw, quiet)); return true; }
+  if (first === "GEO" && !S.geo && (S.deskMan || {}).geo) { (S.geoTried = S.geoTried || GeoDesk.preload().catch(() => null)).then(() => { S.geo = S.geo || { regions: [] }; runText(raw, quiet); }); return true; }
+  const p = Cmd.parseCmd(raw, cmdCtx());
+  if (p.error) { cmdMessage(p.error, p.hints); return true; }
+  if (p.action === "legacy" || p.action === "symbol") return false;
+  return execCmd(p);
+}
 function closeCmd() { $("#cmd-list").hidden = true; $("#cmd").setAttribute("aria-expanded", "false"); cmdOpts = []; cmdAct = -1; }
 function focusCmd(initial = "") { const i = $("#cmd"); i.value = initial; i.focus(); i.setSelectionRange(initial.length, initial.length); runCmd(); }
 function paintCmd() {
@@ -1561,6 +1629,7 @@ function commitCmd(opt) {
   const raw = $("#cmd").value.trim();
   if (raw) { cmdHist = cmdHist.filter(h => h !== raw); cmdHist.unshift(raw); cmdHist = cmdHist.slice(0, 50); }
   cmdHistAt = -1;
+  if (raw && runText(raw)) return;
   if (opt) {
     if (opt.s && opt.code) FUNC_CODES[opt.code].run(opt.s.s);
     else if (opt.code) { if (FUNC_CODES[opt.code].needsSym) toast(`${opt.code} needs a symbol first, e.g. RELIANCE ${opt.code}`); else FUNC_CODES[opt.code].run(); }
@@ -1607,6 +1676,7 @@ $("#cmd").addEventListener("keydown", e => {
   else if (e.key === "Tab" && cmdOpts[cmdAct]) { const o = cmdOpts[cmdAct]; $("#cmd").value = o.s ? o.s.s + (o.code ? " " + o.code : "") : o.code; e.preventDefault(); runCmd(); }
   else if (e.key === "Enter") { commitCmd(cmdOpts[cmdAct] || null); e.preventDefault(); }
 });
+$("#cmd-go").onclick = () => commitCmd(cmdOpts[cmdAct] || null);
 $("#cmd-list").addEventListener("click", e => { const li = e.target.closest("li[role=option]"); if (li) commitCmd(cmdOpts[+li.dataset.i]); });
 $$("#fkeys button").forEach(b => b.onclick = () => {
   const f = FUNC_CODES[b.dataset.code];
