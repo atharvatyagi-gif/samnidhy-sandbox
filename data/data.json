@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-04T07:43:03+00:00",
+  "generated_on": "2026-10-04T10:02:48+00:00",
   "session_date": "2026-10-01",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -14,7 +14,7 @@
     "min_turnover_crore": 10,
     "min_history_years": 1,
     "skipped": [],
-    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_02102026.csv"
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_04102026.csv"
   },
   "order": [
     "SCHNEIDER.NS",
@@ -157,7 +157,7 @@
       },
       "latest_close": 10045.0,
       "trailing_pe": 23.866093,
-      "market_cap": 2758133153792,
+      "market_cap": 2760404631552,
       "history": {
         "first_date": "2021-09-24",
         "trading_days": 1239,
@@ -1713,7 +1713,7 @@
         3305.12,
         3395.93,
         3397.88,
-        3490.81,
+        3490.82,
         3450.59,
         3362.93,
         3369.69,
