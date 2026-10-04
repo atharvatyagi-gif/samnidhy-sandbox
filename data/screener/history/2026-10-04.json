@@ -130,7 +130,7 @@
    -0.15089,
    -0.14983,
    -0.14925,
-   -0.1486,
+   -0.14859,
    -0.14849,
    -0.1473,
    -0.14618,
@@ -1437,9 +1437,9 @@
    1.10954
   ]
  },
- "generated_utc": "2026-10-04T10:05:32+00:00",
- "generated_ist": "04 Oct 2026, 03:35 PM IST",
- "screened_ist": "04 Oct 2026, 03:35 PM IST",
+ "generated_utc": "2026-10-04T13:34:50+00:00",
+ "generated_ist": "04 Oct 2026, 07:04 PM IST",
+ "screened_ist": "04 Oct 2026, 07:04 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1469,11 +1469,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 272
+   "count": 268
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 154
+   "count": 151
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1495,6 +1495,10 @@
    "INFY"
   ],
   "download failed (YFRateLimitError)": [
+   "SHREECEM",
+   "SHRIPISTON",
+   "SHYAMMETL",
+   "SIEMENS",
    "SIGNATURE",
    "SOBHA",
    "SOLARINDS",
@@ -1613,7 +1617,7 @@
    "magic_rank": 1,
    "rank_roc": 10,
    "rank_ey": 12,
-   "of": 154
+   "of": 151
   },
   {
    "symbol": "NBCC",
@@ -1666,7 +1670,7 @@
    "magic_rank": 2,
    "rank_roc": 9,
    "rank_ey": 24,
-   "of": 154
+   "of": 151
   },
   {
    "symbol": "CASTROLIND",
@@ -1719,7 +1723,7 @@
    "magic_rank": 3,
    "rank_roc": 5,
    "rank_ey": 30,
-   "of": 154
+   "of": 151
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1772,7 +1776,7 @@
    "magic_rank": 4,
    "rank_roc": 17,
    "rank_ey": 19,
-   "of": 154
+   "of": 151
   },
   {
    "symbol": "HINDZINC",
@@ -1825,7 +1829,7 @@
    "magic_rank": 5,
    "rank_roc": 28,
    "rank_ey": 18,
-   "of": 154
+   "of": 151
   },
   {
    "symbol": "NATIONALUM",
@@ -1876,9 +1880,9 @@
    "beta": 0.715,
    "summary": "National Aluminium Company Limited engages in the manufacture and sale of alumina and aluminum products in India and internationally. The company operates through Chemical and Aluminum segments. It offers aluminum metal products, such as ingots, alloy ingots, T-ingots, sows, billets, and wire rods; alumina and hydrate products, including calcined alumina and alumina hydrate; zeolite-A products; specialty alumina and hydrate products; and aluminum rolled and chequered sheets products. The company also owns and operates Coal Mine covering an area of 824.316 hectors situated in Chhendipada Tehsil of Angul District; an opencast mine covering an area of 16 square kilometers on Panchpatmali hills of Koraput district in Odisha; a wind power plant with 50.4 MW of generation capacity in Gandikota, Andhra Pradesh; a wind power plant with 47.6 MW of generation capacity at Jaisalmer, Rajasthan; a wind power plant with 50 MW of generation capacity at Devikot, Rajasthan; a wind power plant with 50.4 MW of generation capacity at Sangli, Maharashtra; and a solar power plants, as well as alumina refinery, aluminum smelter plants, and captive power plant. In addition, it provides testing services. N",
    "magic_rank": 6,
-   "rank_roc": 40,
+   "rank_roc": 39,
    "rank_ey": 8,
-   "of": 154
+   "of": 151
   },
   {
    "symbol": "ENGINERSIN",
@@ -1931,7 +1935,7 @@
    "magic_rank": 7,
    "rank_roc": 6,
    "rank_ey": 44,
-   "of": 154
+   "of": 151
   },
   {
    "symbol": "FORCEMOT",
@@ -1984,7 +1988,7 @@
    "magic_rank": 8,
    "rank_roc": 26,
    "rank_ey": 25,
-   "of": 154
+   "of": 151
   },
   {
    "symbol": "ESCORTS",
@@ -2037,7 +2041,7 @@
    "magic_rank": 9,
    "rank_roc": 33,
    "rank_ey": 22,
-   "of": 154
+   "of": 151
   },
   {
    "symbol": "IRCTC",
@@ -2090,7 +2094,7 @@
    "magic_rank": 10,
    "rank_roc": 16,
    "rank_ey": 42,
-   "of": 154
+   "of": 151
   }
  ]
 }
