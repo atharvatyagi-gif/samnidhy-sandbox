@@ -130,7 +130,7 @@
    -0.15089,
    -0.14983,
    -0.14925,
-   -0.1486,
+   -0.14859,
    -0.14849,
    -0.1473,
    -0.14618,
@@ -1437,9 +1437,9 @@
    1.10954
   ]
  },
- "generated_utc": "2026-10-04T03:34:06+00:00",
- "generated_ist": "04 Oct 2026, 09:04 AM IST",
- "screened_ist": "04 Oct 2026, 09:04 AM IST",
+ "generated_utc": "2026-10-04T07:45:59+00:00",
+ "generated_ist": "04 Oct 2026, 01:15 PM IST",
+ "screened_ist": "04 Oct 2026, 01:15 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1469,11 +1469,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 274
+   "count": 277
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 156
+   "count": 158
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1489,9 +1489,6 @@
    "NESTLEIND"
   ],
   "download failed (YFRateLimitError)": [
-   "SHREECEM",
-   "SHRIPISTON",
-   "SHYAMMETL",
    "SIEMENS",
    "SIGNATURE",
    "SOBHA",
@@ -1611,7 +1608,7 @@
    "magic_rank": 1,
    "rank_roc": 11,
    "rank_ey": 13,
-   "of": 156
+   "of": 158
   },
   {
    "symbol": "NBCC",
@@ -1664,7 +1661,7 @@
    "magic_rank": 2,
    "rank_roc": 10,
    "rank_ey": 26,
-   "of": 156
+   "of": 158
   },
   {
    "symbol": "CASTROLIND",
@@ -1717,7 +1714,7 @@
    "magic_rank": 3,
    "rank_roc": 5,
    "rank_ey": 32,
-   "of": 156
+   "of": 158
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1770,7 +1767,7 @@
    "magic_rank": 4,
    "rank_roc": 18,
    "rank_ey": 21,
-   "of": 156
+   "of": 158
   },
   {
    "symbol": "HINDZINC",
@@ -1823,7 +1820,7 @@
    "magic_rank": 5,
    "rank_roc": 29,
    "rank_ey": 20,
-   "of": 156
+   "of": 158
   },
   {
    "symbol": "NATIONALUM",
@@ -1876,7 +1873,7 @@
    "magic_rank": 6,
    "rank_roc": 40,
    "rank_ey": 9,
-   "of": 156
+   "of": 158
   },
   {
    "symbol": "ENGINERSIN",
@@ -1929,7 +1926,7 @@
    "magic_rank": 7,
    "rank_roc": 6,
    "rank_ey": 46,
-   "of": 156
+   "of": 158
   },
   {
    "symbol": "FORCEMOT",
@@ -1982,7 +1979,7 @@
    "magic_rank": 8,
    "rank_roc": 27,
    "rank_ey": 27,
-   "of": 156
+   "of": 158
   },
   {
    "symbol": "ESCORTS",
@@ -2035,7 +2032,7 @@
    "magic_rank": 9,
    "rank_roc": 34,
    "rank_ey": 24,
-   "of": 156
+   "of": 158
   },
   {
    "symbol": "IRCTC",
@@ -2088,7 +2085,7 @@
    "magic_rank": 10,
    "rank_roc": 17,
    "rank_ey": 44,
-   "of": 156
+   "of": 158
   }
  ]
 }
