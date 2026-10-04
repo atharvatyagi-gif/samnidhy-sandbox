@@ -26,7 +26,7 @@ SITE = ROOT / "site"
 STATIC = ["index.html", "landing.css", "landing.js", "auth.html", "auth-check.js", "config.js",
           "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js",
           "chart-engine.js", "chart-indicators.js", "mode-dock.js", "globe-map.js",
-          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js"]
+          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js"]
 TERMINAL = ROOT / "data" / "terminal"
 # Scripts/styles that pages load. Browsers keep these for a while (GitHub Pages: 10 min, some longer), so an
 # update could mix a new page with an old script. Every reference gets ?v=<hash of the file>, which changes
@@ -34,7 +34,7 @@ TERMINAL = ROOT / "data" / "terminal"
 # ORDER MATTERS: a file must come AFTER every file it imports (desk-map imports desk-aladin, which imports desk-ticks), because each file is stamped with
 # the hashes of the files before it. Out of order, an import keeps its plain address while the page loads the hashed one, and the browser runs the file
 # twice as two separate modules (one of them never initialised). tests/test_build_assets.py checks this.
-ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-ticks.js", "desk-nexus.js", "desk-aladin.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
+ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
 
 
 def geo_summary(g: dict) -> dict:

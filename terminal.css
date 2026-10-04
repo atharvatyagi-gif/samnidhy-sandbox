@@ -849,3 +849,10 @@ body.nx-open { overflow: hidden; }
 .nx-skel i { display: block; height: 14px; margin: 12px 0; background: var(--sunken); }
 .nx-alt { margin-top: 10px; }
 @media (max-width: 700px) { .nx-drawer { top: auto; height: 88vh; width: 100vw; border-left: 0; border-top: 1px solid var(--rule-2); } }
+
+/* ---------- CMD ---------- */
+.cmd-go { font: 700 10px var(--mono); letter-spacing: 0.08em; color: var(--paper); background: var(--acc); border: 1px solid var(--acc); padding: 3px 9px; cursor: pointer; }
+.cmd-go:hover { background: var(--hl); border-color: var(--hl); }
+.cmd-list li.empty { display: block; line-height: 1.5; }
+@media (max-width: 700px) { .cmdline kbd { display: none; } }
+

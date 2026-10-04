@@ -8,7 +8,7 @@
 import { onTick } from "./desk-ticks.js";
 
 let ctx = null, opened = false, filterSym = null, loading = null, failed = null;
-const st = { h: 10, view: "up", board: "All", sector: "", house: "", region: "", sent: "", conf: "", q: "", sort: null, limit: 50 };
+const st = { h: 10, view: "up", board: "All", sector: "", house: "", region: "", sent: "", conf: "", q: "", sort: null, limit: 50, sweepOnly: false };
 const expanded = new Set();
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.";
 const LEVELS = ["BAD", "POOR", "NEUTRAL", "GOOD", "EXCELLENT"];
@@ -218,6 +218,7 @@ function visibleRows() {
     if (st.sector && u.ind !== st.sector) return false;
     if (hs && !hs.has(r.sym)) return false;
     if (rg && !rg.has(r.sym)) return false;
+    if (st.sweepOnly && !sweepOf(r.sym)) return false;
     if (q && !(r.sym.includes(q) || (u.n || "").toUpperCase().includes(q))) return false;
     return true;
   });
@@ -227,7 +228,7 @@ function visibleRows() {
   const withP = rows.filter(r => r.c), noP = rows.filter(r => !r.c);
   const by = (f, dir = 1) => (a, b) => dir * ((f(a) ?? -1e9) - (f(b) ?? -1e9));
   const keys = { sym: r => r.sym, n: r => r.u.n, last: r => (ctx.q(r.sym) || {}).p, chg: r => (ctx.q(r.sym) || {}).pct, pup: r => r.c && r.c.p, pdn: r => r.c && r.c.q, F: r => r.c && r.c.Fadj, I: r => r.c && r.c.I,
-    T: r => r.c && r.c.T, S: r => r.c && r.c.S, sw: r => sweepOf(r.sym), agree: r => r.c && r.c.agree_k, conf: r => r.c && ({ Low: 0, Medium: 1, High: 2 })[r.c.conf], cov: r => r.a && ((r.a.cov.f || 0) + (r.a.cov.t || 0) + (r.a.cov.s || 0)) };
+    T: r => r.c && r.c.T, S: r => r.c && r.c.S, sw: r => sweepOf(r.sym), swabs: r => Math.abs(sweepOf(r.sym) || 0), agree: r => r.c && r.c.agree_k, conf: r => r.c && ({ Low: 0, Medium: 1, High: 2 })[r.c.conf], cov: r => r.a && ((r.a.cov.f || 0) + (r.a.cov.t || 0) + (r.a.cov.s || 0)) };
   let list;
   if (st.sort) {
     const [k, d] = st.sort, f = keys[k];
@@ -344,7 +345,13 @@ function paperLog() {
 
 const SORTS = [["sym", "Symbol"], ["n", "Company"], ["last", "Last"], ["chg", "Chg %"], ["pup", "P(up)"], ["pdn", "P(down)"], ["F", "Fundamental"], ["I", "Impact"], ["T", "Technical"], ["S", "Sentiment"], ["sw", "Sweep"], ["agree", "Agree"], ["conf", "Conf"], ["cov", "Cov"]];
 
+/* SWEEP: only the rows that have a liquidity sweep today, strongest first (the sweep score is the local tick program's, so this is empty without it) */
+export function setAladinSweepOnly(on) {
+  st.sweepOnly = !!on;
+  if (on) { Object.assign(st, { q: "", view: "all", board: "All", sector: "", house: "", region: "", sent: "", conf: "", limit: 50, sort: ["swabs", -1] }); filterSym = null; }
+}
 export function setAladinFilter(sym) {
+  st.sweepOnly = false;
   filterSym = sym || null;
   if (sym) { st.q = sym; st.view = "all"; st.sort = null; st.board = "All"; st.sector = ""; st.house = ""; st.sent = ""; st.conf = ""; expanded.add(sym); }
 }
@@ -383,9 +390,10 @@ function draw() {
       ${sel("al-sent", [["", "Any sentiment"], ["EXCELLENT", "Excellent"], ["GOOD", "Good"], ["NEUTRAL", "Neutral"], ["POOR", "Poor"], ["BAD", "Bad"], ["NO NEWS", "No news"]], st.sent)}
       ${sel("al-conf", [["", "Any confidence"], ["High", "High"], ["Medium", "Medium"], ["Low", "Low"]], st.conf)}
       <input id="al-q" type="search" placeholder="Filter by symbol or name" aria-label="Filter ALADIN" value="${esc(st.q)}">
+      ${st.sweepOnly ? '<button class="btn-line sm on" id="al-sweepoff" title="Show every stock again">Sweep today only ✕</button>' : ""}
     </div>
     <div class="tablecard"><table class="tbl" id="al-table"><thead><tr><th>#</th>${SORTS.map(([k, l]) => `<th data-sort="${k}" tabindex="0" class="${["last", "chg", "pup", "pdn"].includes(k) ? "r " : ""}${st.sort && st.sort[0] === k ? "sorted " : ""}${["pdn", "I", "sw", "agree", "conf", "cov"].includes(k) ? "al-hide " : ""}${k === "n" ? "al-hide2" : ""}" aria-sort="${st.sort && st.sort[0] === k ? (st.sort[1] > 0 ? "ascending" : "descending") : "none"}">${l}</th>`).join("")}</tr></thead>
-      <tbody>${show.map((r, i) => rowHtml(r, i)).join("") || '<tr><td colspan="15" class="empty">No stocks match these filters.</td></tr>'}</tbody></table></div>
+      <tbody>${show.map((r, i) => rowHtml(r, i)).join("") || '<tr><td colspan="15" class="empty">${st.sweepOnly ? "No liquidity sweep has been seen today. Sweeps come from the local tick program (TICKS ON), during market hours." : "No stocks match these filters."}</td></tr>'}</tbody></table></div>
     <div class="more-row"><span class="mut" id="al-count">Showing ${show.length.toLocaleString("en-IN")} of ${rows.length.toLocaleString("en-IN")} securities</span>${rows.length > show.length ? '<button class="btn-line" id="al-more">Show 50 more</button>' : ""}</div>
     ${paperLog()}${foot()}`;
   bind(el);
@@ -399,6 +407,7 @@ function bind(el) {
   const on = (id, k) => { const s = el.querySelector("#" + id); if (s) s.onchange = () => { st[k] = s.value; st.limit = 50; rd(); }; };
   on("al-board", "board"); on("al-sector", "sector"); on("al-house", "house"); on("al-region", "region"); on("al-sent", "sent"); on("al-conf", "conf");
   const q = el.querySelector("#al-q"); q.oninput = () => { st.q = q.value; st.limit = 50; const pos = q.selectionStart; rd(); const n = ctx.$("#al-q"); n.focus(); n.setSelectionRange(pos, pos); };
+  const sw = el.querySelector("#al-sweepoff"); if (sw) sw.onclick = () => { st.sweepOnly = false; st.sort = null; st.view = "up"; rd(); };
   const more = el.querySelector("#al-more"); if (more) more.onclick = () => { st.limit += 50; rd(); };
   el.querySelectorAll("#al-table th[data-sort]").forEach(th => { const go = () => { const k = th.dataset.sort; st.sort = st.sort && st.sort[0] === k ? [k, -st.sort[1]] : [k, ["sym", "n"].includes(k) ? 1 : -1]; rd(); }; th.onclick = go; th.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }; });
   el.querySelectorAll("tr.al-r").forEach(tr => {
