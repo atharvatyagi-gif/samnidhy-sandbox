@@ -5,6 +5,8 @@
    "Not measured" or "Not disclosed", never a guess. A linked move is an association, not proof of cause.
    ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. */
 
+import { lanesAt, carrierOf, ageMin, ageText, isStale, shipTypeLabel, countIn } from "./desk-lanes.js";
+
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.";
 const REL = { supplies: "supplies", equipment_for: "equipment for", raw_material_from: "raw material from", logistics_for: "logistics for", related_party: "related party", customer_of: "customer of" };
 const KIND = { co: "listed company", ext: "unlisted or foreign", anon: "unnamed customer", fac: "facility" };
@@ -12,6 +14,8 @@ const COMPANY_TABS = [["overview", "Overview"], ["chain", "Supply chain"], ["dep
 const GEO_PREC = { exact: "Exact location", locality: "Approximate (locality)", district: "Approximate (district)", city: "Approximate (city)" };
 
 let ctx = null, root = null, graph = null, shocks = null, loading = null, loadFailed = false, lastFocus = null;
+const extra = { lanes: null };                                         // trade_lanes.json, fetched for the flight / vessel / hotspot / chokepoint panels
+const MOVING = new Set(["flight", "vessel", "hotspot", "chokepoint"]);
 const cur = { type: null, id: null, tab: "overview" };
 const gst = { tier: 1, side: "both", low: false, view: "graph", hit: [] };
 
@@ -37,6 +41,17 @@ async function load() {
     ctx.S.sentiment || !files().sentiment ? 0 : ctx.getJSON("sentiment.json").then(j => { ctx.S.sentiment = j; }).catch(() => 0),
   ]).catch(() => { loadFailed = true; }).finally(() => { loading = null; });
   await loading;
+}
+async function loadExtra() {
+  if (!MOVING.has(cur.type)) return;
+  const f = files();
+  await Promise.all([
+    ctx.S.transport || !f.transport ? 0 : ctx.getJSON("transport.json", true).then(j => { ctx.S.transport = j; }).catch(() => 0),
+    extra.lanes || !f.lanes ? 0 : ctx.getJSON("trade_lanes.json", false).then(j => { extra.lanes = j; }).catch(() => 0),
+    ctx.S.geo || !f.geo ? 0 : ctx.getJSON("geo.json").then(j => { ctx.S.geo = j; }).catch(() => 0),
+    ctx.S.aladin || !f.aladin ? 0 : ctx.getJSON("aladin.json").then(j => { ctx.S.aladin = j; }).catch(() => 0),
+    ctx.S.sentiment || !f.sentiment ? 0 : ctx.getJSON("sentiment.json").then(j => { ctx.S.sentiment = j; }).catch(() => 0),
+  ]);
 }
 const nodeOf = id => graph && (graph._n || (graph._n = new Map(graph.nodes.map(n => [n.id, n])))).get(id);
 const nameOf = id => { const n = nodeOf(id), u = ctx.S.map && ctx.S.map.get(id); return (u && u.n) || (n && n.n) || id; };
@@ -103,6 +118,7 @@ export async function openNexus(a) {
   root.querySelector("#nx-body").innerHTML = '<div class="nx-skel" aria-busy="true"><i></i><i></i><i></i></div>';
   root.querySelector(".nx-drawer").focus();
   await load();
+  await loadExtra();
   if (!root.hidden && cur.id === a.id) draw();
 }
 export function closeNexus() {
@@ -125,11 +141,17 @@ function paintHead() {
   if (t === "company") { title = `${id} · ${nameOf(id)}`; kind = "NEXUS · company"; }
   else if (t === "facility") { const f = graph && graph.fac[id]; title = f ? f.n : id; kind = "NEXUS · facility"; }
   else if (t === "edge") { const e = graph && graph.edges.find(x => x.id === id); title = e ? `${lab(e.s)} → ${lab(e.d)}` : id; kind = "NEXUS · dependency"; }
+  else if (t === "flight") { const f = flightRow(id); title = f ? `${f[1] || f[0]} · flight` : `${id} · flight`; kind = "NEXUS · flight"; }
+  else if (t === "vessel") { const v = vesselRow(id); title = v ? `${v[1] || v[0]} · vessel` : `${id} · vessel`; kind = "NEXUS · vessel"; }
+  else if (t === "hotspot") { const r = regionOf(id); title = r ? r.name : id; kind = "NEXUS · hotspot"; }
+  else if (t === "chokepoint") { const c = chokeOf(id); title = c ? c.name : id; kind = "NEXUS · chokepoint"; }
   else kind = `NEXUS · ${t}`;
   root.querySelector("#nx-kind").textContent = kind;
   root.querySelector("#nx-title").textContent = title;
-  root.querySelector("#nx-asof").textContent = graph ? `Supply-chain data generated ${graph.generated_utc} · ${graph.coverage.companies_done} companies read` : "";
-  const tabs = t === "company" ? COMPANY_TABS : [["overview", "Overview"], ["sources", "Sources"]];
+  const T = ctx.S.transport;
+  root.querySelector("#nx-asof").textContent = MOVING.has(t) && (t === "flight" || t === "vessel" || t === "chokepoint") && T ? `Position snapshot ${ageText(ageMin(T.generated_utc))}${isStale(T) ? " · older than its limit" : ""}`
+    : graph ? `Supply-chain data generated ${graph.generated_utc} · ${graph.coverage.companies_done} companies read` : "";
+  const tabs = t === "company" ? COMPANY_TABS : [];
   root.querySelector("#nx-tabs").innerHTML = tabs.map(([k, l]) => `<button role="tab" aria-selected="${cur.tab === k}" class="${cur.tab === k ? "on" : ""}" data-nx-tab="${k}">${l}</button>`).join("");
   void esc;
 }
@@ -138,6 +160,7 @@ function draw() {
   if (!root || root.hidden) return;
   paintHead();
   const body = root.querySelector("#nx-body");
+  if (MOVING.has(cur.type)) { body.innerHTML = cur.type === "flight" ? flightPanel() : cur.type === "vessel" ? vesselPanel() : cur.type === "hotspot" ? hotspotPanel() : chokePanel(); return; }
   if (!files().graph && !graph) { body.innerHTML = '<p class="note">The supply-chain data has not been published yet, so there are no dependencies to show. Everything else about this entity stays available in the ALADIN tab.</p>'; return; }
   if (!graph) { body.innerHTML = '<p class="note">The supply-chain data could not be loaded. Try again in a minute.</p>'; return; }
   const t = cur.type;
@@ -146,7 +169,88 @@ function draw() {
 }
 
 function placeholderPanel() {
-  return `<p class="note">${ctx.esc(cur.type)} panels arrive with the Globe update. Cargo manifests, bills of lading and receiving clients are private or paid customs data and are never shown.</p>`;
+  return `<p class="note">There is no panel for "${ctx.esc(cur.type)}".</p>`;
+}
+
+/* ---------- flights, vessels, hotspots, chokepoints (the Globe) ---------- */
+const flightRow = id => ((ctx.S.transport || {}).flights || []).find(r => r[0] === id);
+const vesselRow = id => ((ctx.S.transport || {}).vessels || []).find(r => String(r[0]) === String(id));
+const regionOf = id => ((ctx.S.geo || {}).regions || []).find(r => r.id === id);
+const chokeOf = id => ((extra.lanes || {}).chokepoints || []).find(c => c.id === id);
+const NM = '<span class="mut">Not measured</span>';
+
+/* "lane-level inference": companies listed against the hand-drawn lanes a position falls inside. NEVER about this one flight or ship. */
+function stocksFor(row) {
+  if (row.sym) return ctx.S.map.has(row.sym) ? [row.sym] : [];
+  return ctx.S.uni.stocks.filter(u => u.ind === row.ind && u.n500).sort((a, b) => (b.v || 0) * (b.c || 0) - (a.v || 0) * (a.c || 0)).slice(0, 5).map(u => u.s);
+}
+function exposureTable(rows, withDelta) {
+  const { esc } = ctx, seen = new Set(), out = [];
+  for (const r of rows) for (const sym of stocksFor(r)) {
+    const k = sym + r.dir + (r.laneId || ""); if (seen.has(k)) continue; seen.add(k);
+    const v = ctx.stockView ? ctx.stockView(sym) : null, d = withDelta && ctx.geoDelta ? ctx.geoDelta(sym) : null;
+    out.push(`<tr><td><button class="lnk" data-nexus="company:${esc(sym)}">${esc(sym)}</button> <span class="mut">${esc(nameOf(sym))}</span></td><td class="${r.dir === "+" ? "up" : "down"}" title="${r.dir === "+" ? "Tends to gain" : "Tends to lose"} when this is disrupted">${r.dir === "+" ? "▲" : "▼"}</td>
+      <td class="mut">${esc(r.why)}${r.lane ? ` <i>(${esc(r.lane)})</i>` : ""}</td><td class="r">${move(sym)}</td>${withDelta ? `<td class="r">${d ? `<span class="${d.dp > 0 ? "up" : d.dp < 0 ? "down" : ""}" title="P(up) with the geopolitical adjustment minus P(up) without it, ${d.h}-day, model estimate">${d.dp > 0 ? "▲ +" : d.dp < 0 ? "▼ " : ""}${d.dp.toFixed(1)} pts</span>` : '<span class="mut">not available</span>'}</td>` : ""}
+      <td class="r">${v ? pct(v.p) : '<span class="mut">—</span>'}</td></tr>`);
+  }
+  return out.length ? `<div class="tablecard"><table class="tbl sm"><thead><tr><th>Company</th><th></th><th>Why it is linked</th><th class="r">Move today</th>${withDelta ? '<th class="r">ΔP(up)</th>' : ""}<th class="r">P(up)</th></tr></thead><tbody>${out.join("")}</tbody></table></div>` : '<p class="mut">No listed company is linked to this.</p>';
+}
+const FIXED_ROWS = op => `<tr><th>Cargo manifest / Bill of Lading</th><td>Not measured — private/paid customs data</td></tr><tr><th>Receiving client</th><td>Not measured</td></tr><tr><th>Logistics carrier</th><td>${op}</td></tr>`;
+function laneBlock(lat, lon, kind) {
+  const L = extra.lanes ? lanesAt(lat, lon, extra.lanes.lanes, kind) : [];
+  if (!extra.lanes) return '<p class="mut">The trade-lane list has not been published yet.</p>';
+  if (!L.length) return '<p class="mut">This position is not inside any lane in our list, so no company is linked to it. Nothing is guessed.</p>';
+  const rows = L.flatMap(l => (l.exposure || []).map(e => ({ ...e, lane: l.name, laneId: l.id })));
+  return `<p class="mut">Inside: ${L.map(l => ctx.esc(l.name)).join("; ")}.</p>${exposureTable(rows, false)}<p class="mut">${ctx.esc(extra.lanes.note)}</p>`;
+}
+const snapNote = k => { const T = ctx.S.transport; return T ? `<p class="mut">${ctx.esc(T.sources[k].attribution)} Snapshot ${ctx.esc(ageText(ageMin(T.generated_utc)))}${isStale(T) ? " (older than its limit: treat as out of date)" : ""}. Positions are not live.</p>` : ""; };
+
+function flightPanel() {
+  const { esc } = ctx, T = ctx.S.transport, f = flightRow(cur.id);
+  if (!T) return '<p class="note">No flight snapshot is published yet, so there is nothing to show. Nothing is guessed.</p>';
+  if (!f) return `<p class="note">Not in the current snapshot (age ${esc(ageText(ageMin(T.generated_utc)))}). Aircraft move: it may have landed or left the area covered.</p>`;
+  const c = carrierOf(f[1], T.carriers), op = c ? `${esc(c.name)} <span class="mut">(inferred from the callsign prefix ${esc(c.prefix)})</span>` : '<span class="mut">Operator not identified from the callsign</span>';
+  return `<table class="tbl sm"><tbody><tr><th>Callsign</th><td>${esc(f[1] || "—")}</td></tr><tr><th>ICAO24 (aircraft address)</th><td>${esc(f[0])}</td></tr><tr><th>Operator</th><td>${op}</td></tr>
+    <tr><th>Freighter airline?</th><td>${c ? (c.cargo ? "Yes: this airline flies dedicated freighters" : "No: a passenger airline") : "Unknown"} <span class="mut">(says nothing about what is on board)</span></td></tr>
+    <tr><th>Registered in</th><td>${esc(f[7] || "—")}</td></tr><tr><th>Position</th><td>${f[2].toFixed(3)}, ${f[3].toFixed(3)}</td></tr><tr><th>Altitude</th><td>${f[4] == null ? "—" : Math.round(f[4]).toLocaleString("en-IN") + " m"}</td></tr>
+    <tr><th>Speed</th><td>${f[5] == null ? "—" : Math.round(f[5] * 3.6) + " km/h"}</td></tr><tr><th>Heading</th><td>${f[6] == null ? "—" : f[6] + "°"}</td></tr>${FIXED_ROWS(c ? esc(c.name) + ' <span class="mut">(inferred from the callsign prefix)</span>' : NM)}</tbody></table>
+    <div class="sec-t">Lane-level exposure (inference, not this shipment)</div>${laneBlock(f[2], f[3], "air")}${snapNote("flights")}`;
+}
+function vesselPanel() {
+  const { esc } = ctx, T = ctx.S.transport, v = vesselRow(cur.id);
+  if (!T || !T.vessels) return `<p class="note">${esc((T && T.vessels_reason) || "Vessel layer off: no AIS key.")}</p>`;
+  if (!v) return `<p class="note">Not in the current snapshot (age ${esc(ageText(ageMin(T.generated_utc)))}). Ships move: it may have left the areas covered.</p>`;
+  return `<table class="tbl sm"><tbody><tr><th>Name</th><td>${esc(v[1] || "not broadcast")}</td></tr><tr><th>MMSI</th><td>${esc(v[0])}</td></tr><tr><th>Type</th><td>${esc(shipTypeLabel(v[6]))}</td></tr>
+    <tr><th>Destination (as broadcast)</th><td>${esc(v[7] || "not broadcast")}</td></tr><tr><th>ETA (as broadcast)</th><td>${esc(v[8] || "not broadcast")}</td></tr><tr><th>Position</th><td>${v[2].toFixed(3)}, ${v[3].toFixed(3)}</td></tr>
+    <tr><th>Speed / course</th><td>${v[4] == null ? "—" : v[4] + " kn"} / ${v[5] == null ? "—" : Math.round(v[5]) + "°"}</td></tr>${FIXED_ROWS(NM)}</tbody></table>
+    <div class="sec-t">Lane-level exposure (inference, not this shipment)</div>${laneBlock(v[2], v[3], "sea")}${snapNote("vessels")}`;
+}
+function sparkSvg(a) {
+  const v = (a || []).filter(x => x != null);
+  if (v.length < 2) return '<span class="mut">No history yet</span>';
+  const lo = Math.min(...v), hi = Math.max(...v), W = 220, H = 36, pts = v.map((y, i) => `${(i / (v.length - 1) * W).toFixed(1)},${(H - 2 - (hi === lo ? 0.5 : (y - lo) / (hi - lo)) * (H - 4)).toFixed(1)}`).join(" ");
+  return `<svg class="nx-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="30-day news-attention history"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+}
+function hotspotPanel() {
+  const { esc } = ctx, r = regionOf(cur.id);
+  if (!r) return '<p class="note">The geopolitical index has not been published yet, or this region is not in it.</p>';
+  const lanes = ((extra.lanes || {}).lanes || []).filter(l => l.geo_region === r.id), cps = ((extra.lanes || {}).chokepoints || []).filter(c => c.geo_region === r.id), T = ctx.S.transport;
+  const heads = (r.heads || []).slice(0, 5).map(h => `<li><a href="${esc(h.url)}" target="_blank" rel="noopener noreferrer">${esc(h.title)}</a> <span class="mut">${esc(h.source || "")}</span></li>`).join("");
+  return `<p><b>${esc(r.level)}${r.score == null ? "" : " · " + r.score}</b> <span class="mut">${esc(r.kind)} · news attention and tone, not events</span></p>
+    ${r.baseline && !r.baseline.ready ? `<p class="mut">Building its baseline: ${r.baseline.n} of ${r.baseline.need} samples over ${r.baseline.days} of ${r.baseline.need_days} days. The score appears once there is a baseline to compare against.</p>` : ""}
+    <div class="sec-t">30-day history</div>${sparkSvg(r.spark)}
+    <div class="sec-t">Affected lanes and chokepoints</div>${lanes.length || cps.length ? `<ul class="nx-ul">${lanes.map(l => `<li>${esc(l.name)} <span class="mut">(${esc(l.kind)} lane)</span></li>`).join("")}${cps.map(c => `<li><button class="lnk" data-nexus="chokepoint:${esc(c.id)}">${esc(c.name)}</button> <span class="mut">${T && T.vessels ? countIn(T.vessels, c.bbox) + " vessels in the snapshot" : "vessel count not available"}</span></li>`).join("")}</ul>` : '<p class="mut">No lane in our list is tied to this region.</p>'}
+    <div class="sec-t">Exposed on NSE</div>${exposureTable(r.exposure || [], true)}
+    <p class="mut">ΔP(up) is the change the geopolitical adjustment makes to a stock's ALADIN probability (model estimate; its sign is the lean the news adds, across every region the stock is exposed to). Association, not proof of cause.</p>
+    <div class="sec-t">Headlines</div>${heads ? `<ul class="nx-ul">${heads}</ul>` : '<p class="mut">None in the last cycle.</p>'}`;
+}
+function chokePanel() {
+  const { esc } = ctx, c = chokeOf(cur.id), T = ctx.S.transport;
+  if (!c) return '<p class="note">This chokepoint is not in the lane list.</p>';
+  const r = c.geo_region ? regionOf(c.geo_region) : null, lanes = ((extra.lanes || {}).lanes || []).filter(l => (l.path || []).some(([lo, la]) => la >= c.bbox[1] - 3 && la <= c.bbox[3] + 3 && lo >= c.bbox[0] - 3 && lo <= c.bbox[2] + 3));
+  return `<table class="tbl sm"><tbody><tr><th>Position</th><td>${c.lat.toFixed(2)}, ${c.lon.toFixed(2)}</td></tr><tr><th>Vessels in the box</th><td>${T && T.vessels ? countIn(T.vessels, c.bbox) + " in the snapshot" : esc((T && T.vessels_reason) || "Vessel layer off: no AIS key.")}</td></tr>
+    <tr><th>News-attention region</th><td>${r ? `<button class="lnk" data-nexus="hotspot:${esc(r.id)}">${esc(r.name)}</button> · ${esc(r.level)}${r.score == null ? "" : " " + r.score}` : '<span class="mut">none tied to this chokepoint</span>'}</td></tr></tbody></table>
+    <div class="sec-t">Lanes that pass through</div>${lanes.length ? `<ul class="nx-ul">${lanes.map(l => `<li>${esc(l.name)}</li>`).join("")}</ul>${exposureTable(lanes.flatMap(l => (l.exposure || []).map(e => ({ ...e, lane: l.name, laneId: l.id }))), false)}` : '<p class="mut">None in our list.</p>'}${snapNote("vessels")}`;
 }
 
 /* ---------- company ---------- */

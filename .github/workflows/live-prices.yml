@@ -80,6 +80,17 @@ jobs:
         continue-on-error: true
         run: python scripts/embed_data.py
 
+      - name: Aircraft and ship positions (one snapshot; reuses the last published one so OpenSky's free credits are never overspent)
+        continue-on-error: true
+        timeout-minutes: 4
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+          AISSTREAM_API_KEY: ${{ secrets.AISSTREAM_API_KEY }}
+        run: |
+          pip install -q websockets || true
+          python scripts/transport_snapshot.py
+
       - name: Rebuild the site
         run: python scripts/build_site.py
 

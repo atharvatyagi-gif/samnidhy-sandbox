@@ -76,8 +76,8 @@ def run():
 
         run_cmd(pg, "SWEEP")
         check("SWEEP without the local daemon explains why", "Sweep data needs the local daemon (not running)" in msg(pg), msg(pg)[:120])
-        run_cmd(pg, "FLIGHT AIC101")
-        check("FLIGHT with no snapshot says so and invents nothing", "No flight snapshot is published" in msg(pg), msg(pg)[:140])
+        run_cmd(pg, "FLIGHT ZZZ9999", 2500)
+        check("FLIGHT with a snapshot but no such callsign: says so with the snapshot's age, invents nothing", "Not in the current snapshot (age" in msg(pg), msg(pg)[:140])
         run_cmd(pg, "VESSEL EVER GIVEN")
         check("VESSEL with no AIS feed says the layer is off", "Vessel layer off" in msg(pg), msg(pg)[:100])
 
@@ -102,6 +102,14 @@ def run():
         check("MOVERS SHOCK says it is not built yet instead of pretending", "not built yet" in pg.inner_text("#toast"), pg.inner_text("#toast"))
         run_cmd(pg, "MAP", 800)
         check("MAP: Globe tab", view_on(pg) == "v-globe")
+
+        # no flight snapshot published at all
+        b2, pg2, errs2, _ = page_for(pw, routes={"**/desk_data.json*": lambda route: route.fulfill(response=route.fetch(), body=json.dumps({k: v for k, v in route.fetch().json().items() if k != "transport"}))})
+        pg2.goto(BASE)
+        pg2.wait_for_timeout(5500)
+        run_cmd(pg2, "FLIGHT AIC101", 800)
+        check("FLIGHT with no snapshot published says so and invents nothing", "No flight snapshot is published" in msg(pg2) and not errs2, msg(pg2)[:140])
+        b2.close()
 
         # the old grammar
         run_cmd(pg, "RELIANCE CH", 1500)

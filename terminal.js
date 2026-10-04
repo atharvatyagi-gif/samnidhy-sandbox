@@ -18,6 +18,8 @@ import * as Aladin from "./desk-aladin.js";
 import * as Ticks from "./desk-ticks.js";
 import * as Nexus from "./desk-nexus.js";
 import * as Cmd from "./desk-cmd.js";
+import * as Globe from "./desk-globe.js";
+import { ageText, ageMin } from "./desk-lanes.js";
 const NX_HASH = (/[#&]nx=([^&]+)/.exec(location.hash) || [])[1];     // a NEXUS deep link, read before the first navigation rewrites the address
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -215,16 +217,17 @@ setInterval(() => {
 // Each module gets the same ctx and renders only after its tab is first opened. Optional data files are listed in
 // desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
 // while a file hasn't been produced yet.
-const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json" };
-const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks"]);   // big or tab-specific files: fetched by their own tab, never at page start
+const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json", lanes: "trade_lanes.json", transport: "transport.json" };
+const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "transport"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
-function deskCtx() { return { renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a) }; }
-function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus]) m.init(c); }
+function deskCtx() { return { renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
+function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe]) m.init(c); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
   let changed = false;
-  if (S.geo) GeoDesk.refresh();                                  // lazy file, but once it has been opened keep it current
+  if (S.geo) GeoDesk.refresh();
+  Globe.refresh();                                  // lazy file, but once it has been opened keep it current
   if (S.aladin) Aladin.refresh();
   await Promise.all(Object.entries(DESK_FILES).map(async ([k, file]) => {
     if (!man[k] || DESK_LAZY.has(k)) return;                    // lazy files are fetched by their own tab on first open
@@ -246,6 +249,7 @@ function go(v, quiet) {
   if (v === "globe") {
     const gm = ensureGlobeMap(); if (gm && S.globe) gm.update(S.globe);
     requestAnimationFrame(() => { gm && gm.resize(); if (gm && sec) { lastFootprintSym = sec; renderCompanyFootprint(gm, sec); } });
+    Globe.mount();
   }
   if (v === "houses") Houses.renderHouses();
   if (v === "lab") Aladin.renderAladin();
@@ -1552,7 +1556,9 @@ function cmdCtx() {
   return { resolve: resolveSym, suggest: (q, n) => scoreStocks(q.toUpperCase(), "all").slice(0, n).map(s => s.s), selected: sec || null,
     houses: S.houseList || [], sectors: sectorStats().map(s => s.k), regions: ((S.geo || {}).regions || []).map(r => ({ id: r.id, name: r.name })),
     legacy: new Set([...Object.keys(FUNC_CODES), "TICKS"]),                                       // the parser checks its own commands first
-    flights: null, vessels: null, snapAge: "no snapshot published",                              // the transport snapshot arrives with the Globe update
+    flights: S.transport ? (S.transport.flights || []).map(r => ({ icao24: r[0], callsign: r[1] })) : null,                  // null = no snapshot published: the parser then says so
+    vessels: S.transport && S.transport.vessels ? S.transport.vessels.map(r => ({ mmsi: r[0], name: r[1] })) : null,
+    snapAge: S.transport ? ageText(ageMin(S.transport.generated_utc)) : "no snapshot published",
     sweepAvailable: Ticks.active() || Object.keys(S.sweep || {}).length > 0 };
 }
 function cmdMessage(error, hints) {
@@ -1590,6 +1596,9 @@ function execCmd(p) {
 function runText(raw, quiet) {
   const first = raw.trim().split(/\s+/)[0].toUpperCase();
   if (first === "HOUSE" && !S.houseList) { S.houseList = []; getJSON("houses.json", false).then(j => { S.houseList = (j.houses || []).map(h => ({ id: h.id, name: h.name })); runText(raw, quiet); }).catch(() => runText(raw, quiet)); return true; }
+  if ((first === "FLIGHT" || first === "VESSEL") && !S.transport && (S.deskMan || {}).transport && !S.transportTried) {
+    S.transportTried = true; getJSON("transport.json", true).then(j => { S.transport = j; runText(raw, quiet); }).catch(() => runText(raw, quiet)); return true;
+  }
   if (first === "GEO" && !S.geo && (S.deskMan || {}).geo) { (S.geoTried = S.geoTried || GeoDesk.preload().catch(() => null)).then(() => { S.geo = S.geo || { regions: [] }; runText(raw, quiet); }); return true; }
   const p = Cmd.parseCmd(raw, cmdCtx());
   if (p.error) { cmdMessage(p.error, p.hints); return true; }
