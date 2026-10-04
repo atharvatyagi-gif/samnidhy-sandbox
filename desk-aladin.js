@@ -460,6 +460,16 @@ function flush() {
 }
 
 /* One stock's ALADIN view for other panels (the Globe's exposure table): combined P(up) at the primary horizon, confidence, sentiment level. null if no data. */
+/* How many points the geopolitical adjustment moves this stock's primary-horizon P(up): P(up) with it minus P(up) without it. Model estimate. Null when the stock has no
+   sentiment entry (nothing stored to remove) or no probability. The adjustment is the stock's TOTAL across every region it is exposed to. */
+export function geoDelta(sym) {
+  const A = ctx && ctx.S.aladin, a = A && A.stocks && A.stocks[sym], sn = sentOf(sym), h = (A && A.primary) || 10;
+  if (!a || !a.t || !a.t.p || a.t.p[h] == null || !sn || sn.sc == null) return null;
+  const geo = sn.geo || 0, F = a.f && a.f.sc != null ? a.f.sc : null, I = a.x && a.x.i != null ? a.x.i : null, sw = sweepOf(sym);
+  const withG = combine(a.t.p[h], F, sn.sc, sw == null ? null : sw, W(), I).p;
+  const without = combine(a.t.p[h], F, Math.max(-100, Math.min(100, sn.sc - geo * 100)), sw == null ? null : sw, W(), I).p;
+  return { dp: Math.round((withG - without) * 1000) / 10, geo, h };
+}
 export function stockView(sym) {
   if (!ctx || !ctx.S.aladin) return null;
   const h = ctx.S.aladin.primary || 10, c = calc(sym, h);

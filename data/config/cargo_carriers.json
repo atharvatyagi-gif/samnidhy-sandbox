@@ -1,0 +1,154 @@
+{
+ "version": 1,
+ "note": "ICAO airline designators (the first three letters of a flight's callsign) -> operator. 'cargo' is true only for airlines that fly dedicated freighters. A flight whose callsign starts with one of these is shown as 'inferred from the callsign prefix': the callsign tells who operates it, never what it carries or for whom. Hand-seeded and short on purpose; a prefix not listed means the operator is simply not identified.",
+ "carriers": {
+  "FDX": [
+   "FedEx Express",
+   true
+  ],
+  "UPS": [
+   "UPS Airlines",
+   true
+  ],
+  "GTI": [
+   "Atlas Air",
+   true
+  ],
+  "CLX": [
+   "Cargolux",
+   true
+  ],
+  "BCS": [
+   "European Air Transport (DHL)",
+   true
+  ],
+  "DHK": [
+   "DHL Air UK",
+   true
+  ],
+  "CKS": [
+   "Kalitta Air",
+   true
+  ],
+  "BOX": [
+   "AeroLogic",
+   true
+  ],
+  "ABW": [
+   "AirBridgeCargo",
+   true
+  ],
+  "PAC": [
+   "Polar Air Cargo",
+   true
+  ],
+  "CKK": [
+   "China Cargo Airlines",
+   true
+  ],
+  "CSS": [
+   "SF Airlines",
+   true
+  ],
+  "AHK": [
+   "Air Hong Kong",
+   true
+  ],
+  "BDA": [
+   "Blue Dart Aviation",
+   true
+  ],
+  "AZG": [
+   "Silk Way West Airlines",
+   true
+  ],
+  "NCR": [
+   "National Airlines",
+   true
+  ],
+  "WGN": [
+   "Western Global Airlines",
+   true
+  ],
+  "AIC": [
+   "Air India",
+   false
+  ],
+  "AXB": [
+   "Air India Express",
+   false
+  ],
+  "IGO": [
+   "IndiGo",
+   false
+  ],
+  "QPA": [
+   "Akasa Air",
+   false
+  ],
+  "SEJ": [
+   "SpiceJet",
+   false
+  ],
+  "VTI": [
+   "Vistara",
+   false
+  ],
+  "UAE": [
+   "Emirates",
+   false
+  ],
+  "QTR": [
+   "Qatar Airways",
+   false
+  ],
+  "ETD": [
+   "Etihad Airways",
+   false
+  ],
+  "SVA": [
+   "Saudia",
+   false
+  ],
+  "GFA": [
+   "Gulf Air",
+   false
+  ],
+  "OMA": [
+   "Oman Air",
+   false
+  ],
+  "KAC": [
+   "Kuwait Airways",
+   false
+  ],
+  "DLH": [
+   "Lufthansa",
+   false
+  ],
+  "BAW": [
+   "British Airways",
+   false
+  ],
+  "AFR": [
+   "Air France",
+   false
+  ],
+  "KLM": [
+   "KLM",
+   false
+  ],
+  "SIA": [
+   "Singapore Airlines",
+   false
+  ],
+  "CPA": [
+   "Cathay Pacific",
+   false
+  ],
+  "THY": [
+   "Turkish Airlines",
+   false
+  ]
+ }
+}
