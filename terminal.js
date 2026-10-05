@@ -19,6 +19,9 @@ import * as Ticks from "./desk-ticks.js";
 import * as Nexus from "./desk-nexus.js";
 import * as Cmd from "./desk-cmd.js";
 import * as Globe from "./desk-globe.js";
+import * as Movers from "./desk-movers.js";
+import * as Sectors from "./desk-sectors.js";
+import { relVol, sessionFraction, sweepBadge } from "./desk-deps.js";
 import { ageText, ageMin } from "./desk-lanes.js";
 const NX_HASH = (/[#&]nx=([^&]+)/.exec(location.hash) || [])[1];     // a NEXUS deep link, read before the first navigation rewrites the address
 
@@ -217,11 +220,11 @@ setInterval(() => {
 // Each module gets the same ctx and renders only after its tab is first opened. Optional data files are listed in
 // desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
 // while a file hasn't been produced yet.
-const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json", lanes: "trade_lanes.json", transport: "transport.json" };
-const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "transport"]);   // big or tab-specific files: fetched by their own tab, never at page start
+const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json", lanes: "trade_lanes.json", transport: "transport.json", moves: "aladin_moves.json" };
+const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "transport", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
 function deskCtx() { return { renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
-function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe]) m.init(c); }
+function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
@@ -1083,26 +1086,49 @@ function moverRows() {
   else if (movMode === "hi") rows = rows.filter(r => r.s.hi52 && r.x.h >= r.s.hi52 * 0.999).sort((a, b) => b.x.pct - a.x.pct);
   else rows = rows.filter(r => r.s.lo52 && r.x.l <= r.s.lo52 * 1.001).sort((a, b) => a.x.pct - b.x.pct);
   if (movSort) {
-    const [k, dir] = movSort, get = r => ({ s: r.s.s, n: r.s.n, p: r.x.p, chg: r.x.chg, pct: r.x.pct, v: r.x.v, val: r.val, deliv: r.s.deliv, grp: r.x.grp && r.x.grp[0] }[k]);
+    const [k, dir] = movSort, get = r => ({ s: r.s.s, n: r.s.n, p: r.x.p, chg: r.x.chg, pct: r.x.pct, v: r.x.v, val: r.val, deliv: r.s.deliv, grp: r.x.grp && r.x.grp[0], rv: relVol(r.x.v, r.s.avgv20, sessionFraction()), sw: Math.abs((S.sweep || {})[r.s.s] || 0) }[k]);
     rows.sort((a, b) => { const A = get(a), B = get(b); if (A == null) return 1; if (B == null) return -1; return (typeof A === "string" ? A.localeCompare(B) : A - B) * dir; });
   }
   return rows;
 }
+let mvSig = "";
+const mvRv = (r, frac) => { const v = relVol(r.x.v, r.s.avgv20, frac); return v == null ? null : v; };
+const mvRvTxt = v => v == null ? "—" : v.toFixed(1) + "×";
+function mvSweep(sym) {
+  const b = sweepBadge((S.sweep || {})[sym]);
+  return b ? { txt: `${b.arrow} ${b.n}`, cls: b.cls, title: "Liquidity sweep seen today (from the local tick program)" }
+    : { txt: "—", cls: "mut", title: Ticks.active() ? "No sweep seen today" : "Sweeps need the local tick program (TICKS ON)" };
+}
+function patchMovers(show, frac) {                              // same rows in the same order: change the cells that moved, never rebuild (open expansions stay put)
+  const by = new Map(show.map(r => [r.s.s, r]));
+  for (const tr of $$("#mov-table tbody tr[data-s]")) {
+    const r = by.get(tr.dataset.s); if (!r || tr.classList.contains("mv-x")) continue;
+    const c = tr.children, set = (i, txt, cls) => { if (c[i].textContent !== txt) c[i].textContent = txt; if (cls != null) c[i].className = cls; };
+    set(2, inr(r.x.p)); flash(c[2], "m:" + r.s.s, r.x.p);
+    set(3, sg(r.x.chg), `num ${ud(r.x.chg)}`); set(4, sg(r.x.pct) + "%", `num ${ud(r.x.pct)}`); set(5, big(r.x.v)); set(6, "₹" + big(r.val)); set(7, mvRvTxt(mvRv(r, frac)));
+    const sw = mvSweep(r.s.s); set(8, sw.txt, `num ${sw.cls}`); c[8].title = sw.title;
+  }
+}
 function renderMovers() {
-  const rows = moverRows(), show = rows.slice(0, movLimit), wl = loadWatch();
+  const rows = moverRows(), show = rows.slice(0, movLimit), wl = loadWatch(), frac = sessionFraction();
+  const sig = [movMode, board, sector, movQuery, movSort ? movSort.join() : "", movLimit, wl.join(","), show.map(r => r.s.s).join(",")].join("|");
+  $("#mov-count").textContent = `Showing ${show.length.toLocaleString("en-IN")} of ${rows.length.toLocaleString("en-IN")} stocks`;
+  $("#mov-more").hidden = rows.length <= movLimit;
+  if (sig === mvSig && $("#mov-table tbody tr[data-s]")) { patchMovers(show, frac); Movers.refresh(); return; }
+  mvSig = sig;
   $("#mov-table tbody").innerHTML = show.length ? show.map(r => {
-    const lo = r.s.lo52, hi = r.s.hi52, pos = lo != null && hi > lo ? Math.max(0, Math.min(100, (r.x.p - lo) / (hi - lo) * 100)) : null, on = wl.includes(r.s.s);
-    return `<tr data-s="${esc(r.s.s)}"><td class="sym">${esc(r.s.s)} ${r.s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${r.s.etf ? '<span class="tag">ETF</span>' : ""}</td><td class="co">${esc(r.s.n)}</td>
+    const lo = r.s.lo52, hi = r.s.hi52, pos = lo != null && hi > lo ? Math.max(0, Math.min(100, (r.x.p - lo) / (hi - lo) * 100)) : null, on = wl.includes(r.s.s), sw = mvSweep(r.s.s);
+    return `<tr data-s="${esc(r.s.s)}"><td class="sym"><button class="mv-tg" data-s="${esc(r.s.s)}" aria-expanded="false" aria-label="Show lineage, drivers and sentiment for ${esc(r.s.s)}">▸</button> ${esc(r.s.s)} ${r.s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${r.s.etf ? '<span class="tag">ETF</span>' : ""}</td><td class="co">${esc(r.s.n)}</td>
       <td class="num">${inr(r.x.p)}</td><td class="num ${ud(r.x.chg)}">${sg(r.x.chg)}</td><td class="num ${ud(r.x.pct)}">${sg(r.x.pct)}%</td><td class="num">${big(r.x.v)}</td><td class="num">₹${big(r.val)}</td>
+      <td class="num">${mvRvTxt(mvRv(r, frac))}</td><td class="num ${sw.cls}" title="${esc(sw.title)}">${sw.txt}</td>
       <td class="num">${r.s.deliv == null ? "--" : r.s.deliv.toFixed(0) + "%"}</td><td>${pos == null ? "--" : `<div class="rng" title="₹${inr(lo)} – ₹${inr(hi)}"><i style="left:calc(${pos}% - 1px)"></i></div>`}</td>
       <td class="mov-grp">${r.x.nse && r.x.grp && r.x.grp.length ? `<span class="tag acc" title="NSE's own live lists this price came from: ${esc(r.x.grp.join(", "))}">${esc(r.x.grp[0])}${r.x.grp.length > 1 ? ` +${r.x.grp.length - 1}` : ""}</span>` : '<span class="mut">–</span>'}</td>
       <td><button class="icon-btn ${on ? "on" : ""}" data-wl="${esc(r.s.s)}" title="${on ? "Remove from" : "Add to"} watchlist">${on ? "✓" : "+"}</button></td></tr>`;
-  }).join("") : '<tr><td colspan="11" class="empty">No stocks match these filters.</td></tr>';
-  $("#mov-count").textContent = `Showing ${show.length.toLocaleString("en-IN")} of ${rows.length.toLocaleString("en-IN")} stocks`;
-  $("#mov-more").hidden = rows.length <= movLimit;
+  }).join("") : '<tr><td colspan="13" class="empty">No stocks match these filters.</td></tr>';
   $$("#mov-table tbody tr[data-s]").forEach(tr => flash(tr.children[2], "m:" + tr.dataset.s, q(tr.dataset.s)?.p));
-  $$("#mov-table tbody tr[data-s]").forEach(tr => tr.onclick = e => { const w = e.target.closest("[data-wl]"); if (w) { e.stopPropagation(); toggleWatch(w.dataset.wl); return; } openSec(tr.dataset.s); go("terminal"); });
+  $$("#mov-table tbody tr[data-s]").forEach(tr => tr.onclick = e => { if (e.target.closest(".mv-tg")) return; const w = e.target.closest("[data-wl]"); if (w) { e.stopPropagation(); toggleWatch(w.dataset.wl); return; } openSec(tr.dataset.s); go("terminal"); });
   $$("#mov-table th[data-sort]").forEach(th => th.classList.toggle("sorted", movSort && movSort[0] === th.dataset.sort));
+  Movers.restore(); Movers.refresh();
 }
 $$("#mov-tabs button").forEach(b => b.onclick = () => { movMode = b.dataset.m; movSort = null; movLimit = 50; $$("#mov-tabs button").forEach(x => x.classList.toggle("on", x === b)); renderMovers(); });
 $$("#board-grp button").forEach(b => b.onclick = () => { board = b.dataset.b; movLimit = 50; $$("#board-grp button").forEach(x => x.classList.toggle("on", x === b)); renderMovers(); });
@@ -1132,7 +1158,9 @@ function renderSectors() {
   $("#sec-detail").innerHTML = cur ? `<div class="card-bar">${esc(cur.k)} <span class="mut">${cur.n} stocks · avg ${sg(cur.avg)}%</span></div>
     <table class="tbl"><thead><tr><th>Symbol</th><th class="r">Last</th><th class="r">Chg %</th><th class="r">Value</th></tr></thead><tbody>${[...cur.rows].sort((a, b2) => b2.x.pct - a.x.pct).map(r =>
       `<tr data-s="${esc(r.s.s)}"><td><span class="sym">${esc(r.s.s)}</span><div class="mut">${esc(r.s.n)}</div></td><td class="num">${inr(r.x.p)}</td><td class="num ${ud(r.x.pct)}">${sg(r.x.pct)}%</td><td class="num">₹${big((r.x.v || 0) * r.x.p)}</td></tr>`).join("")}</tbody></table>
-    <div class="more-row" style="padding:10px 14px"><button class="btn-line sm" id="sec-to-movers">Show in movers →</button></div>` : '<div class="empty">Choose a sector.</div>';
+    <div class="more-row" style="padding:10px 14px"><button class="btn-line sm" id="sec-to-movers">Show in movers →</button></div>
+    <div class="sec-deps">${Sectors.shell(cur.k)}</div>` : '<div class="empty">Choose a sector.</div>';
+  if (cur) Sectors.bind(cur.k);
   $$("#sec-detail tr[data-s]").forEach(tr => tr.onclick = () => { openSec(tr.dataset.s); go("terminal"); });
   const tm = $("#sec-to-movers"); if (tm) tm.onclick = () => { sector = heatSel; $("#sector-sel").value = heatSel; movLimit = 50; renderMovers(); go("movers"); };
 }
@@ -1583,7 +1611,7 @@ function execCmd(p) {
     case "sector": heatSel = a.name; go("sectors"); renderSectors(); break;
     case "geo": go("globe"); GeoDesk.preload().then(() => GeoDesk.selectRegion(a.id)).catch(() => {}); break;
     case "map": go("globe"); break;
-    case "movers": go("movers"); if (a.mode !== "PRICE") toast(`MOVERS ${a.mode} is not built yet: showing the price movers.`); break;
+    case "movers": go("movers"); Movers.setKind(a.mode === "ALADIN" ? "aladin" : a.mode === "SHOCK" ? "shock" : "price"); break;
     case "help": openHelp(a.filter || ""); break;
     case "flight": case "vessel": go("globe"); Nexus.openNexus({ type: a.kind || p.action, id: a.id }); break;
     case "pick": cmdMessage(`Several ${a.kind}s match: type the full ${a.kind === "flight" ? "callsign" : "name"}.`, a.matches.map(m => m.label)); return false;

@@ -861,11 +861,29 @@ body.nx-open { overflow: hidden; }
 .gd-layers { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .gd-chips { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; }
 .gd-chip { font: 11px var(--mono); color: var(--ink-2); border: 1px solid var(--rule-2); padding: 2px 8px; background: var(--card); }
-.gd-chip.stale { color: var(--ink-4); border-style: dashed; } .gd-chip.off { color: var(--ink-3); border-style: dashed; }
+.gd-chip.stale { color: var(--ink-3); border-style: dashed; } .gd-chip.off { color: var(--ink-3); border-style: dashed; }
 .gd-wrap { position: relative; border: 1px solid var(--rule-2); background: var(--card); margin-bottom: 10px; touch-action: none; }
 .gd-wrap canvas { display: block; max-width: 100%; cursor: grab; touch-action: none; }
 .gd-tip { position: absolute; max-width: 220px; background: var(--card-hover); border: 1px solid var(--rule-2); padding: 6px 8px; font-size: 11.5px; line-height: 1.4; pointer-events: none; z-index: 3; }
 .gd-hint { margin: 4px 8px 6px; font-size: 11px; }
 .gd-list { margin-bottom: 14px; } .gd-list .controls { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
 .nx-spark { color: var(--gold); display: block; margin: 4px 0 8px; }
+
+/* ---------- MOVERS ---------- */
+.mv-tg { width: 20px; height: 20px; padding: 0; border: 0; background: transparent; color: var(--acc); font: 12px var(--mono); cursor: pointer; vertical-align: middle; }
+.mv-tg:focus-visible { outline: 1px solid var(--acc); outline-offset: 1px; }
+#v-movers tr.mv-x > td { padding: 12px 14px 16px; background: var(--sunken); white-space: normal; }
+#v-movers tr.mv-r { cursor: pointer; } #v-movers tr.mv-r:hover { background: var(--card-hover); }
+#mov-alt .ol-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } #mov-alt .tablecard { overflow-x: auto; }
+#mov-alt .asof { margin: 6px 0 10px; }
+.sh-tx { font-size: 11.5px; line-height: 1.4; margin-top: 3px; max-width: 520px; white-space: normal; }
+@media (max-width: 1000px) { #mov-alt .ol-two { grid-template-columns: 1fr; } .mov-co { display: none; } }
+
+/* ---------- SECTORS ---------- */
+.sec-deps { border-top: 1px solid var(--rule); padding: 8px 14px 14px; }
+.sec-dep > summary { cursor: pointer; font: 600 12px var(--mono); color: var(--acc); padding: 6px 0; }
+.sec-dep > summary:focus-visible { outline: 1px solid var(--acc); outline-offset: 2px; }
+.sec-dep-body p { font-size: 12.5px; line-height: 1.5; margin: 6px 0; } .sec-dep-body .tablecard { margin: 6px 0; overflow-x: auto; }
+.hh-deps { padding: 6px 14px 12px; } .hh-deps p { font-size: 12.5px; line-height: 1.5; margin: 6px 0; } .hh-deps .tablecard { margin: 6px 0; overflow-x: auto; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 

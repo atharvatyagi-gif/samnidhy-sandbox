@@ -170,7 +170,7 @@ function sweepHtml(sym) {
 }
 
 /* ---------- sentiment bar (markup as specified) ---------- */
-function sentHtml(sym, compact, open) {
+export function sentHtml(sym, compact, open) {
   const e = sentOf(sym), esc = ctx.esc, lvl = e ? e.lvl : "NO NEWS";
   const segs = "<i></i>".repeat(5);
   const sum = e ? `+${Math.round(e.sc)}`.replace("+-", "−") : "";

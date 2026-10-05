@@ -727,7 +727,7 @@ def main(argv=None):
     (OUT_DIR / "latest.json").write_text(txt, encoding="utf-8")
     hist_dir = OUT_DIR / "history"
     hist_dir.mkdir(exist_ok=True)
-    snap = {s: [e.get("f", {}).get("sc"), (sentiment or {}).get("stocks", {}).get(s, {}).get("sc"), e["t"]["sc"], e["t"]["p"].get("10"), e["t"]["p"].get("5"), e["t"]["p"].get("20")] for s, e in entries.items()}
+    snap = {s: [e.get("f", {}).get("sc"), (sentiment or {}).get("stocks", {}).get(s, {}).get("sc"), e["t"]["sc"], e["t"]["p"].get("10"), e["t"]["p"].get("5"), e["t"]["p"].get("20"), (e.get("x") or {}).get("i")] for s, e in entries.items()}
     (hist_dir / f"{cal[-1].date()}.json").write_text(json.dumps({"hmm": round(float(hp_final.iloc[-1]), 3), "s": snap}, separators=(",", ":")), encoding="utf-8")
     print(f"wrote data/aladin/latest.json ({len(txt) / 1e6:.2f} MB), {len(entries)} stocks, as of {cal[-1].date()} ({time.time() - t0:.0f}s)")
     return 0
