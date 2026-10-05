@@ -1,0 +1,93 @@
+# NEXUS supply-chain graph: reads company filings with a free language model (Groq, then Gemini), keeps only edges backed by a
+# verbatim quote, finds facility coordinates (OpenStreetMap Nominatim, 1 request a second), audits the result and saves
+# data/supply_graph.json. The next Live prices run publishes it (build_site.py), the nightly ALADIN run scores it.
+# Weekly: filings change a few times a year, and the free model quotas (Groq 200k tokens a day per model) are the limit.
+# Every step may fail: the repository keeps the previous graph, and the file is only saved when check_graph.py says "ok".
+# Commits end in "[skip ci]" and touch nothing but data/supply_graph.json.
+name: NEXUS graph
+
+on:
+  schedule:
+    - cron: "30 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "How many companies to read this run (the builder resumes from its cache)"
+        required: false
+        default: "40"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexus
+  cancel-in-progress: false
+
+jobs:
+  graph:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        continue-on-error: true
+        run: |
+          pip install -r requirements.txt
+          pip install pypdf jsonschema rapidfuzz
+
+      - name: Restore the filings and model-answer cache
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: data/nexus_cache
+          key: nexus-${{ github.run_id }}
+          restore-keys: |
+            nexus-
+
+      - name: Read filings and build the graph
+        continue-on-error: true
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LIMIT: ${{ github.event.inputs.limit || '40' }}
+        run: python scripts/revenue_graph_builder.py --limit "$LIMIT"
+
+      - name: Find facility coordinates
+        continue-on-error: true
+        env:
+          GEOCODE_CONTACT: ${{ secrets.GEOCODE_CONTACT }}
+        run: python scripts/geocode_facilities.py
+
+      - name: Audit the graph
+        id: audit
+        continue-on-error: true
+        run: python scripts/check_graph.py
+
+      - name: Save the cache for the next run
+        uses: actions/cache/save@v4
+        continue-on-error: true
+        if: always()
+        with:
+          path: data/nexus_cache
+          key: nexus-${{ github.run_id }}
+
+      - name: Save supply_graph.json to the repository (only when the audit passed)
+        if: steps.audit.outcome == 'success'
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/supply_graph.json
+          if git diff --cached --quiet; then
+            echo "Nothing new to save."
+          else
+            git commit -q -m "NEXUS graph: $(date -u +%Y-%m-%d) [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

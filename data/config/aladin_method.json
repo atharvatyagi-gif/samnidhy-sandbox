@@ -44,9 +44,17 @@
       ]
     },
     {
+      "h": "Supply-chain dependencies (NEXUS)",
+      "p": [
+        "NEXUS is a map of which company supplies which, built only from what listed companies themselves disclose: annual reports (segment and major-customer notes) and earnings-call transcripts, read by a free language model. An edge is kept only if the model returns a word-for-word quote that is really in the filing, names a counterparty, and passes a fixed confidence rubric (0.5 for a verified quote, 0.2 for a named counterparty, 0.2 for a stated share, 0.1 for a recent filing). Edges to a group or a parent instead of a named company are dropped. A share of revenue (the supplier's) and a share of purchases (the customer's) are never mixed. Nothing is filled in from the model's general knowledge: where a filing says nothing, the map has nothing.",
+        "The map is small. Free filings name few customers and suppliers, and few of the named companies are themselves listed, so most stocks have no edge and show Not measured. The Globe adds facility locations (looked up on OpenStreetMap), flights (OpenSky) and ships (AISstream) when those free feeds respond; each layer shows its own age and says when it has no data.",
+        "Impact score I for a stock is 100 times minus the sum, over its disclosed edges to listed companies it depends on, of the dependency share w, the edge confidence and tanh(z / 2), limited to -100 to +100; positive means adverse. z is the counterparty's 5-day return after removing its beta to the NIFTY 50 (beta from the previous 250 days only), divided by its own residual volatility and limited to plus or minus 3. It is computed nightly from the last close, never intraday. A walk-forward test checks whether I predicts the stock's next 5-day residual return; while its t-statistic is below 2 the term is labelled prior, unvalidated. The weights are fixed and never tuned to pass the test."
+      ]
+    },
+    {
       "h": "How the views are combined",
       "p": [
-        "logit(p) = logit(p_technical) + 0.20 x F/100 + 0.12 x S/100 + 0.18 x S_sweep/100. A missing view adds nothing. p is limited to the range 0.02 to 0.98. Confidence is Low when p is within 0.03 of 0.5, Medium within 0.07 and High beyond that. Agreement counts how many of the available views (Fundamental, Technical, Sentiment) lean the same way as p; a view leans up above +10 and down below -10.",
+        "logit(p) = logit(p_technical) + 0.20 x F_adj/100 + 0.12 x S/100 + 0.18 x S_sweep/100, where F_adj is the fundamental score F minus the NEXUS impact score I, limited to -100 to +100 (so a dependency on a counterparty that is falling pulls the fundamental term down). A missing view adds nothing; a stock with no impact score has F_adj = F. p is limited to the range 0.02 to 0.98. Confidence is Low when p is within 0.03 of 0.5, Medium within 0.07 and High beyond that. Agreement counts how many of the available views (Fundamental, Technical, Sentiment) lean the same way as p; a view leans up above +10 and down below -10.",
         "These weights are priors chosen in advance. Every night the model saves its predictions. Once at least 120 trading days of them have matured, a logistic stacker is fitted on them and replaces the priors only if it is better on days it was not fitted on."
       ]
     },

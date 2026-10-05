@@ -1,4 +1,4 @@
-"""Transport snapshot: only airborne, recent, positioned aircraft; honest cargo flag; OpenSky credit discipline; AIS merging; never fails the job."""
+﻿"""Transport snapshot: only airborne, recent, positioned aircraft; honest cargo flag; OpenSky credit discipline; AIS merging; never fails the job."""
 import asyncio
 import json
 import sys
@@ -250,3 +250,26 @@ def test_trade_lane_file_is_complete_exact_and_honest():
     text = json.dumps(lanes).lower()
     for w in ("buy", "sell", "target", "recommendation", "guaranteed"):
         assert f" {w} " not in text and f'"{w}' not in text
+
+
+def test_a_refused_login_does_not_buy_the_bigger_budget_and_is_retried_only_hourly():
+    env = {"OPENSKY_CLIENT_ID": "id", "OPENSKY_CLIENT_SECRET": "s3cr3t-xyz"}
+    d = ts.build(env=env, now=NOW, get=fake_get, post=lambda *a, **k: Resp(401, {"error": "unauthorized_client"}), prev=None, force=True)
+    f = d["sources"]["flights"]
+    assert f["mode"] == "anonymous" and f["login_failed"] is True and f["areas"] == 3 and d["refresh_min"] == 60 and d["max_age_min"] == 120
+    assert any("refused the login" in e for e in f["errors"]) and "s3cr3t-xyz" not in json.dumps(d)
+    prev = {**d, "generated_utc": (NOW - timedelta(minutes=20)).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    again = ts.build(env=env, now=NOW, get=lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not call OpenSky")), prev=prev)
+    assert again["reused"] is True                                                    # 20 minutes old: the hourly cadence still holds, no 15-minute retries
+    stale = {**d, "generated_utc": (NOW - timedelta(minutes=70)).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    ok = ts.build(env=env, now=NOW, get=fake_get, post=lambda *a, **k: Resp(200, {"access_token": "T"}), prev=stale)
+    assert ok["sources"]["flights"]["mode"] == "oauth2" and ok["sources"]["flights"]["login_failed"] is False and ok["refresh_min"] == 15 and ok["sources"]["flights"]["areas"] == 6
+
+
+def test_no_credentials_at_all_is_not_a_failed_login():
+    d = ts.build(env={}, now=NOW, get=fake_get, prev=None, force=True)
+    assert d["sources"]["flights"]["login_failed"] is False and d["sources"]["flights"]["errors"] == []
+
+
+def test_the_vessel_window_is_long_enough_to_catch_the_few_ships_free_ais_coverage_gives():
+    assert ts.load_cfg()["vessel_window_s"] >= 40
