@@ -1,0 +1,7 @@
+# OPTIONAL: only for the Angel One source of the local tick daemon (scripts/angel_feed.py). Install with:  pip install -r requirements-angel.txt
+# It needs your own Angel One SmartAPI app and TOTP: ANGEL_API_KEY, ANGEL_CLIENT_CODE, ANGEL_MPIN and ANGEL_TOTP_SECRET in .env (never committed).
+# Without them the daemon uses the free NSE web feed and none of this is needed. These are the same libraries (and minimum versions) relay/requirements.txt uses.
+smartapi-python>=1.4.8
+pyotp>=2.9
+websocket-client>=1.8
+logzero>=1.7

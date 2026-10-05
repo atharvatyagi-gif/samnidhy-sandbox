@@ -235,18 +235,19 @@ The Excel file and `private/` are never committed or published; `firestore.rules
 
 ### Local tick feed (optional, runs on your own PC)
 
-`scripts/aladin_ticker_daemon.py` polls NSE's free website feed about every 3 seconds (index levels plus the stocks on NSE's own movers / most-active lists, a few hundred at most) and serves it only to your own browser at `ws://127.0.0.1:8787/ws/ticks`.
+`scripts/aladin_ticker_daemon.py` serves live prices only to your own browser at `ws://127.0.0.1:8787/ws/ticks`. It has two sources: the free NSE website feed (the default: index levels plus the stocks on NSE's own movers / most-active lists, a few hundred at most, polled about every 3 seconds) and, if you have your own Angel One SmartAPI login, Angel One's WebSocket feed (every NSE stock, pushed in real time).
 
 1. `scripts/start_aladin_local.bat` (Windows) or `scripts/start_aladin_local.sh` (Mac/Linux). Leave it running.
-2. In the desk's command line type `TICKS ON`. The top-right chip then reads "LIVE · NSE WEB (THIS PC, ~3 s)". `TICKS OFF` stops it.
+2. In the desk's command line type `TICKS ON`. The top-right chip then reads "LIVE · NSE WEB (THIS PC, ~3 s)" for the free feed, or "REAL-TIME · NSE (THIS PC)" for Angel One. `TICKS OFF` stops it.
 
 Things to know:
 - It is a polled website feed, not an exchange feed: other stocks keep their delayed price (the age is shown). It only runs Mon-Fri 09:00-15:45 IST.
 - Chrome and Edge allow a secure page to talk to `127.0.0.1` (they may ask once). Safari blocks it.
 - The ticks stay on your machine: `data/live_extra/` is gitignored and never published (NSE's website terms restrict redistributing this data).
 - If NSE blocks the connection the daemon backs off and says so; it does not try to get around a block.
-- Sub-second prices for every stock would need an Angel One SmartAPI login (the existing relay in `relay/`). That source is not part of this daemon.
-- Tests: `python -m pytest tests -q` (no network needed).
+- **Angel One source (optional).** Put `ANGEL_API_KEY`, `ANGEL_CLIENT_CODE`, `ANGEL_MPIN` and `ANGEL_TOTP_SECRET` in `.env` (never committed; see `.env.example`) and `pip install -r requirements-angel.txt`. With all four set the daemon uses Angel One by default (`--source angel` forces it, `--source nse-web` forces the free feed). If the login or the instrument list fails, the reason (never a secret) is printed, shown under `/health` as `session.fallback_from`, and the daemon carries on with the free feed. Focus symbols are applied every 250 ms, the rest every second. The code is `scripts/angel_feed.py`; it repeats the instrument-list parsing, tick conversion and connection grouping of `relay/relay.py` on purpose (the relay is installed on a server on its own and cannot import it), and `tests/test_angel_feed.py` loads `relay.py` with stubbed libraries and checks both give identical results. It has been tested against recorded message shapes and those stubs, **not against a live Angel One account**: nobody on this project has run it with real credentials yet.
+- **Licence.** Angel One's market data is licensed to the account holder. The daemon shows it only on your machine (loopback). Showing it to the cohort needs Angel One's written permission and the server relay in `relay/`.
+- Tests: `python -m pytest tests -q` (no network needed). Browser checks of the chip use a scripted feed: `python tests/e2e/ticks_check.py`.
 
 ### Geopolitical news attention (Globe layer)
 
@@ -256,9 +257,16 @@ Things to know:
 - Google returns at most 100 items per query and has no history, so the baseline is collected by the hourly Globe workflow itself (`data/aladin/geo_history.json`). A region shows "Building baseline" and no score until it has 48 samples over 3 days. Busy regions that hit the 100-item cap are marked as a lower bound.
 - Tone is a transparent word-list count over headlines (`data/config/tone_words.json`), not a language model.
 
+### Checks that guard the wording and the evidence
+
+- `python scripts/check_banned.py` fails if the words buy / sell / target / recommendation / guaranteed appear in anything new the user can read (the new modules, the new HTML blocks, our own config strings, the README methodology block, and every key of every JSON file the site serves), or if the disclaimer is missing from the ALADIN view, the NEXUS panel or the Globe tab. `--existing` also lists such words in the older desk code (they are internal data-field names such as Yahoo's `strong_buy`, not wording users see).
+- `python scripts/aladin_sweep_eval.py` (run on the PC that runs the tick program, whose sweep log is local) checks whether a liquidity sweep predicted the next day's direction and reports the hit rate with a 95% interval. The sweep weight stays "prior, unvalidated" until at least 60 outcomes have matured and the interval's lower bound is above 50%.
+- `python scripts/aladin_lstm_test.py` tests whether a small LSTM adds to the Technical model, under a rule fixed before looking at results; its verdict is in `data/aladin/lstm_test.json` and shown on the ALADIN model card.
+- `python scripts/aladin_moves.py` (nightly) compares the last two saved nights for the Movers tab's ALADIN probability view.
+
 ### ALADIN sentiment engine
 
-`scripts/aladin_sentiment_engine.py --once` (or `--loop 900` on your PC) scores headlines from Mint, the news wire (ET, Business Standard) and Google News (Moneycontrol headlines, queried per company) with FinBERT, matches them to NSE stocks, and blends in retail chatter (Reddit) and FII/DII flow into `data/aladin/sentiment.json`. The "ALADIN sentiment" workflow runs it every 30 minutes in market hours and hourly otherwise, started by the heartbeat.
+`scripts/aladin_sentiment_engine.py --once` (or `--loop 900` on your PC) scores headlines from Mint, the news wire (ET, Business Standard) and Google News (Moneycontrol headlines, queried per company) with FinBERT, matches them to NSE stocks, and blends in retail chatter (Reddit) and FII/DII flow into `data/aladin/sentiment.json`. Earnings-call transcripts are read by a free cloud model: Groq's `openai/gpt-oss-120b`, then `openai/gpt-oss-20b`, then `qwen/qwen3.8-27b`, then Google's `gemini-flash-latest` and `gemini-flash-lite-latest` (override with `GROQ_MODEL`, `GROQ_FALLBACK_MODELS`, `GEMINI_MODEL`). A model that is gone, over its daily allowance or overloaded hands over to the next; with no key, or when all fail, a local FinBERT split of the call is used. The "ALADIN sentiment" workflow runs it every 30 minutes in market hours and hourly otherwise, started by the heartbeat.
 
 - A stock is scored only if a headline in the last 72 hours names it (symbol, company name or alias) or, when no company is named, its business group. Sector and market-wide headlines only add low-weight context. A stock with nothing specific is "NO NEWS" with no score, never "neutral".
 - The score is -100 to +100: BAD, POOR, NEUTRAL, GOOD, EXCELLENT. FII/DII flow applies to every scored stock, so a heavy-selling week pulls all scores down together.
@@ -335,9 +343,11 @@ Walk-forward: each test year from 2013 onward is predicted by models trained onl
 
 Out of sample, the model's edge over the base rate is small. The yearly table shows that it varies from year to year and is sometimes no better than chance.
 
+An LSTM neural network (one layer of 32 units on the last 60 trading days of returns, range, volume and close position, at most 8 epochs) was tested walk-forward for each year from 2018, under a rule fixed before any result was seen: keep it only if averaging it with the LightGBM model raises the out-of-sample AUC by at least 0.003 on average and in at least two thirds of the years. It lowered the average AUC by 0.0053 and helped in 4 of 9 years, so it is tested, shows no out-of-sample gain, and is not used.
+
 **Not measured, and why**
 
-Satellite imagery and card-spend data (no free source), job postings (the sites' terms forbid scraping), ESG scores (no free source), order-book models (no free NSE order-book history), reinforcement-learning execution (it improves trade execution, not direction), Heston option-model calibration (no free options history), EPS surprise and analyst revisions (Yahoo has none for NSE names), and an LSTM neural network (optional, not tried). Yahoo returns only about four annual and five quarterly periods, so earnings stability and quarter-on-quarter revenue acceleration are usually missing, and annual figures are used instead where that is stated.
+Satellite imagery and card-spend data (no free source), job postings (the sites' terms forbid scraping), ESG scores (no free source), order-book models (no free NSE order-book history), reinforcement-learning execution (it improves trade execution, not direction), Heston option-model calibration (no free options history), EPS surprise and analyst revisions (Yahoo has none for NSE names). Yahoo returns only about four annual and five quarterly periods, so earnings stability and quarter-on-quarter revenue acceleration are usually missing, and annual figures are used instead where that is stated.
 
 **Paper trading**
 
