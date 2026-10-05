@@ -202,21 +202,27 @@ def build(env=None, now=None, get=None, post=None, ais=None, prev=None, force=Fa
     ais = ais or ais_listen
     cfg, lanes, car = load_cfg(), load_json(LANES, {}), (load_json(CARRIERS, {}) or {}).get("carriers", {})
     cid, secret, akey = env.get("OPENSKY_CLIENT_ID", "").strip(), env.get("OPENSKY_CLIENT_SECRET", "").strip(), env.get("AISSTREAM_API_KEY", "").strip()
-    authed = bool(cid and secret)
-    refresh = 15 if authed else 60                                     # minutes between real OpenSky calls
+    has_creds = bool(cid and secret)
     if not force:
         prev = prev if prev is not None else previous_snapshot(get)
-        if prev and age_min(prev, now) < refresh and prev.get("refresh_min") == refresh:
-            prev["reused"] = True
-            return prev
+    last_failed = bool(prev and ((prev.get("sources") or {}).get("flights") or {}).get("login_failed"))
+    refresh = 15 if (has_creds and not last_failed) else 60            # minutes between real OpenSky calls; a login that failed last time is retried only hourly
+    if not force and prev and age_min(prev, now) < refresh and prev.get("refresh_min") == refresh:
+        prev["reused"] = True
+        return prev
+    token = oauth_token(cid, secret, post) if has_creds else None
+    authed = bool(token)                                               # settings alone are not a login: only a token is. A refused login must not buy a bigger budget
+    login_failed = has_creds and not authed
+    refresh = 15 if authed else 60
     boxes = pick_boxes(lanes.get("flight_boxes", []), authed, cfg["flight_bbox_budget"], lanes.get("anonymous_boxes", 3))
-    token = oauth_token(cid, secret, post) if authed else None
     mode = "oauth2" if token else "anonymous"
     flights, credits, ferr = [], 0, []
+    login_note = ["OpenSky refused the login (check OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET): using anonymous access, refreshed hourly"] if login_failed else []
     try:
         flights, credits, ferr = fetch_flights(boxes, car, token, get, now.timestamp())
     except Exception as e:  # noqa: BLE001
-        ferr.append(str(e)[:100])
+        ferr = [str(e)[:100]]
+    ferr = login_note + list(ferr)
     vessels, vreason = None, "No free keyless AIS feed: add a free AISSTREAM_API_KEY to turn the vessel layer on."
     if akey:
         vboxes = [{"id": c["id"], "bbox": c["bbox"]} for c in lanes.get("chokepoints", []) + lanes.get("ports", [])]
@@ -229,7 +235,7 @@ def build(env=None, now=None, get=None, post=None, ais=None, prev=None, force=Fa
             vreason = f"AIS feed unavailable: {str(e)[:80]}"
     used = {r[1][:3].upper() for r in flights if r[1]}
     return {"generated_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "refresh_min": refresh, "max_age_min": refresh * 2,
-            "sources": {"flights": {"name": "OpenSky Network", "url": "https://opensky-network.org", "mode": mode, "areas": len(boxes), "credits_used": credits, "errors": ferr,
+            "sources": {"flights": {"name": "OpenSky Network", "url": "https://opensky-network.org", "mode": mode, "login_failed": login_failed, "areas": len(boxes), "credits_used": credits, "errors": ferr,
                                     "attribution": "Flight positions: The OpenSky Network, https://opensky-network.org (free ADS-B data, as received; coverage has gaps)."},
                         "vessels": {"name": "AISstream.io", "url": "https://aisstream.io", "window_s": cfg["vessel_window_s"] if akey else None,
                                     "attribution": "Vessel positions: AISstream.io (terrestrial AIS, a short listening window; coverage has gaps)."}},
