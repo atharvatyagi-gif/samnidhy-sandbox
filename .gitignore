@@ -6,6 +6,10 @@ __pycache__/
 .env
 .env.*
 !.env.example
+# Downloaded key files (OpenSky's credentials.json and the like): never in git
+credentials*.json
+*client_secret*.json
+*clientsecret*.json
 
 # Raw price downloads: a cache the daily job rebuilds (new stocks every day would bloat git)
 data/raw/
