@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-05T02:02:11+00:00",
+  "generated_on": "2026-10-05T03:31:09+00:00",
   "session_date": "2026-10-01",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -107,7 +107,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.118222,
-      "total_return": 0.364129,
+      "total_return": 0.364128,
       "annualised_volatility": 0.454913,
       "max_drawdown": -0.469873,
       "beta": 1.5158
@@ -298,14 +298,14 @@
       "SCHNEIDER.NS": 0.066421,
       "INOXINDIA.NS": 0.047518,
       "IDBI.NS": 0.206946,
-      "POLICYBZR.NS": 0.035977,
+      "POLICYBZR.NS": 0.035976,
       "BAJAJ-AUTO.NS": 0.023113,
       "CHENNPETRO.NS": 0.051839
     },
     "POLICYBZR.NS": {
       "SCHNEIDER.NS": 0.041492,
       "INOXINDIA.NS": 0.029085,
-      "IDBI.NS": 0.035977,
+      "IDBI.NS": 0.035976,
       "POLICYBZR.NS": 0.21749,
       "BAJAJ-AUTO.NS": 0.025505,
       "CHENNPETRO.NS": 0.037526
@@ -1669,7 +1669,7 @@
         2984.08,
         2836.33,
         2812.16,
-        2898.88,
+        2898.87,
         3026.68,
         3062.63,
         3051.03,
@@ -1713,7 +1713,7 @@
         3305.12,
         3395.93,
         3397.88,
-        3490.82,
+        3490.81,
         3450.59,
         3362.93,
         3369.69,
