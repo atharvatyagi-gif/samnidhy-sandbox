@@ -99,7 +99,10 @@ def run():
         run_cmd(pg, "MOVERS", 800)
         check("MOVERS: Movers tab", view_on(pg) == "v-movers")
         run_cmd(pg, "MOVERS SHOCK", 800)
-        check("MOVERS SHOCK says it is not built yet instead of pretending", "not built yet" in pg.inner_text("#toast"), pg.inner_text("#toast"))
+        check("MOVERS SHOCK opens the Supply-chain shocks view", pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "shock")
+        run_cmd(pg, "MOVERS ALADIN", 1500)
+        check("MOVERS ALADIN opens the ALADIN probability view", pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "aladin")
+        run_cmd(pg, "MOVERS", 800)
         run_cmd(pg, "MAP", 800)
         check("MAP: Globe tab", view_on(pg) == "v-globe")
 

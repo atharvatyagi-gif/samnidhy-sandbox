@@ -4,7 +4,9 @@
    each listed member, summed. Cross-holdings and promoter stakes are NOT netted out. A member with no share count
    stays in the group (shown with a dash) but adds nothing to the totals, and the row says how many are missing.
    Returns (1W / 1M / YTD) are market-cap-weighted from the split-adjusted daily files, loaded only when a row opens. */
-let ctx = null, cfg = null, loading = null, failed = null;
+import { houseDeps, shareText } from "./desk-deps.js";
+
+let ctx = null, cfg = null, loading = null, failed = null, graph = null, graphLoading = null, hostEl = null;
 let sortKey = "mcap", query = "";
 const open = new Set(), hist = new Map(), histLoading = new Map();
 const CR = 1e7;
@@ -111,7 +113,40 @@ export async function renderHouses() {
   draw(el);
 }
 
+/* the supply-chain file is fetched only when a group is first expanded */
+function wantGraph() {
+  if (graph !== null || graphLoading || !ctx.S.deskMan || !ctx.S.deskMan.graph) return;
+  graphLoading = ctx.getJSON("supply_graph.json", false).then(j => { graph = j; }).catch(() => { graph = false; })
+    .finally(() => { graphLoading = null; if (hostEl && document.contains(hostEl)) draw(hostEl); });
+}
+function depsBlock(g) {
+  const { esc } = ctx;
+  if (!ctx.S.deskMan || !ctx.S.deskMan.graph) return '<div class="sec-t">Group dependencies</div><p class="mut">The supply-chain data has not been published yet.</p>';
+  wantGraph();
+  if (graph === false) return '<div class="sec-t">Group dependencies</div><p class="mut">The supply-chain data could not be loaded.</p>';
+  if (!graph) return '<div class="sec-t">Group dependencies</div><p class="mut">Loading the disclosed links…</p>';
+  const members = g.rows.map(r => r.s), rev = {};
+  for (const s of members) { const f = (ctx.S.fund || {})[s]; if (f && f.rev) rev[s] = f.rev; }
+  const d = houseDeps(graph, members, rev), N = new Map(graph.nodes.map(n => [n.id, n]));
+  const nm = id => { const n = N.get(id); return n && n.k === "co" ? `<button class="lnk" data-nexus="company:${esc(id)}">${esc(id)}</button>` : esc((n && n.n) || id); };
+  const inter = d.inter.map(e => `<tr><td>${nm(e.s)}</td><td>→</td><td>${nm(e.d)}</td><td>${esc(e.rel === "related_party" ? "related party" : e.rel.replace(/_/g, " "))}</td><td>${esc(shareText(e))}</td><td>${esc(e.per || "—")}</td><td><button class="lnk" data-nexus="edge:${esc(e.id)}">evidence</button></td></tr>`).join("");
+  const ext = (list, who) => list.length ? `<ul class="nx-ul">${list.map(c => {
+    const amt = c.amount > 0 ? `≈ ₹${Math.round(c.amount / CR).toLocaleString("en-IN")} Cr <span class="mut">(sum of share × the member's revenue${c.partial ? "; links without a share of revenue are not counted" : ""})</span>`
+      : c.maxShare != null ? `largest single share ${(c.maxShare * 100).toFixed(0)}% <span class="mut">(${esc(shareText(c.maxEdge))}; no rupee amount can be worked out)</span>` : '<span class="mut">no share stated</span>';
+    return `<li>${nm(c.id)} · ${amt} <span class="mut">· ${c.edges} link${c.edges === 1 ? "" : "s"} via ${esc(c.members.join(", "))}</span></li>`;
+  }).join("")}</ul>` : `<p class="mut">No external ${who} disclosed in the filings read so far.</p>`;
+  return `<div class="sec-t">Group dependencies</div>
+    <p>Graph covers <b>${d.cover.read}</b> of <b>${d.cover.members}</b> members (filings read); <b>${d.cover.linked}</b> have a disclosed link.</p>
+    <div class="sec-t">Between members of the group</div>
+    ${inter ? `<div class="tablecard"><table class="tbl sm"><thead><tr><th>Sender</th><th></th><th>Receiver</th><th>Link</th><th>Share</th><th>Period</th><th><span class="sr">Evidence</span></th></tr></thead><tbody>${inter}</tbody></table></div>` : '<p class="mut">No link between two members is disclosed in the filings read so far.</p>'}
+    <p class="mut">Related-party transactions from a filing's related-party note appear in this table once that note is read; none have been extracted yet.</p>
+    <div class="sec-t">External concentration: largest customers</div>${ext(d.customers, "customers")}
+    <div class="sec-t">External concentration: largest suppliers</div>${ext(d.suppliers, "suppliers")}
+    <p class="mut">Rupee amounts are shown only for links that are a share of the member's own revenue; a share of someone else's purchases is shown as a share. Association, not proof of cause.</p>`;
+}
+
 function draw(el) {
+  hostEl = el;
   const { esc, S } = ctx, { list, n500Total } = compute();
   const q = query.trim().toLowerCase();
   const shown = list.filter(g => !q || g.h.name.toLowerCase().includes(q) || g.rows.some(r => r.s.toLowerCase().includes(q) || r.n.toLowerCase().includes(q))).sort(sorters[sortKey]);
@@ -198,7 +233,8 @@ function detailHtml(g) {
     <td class="num">${r.mcap == null || !tmcap ? "—" : (r.mcap / tmcap * 100).toFixed(1) + "%"}</td>${stockRet(r, "1W")}${stockRet(r, "1M")}${stockRet(r, "YTD")}</tr>`).join("");
   return `<div class="tablecard"><table class="tbl"><thead><tr><th>Symbol</th><th>Company</th><th class="r">Last</th><th class="r">Chg %</th><th class="r">Mcap ₹ cr</th><th class="r">Weight</th><th class="r">1W</th><th class="r">1M</th><th class="r">YTD</th></tr></thead>
     <tbody>${body}<tr class="hh-total"><td colspan="2"><b>Group, market-cap weighted</b></td><td></td><td class="num ${cls(g.sum.dayPct)}">${pctTxt(g.sum.dayPct)}</td><td class="num">${crTxt(tmcap / CR)}</td><td class="num">100%</td>${groupRet("1W")}${groupRet("1M")}${groupRet("YTD")}</tr></tbody></table></div>
-    ${g.h.note ? `<p class="note">${esc(g.h.note)}</p>` : ""}<p class="note">Returns use today's share counts and split-adjusted closes, so they reflect price moves only (no share repurchases, issues or dividends).</p>`;
+    ${g.h.note ? `<p class="note">${esc(g.h.note)}</p>` : ""}<p class="note">Returns use today's share counts and split-adjusted closes, so they reflect price moves only (no share repurchases, issues or dividends).</p>
+    <div class="hh-deps">${depsBlock(g)}</div>`;
 }
 
 async function loadReturns(el, id) {

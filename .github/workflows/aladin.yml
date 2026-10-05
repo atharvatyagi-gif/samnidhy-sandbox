@@ -101,6 +101,10 @@ jobs:
         run: |
           if [ "${{ inputs.mode }}" = "full" ]; then python scripts/aladin_model.py --full --workers 2; else python scripts/aladin_model.py --nightly --workers 2; fi
 
+      - name: ALADIN probability movers (data/aladin/moves.json, what changed since the last saved night)
+        continue-on-error: true
+        timeout-minutes: 10
+        run: python scripts/aladin_moves.py
       - name: Paper trader
         continue-on-error: true
         run: python scripts/paper_trader.py

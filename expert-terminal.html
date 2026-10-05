@@ -175,6 +175,11 @@
       <div class="page">
         <div class="page-head"><p class="kick">— NSE movers · all boards</p><h2>Where the money <span class="acc">moved today.</span></h2><p class="asof" data-asof="prices"></p></div>
         <div class="controls">
+          <div class="seg" id="mov-kind" role="group" aria-label="Movers view"><button data-k="price" class="on" aria-pressed="true">Price &amp; volume</button><button data-k="aladin" aria-pressed="false">ALADIN probability</button><button data-k="shock" aria-pressed="false">Supply-chain shocks</button></div>
+          <div class="seg" id="mov-h" role="group" aria-label="Horizon" hidden><button data-h="5" aria-pressed="false">5D</button><button data-h="10" class="on" aria-pressed="true">10D</button><button data-h="20" aria-pressed="false">20D</button></div>
+        </div>
+        <div id="mov-price">
+        <div class="controls">
           <div class="seg" id="mov-tabs"><button data-m="gain" class="on">Gainers</button><button data-m="lose">Losers</button><button data-m="val">Most active</button><button data-m="hi">52W high</button><button data-m="lo">52W low</button></div>
           <div class="seg" id="board-grp"><button data-b="All" class="on">All</button><button data-b="Main">Main board</button><button data-b="SME">SME</button><button data-b="ETF">ETFs</button></div>
           <select id="sector-sel" aria-label="Sector"><option value="">All sectors</option></select>
@@ -182,9 +187,11 @@
         </div>
         <div class="tablecard"><table class="tbl" id="mov-table"><thead><tr>
           <th data-sort="s">Symbol</th><th data-sort="n">Company</th><th data-sort="p" class="r">Last</th><th data-sort="chg" class="r">Chg</th><th data-sort="pct" class="r">Chg %</th>
-          <th data-sort="v" class="r">Volume</th><th data-sort="val" class="r">Value</th><th data-sort="deliv" class="r">Delivery</th><th>52-week range</th>
+          <th data-sort="v" class="r">Volume</th><th data-sort="val" class="r">Value</th><th data-sort="rv" class="r" title="Today's volume divided by the 20-day average, pro-rated by how much of the session has passed (approximate: a straight line through the day)">Rel vol</th><th data-sort="sw" class="r" title="Liquidity sweep seen today (needs the local tick program)">Sweep</th><th data-sort="deliv" class="r">Delivery</th><th>52-week range</th>
           <th data-sort="grp" class="mov-grp" title="Which of NSE's own live lists this price was picked up from (unofficial; not an industry sector)">NSE Live</th><th></th></tr></thead><tbody></tbody></table></div>
         <div class="more-row"><span class="mut" id="mov-count"></span><button class="btn-line" id="mov-more">Show 50 more</button></div>
+        </div>
+        <div id="mov-alt" hidden></div>
       </div>
     </section>
 
