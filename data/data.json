@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-04T17:44:22+00:00",
+  "generated_on": "2026-10-05T02:02:11+00:00",
   "session_date": "2026-10-01",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,7 +40,7 @@
         "turnover_crore": 182.77
       },
       "latest_close": 1275.4,
-      "trailing_pe": 167.05882,
+      "trailing_pe": 166.18985,
       "market_cap": 305574936576,
       "history": {
         "first_date": "2021-09-24",
@@ -69,7 +69,7 @@
         "turnover_crore": 133.85
       },
       "latest_close": 2168.3,
-      "trailing_pe": 77.08617,
+      "trailing_pe": 77.00358,
       "market_cap": 196037918720,
       "history": {
         "first_date": "2023-12-21",
@@ -107,7 +107,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.118222,
-      "total_return": 0.364128,
+      "total_return": 0.364129,
       "annualised_volatility": 0.454913,
       "max_drawdown": -0.469873,
       "beta": 1.5158
@@ -127,7 +127,7 @@
         "turnover_crore": 1403.29
       },
       "latest_close": 980.0,
-      "trailing_pe": 60.60606,
+      "trailing_pe": 60.945274,
       "market_cap": 452857888768,
       "history": {
         "first_date": "2021-11-15",
@@ -156,7 +156,7 @@
         "turnover_crore": 1510.04
       },
       "latest_close": 10045.0,
-      "trailing_pe": 23.866093,
+      "trailing_pe": 23.888227,
       "market_cap": 2760404631552,
       "history": {
         "first_date": "2021-09-24",
@@ -185,7 +185,7 @@
         "turnover_crore": 252.22
       },
       "latest_close": 1346.4,
-      "trailing_pe": 4.7838182,
+      "trailing_pe": 4.78416,
       "market_cap": 199690174464,
       "history": {
         "first_date": "2021-09-24",
@@ -298,14 +298,14 @@
       "SCHNEIDER.NS": 0.066421,
       "INOXINDIA.NS": 0.047518,
       "IDBI.NS": 0.206946,
-      "POLICYBZR.NS": 0.035976,
+      "POLICYBZR.NS": 0.035977,
       "BAJAJ-AUTO.NS": 0.023113,
       "CHENNPETRO.NS": 0.051839
     },
     "POLICYBZR.NS": {
       "SCHNEIDER.NS": 0.041492,
       "INOXINDIA.NS": 0.029085,
-      "IDBI.NS": 0.035976,
+      "IDBI.NS": 0.035977,
       "POLICYBZR.NS": 0.21749,
       "BAJAJ-AUTO.NS": 0.025505,
       "CHENNPETRO.NS": 0.037526
@@ -1659,7 +1659,7 @@
         3437.16,
         3404.11,
         3538.25,
-        3449.57,
+        3449.56,
         3307.49,
         3353.97,
         3243.07,
@@ -1669,7 +1669,7 @@
         2984.08,
         2836.33,
         2812.16,
-        2898.87,
+        2898.88,
         3026.68,
         3062.63,
         3051.03,
@@ -1810,7 +1810,7 @@
         10008.38,
         10474.92,
         10415.82,
-        11288.18,
+        11288.17,
         11484.9,
         12181.88,
         11324.0,
@@ -1827,12 +1827,12 @@
         8451.12,
         8586.77,
         8622.74,
-        8428.75,
+        8428.76,
         8253.14,
         8080.12,
         8509.35,
         8645.53,
-        8181.11,
+        8181.1,
         8180.67,
         7600.59,
         7285.0,
@@ -1846,7 +1846,7 @@
         7521.35,
         7388.63,
         8158.02,
-        8406.63,
+        8406.64,
         8277.76,
         8306.61,
         8139.75,
