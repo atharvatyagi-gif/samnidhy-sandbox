@@ -16,6 +16,7 @@ const store = {
   set(v) { try { v ? localStorage.setItem(KEY, "1") : localStorage.removeItem(KEY); } catch (e) { /* private mode */ } },
 };
 
+let src = null;
 export function init(c) {
   ctx = c;
   document.addEventListener("visibilitychange", () => { if (!document.hidden && store.get() && !connected && fails >= 3) { fails = 0; connect(); } });
@@ -24,6 +25,8 @@ export function init(c) {
 export function onTick(cb) { listeners.add(cb); return () => listeners.delete(cb); }
 export function emitTick(batch) { listeners.forEach(cb => { try { cb(batch); } catch (e) { /* one bad listener must not stop the rest */ } }); }
 export const enabled = () => store.get();
+/* which feed the daemon is using: "angel" (Angel One, real-time) or "nse-web" (the free web feed, polled about every 3 s); null until the daemon has said hello */
+export const source = () => src;
 /* true while ticks from this PC are arriving (used by the masthead chip) */
 export const active = () => connected && !ctx.LIVE.ok && Date.now() - lastTickAt < 120000;
 
@@ -69,8 +72,8 @@ function convert(q) {
 function onMsg(m) {
   if (ctx.LIVE.ok) return;                                    // the relay feed wins
   if (m.type === "hello") {
-    connected = !!m.ok; fails = 0; lastTickAt = Date.now(); clearInterval(poll); poll = null;
-    if (m.ok) { ctx.toast("Local tick feed connected (NSE web, this PC)"); sendFocus(); }
+    connected = !!m.ok; fails = 0; lastTickAt = Date.now(); clearInterval(poll); poll = null; src = m.src || null;
+    if (m.ok) { ctx.toast(`Local tick feed connected (${src === "angel" ? "Angel One, real-time, this PC" : "NSE web, this PC"})`); sendFocus(); }
     ctx.renderMast && ctx.renderMast();
   } else if (m.type === "snap" || m.type === "ticks") {
     lastTickAt = Date.now();

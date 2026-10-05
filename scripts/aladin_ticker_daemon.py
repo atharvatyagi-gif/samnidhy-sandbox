@@ -12,8 +12,10 @@ What it does, and the limits it works inside (all measured against the real NSE 
   movers / most-active lists. The bulk "NIFTY 500 in one call" endpoint (/api/equity-stockIndices) now returns
   404 and the per-stock /api/quote-equity returns 403, so stocks outside those lists get NO live price here -
   the desk keeps showing their delayed price with its age. This is a hard limit of the free feed, not a bug.
-* Data source "angel" (Angel One SmartAPI WebSocket) would cover every stock sub-second, but needs the
-  account holder's login and TOTP keys. Not built in this version; --source angel says so and exits.
+* Data source "angel" (Angel One SmartAPI WebSocket): every NSE stock, sub-second, pushed (not polled), through the account holder's OWN login (ANGEL_* in .env, see
+  scripts/angel_feed.py and requirements-angel.txt). It is the default when all four ANGEL_* settings exist. If the login or the instrument list fails, the reason (never
+  a secret) is printed and shown under /health "session", and the daemon carries on with the free nse-web feed. The data is licensed to the account holder: it is shown only on
+  this machine (loopback). Focus symbols are applied every 250 ms and everything else every second.
 * Intraday Liquidity Sweep Engine: 15-minute bars from the ticks (volume = difference of cumulative traded
   quantity), levels from completed daily candles, sweeps scored with a 45-minute half-life. It only sees the
   stocks that appear in the feed above.
@@ -27,6 +29,7 @@ backs off; it does not try to evade the block.
 
 import argparse
 import asyncio
+import queue
 import collections
 import http
 import json
@@ -535,7 +538,7 @@ class NseWebSource:
 
     @property
     def status(self):
-        return {**self.s.status, "latency_ms": self.latency_ms, "source": self.name}
+        return {**self.s.status, "latency_ms": self.latency_ms, "source": self.name, **getattr(self, "note", {})}
 
     def poll_once(self):
         """One round of 5 small requests. Returns {SYM: tick} of everything seen this round, split by kind."""
@@ -548,6 +551,53 @@ class NseWebSource:
             stocks.update(parse_most_active(self.s.get_json("/api/live-analysis-most-active-securities", {"index": which})))
         self.latency_ms = round((time.monotonic() - t0) * 1000)
         return stocks, idx
+
+
+class AngelSource:
+    """Angel One SmartAPI WebSocket (see angel_feed.py): every NSE stock, pushed. Sub-second ticks; focus symbols are applied every 250 ms, the rest every second."""
+    name = "angel"
+    interval = 1.0
+    latency_ms = None
+
+    def __init__(self, feed=None, env=None):
+        import angel_feed
+        self.q, self.focus = queue.SimpleQueue(), set()
+        self.feed = feed or angel_feed.AngelFeed(os.environ if env is None else env, lambda sym, row: self.q.put((sym, row)))
+
+    @property
+    def status(self):
+        return {"source": "angel", **self.feed.status}
+
+    def prepare(self):
+        self.feed.prepare()
+
+    def set_focus(self, syms):
+        self.focus = set(list(syms)[:50])
+
+    async def run(self, hub, broadcast_fn, stop, fast=0.25, slow=1.0):
+        self.feed.start()
+        buf, last_slow = {}, 0.0
+        while not stop.is_set():
+            now = time.monotonic()
+            try:
+                while True:
+                    sym, row = self.q.get_nowait()
+                    buf[sym] = row                                                     # the newest tick per symbol is all that matters
+            except queue.Empty:
+                pass
+            slow_due = now - last_slow >= slow
+            for sym in [s for s in buf if slow_due or s in self.focus]:
+                r = buf.pop(sym)
+                hub.on_tick(sym, r[0], r[1], r[2], r[3], r[4], r[5], r[6], "index" if sym.startswith("^") else "stock")
+            if slow_due:
+                last_slow = now
+            hub.src_name, hub.src_status = "angel", self.status
+            await broadcast_fn()
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=fast)
+            except asyncio.TimeoutError:
+                pass
+        self.feed.stop()
 
 
 async def run_source(source, hub, broadcast_fn, stop):
@@ -599,7 +649,9 @@ async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=Non
                 except ValueError:
                     continue
                 if m.get("type") == "focus":
-                    missing = [s for s in (m.get("syms") or [])[:50] if s not in hub.ticks]
+                    if hasattr(source, "set_focus"):
+                        source.set_focus([s for s in (m.get("syms") or []) if isinstance(s, str)])
+                    missing = [s for s in (m.get("syms") or [])[:50] if s not in hub.ticks] if not hasattr(source, "set_focus") else []
                     if missing:
                         await ws.send(json.dumps({"type": "warn", "msg": "NSE's free feed only carries the movers / most-active lists: no live price for " + ", ".join(missing[:5]) + ("..." if len(missing) > 5 else "")}))
         finally:
@@ -634,7 +686,8 @@ async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=Non
                 pass
 
     async with ws_serve(handler, host, port, origins=ALLOWED_ORIGINS, process_request=process_request):
-        await asyncio.gather(run_source(source, hub, broadcast_fn, stop), dumper())
+        runner = source.run(hub, broadcast_fn, stop) if hasattr(source, "run") else run_source(source, hub, broadcast_fn, stop)
+        await asyncio.gather(runner, dumper())
 
 
 def main(argv=None):
@@ -649,12 +702,8 @@ def main(argv=None):
     aladin_env.announce("aladin_ticker_daemon")
     cfg = load_cfg()
     port = a.port or cfg["ws_port"]
-    if a.source == "angel":
-        print("The Angel One source isn't built in this version: it needs the account holder's SmartAPI login and TOTP keys.\n"
-              "Run without --source (or --source nse-web) to use NSE's free web feed.", file=sys.stderr)
-        return 2
-    if os.environ.get("ANGEL_API_KEY") and a.source == "auto":
-        print("ANGEL_* keys found, but the Angel One source isn't built yet - using nse-web.")
+    import angel_feed
+    want_angel = a.source == "angel" or (a.source == "auto" and not angel_feed.missing_env(os.environ))
     uni = {}
     try:
         uni = {s["s"]: s for s in json.loads((ROOT / "data" / "terminal" / "universe.json").read_text(encoding="utf-8"))["stocks"]}
@@ -663,9 +712,24 @@ def main(argv=None):
     min_val = cfg["sweep"]["min_value_cr"] * 1e7
     value_ok = lambda sym: bool(uni.get(sym)) and (uni[sym].get("avgv20") or 0) * (uni[sym].get("c") or 0) >= min_val
     hub = Hub(cfg, value_ok=value_ok, sweep_log_dir=ROOT / "data" / "aladin_cache" / "sweep_log")
-    source = NseWebSource(NseSession(), a.interval)
-    print(f"ALADIN ticker daemon | source nse-web | ws://127.0.0.1:{port}/ws/ticks | window Mon-Fri 09:00-15:45 IST | poll {source.interval:.0f}s")
-    print("Covers index levels + the stocks on NSE's own movers / most-active lists (the free feed has nothing wider). Ctrl+C to stop.")
+    source, fallback = None, None
+    if want_angel:
+        try:
+            cand = AngelSource()
+            cand.prepare()
+            source = cand
+        except Exception as e:  # noqa: BLE001 - whatever went wrong, the free feed still works
+            fallback = f"Angel One source unavailable ({str(e)[:120]}): using the free NSE web feed instead"
+            print(fallback)
+    if source is None:
+        source = NseWebSource(NseSession(), a.interval)
+        if fallback:
+            source.note = {"fallback_from": "angel", "reason": fallback}
+        print(f"ALADIN ticker daemon | source nse-web | ws://127.0.0.1:{port}/ws/ticks | window Mon-Fri 09:00-15:45 IST | poll {source.interval:.0f}s")
+        print("Covers index levels + the stocks on NSE's own movers / most-active lists (the free feed has nothing wider). Ctrl+C to stop.")
+    else:
+        hub.src_name = "angel"
+        print(f"ALADIN ticker daemon | source angel | ws://127.0.0.1:{port}/ws/ticks | window Mon-Fri 09:00-15:45 IST | every NSE stock, pushed. Ctrl+C to stop.")
     try:
         asyncio.run(serve(hub, source, port, dump_path=ROOT / "data" / "live_extra" / "ticks.json"))
     except KeyboardInterrupt:

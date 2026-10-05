@@ -586,6 +586,39 @@ def build_stock_entries(L, per, drv, fund, sentiment, cfg, hmm_last, jumps, pair
     return entries
 
 
+def load_lstm():
+    """The verdict of scripts/aladin_lstm_test.py (data/aladin/lstm_test.json) in the shape aladin.json carries, or the 'not tried' default."""
+    try:
+        d = json.loads((OUT_DIR / "lstm_test.json").read_text(encoding="utf-8"))
+        return {"used": bool(d["used"]), "tested": True, "auc_gain": d.get("auc_gain"), "years_better": d.get("years_better"), "note": d.get("note"),
+                "folds": [{k: f.get(k) for k in ("year", "auc_lgb", "auc_lstm", "auc_blend")} for f in d.get("folds", [])]}
+    except (OSError, ValueError, KeyError):
+        return {"used": False, "tested": False, "auc_gain": None, "note": "not tried yet"}
+
+
+def not_measured(lstm):
+    """The static list, with the LSTM row only while it has not been tested (afterwards its result sits under model.lstm)."""
+    return [x for x in NOT_MEASURED if x[0] != "LSTM"] + ([] if lstm.get("tested") else [["LSTM", "Optional in the brief; not tried yet"]])
+
+
+def load_sweep_eval():
+    """data/aladin/sweep_eval.json (scripts/aladin_sweep_eval.py, run where the tick program's sweep log lives), or None."""
+    try:
+        return json.loads((OUT_DIR / "sweep_eval.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def stacker_status(hist_dates, cal, h=10, need=120):
+    """How many saved nightly runs have matured (h trading days have passed since), against the 120 the fitted stacker needs. Until then the prior weights stand."""
+    pos = {str(d.date()): i for i, d in enumerate(cal)}
+    last = len(cal) - 1
+    n = sum(1 for d in hist_dates if d in pos and pos[d] + h <= last)
+    why = (f"{n} of the {need} trading days needed have matured, so the fitted stacker is not tried yet and the prior weights stand" if n < need else
+           f"{n} matured days exist, but wiring a fitted stacker into the page's combiner is not built yet, so the prior weights stand")
+    return {"mode": "prior", "matured_days": n, "needed": need, "horizon": h, "reason": why}
+
+
 def load_impact(as_of):
     """data/aladin/impact.json (written by graph_impact.py just before the model runs). Used only when it is for the same close as the model:
     an impact score from another day is not mixed in (those stocks then show 'not measured')."""
@@ -708,13 +741,13 @@ def main(argv=None):
     impact = load_impact(str(cal[-1].date()))
     entries = build_stock_entries(L, per, drv, fund, sentiment, cfg, float(hp_final.iloc[-1]), jumps, pairs_live, alt, impact)
     doc = {"generated_utc": now_utc().isoformat(timespec="seconds"), "as_of": str(cal[-1].date()), "horizons": horizons, "primary": cfg.get("primary_horizon", 10),
-           "weights": {"mode": "prior", **cfg["weights"], "fit": None, "sweep_validated": False,
+           "weights": {"mode": "prior", **cfg["weights"], "fit": stacker_status([p.stem for p in (OUT_DIR / "history").glob("*.json")] + [str(cal[-1].date())], cal), "sweep_validated": bool((load_sweep_eval() or {}).get("validated")),
                        "impact_validated": bool(((impact or {}).get("validation") or {}).get("validated")), "impact": (impact or {}).get("validation")},
            "model": {"type": "LightGBM x3 seeds per horizon, isotonic-calibrated; regime blend where it beat the pooled model out of sample", "features": len(feats),
-                     "regime_blend": bool(any(regime_use.values())), "lstm": {"used": False, "tested": False, "auc_gain": None}, "pca_k": pca_k, "pairs": int(pairf[pairf["date"] == cal[-1]]["sym"].nunique()),
+                     "regime_blend": bool(any(regime_use.values())), "lstm": load_lstm(), "pca_k": pca_k, "pairs": int(pairf[pairf["date"] == cal[-1]]["sym"].nunique()),
                      "names": {f: NAMES[f] for f in feats if f in NAMES}, "trained_stocks": int(X.loc[X["tr"], "sym"].nunique()), "scored_stocks": len(entries)},
-           "oos": oos_out, "live": {str(h): {"scored": int(len(per[h])), "mean_p": round(float(np.mean(per[h])), 3)} for h in per}, "sweep_eval": None,
-           "not_measured": NOT_MEASURED, "stocks": entries}
+           "oos": oos_out, "live": {str(h): {"scored": int(len(per[h])), "mean_p": round(float(np.mean(per[h])), 3)} for h in per}, "sweep_eval": load_sweep_eval(),
+           "not_measured": not_measured(load_lstm()), "stocks": entries}
     txt = json.dumps(doc, separators=(",", ":"), allow_nan=False, default=lambda o: None)
     size = len(txt.encode())
     if size > 2_900_000:                                               # keep aladin.json under 3 MB: drop the heavy per-stock detail outside the training universe

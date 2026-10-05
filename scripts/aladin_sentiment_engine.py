@@ -416,36 +416,80 @@ LLM_PROMPT = ("You are analysing an earnings-call transcript. Reply with STRICT 
               "copied from the text), confidence (0..1). No commentary.")
 
 
+# Free-tier model names move (Groq retired llama-3.3-70b-versatile for new accounts, Google retired gemini-1.5-flash), so nothing here is pinned to one name: the models
+# below are tried in order, and each can be overridden (GROQ_MODEL, GROQ_FALLBACK_MODELS, GEMINI_MODEL) or set in data/config/aladin_config.json "llm".
+DEFAULT_GROQ = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+DEFAULT_GEMINI = ["gemini-flash-latest", "gemini-flash-lite-latest"]                     # Google's own aliases, which follow the current model
+GROQ_CHARS, GEMINI_CHARS = 18000, 60000                                                   # Groq's free tier allows about 8,000 tokens a minute: send an excerpt
+
+
 def _llm_cfg():
-    cfg = {"groq_model": "llama-3.3-70b-versatile", "gemini_model": "gemini-1.5-flash", **load_json(CFG, {}).get("llm", {})}
-    if os.environ.get("GROQ_MODEL"):
-        cfg["groq_model"] = os.environ["GROQ_MODEL"]
-    if os.environ.get("GEMINI_MODEL"):
-        cfg["gemini_model"] = os.environ["GEMINI_MODEL"]
-    return cfg
+    return dict(load_json(CFG, {}).get("llm", {}))
+
+
+def _llm_candidates(env, cfg):
+    """[(provider, model)] in the order they are tried: Groq's models first (when its key exists), then Gemini's."""
+    out = []
+    if env.get("GROQ_API_KEY"):
+        first = env.get("GROQ_MODEL") or cfg.get("groq_model")
+        rest = [m.strip() for m in (env.get("GROQ_FALLBACK_MODELS") or ",".join(DEFAULT_GROQ)).split(",") if m.strip()]
+        out += [("groq", m) for m in dict.fromkeys(([first] if first else []) + rest)]
+    if env.get("GEMINI_API_KEY"):
+        one = env.get("GEMINI_MODEL") or cfg.get("gemini_model")
+        out += [("gemini", m) for m in ([one] if one else DEFAULT_GEMINI)]
+    return out
+
+
+def _excerpt(text, limit):
+    """The opening of the prepared remarks plus the opening of the Q&A (the part that shows how management sounds when unscripted), within `limit` characters."""
+    if len(text) <= limit:
+        return text
+    m = QA_MARK.search(text)
+    if not m:
+        return text[:limit]
+    half = limit // 2
+    return text[:half] + "\n[...]\n" + text[m.start():m.start() + half]
+
+
+def _daily_quota(r):
+    s = (getattr(r, "text", "") or "").lower()
+    return "per day" in s or "(tpd)" in s or "daily" in s
+
+
+def _llm_post(provider, model, text, env, post):
+    if provider == "groq":
+        body = {"model": model, "temperature": 0, "response_format": {"type": "json_object"}, "max_completion_tokens": 1500,
+                "messages": [{"role": "system", "content": LLM_PROMPT}, {"role": "user", "content": text}]}
+        if model.startswith("openai/gpt-oss"):
+            body["reasoning_effort"] = "low"
+        return post("https://api.groq.com/openai/v1/chat/completions", headers={"Authorization": "Bearer " + env["GROQ_API_KEY"]}, timeout=60, json=body)
+    return post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", headers={"x-goog-api-key": env["GEMINI_API_KEY"]}, timeout=60,
+                json={"contents": [{"parts": [{"text": LLM_PROMPT + "\n\n" + text}]}], "generationConfig": {"responseMimeType": "application/json", "temperature": 0}})
 
 
 def call_llm(text, post=None, env=None, sleep=time.sleep):
-    """Groq if GROQ_API_KEY else Gemini if GEMINI_API_KEY; JSON dict or None. Retries 429 with backoff. Never raises."""
+    """The free models in order (see DEFAULT_GROQ / DEFAULT_GEMINI): a 429 is retried with backoff unless it says the day's quota is used up; a model that is gone (404),
+    refuses the request (400/413) or is overloaded (5xx) hands over to the next one. JSON dict, or None when nothing answered. Never raises."""
     env, post, cfg = env if env is not None else os.environ, post or requests.post, _llm_cfg()
-    for attempt in range(3):
-        try:
-            if env.get("GROQ_API_KEY"):
-                r = post("https://api.groq.com/openai/v1/chat/completions", headers={"Authorization": "Bearer " + env["GROQ_API_KEY"]}, timeout=60,
-                         json={"model": cfg["groq_model"], "temperature": 0, "response_format": {"type": "json_object"},
-                               "messages": [{"role": "system", "content": LLM_PROMPT}, {"role": "user", "content": text}]})
+    for provider, model in _llm_candidates(env, cfg):
+        body = _excerpt(text, GROQ_CHARS if provider == "groq" else GEMINI_CHARS)
+        for attempt in range(3):
+            try:
+                r = _llm_post(provider, model, body, env, post)
                 if r.status_code == 429:
-                    sleep(2 ** attempt * 2); continue
-                return json.loads(r.json()["choices"][0]["message"]["content"]) if r.status_code == 200 else None
-            if env.get("GEMINI_API_KEY"):
-                r = post(f"https://generativelanguage.googleapis.com/v1beta/models/{cfg['gemini_model']}:generateContent", params={"key": env["GEMINI_API_KEY"]}, timeout=60,
-                         json={"contents": [{"parts": [{"text": LLM_PROMPT + "\n\n" + text}]}], "generationConfig": {"responseMimeType": "application/json", "temperature": 0}})
-                if r.status_code == 429:
-                    sleep(2 ** attempt * 2); continue
-                return json.loads(r.json()["candidates"][0]["content"]["parts"][0]["text"]) if r.status_code == 200 else None
-            return None
-        except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
-            return None
+                    if _daily_quota(r):
+                        break
+                    sleep(2 ** attempt * 2)
+                    continue
+                if r.status_code != 200:
+                    break
+                j = r.json()
+                raw = j["choices"][0]["message"]["content"] if provider == "groq" else j["candidates"][0]["content"]["parts"][0]["text"]
+                return json.loads(raw)
+            except requests.RequestException:
+                break
+            except (ValueError, KeyError, IndexError, TypeError):
+                return None                                                                 # an unreadable answer: the caller falls back to the local split
     return None
 
 
@@ -470,7 +514,7 @@ def score_transcript(pdf_text, symbol, cache=None, key=None, post=None, env=None
         return cache[key]
     if not pdf_text or len(pdf_text) < 500:
         return None
-    res = call_llm(pdf_text[:60000], post, env, sleep)
+    res = call_llm(pdf_text, post, env, sleep)
     if isinstance(res, dict) and isinstance(res.get("tone"), (int, float)):
         res = {**res, "method": "llm", "evidence": [" ".join(str(q).split()[:25]) for q in (res.get("evidence") or [])[:3]]}
     else:

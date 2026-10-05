@@ -1,4 +1,5 @@
 """Sentiment engine: matching, weighting, the evidence rule, retail/flow/geo parts, transcripts. No network."""
+import itertools
 import json
 import math
 import sys
@@ -265,7 +266,7 @@ def test_groq_path_truncates_quotes_and_is_cached():
 
 
 def test_rate_limit_retries_then_falls_back_and_bad_json_falls_back():
-    seq = iter([Resp(429), Resp(429), Resp(429)])
+    seq = itertools.repeat(Resp(429))                                                          # every model keeps saying "slow down"
     r = se.score_transcript(TRANSCRIPT, "TCS", post=lambda *a, **k: next(seq), env={"GROQ_API_KEY": "k"}, scorer=fake_scorer, sleep=lambda s: None)
     assert r["method"] == "local"
     seq2 = iter([Resp(429), groq_ok({"tone": 0.1, "qa_gap": 0})])
@@ -318,3 +319,80 @@ def test_full_cycle_with_fake_network_and_scorer(tmp_path, monkeypatch):
     se.run_cycle(Namespace(no_google=True, no_reddit=True), NOW, Scorer(), lambda url, params=None: rss if "livemint" in url else None, lambda s: None)
     assert Scorer.calls == first_calls                                                           # every headline is scored only once (store)
     assert len(json.loads((tmp_path / "cache" / "news_store.json").read_text())) == 2
+
+
+# ---------------------------------------------------------------- the free-tier model chain
+def gem_ok(payload):
+    return Resp(200, {"candidates": [{"content": {"parts": [{"text": json.dumps(payload)}]}}]})
+
+
+def test_default_models_are_current_names_not_retired_ones():
+    assert "llama-3.3-70b-versatile" not in " ".join(se.DEFAULT_GROQ) and se.DEFAULT_GROQ[0] == "openai/gpt-oss-120b"
+    assert all("1.5" not in m and "2.5-flash" != m for m in se.DEFAULT_GEMINI) and se.DEFAULT_GEMINI[0] == "gemini-flash-latest"
+    c = se._llm_candidates({"GROQ_API_KEY": "k", "GEMINI_API_KEY": "g"}, {})
+    assert [p for p, _ in c] == ["groq", "groq", "groq", "gemini", "gemini"]
+    assert se._llm_candidates({}, {}) == []
+    assert se._llm_candidates({"GROQ_API_KEY": "k", "GROQ_MODEL": "m1", "GROQ_FALLBACK_MODELS": "m2,m1"}, {}) == [("groq", "m1"), ("groq", "m2")]
+    assert se._llm_candidates({"GEMINI_API_KEY": "g", "GEMINI_MODEL": "gx"}, {}) == [("gemini", "gx")]
+
+
+def test_a_gone_model_a_used_up_day_and_an_overloaded_model_each_hand_over_to_the_next():
+    seen = []
+
+    def post(url, **kw):
+        model = (kw.get("json") or {}).get("model") or url.split("/models/")[1].split(":")[0]
+        seen.append(model)
+        if model == "openai/gpt-oss-120b":
+            return Resp(404)                                                                   # gone
+        if model == "openai/gpt-oss-20b":
+            r = Resp(429)
+            r.text = "Rate limit reached on tokens per day (TPD): Limit 200000"
+            return r                                                                           # the day's allowance is used up: no retries
+        if model == "qwen/qwen3.8-27b":
+            return Resp(503)                                                                   # overloaded
+        return gem_ok({"tone": 0.2, "qa_gap": 0.0, "evidence": []})
+    r = se.score_transcript(TRANSCRIPT, "TCS", post=post, env={"GROQ_API_KEY": "k", "GEMINI_API_KEY": "g"}, scorer=fake_scorer, sleep=lambda s: None)
+    assert seen == ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b", "gemini-flash-latest"] and r["method"] == "llm" and r["tone"] == 0.2
+
+
+def test_a_plain_429_is_retried_on_the_same_model_before_moving_on():
+    seen = []
+
+    def post(url, **kw):
+        seen.append(kw["json"]["model"])
+        return Resp(429) if len(seen) < 3 else groq_ok({"tone": 0.1, "qa_gap": 0})
+    r = se.score_transcript(TRANSCRIPT, "TCS", post=post, env={"GROQ_API_KEY": "k"}, scorer=fake_scorer, sleep=lambda s: None)
+    assert seen == ["openai/gpt-oss-120b"] * 3 and r["method"] == "llm"
+
+
+def test_groq_gets_a_short_excerpt_with_the_qa_part_and_gemini_a_longer_one():
+    long = ("Prepared remarks. " * 3000) + "Question-and-Answer Session " + ("Analyst asks. " * 3000)
+    sizes = {}
+
+    def post(url, **kw):
+        if "groq" in url:
+            sizes["groq"] = kw["json"]["messages"][1]["content"]
+            return Resp(400)
+        sizes["gemini"] = kw["json"]["contents"][0]["parts"][0]["text"]
+        return gem_ok({"tone": 0.0, "qa_gap": 0.0, "evidence": []})
+    se.call_llm(long, post, {"GROQ_API_KEY": "k", "GEMINI_API_KEY": "g"}, lambda s: None)
+    assert len(sizes["groq"]) <= se.GROQ_CHARS + 20 and "Question-and-Answer Session" in sizes["groq"] and "[...]" in sizes["groq"]
+    assert len(sizes["gemini"]) > len(sizes["groq"]) and "Question-and-Answer Session" in sizes["gemini"]
+    assert se._excerpt("short", 100) == "short" and se._excerpt("x" * 500, 100) == "x" * 100
+
+
+def test_gpt_oss_models_are_asked_for_low_reasoning_effort_and_other_models_are_not():
+    got = {}
+
+    def post(url, **kw):
+        got[kw["json"]["model"]] = kw["json"]
+        return Resp(400)
+    se.call_llm("t" * 600, post, {"GROQ_API_KEY": "k"}, lambda s: None)
+    assert got["openai/gpt-oss-120b"]["reasoning_effort"] == "low" and "reasoning_effort" not in got["qwen/qwen3.8-27b"] and got["openai/gpt-oss-120b"]["max_completion_tokens"] == 1500
+
+
+def test_a_network_error_moves_to_the_next_model_and_nothing_raises():
+    def post(url, **kw):
+        raise se.requests.ConnectionError("down")
+    assert se.call_llm("t" * 600, post, {"GROQ_API_KEY": "k", "GEMINI_API_KEY": "g"}, lambda s: None) is None
+    assert se.call_llm("t" * 600, post, {}, lambda s: None) is None                        # no keys: nothing is tried

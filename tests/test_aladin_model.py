@@ -409,3 +409,35 @@ def test_brier_baseline_uses_the_base_rate_known_at_the_time():
 def test_live_calibration_still_uses_all_unseen_years_and_is_monotone():
     ev, iso, _ = am.evaluate(nested_frame(flip_last=False), 10)
     assert np.all(np.diff(iso["x"]) >= 0) and np.all(np.diff(iso["y"]) >= 0) and len(ev["calibration"]) == 10
+
+
+def test_stacker_status_counts_only_matured_days_and_never_claims_a_fit_it_has_not_run():
+    cal = pd.bdate_range("2026-01-01", periods=60)
+    hist = [str(d.date()) for d in cal[:30]] + ["2026-02-30", "not a date"]
+    s = am.stacker_status(hist, cal, h=10, need=120)
+    assert s["mode"] == "prior" and s["matured_days"] == 30 and s["needed"] == 120 and "30 of the 120" in s["reason"]
+    assert am.stacker_status([str(d.date()) for d in cal[-5:]], cal, h=10)["matured_days"] == 0      # the latest nights have not matured yet
+    full = am.stacker_status([str(d.date()) for d in cal[:50]], cal, h=10, need=40)
+    assert full["mode"] == "prior" and "not built yet" in full["reason"]
+
+
+def test_sweep_eval_file_is_read_only_when_present(tmp_path, monkeypatch):
+    monkeypatch.setattr(am, "OUT_DIR", tmp_path)
+    assert am.load_sweep_eval() is None
+    (tmp_path / "sweep_eval.json").write_text(json.dumps({"n": 3, "validated": False}), encoding="utf-8")
+    assert am.load_sweep_eval() == {"n": 3, "validated": False}
+    (tmp_path / "sweep_eval.json").write_text("junk", encoding="utf-8")
+    assert am.load_sweep_eval() is None
+
+
+def test_lstm_verdict_is_read_from_its_result_file_and_defaults_to_not_tried(tmp_path, monkeypatch):
+    monkeypatch.setattr(am, "OUT_DIR", tmp_path)
+    d = am.load_lstm()
+    assert d == {"used": False, "tested": False, "auc_gain": None, "note": "not tried yet"} and ["LSTM", "Optional in the brief; not tried yet"] in am.not_measured(d)
+    (tmp_path / "lstm_test.json").write_text(json.dumps({"used": False, "auc_gain": -0.001, "years_better": "2 of 9", "note": "tested, no out-of-sample gain, not used",
+                                                         "folds": [{"year": 2018, "auc_lgb": 0.54, "auc_lstm": 0.51, "auc_blend": 0.539, "n_train": 99}]}), encoding="utf-8")
+    d = am.load_lstm()
+    assert d["tested"] is True and d["used"] is False and d["folds"] == [{"year": 2018, "auc_lgb": 0.54, "auc_lstm": 0.51, "auc_blend": 0.539}]
+    assert not any(x[0] == "LSTM" for x in am.not_measured(d)) and any(x[0] == "Heston calibration" for x in am.not_measured(d))
+    (tmp_path / "lstm_test.json").write_text("junk", encoding="utf-8")
+    assert am.load_lstm()["tested"] is False
