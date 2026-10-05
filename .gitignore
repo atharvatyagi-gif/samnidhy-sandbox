@@ -7,7 +7,7 @@ __pycache__/
 .env.*
 !.env.example
 # Downloaded key files (OpenSky's credentials.json and the like): never in git
-credentials*.json
+*credentials*.json
 *client_secret*.json
 *clientsecret*.json
 
