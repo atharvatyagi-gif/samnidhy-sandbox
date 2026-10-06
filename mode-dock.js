@@ -4,13 +4,13 @@
   const me = document.currentScript, base = me ? me.src.replace(/mode-dock\.js(\?.*)?$/, "") : "";
   const here = location.pathname.split("/").pop() || "index.html";
   const css = `
-  .mdock { position: fixed; right: 18px; bottom: 18px; z-index: 9990; display: flex; gap: 10px; font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; }
-  .mdock a { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px; border-radius: 12px; text-decoration: none; font-weight: 700;
-    font-size: 14px; letter-spacing: 0.03em; box-shadow: 0 12px 34px rgba(0,0,0,0.45); transition: transform .15s ease, filter .15s ease; }
-  .mdock a:hover { transform: translateY(-2px); filter: brightness(1.08); }
-  .mdock .adv { background: #e9dcc0; color: #06170e; border: 1px solid rgba(6,23,14,0.2); }
-  .mdock .exp { background: #22c55e; color: #03140a; border: 1px solid #16a34a; }
-  .mdock a.here { outline: 3px solid rgba(255,255,255,0.55); outline-offset: 2px; }
+  .mdock { position: fixed; right: 18px; bottom: 18px; z-index: 9990; display: flex; gap: 10px; font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .mdock a { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px; border-radius: 6px; text-decoration: none; font-weight: 700;
+    font-size: 14px; letter-spacing: 0.03em; transition: background-color .15s ease; }
+  .mdock a:hover { background: #a1a1aa; }
+  .mdock .adv { background: #fafafa; color: #09090b; border: 1px solid #27272a; }
+  .mdock .exp { background: #121214; color: #fafafa; border: 1px solid #27272a; }
+  .mdock a.here { outline: 1px solid #52525b; outline-offset: 0; }
   .mdock small { font-weight: 500; font-size: 11px; opacity: 0.75; }
   @media (max-width: 600px) { .mdock { left: 12px; right: 12px; bottom: 12px; } .mdock a { flex: 1; justify-content: center; height: 44px; padding: 0 10px; font-size: 13px; } .mdock small { display: none; } }
   @media print { .mdock { display: none; } }`;
