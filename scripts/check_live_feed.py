@@ -1,7 +1,16 @@
 """
-Smoke test of the Angel One live feed, for YOU to run on your own PC with your own keys (nobody else can: the keys and the account are yours).
+Smoke test of the live price feed the local tick daemon uses.
 
-    python scripts/check_live_feed.py [--seconds 30] [--symbols RELIANCE,TCS,INFY,HDFCBANK,SBIN]
+    python scripts/check_live_feed.py                 # no Angel One keys: checks the FREE NSE web feed (what the daemon uses without keys); keys present: checks Angel One
+    python scripts/check_live_feed.py --source nse    # the free feed, whatever keys exist
+    python scripts/check_live_feed.py --source angel [--seconds 30] [--symbols RELIANCE,TCS,INFY,HDFCBANK,SBIN]
+
+FREE NSE WEB FEED (--source nse; needs no account and no keys). Stages: session (NSE's cookie handshake), endpoints (each list answers: rows, how long it took), coverage (how many
+stocks and indices get a live price: gainers/losers, most active, and the futures-and-options stocks' spot prices), freshness (age of the newest exchange time stamp), movement
+(a second round later: how many prices changed). It is NSE's own website data, polled about every 3 seconds: live for the stocks above (a few hundred), unofficial, and it can
+change shape; every other stock stays on the delayed Yahoo prices.
+
+ANGEL ONE (--source angel) is for an account holder only: it needs a demat account and the four ANGEL_* keys, and tests them.
 
 Stages, each printed as PASS / FAIL / SKIP with its timing:
   1 keys        the five ANGEL_* settings are present (printed as set / missing, NEVER their values)
@@ -22,6 +31,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import angel_feed as af  # noqa: E402
 
+ENDPOINTS = (("indices", "/api/allIndices", None, "parse_indices"),
+             ("gainers", "/api/live-analysis-variations", {"index": "gainers"}, "parse_variations"),
+             ("losers", "/api/live-analysis-variations", {"index": "loosers"}, "parse_variations"),
+             ("most active by volume", "/api/live-analysis-most-active-securities", {"index": "volume"}, "parse_most_active"),
+             ("most active by value", "/api/live-analysis-most-active-securities", {"index": "value"}, "parse_most_active"),
+             ("futures-and-options stocks", "/api/live-analysis-oi-spurts-underlyings", None, "parse_fo_spot"))
 KEYS = ("ANGEL_API_KEY", "ANGEL_CLIENT_CODE", "ANGEL_MPIN", "ANGEL_TOTP_SECRET")
 DEFAULT_SYMBOLS = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "SBIN"]
 
@@ -110,9 +125,77 @@ def run(env, symbols, seconds, feed_factory=None, importer=None, clock=time.time
     return (0 if all(r is not False for r in results) else 1), results
 
 
+def run_nse(seconds=20, session=None, daemon=None, now=None, clock=time.time, sleep=time.sleep, out=print):
+    """The free NSE web feed. `session` and `daemon` (the module with the parsers) are injectable for tests."""
+    if daemon is None:
+        import aladin_ticker_daemon as daemon
+    results = []
+    out("Free NSE web feed check (no account, no keys)")
+    t0 = clock()
+    try:
+        session = session or daemon.NseSession()
+        warmed = session._warm() if hasattr(session, "_warm") else True
+        results.append(stage("session", bool(warmed), "NSE's cookie handshake worked" if warmed else "NSE did not give a session (blocked, or the site is down): try again in a minute", t0, out))
+    except Exception as e:  # noqa: BLE001
+        results.append(stage("session", False, f"{type(e).__name__}: {str(e)[:120]}", t0, out))
+        return 1, results
+    if not warmed:
+        return 1, results
+    ref = "https://www.nseindia.com/market-data/live-equity-market"
+
+    def one_round():
+        got, ok_all = {}, True
+        for name, path, params, parser in ENDPOINTS:
+            t = clock()
+            try:
+                js = session.get_json(path, params, referer=ref) if params else session.get_json(path, referer=ref)
+                rows = getattr(daemon, parser)(js)
+                got[name] = (rows, clock() - t)
+            except Exception as e:  # noqa: BLE001
+                got[name] = (None, str(e)[:80])
+                ok_all = False
+        return got, ok_all
+    t0 = clock()
+    r1, _ = one_round()
+    bad = [n for n, (rows, _) in r1.items() if rows is None]
+    detail = "; ".join(f"{n}: {len(rows)} rows in {lat:.1f} s" if rows is not None else f"{n}: FAILED ({lat})" for n, (rows, lat) in r1.items())
+    results.append(stage("endpoints", not bad, detail, t0, out))
+    stocks, full = {}, set()
+    for n in ("gainers", "losers", "most active by volume", "most active by value"):
+        for sym, t in (r1[n][0] or {}).items():
+            stocks[sym] = t
+            full.add(sym)
+    for sym, t in (r1["futures-and-options stocks"][0] or {}).items():
+        stocks.setdefault(sym, t)
+    idx = r1["indices"][0] or {}
+    results.append(stage("coverage", len(stocks) > 0, f"{len(stocks)} stocks get a live price ({len(full)} with open/high/low/volume, {len(stocks) - len(full)} price only) and {len(idx)} indices; every other stock stays on delayed prices", out=out))
+    newest = max([t[6] for t in list(stocks.values()) + list(idx.values()) if t[6]] or [0])
+    open_now = market_open(now)
+    age = (clock() * 1000 - newest) / 1000 if newest else None
+    if not open_now:
+        results.append(stage("freshness", None, "market closed (NSE sends the last session's prices outside Mon-Fri 09:15-15:30 IST)" + (f"; newest time stamp is {age / 3600:.1f} h old" if age else ""), out=out))
+    else:
+        results.append(stage("freshness", age is not None and age < 120, f"newest exchange time stamp is {age:.0f} s old" if age is not None else "no time stamp in the data", out=out))
+    t0 = clock()
+    sleep(max(0, seconds))
+    r2, _ = one_round()
+    s2 = {}
+    for n, (rows, _) in r2.items():
+        if rows and n != "indices":
+            for sym, t in rows.items():
+                s2.setdefault(sym, t) if n == "futures-and-options stocks" else s2.__setitem__(sym, t)
+    moved = sum(1 for sym, t in s2.items() if sym in stocks and t[0] != stocks[sym][0])
+    if not open_now:
+        results.append(stage("movement", None, "market closed: prices do not move", t0, out))
+    else:
+        results.append(stage("movement", moved > 0, f"{moved} of {len(s2)} prices changed in {seconds:.0f} s", t0, out))
+    return (0 if all(r is not False for r in results) else 1), results
+
+
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Check the Angel One live feed with your own keys (never prints a secret)")
-    ap.add_argument("--seconds", type=float, default=30, help="how long to listen (default 30)")
+    ap = argparse.ArgumentParser(description="Check the live price feed: the free NSE web feed (default without Angel One keys) or Angel One (account holders; never prints a secret)")
+    ap.add_argument("--source", choices=["auto", "nse", "angel"], default="auto", help="auto: Angel One when its four keys exist, otherwise the free NSE feed")
+    ap.add_argument("--seconds", type=float, default=30, help="how long to listen (default 30; the free feed waits this long between its two rounds)")
     ap.add_argument("--symbols", default=",".join(DEFAULT_SYMBOLS), help="comma separated NSE symbols (default 5 large ones)")
     a = ap.parse_args(argv)
     try:
@@ -122,7 +205,13 @@ def main(argv=None):
         pass
     import os
     syms = [s.strip().upper() for s in a.symbols.split(",") if s.strip()][:5]
-    code, _ = run(os.environ, syms, a.seconds)
+    use_nse = a.source == "nse" or (a.source == "auto" and af.missing_env(os.environ))
+    if use_nse:
+        if a.source == "auto":
+            print("No Angel One keys set: checking the free NSE web feed instead (that is the feed the daemon uses without keys).")
+        code, _ = run_nse(a.seconds)
+    else:
+        code, _ = run(os.environ, syms, a.seconds)
     print("RESULT:", "ALL STAGES PASSED" if code == 0 else "SOMETHING FAILED (see above)" if code == 1 else "KEYS MISSING")
     return code
 

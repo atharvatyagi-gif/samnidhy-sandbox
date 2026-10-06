@@ -329,3 +329,42 @@ def test_websocket_messages_origin_and_health():
     assert warn["type"] == "warn" and "ZZZ" in warn["msg"]
     assert bad != "connected"
     assert health["src"] == "nse-web" and health["symbols_tracked"] == 1
+
+
+# ---------------------------------------------------------------- price-only spot prices of the futures-and-options stocks (the free feed's wider coverage)
+def test_fo_spot_parser_on_a_real_response_gives_price_only_ticks():
+    raw = fx("nse_oi_spurts.json")
+    f = d.parse_fo_spot(raw["response"] if "response" in raw else raw)
+    assert f and all(len(t) == 7 and t[0] > 0 and t[1:6] == [None] * 5 and t[6] and t[6] > 1.7e12 for t in f.values())
+    assert d.parse_fo_spot({}) == {} and d.parse_fo_spot({"data": [{"symbol": "X", "underlyingValue": 0}, {"underlyingValue": 5}]}) == {}
+
+
+def test_a_round_adds_the_spot_prices_but_a_full_tick_always_wins_and_a_failing_endpoint_loses_only_those():
+    class S:
+        status = {}
+
+        def __init__(self, fail=False):
+            self.fail = fail
+
+        def get_json(self, path, params=None, referer=None, max_tries=4):
+            if "oi-spurts" in path:
+                if self.fail:
+                    raise d.NseError("boom")
+                return {"timestamp": "06-Oct-2026 10:00:00", "data": [{"symbol": "FOONLY", "underlyingValue": 101.5}, {"symbol": "BOTH", "underlyingValue": 55}]}
+            if "variations" in path:
+                return {"NIFTY": {"timestamp": "06-Oct-2026 10:00:00", "data": [{"symbol": "BOTH", "ltp": 56, "open_price": 50, "high_price": 57, "low_price": 49, "prev_price": 52, "trade_quantity": 900}]}}
+            return {"data": []}
+    src = d.NseWebSource(S())
+    stocks, idx = src.poll_once()
+    assert stocks["FOONLY"][0] == 101.5 and stocks["FOONLY"][5] is None
+    assert stocks["BOTH"][:6] == [56, 50, 57, 49, 52, 900]                      # the full tick, not the price-only 55
+    stocks2, _ = d.NseWebSource(S(fail=True)).poll_once()
+    assert "FOONLY" not in stocks2 and "BOTH" in stocks2
+
+
+def test_a_price_only_tick_moves_the_price_but_never_the_bar_builder():
+    hub = d.Hub(value_ok=lambda s: True)
+    assert hub.on_tick("FOONLY", 101.5, None, None, None, None, None, 1_790_000_000_000) is True
+    assert hub.on_tick("FOONLY", 101.5, None, None, None, None, None, 1_790_000_003_000) is False          # unchanged price: nothing to send
+    assert hub.on_tick("FOONLY", 102.0, None, None, None, None, None, 1_790_000_006_000) is True
+    assert hub.bars.developing("FOONLY") is None and not hub.confirmed

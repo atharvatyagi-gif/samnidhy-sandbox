@@ -777,7 +777,11 @@ function applyTicks(qmap, local) {
   const day = todayIST();
   let mine = null;
   for (const [sym, r] of Object.entries(qmap)) {
-    const [p, o, h, l, pc, v, ms] = r;
+    let [p, o, h, l, pc, v, ms] = r;
+    if (o == null && !sym.startsWith("^")) {                // a price-only tick (futures-and-options stocks on the free NSE feed): keep the rest of the row, widen the day's range
+      const old = S.quotes[sym];
+      if (old) { pc = old.p - old.chg; o = old.o; h = Math.max(old.h ?? p, p); l = Math.min(old.l ?? p, p); v = old.v; }
+    }
     if (sym.startsWith("^")) { S.idxLive[sym] = { p, pc, pct: pc ? (p / pc - 1) * 100 : null, rt: !local }; continue; }
     const t = ms ? new Date(ms).toLocaleTimeString("en-GB", { timeZone: IST, hour12: false }) : "";
     S.quotes[sym] = { p, chg: +(p - pc).toFixed(2), pct: pc ? +((p / pc - 1) * 100).toFixed(2) : null, o, h, l, v, t, d: day, rt: !local, loc: !!local };

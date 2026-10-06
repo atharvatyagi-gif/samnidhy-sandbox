@@ -235,7 +235,7 @@ The Excel file and `private/` are never committed or published; `firestore.rules
 
 ### Local tick feed (optional, runs on your own PC)
 
-`scripts/aladin_ticker_daemon.py` serves live prices only to your own browser at `ws://127.0.0.1:8787/ws/ticks`. It has two sources: the free NSE website feed (the default: index levels plus the stocks on NSE's own movers / most-active lists, a few hundred at most, polled about every 3 seconds) and, if you have your own Angel One SmartAPI login, Angel One's WebSocket feed (every NSE stock, pushed in real time).
+`scripts/aladin_ticker_daemon.py` serves live prices only to your own browser at `ws://127.0.0.1:8787/ws/ticks`. It has two sources: the free NSE website feed (the default, no account needed: the index levels plus about 300 stocks, namely NSE's own movers and most-active lists and the spot prices of the futures-and-options stocks, polled about every 3 seconds; every other stock keeps its delayed price) and, if you have your own Angel One SmartAPI login, Angel One's WebSocket feed (every NSE stock, pushed in real time).
 
 1. `scripts/start_aladin_local.bat` (Windows) or `scripts/start_aladin_local.sh` (Mac/Linux). Leave it running.
 2. In the desk's command line type `TICKS ON`. The top-right chip then reads "LIVE · NSE WEB (THIS PC, ~3 s)" for the free feed, or "REAL-TIME · NSE (THIS PC)" for Angel One. `TICKS OFF` stops it.
@@ -305,11 +305,19 @@ NEXUS adds a dependency map to ALADIN. What is built, and where each part runs:
 
 ### Check the live feed
 
-The Angel One feed was built and tested against stand-ins (the login, the TOTP, the instrument list, the price messages, reconnecting, and a new login when the daily session ends are all covered by `tests/test_angel_feed.py`), but nobody except the account holder can try it against the real account. This script does that, on your PC, with your keys:
+Without a demat account there are no Angel One keys, and none are needed: the desk's live feed is NSE's own website data, which needs no account. Check it (this is also what the command does by default when no `ANGEL_*` keys are set):
 
 ```
-python scripts/check_live_feed.py            # listens for 30 seconds to RELIANCE, TCS, INFY, HDFCBANK, SBIN
-python scripts/check_live_feed.py --seconds 60 --symbols RELIANCE,SBIN
+python scripts/check_live_feed.py --source nse      # the free feed: session, each list, coverage, freshness, movement
+```
+
+It prints PASS, FAIL or SKIP per stage. Measured on 6 Oct 2026: 6 lists answered in 1.6 s, 316 stocks get a live price (194 with open, high, low and volume, 122 price only) plus 139 indices. Outside market hours the freshness and movement stages are skipped. The free feed is unofficial and can change shape, which is why this check exists. No free source covers every stock in real time: Yahoo's NSE prices are delayed 15 minutes (the site's own refresh), and every real-time Indian feed needs a broker account.
+
+**Angel One (optional, account holders only).** The Angel One feed was built and tested against stand-ins (the login, the TOTP, the instrument list, the price messages, reconnecting, and a new login when the daily session ends are all covered by `tests/test_angel_feed.py`); the holder of a real account can test it with:
+
+```
+python scripts/check_live_feed.py --source angel            # listens for 30 seconds to RELIANCE, TCS, INFY, HDFCBANK, SBIN
+python scripts/check_live_feed.py --source angel --seconds 60 --symbols RELIANCE,SBIN
 ```
 
 It prints PASS, FAIL or SKIP for five stages (keys, packages, login, feed, ticks), with the delay between the exchange's time stamp and your clock (median, 95th percentile, worst) and the gaps between prices. It prints each `ANGEL_*` setting only as `set` or `missing`, never a key, a token or a TOTP code, and a failure shows its reason, not a traceback. Outside market hours (Mon-Fri 09:15-15:30 IST) no prices are sent, so the last stage is skipped and the first four still prove the login and the connection. Exit code 0 means every stage passed or was skipped for a stated reason; without keys it says which are missing and exits with 2.

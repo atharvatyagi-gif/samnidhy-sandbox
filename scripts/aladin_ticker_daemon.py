@@ -6,10 +6,12 @@ ALADIN local tick daemon (Module A) - runs on YOUR PC during market hours and se
 What it does, and the limits it works inside (all measured against the real NSE site, not assumed):
 
 * Data source "nse-web": the free NSE website feed, polled every ~3 s (never faster than 2 s) through a
-  self-healing, rate-limited session (<= 3 requests/s). Each poll round makes 5 small calls, ~0.1-0.3 s each:
-  /api/allIndices, /api/live-analysis-variations (gainers and losers) and /api/live-analysis-most-active-
-  securities (volume and value). That is the index levels plus the ~100-200 stocks currently on NSE's own
-  movers / most-active lists. The bulk "NIFTY 500 in one call" endpoint (/api/equity-stockIndices) now returns
+  self-healing, rate-limited session (<= 3 requests/s). Each poll round makes 6 small calls, ~0.1-0.3 s each:
+  /api/allIndices, /api/live-analysis-variations (gainers and losers), /api/live-analysis-most-active-
+  securities (volume and value) and /api/live-analysis-oi-spurts-underlyings (the spot price of every stock with
+  futures and options, about 200, PRICE ONLY: no open, high, low or volume, so those ticks move the price but
+  never the bar builder or the sweep detector). Together that is the index levels plus about 300 stocks (194 with full data and
+  122 price-only when last measured), the ones currently on NSE's own movers / most-active lists and the F&O stocks. The bulk "NIFTY 500 in one call" endpoint (/api/equity-stockIndices) now returns
   404 and the per-stock /api/quote-equity returns 403, so stocks outside those lists get NO live price here -
   the desk keeps showing their delayed price with its age. This is a hard limit of the free feed, not a bug.
 * Data source "angel" (Angel One SmartAPI WebSocket): every NSE stock, sub-second, pushed (not polled), through the account holder's OWN login (ANGEL_* in .env, see
@@ -231,6 +233,18 @@ def parse_most_active(js):
              _num(r.get("previousClose")), _num(r.get("totalTradedVolume")), parse_ts(r.get("lastUpdateTime"))]
         if r.get("symbol") and t[0] is not None and t[5] is not None:
             out[r["symbol"]] = t
+    return out
+
+
+def parse_fo_spot(js):
+    """/api/live-analysis-oi-spurts-underlyings -> {SYM: [ltp, None, None, None, None, None, exchange_ms]} for every stock with futures and options (about 200).
+    The feed gives the spot price (`underlyingValue`) only: no open, high, low, previous close or cash-market volume, so these are PRICE-ONLY ticks: the page shows the live
+    price and keeps the rest of the row from the delayed data, and they never feed the bar builder or the sweep detector (those need volume)."""
+    out, ms = {}, parse_ts((js or {}).get("timestamp"))
+    for r in (js or {}).get("data", []):
+        v = _num(r.get("underlyingValue"))
+        if r.get("symbol") and v is not None and v > 0:
+            out[r["symbol"]] = [v, None, None, None, None, None, ms]
     return out
 
 
@@ -541,7 +555,7 @@ class NseWebSource:
         return {**self.s.status, "latency_ms": self.latency_ms, "source": self.name, **getattr(self, "note", {})}
 
     def poll_once(self):
-        """One round of 5 small requests. Returns {SYM: tick} of everything seen this round, split by kind."""
+        """One round of 6 small requests (2 a second at the default 3 s round). Returns {SYM: tick} of everything seen this round, split by kind."""
         stocks, idx = {}, {}
         t0 = time.monotonic()
         idx.update(parse_indices(self.s.get_json("/api/allIndices")))
@@ -549,6 +563,11 @@ class NseWebSource:
             stocks.update(parse_variations(self.s.get_json("/api/live-analysis-variations", {"index": which})))
         for which in ("volume", "value"):
             stocks.update(parse_most_active(self.s.get_json("/api/live-analysis-most-active-securities", {"index": which})))
+        try:                                                           # price-only spot prices of the ~200 futures-and-options stocks; a failure here loses only these
+            for sym, t in parse_fo_spot(self.s.get_json("/api/live-analysis-oi-spurts-underlyings")).items():
+                stocks.setdefault(sym, t)                              # a full tick (with volume) from the lists above always wins
+        except NseError:
+            pass
         self.latency_ms = round((time.monotonic() - t0) * 1000)
         return stocks, idx
 
@@ -655,7 +674,7 @@ async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=Non
                         source.set_focus([s for s in (m.get("syms") or []) if isinstance(s, str)])
                     missing = [s for s in (m.get("syms") or [])[:50] if s not in hub.ticks] if not hasattr(source, "set_focus") else []
                     if missing:
-                        await ws.send(json.dumps({"type": "warn", "msg": "NSE's free feed only carries the movers / most-active lists: no live price for " + ", ".join(missing[:5]) + ("..." if len(missing) > 5 else "")}))
+                        await ws.send(json.dumps({"type": "warn", "msg": "NSE's free feed carries about 300 stocks (movers, most active, futures-and-options): no live price for " + ", ".join(missing[:5]) + ("..." if len(missing) > 5 else "")}))
         finally:
             clients.discard(ws)
 
@@ -735,7 +754,7 @@ def main(argv=None):
         if fallback:
             source.note = {"fallback_from": "angel", "reason": fallback}
         print(f"ALADIN ticker daemon | source nse-web | ws://127.0.0.1:{port}/ws/ticks | window Mon-Fri 09:00-15:45 IST | poll {source.interval:.0f}s")
-        print("Covers index levels + the stocks on NSE's own movers / most-active lists (the free feed has nothing wider). Ctrl+C to stop.")
+        print("Covers index levels + about 300 stocks (NSE's movers / most-active lists and the futures-and-options stocks); the free feed has nothing wider. Ctrl+C to stop.")
     else:
         hub.src_name = "angel"
         print(f"ALADIN ticker daemon | source angel | ws://127.0.0.1:{port}/ws/ticks | window Mon-Fri 09:00-15:45 IST | every NSE stock, pushed. Ctrl+C to stop.")

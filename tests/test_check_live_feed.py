@@ -47,12 +47,12 @@ def test_no_keys_is_a_clear_message_and_a_nonzero_exit_without_a_traceback(capsy
     assert "ANGEL_API_KEY: missing" in text
 
 
-def test_main_with_no_keys_exits_nonzero_cleanly(monkeypatch, capsys):
+def test_main_asking_for_angel_without_keys_exits_nonzero_cleanly(monkeypatch, capsys):
     import aladin_env
     monkeypatch.setattr(aladin_env, "load_env", lambda *a, **k: None)            # never read the real .env in a test
     for k in ENV:
         monkeypatch.delenv(k, raising=False)
-    assert cl.main(["--seconds", "0"]) == 2
+    assert cl.main(["--source", "angel", "--seconds", "0"]) == 2
     o = capsys.readouterr().out
     assert "KEYS MISSING" in o and "Traceback" not in o
 
@@ -132,3 +132,74 @@ def test_ticks_give_counts_delay_percentiles_and_gaps():
 
 def test_percentile_helper():
     assert cl.pct([], 50) is None and cl.pct([1, 2, 3, 4], 50) == 2 and cl.pct([1, 2, 3, 4], 95) == 4
+
+
+# ---------------------------------------------------------------- the free NSE web feed check (no account, no keys)
+class FakeDaemon:
+    """The parsers of the real daemon module, with a controllable session."""
+    import aladin_ticker_daemon as real
+    parse_indices, parse_variations, parse_most_active, parse_fo_spot = (staticmethod(real.parse_indices), staticmethod(real.parse_variations),
+                                                                        staticmethod(real.parse_most_active), staticmethod(real.parse_fo_spot))
+
+
+class FakeSession:
+    def __init__(self, ok=True, fail_path=None, bump=0):
+        self.ok, self.fail_path, self.bump, self.calls = ok, fail_path, bump, 0
+
+    def _warm(self):
+        return self.ok
+
+    def get_json(self, path, params=None, referer=None):
+        if self.fail_path and self.fail_path in path:
+            raise RuntimeError("HTTP 404")
+        self.calls += 1
+        ts = "06-Oct-2026 10:00:00"
+        n = 1 + self.bump * (self.calls > 6)                    # prices differ in the second round when bump is set
+        if "allIndices" in path:
+            return {"timestamp": ts, "data": [{"index": "NIFTY 50", "last": 22000 * n, "open": 1, "high": 1, "low": 1, "previousClose": 1}]}
+        if "variations" in path:
+            return {"NIFTY": {"timestamp": ts, "data": [{"symbol": "AAA", "ltp": 10 * n, "open_price": 9, "high_price": 11, "low_price": 8, "prev_price": 9, "trade_quantity": 5}]}}
+        if "most-active" in path:
+            return {"data": [{"symbol": "BBB", "lastPrice": 20 * n, "open": 1, "dayHigh": 1, "dayLow": 1, "previousClose": 1, "totalTradedVolume": 9, "lastUpdateTime": ts}]}
+        return {"timestamp": ts, "data": [{"symbol": "CCC", "underlyingValue": 30 * n}, {"symbol": "AAA", "underlyingValue": 10 * n}]}
+
+
+def nse_out(session, now, seconds=0):
+    lines = []
+    code, res = cl.run_nse(seconds, session=session, daemon=FakeDaemon, now=now, sleep=lambda s: None, out=lines.append)
+    return code, res, "\n".join(lines)
+
+
+def test_free_feed_closed_market_passes_session_endpoints_and_coverage_and_skips_the_rest():
+    code, res, text = nse_out(FakeSession(), CLOSED)
+    assert code == 0 and "PASS  session" in text and "PASS  endpoints" in text and "PASS  coverage" in text and "SKIP  freshness" in text and "SKIP  movement" in text
+    assert "3 stocks get a live price (2 with open/high/low/volume, 1 price only) and 1 indices" in text                  # AAA and BBB full, CCC price only (AAA's price-only duplicate ignored)
+
+
+def test_free_feed_open_market_needs_fresh_data_and_moving_prices():
+    code, res, text = nse_out(FakeSession(), OPEN)
+    assert code == 1 and "FAIL  freshness" in text and "FAIL  movement" in text                                            # the fake time stamps are old and nothing moves
+    import time
+    lines = []
+    sess = FakeSession(bump=1)
+    now_ms = datetime(2026, 10, 6, 10, 0, 5, tzinfo=timezone.utc).timestamp()                                                  # 5 s after the fake time stamp (10:00:00 IST... see below)
+    code2, res2 = cl.run_nse(0, session=sess, daemon=FakeDaemon, now=OPEN, clock=lambda: 1_790_000_000.0, sleep=lambda s: None, out=lines.append)
+    assert "PASS  movement" in "\n".join(lines) and "prices changed" in "\n".join(lines)
+
+
+def test_free_feed_a_blocked_session_and_a_failing_list_are_named():
+    code, res, text = nse_out(FakeSession(ok=False), OPEN)
+    assert code == 1 and "FAIL  session" in text and "endpoints" not in text
+    code, res, text = nse_out(FakeSession(fail_path="most-active"), CLOSED)
+    assert code == 1 and "FAIL  endpoints" in text and "most active by volume: FAILED (HTTP 404)" in text and "gainers: 1 rows" in text
+
+
+def test_default_without_keys_checks_the_free_feed_and_says_so(monkeypatch, capsys):
+    import aladin_env
+    monkeypatch.setattr(aladin_env, "load_env", lambda *a, **k: None)
+    for k in ENV:
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setattr(cl, "run_nse", lambda seconds: (0, []))
+    assert cl.main(["--seconds", "0"]) == 0
+    o = capsys.readouterr().out
+    assert "checking the free NSE web feed instead" in o and "ALL STAGES PASSED" in o
