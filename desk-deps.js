@@ -33,7 +33,14 @@ const byStrength = (a, b) => (b.w || 0) - (a.w || 0) || (b.conf || 0) - (a.conf 
 
 export function shareText(e) {
   if (e.w == null) return "no share stated";
-  return `${Math.round(e.w * 100)}% of the ${e.wb === "revenue" ? "supplier's revenue" : "customer's purchases"}`;
+  const pct = e.wd === "derived" ? (e.w * 100 >= 10 ? Math.round(e.w * 100) : (e.w * 100).toFixed(1)) : Math.round(e.w * 100);
+  return `${e.wd === "derived" ? "≈" : ""}${pct}% of the ${e.wb === "revenue" ? "supplier's revenue" : "customer's purchases"}${e.wd === "derived" ? " (derived)" : ""}`;
+}
+/* "derived": sales to the related party divided by revenue, both from the same filing; null for a share the company stated itself */
+export function derivedNote(e) {
+  if (e.wd !== "derived" || !e.calc) return null;
+  const f = x => `${Number(x.v).toLocaleString("en-IN")} (${x.u}), page ${x.pg}`;
+  return `Derived, not stated by the company: ${f(e.calc.a)} sold to this related party ÷ ${f(e.calc.t)} ${e.calc.t.label || "revenue"} = ${(e.calc.r * 100).toFixed(2)}%. Column: “${e.calc.a.h}”.`;
 }
 export function docLabel(e) {
   return `${e.per || "period not stated"} ${e.doc === "annual" ? "annual report" : "earnings call"}`;

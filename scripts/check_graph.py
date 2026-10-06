@@ -9,6 +9,7 @@ customer is linked to a company below the configured confidence; sector-level ed
 import json
 import re
 import sys
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -16,6 +17,32 @@ GRAPH = ROOT / "data" / "supply_graph.json"
 CFG = ROOT / "data" / "config" / "aladin_config.json"
 BANNED = re.compile(r"\b(buy|buys|sell|sells|target|recommendation|guaranteed)\b", re.I)
 RELS = {"supplies", "equipment_for", "raw_material_from", "logistics_for", "related_party", "customer_of"}
+
+
+def audit_derived(e):
+    """A share the filing did not state but its own numbers give: it must say so, show both numbers with their quotes, pages, units and headings, and the division must come out."""
+    eid, bad, c = e.get("id", "?"), [], e.get("calc") or {}
+    if e.get("wd") != "derived" or not c:
+        return [f"{eid}: a calculation without wd=derived (or the reverse)"]
+    if e.get("w") is None or e.get("wb") != "revenue":
+        bad.append(f"{eid}: a derived share must be a revenue-basis share")
+    for k in ("a", "t"):
+        x = c.get(k) or {}
+        for f in ("v", "u", "h", "pg", "q"):
+            if x.get(f) in (None, ""):
+                bad.append(f"{eid}: calc.{k} is missing {f}")
+    if not bad:
+        import related_party_shares as rps
+        fa, ft = rps.unit_factor(c["a"]["u"]), rps.unit_factor(c["t"]["u"])
+        if not fa or not ft or not c["t"]["v"]:
+            bad.append(f"{eid}: calc units cannot be read")
+        else:
+            r = c["a"]["v"] * fa / (c["t"]["v"] * ft)
+            if not 0 < r <= 1 or abs(r - e["w"]) > 0.0006 or abs(r - c.get("r", -1)) > 0.0006:
+                bad.append(f"{eid}: the derived share {e['w']} does not equal {c['a']['v']} / {c['t']['v']} = {r:.4f}")
+    if e.get("conf", 1) > 0.9:
+        bad.append(f"{eid}: a derived share cannot be more confident than 0.9")
+    return bad
 
 
 def audit(doc, anon_min=0.75, size_bytes=None):
@@ -43,6 +70,8 @@ def audit(doc, anon_min=0.75, size_bytes=None):
             bad.append(f"{eid}: unknown relation {e.get('rel')!r}")
         if e.get("kind") not in ("disclosed", "resolved", "sector_io"):
             bad.append(f"{eid}: unknown kind")
+        if e.get("wd") is not None or e.get("calc") is not None:
+            bad += audit_derived(e)
         if e.get("kind") == "sector_io" and e.get("conf") != 0.3:
             bad.append(f"{eid}: sector_io confidence must be 0.3")
         for f in ("rel", "kind", "wb"):

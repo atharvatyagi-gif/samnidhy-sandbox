@@ -470,3 +470,40 @@ def test_a_second_key_adds_its_own_models_after_the_first_keys_and_is_used_for_t
     llm.dead.update(c for c in llm.cands if "#" not in c[1])                       # the first key's day is over
     llm.complete("s", "u")
     assert seen == [("openai/gpt-oss-120b", "Bearer g0"), ("openai/gpt-oss-120b", "Bearer g1")] and llm.tokens
+
+
+# ---------------------------------------------------------------- the two error types found by the audit sheet
+
+def test_deals_awards_and_things_not_yet_happened_are_not_supply_relationships():
+    bad = ["The acquisition of Senn Chemicals AG in Switzerland, completed during the year, marked our entry into the peptide CDMO space",
+           "we are expecting now new bids to come from NTPC and others, NHPC, NTPC for pumped hydro",
+           "we are in discussions with Tata Steel and other procurers to supply to them",
+           "We got a Best Award from Siemens, the Top Supplier Recognition Award, and of course"]
+    good = ["In fact, we are going to expand our lines for both Tata Motors as well as Maruti.", "the biggest buyer is of course NTPC and we do work with them very closely",
+            "Our largest customer, Tata Motors Limited, accounted for 24% of our revenue", "The Karcham project has a PPA with PTC India Limited on a long-term basis",
+            "We acquired raw material from Acme and purchased components worth 5 crore"]            # "acquired" plus a purchase: a supply sentence
+    assert not any(rb.supply_quote_ok(q) for q in bad) and all(rb.supply_quote_ok(q) for q in good)
+
+
+def test_a_descriptor_is_an_anonymous_customer_never_a_company_called_that():
+    for n in ("a major customer based in USA", "Customer A", "our largest supplier", "The single largest customer"):
+        assert rb.is_generic_name(n), n
+    for n in ("Tata Motors Limited", "Siemens AG", "Reliance Industries", "Customer Support Services Limited", "Largest Customer Care Pvt Ltd"):
+        assert not rb.is_generic_name(n), n
+    quote = "Revenue from the major customer based in USA represented 29,477.8 million of the Group's total revenues"
+    pages = {3: quote + " in the Pharmaceuticals segment."}
+    e = {"counterparty_name": "major customer based in USA", "counterparty_anon_label": None, "direction": "customer", "rel": "supplies", "w": None, "w_basis": None,
+         "period": "FY2025-26", "component": None, "page": 3, "quote": quote}
+    good, _, dropped = rb.validate_answer({"edges": [e], "facilities": []}, pages, META, NOW, SRC["schema"])
+    assert good and good[0]["name"] is None and good[0]["anon"] == "major customer based in USA" and not dropped
+
+
+def test_saved_edges_are_cleaned_by_the_same_rules_when_the_graph_is_reassembled():
+    ix = rb.NameIndex(STOCKS)
+    bad_q = "The acquisition of Senn Chemicals AG in Switzerland, completed during the year, marked our entry into peptides"
+    e1 = {"own": "BOSCHLTD", "s": "BOSCHLTD", "d": "EXT_SENN", "rel": "supplies", "w": None, "wb": None, "per": "FY2025-26", "tier": 1, "comp": None, "conf": 0.8, "kind": "disclosed",
+          "url": "u", "pg": 1, "q": bad_q, "vq": True, "doc": "annual", "cpn": "Senn Chemicals AG"}
+    e2 = {**e1, "d": "EXT_MAJOR_CUSTOMER_BASED_IN_USA", "q": "Revenue from the major customer based in USA represented 29,477.8 million", "cpn": "major customer based in USA"}
+    d = rb.assemble({"cos": {}, "edges": [e1, e2]}, {}, STOCKS, [], 0.75, NOW)
+    assert len(d["edges"]) == 1 and d["edges"][0]["d"] == "ANON_BOSCHLTD_MAJOR_CUSTOMER_BASED_IN_USA"
+    assert [n["k"] for n in d["nodes"] if n["id"].startswith("ANON_")] == ["anon"] and cg.audit(d) == []

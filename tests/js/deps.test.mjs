@@ -209,3 +209,18 @@ test("the shock table on the synthetic graph is ranked by share x the counterpar
   assert.deepEqual(rows.map(r => r.edge), ["s1", "s2"]);
   assert.match(shockSentence(rows[0]), /association, not proof of cause/);
 });
+
+/* ---------- a derived share is always labelled as derived ---------- */
+import { derivedNote } from "../../desk-deps.js";
+test("a derived share says so, shows its two numbers, and a stated share looks as before", () => {
+  const stated = { w: 0.24, wb: "revenue" };
+  const derived = { w: 0.2501, wb: "revenue", wd: "derived", calc: { r: 0.2501, a: { v: 1250.5, u: "Rs. in crore", pg: 40, h: "Year ended March 31, 2026" }, t: { v: 5000, u: "Rs. in crore", pg: 10, h: "Year ended March 31, 2026", label: "revenue from operations" } } };
+  assert.equal(shareText(stated), "24% of the supplier's revenue");
+  assert.equal(shareText(derived), "≈25% of the supplier's revenue (derived)");
+  assert.equal(shareText({ ...derived, w: 0.034 }), "≈3.4% of the supplier's revenue (derived)");
+  assert.equal(derivedNote(stated), null);
+  const n = derivedNote(derived);
+  assert.match(n, /Derived, not stated by the company/);
+  assert.match(n, /1,250\.5 \(Rs\. in crore\), page 40 sold to this related party ÷ 5,000 \(Rs\. in crore\), page 10 revenue from operations = 25\.01%/);
+  assert.match(n, /Year ended March 31, 2026/);
+});
