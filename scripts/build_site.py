@@ -17,8 +17,11 @@ import hashlib
 import json
 import re
 import shutil
+import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import analyst_fields  # noqa: E402
 from embed_data import ADVANCED_PATH, DATA, HTML_PATH, SCREENER, advanced_blocks, embed, read_json, sessions_summary
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -99,12 +102,15 @@ def main() -> None:
     (SITE / "t").mkdir()
     for name in ("universe.json", "quotes.json", "fund.json"):
         if (TERMINAL / name).exists():
-            shutil.copyfile(TERMINAL / name, SITE / "t" / name)
+            if name == "fund.json":                              # neutral analyst names whatever the saved file used (scripts/analyst_fields.py)
+                (SITE / "t" / name).write_text(json.dumps(analyst_fields.fund_doc(json.loads((TERMINAL / name).read_text(encoding="utf-8"))), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+            else:
+                shutil.copyfile(TERMINAL / name, SITE / "t" / name)
     for sub, dst in (("hist", "h"), ("intra", "i"), ("daily", "d"), ("replay", "r")):
         if (TERMINAL / sub).exists():
             shutil.copytree(TERMINAL / sub, SITE / "t" / dst, ignore=shutil.ignore_patterns("_meta.json"))
     if (DATA / "institutional" / "fii_dii.json").exists():   # the Advanced page refreshes FII/DII from this
-        shutil.copyfile(DATA / "institutional" / "fii_dii.json", SITE / "institutional.json")
+        (SITE / "institutional.json").write_text(json.dumps(analyst_fields.flow_doc(json.loads((DATA / "institutional" / "fii_dii.json").read_text(encoding="utf-8"))), ensure_ascii=False), encoding="utf-8")
     if (DATA / "predict" / "latest.json").exists():   # the terminal's Outlook tab (scripts/predict_model.py)
         shutil.copyfile(DATA / "predict" / "latest.json", SITE / "predict.json")
     if (DATA / "nse_live" / "latest.json").exists():   # NSE's own live indices/movers (scripts/nse_live_poll.py)
@@ -142,7 +148,7 @@ def main() -> None:
             pass
     (SITE / "desk_data.json").write_text(json.dumps(present), encoding="utf-8")
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
-        (SITE / "screener.json").write_text((SCREENER / "latest.json").read_text(encoding="utf-8"), encoding="utf-8")
+        (SITE / "screener.json").write_text(json.dumps(analyst_fields.screener_doc(json.loads((SCREENER / "latest.json").read_text(encoding="utf-8"))), ensure_ascii=False), encoding="utf-8")
 
     version_assets()
     (SITE / ".nojekyll").write_text("", encoding="utf-8")  # tell GitHub Pages to serve files as-is

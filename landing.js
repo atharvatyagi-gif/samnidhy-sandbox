@@ -85,10 +85,10 @@
 
   /* ---------- 6. numbers count up ---------- */
   gsap.utils.toArray(".num-card b").forEach(function (b) {
-    var target = +b.dataset.count, obj = { v: 0 };
+    var end = +b.dataset.count, obj = { v: 0 };
     gsap.fromTo(b.parentNode, { y: 60, opacity: 0 }, { y: 0, opacity: 1, ease: "power2.out", duration: 0.9,
       scrollTrigger: { trigger: b.parentNode, start: "top 90%" } });
-    gsap.to(obj, { v: target, duration: 1.4, ease: "power2.out", scrollTrigger: { trigger: b, start: "top 90%" },
+    gsap.to(obj, { v: end, duration: 1.4, ease: "power2.out", scrollTrigger: { trigger: b, start: "top 90%" },
       onUpdate: function () { b.textContent = Math.round(obj.v); } });
   });
 

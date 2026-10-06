@@ -19,6 +19,8 @@ import yfinance as yf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pick_movers import ROOT, load_config, load_universe  # noqa: E402
+sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parent))
+from analyst_fields import consensus  # noqa: E402
 
 OUT = ROOT / "data" / "terminal" / "fund.json"
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -28,7 +30,7 @@ FIELDS = {
     "pm": "profitMargins", "om": "operatingMargins", "rev": "totalRevenue", "revg": "revenueGrowth",
     "eg": "earningsGrowth", "de": "debtToEquity", "cr": "currentRatio", "beta": "beta", "sh": "sharesOutstanding",
     "inst": "heldPercentInstitutions", "ins": "heldPercentInsiders", "emp": "fullTimeEmployees",
-    "tgt": "targetMeanPrice", "tgt_hi": "targetHighPrice", "tgt_lo": "targetLowPrice", "an": "numberOfAnalystOpinions",
+    "est": "targetMeanPrice", "est_hi": "targetHighPrice", "est_lo": "targetLowPrice", "an": "numberOfAnalystOpinions",
     "rec": "recommendationKey", "sector": "sector", "industry": "industry", "web": "website", "city": "city",
     "desc": "longBusinessSummary",
 }
@@ -61,6 +63,7 @@ def one(sym):
         row["desc"] = row["desc"][:1500]
     if row.get("rec") == "none":
         row["rec"] = None
+    row["rec"] = consensus(row.get("rec"))                 # neutral words (scripts/analyst_fields.py)
     return sym, row
 
 

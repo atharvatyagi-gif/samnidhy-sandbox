@@ -441,3 +441,32 @@ def test_the_default_order_reads_the_priority_companies_first(tmp_path, monkeypa
     monkeypatch.setattr(rb, "discover", lambda sess, sym, src, now=None: seen.append(sym) or [])
     rb.run([], 3, False, True, None, None, None, now=NOW, log=lambda *a: None)
     assert seen == ["PRIO2", "PRIO1", "BIG1"]                    # priority order first, a finished company is not repeated, then the usual n500/liquidity order
+
+
+def test_a_second_key_adds_its_own_models_after_the_first_keys_and_is_used_for_them(monkeypatch):
+    for k in ("GROQ_API_KEY", "GEMINI_API_KEY", "GROQ_API_KEY_1", "GEMINI_API_KEY_1", "GROQ_MODEL", "GEMINI_MODEL", "GROQ_FALLBACK_MODELS", "LLM_PROVIDER"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("GROQ_API_KEY", "g0")
+    monkeypatch.setenv("GROQ_API_KEY_1", "g1")
+    monkeypatch.setenv("GEMINI_API_KEY_1", "m1")
+    llm = rb.LLM()
+    assert [c for c in llm.cands if c[0] == "groq"] == [("groq", "openai/gpt-oss-120b"), ("groq", "openai/gpt-oss-20b"), ("groq", "qwen/qwen3.8-27b"),
+                                                       ("groq", "openai/gpt-oss-120b#1"), ("groq", "openai/gpt-oss-20b#1"), ("groq", "qwen/qwen3.8-27b#1")]
+    assert [c for c in llm.cands if c[0] == "gemini"] == [("gemini", "gemini-flash-latest#1"), ("gemini", "gemini-flash-lite-latest#1")]
+    seen = []
+
+    class R:
+        status_code, headers, text = 200, {}, ""
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"message": {"content": "{}"}}], "usage": {"total_tokens": 5}}
+    import requests
+    monkeypatch.setattr(requests, "post", lambda url, **k: seen.append((k["json"]["model"], k["headers"]["Authorization"])) or R())
+    llm.sleep = lambda s: None
+    llm.complete("s", "u")
+    llm.dead.update(c for c in llm.cands if "#" not in c[1])                       # the first key's day is over
+    llm.complete("s", "u")
+    assert seen == [("openai/gpt-oss-120b", "Bearer g0"), ("openai/gpt-oss-120b", "Bearer g1")] and llm.tokens

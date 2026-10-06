@@ -9,7 +9,7 @@
    Nothing is simulated: values change only when fresh data arrives. */
 
 import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
-import { technicals, recommend } from "./chart-indicators.js";
+import { technicals, suggest } from "./chart-indicators.js";
 import { LIVE_RELAY_URL } from "./config.js";
 import { GlobeMap, freshGlobe } from "./globe-map.js";
 import * as Houses from "./desk-houses.js";
@@ -991,7 +991,7 @@ function renderWatch() {
     : '<div class="empty">Your watchlist is empty. Open any stock and press + Watchlist, or use Set up desk.</div>';
   $$("#watch .wl-row").forEach(r => { flash(r.querySelector(".p"), "w:" + r.dataset.s, q(r.dataset.s)?.p); r.onclick = e => { if (e.target.dataset.rm) { toggleWatch(e.target.dataset.rm); return; } openSec(r.dataset.s); }; });
 }
-const REC = { strong_buy: "Strongly positive", buy: "Positive", hold: "Neutral", underperform: "Negative", sell: "Strongly negative" };
+const REC = { strongly_positive: "Strongly positive", positive: "Positive", neutral: "Neutral", negative: "Negative", strongly_negative: "Strongly negative" };
 function perfFrom(sym) {
   const x = q(sym); if (!x) return null;
   const h = dailyOf(sym).filter(r => r[0] < x.d); if (!h.length) return null;          // history before today
@@ -1007,10 +1007,10 @@ function analysisHtml(sym) {
   if (S.daily[sym] === undefined) return `<div class="sec-t">Technicals &amp; suggested indicators</div><p class="note">Loading ${esc(sym)}'s price history…</p>`;
   const bars = dailyBars(sym);
   const T = S.tech[sym] !== undefined ? S.tech[sym] : (S.tech[sym] = technicals(bars));
-  const R = S.rec[sym] !== undefined ? S.rec[sym] : (S.rec[sym] = recommend(bars));
-  eng.recommended = R ? R.top.map(r => ({ name: r.name, add: r.add })) : [];
+  const R = S.rec[sym] !== undefined ? S.rec[sym] : (S.rec[sym] = suggest(bars));
+  eng.suggested = R ? R.top.map(r => ({ name: r.name, add: r.add })) : [];
   const gauge = (lbl, sc) => `<div class="tg"><div class="tg-top"><span class="mut">${lbl}</span><b class="${sc.score > 0.1 ? "up" : sc.score < -0.1 ? "down" : ""}">${sc.label}</b></div>
-    <div class="tg-bar"><i style="left:calc(${((sc.score + 1) / 2 * 100).toFixed(1)}% - 2px)"></i></div><div class="tg-n">${sc.sell} bearish · ${sc.neutral} neutral · ${sc.buy} bullish</div></div>`;
+    <div class="tg-bar"><i style="left:calc(${((sc.score + 1) / 2 * 100).toFixed(1)}% - 2px)"></i></div><div class="tg-n">${sc.bear} bearish · ${sc.neutral} neutral · ${sc.bull} bullish</div></div>`;
   let h = `<div class="sec-t">Technicals · daily</div>`;
   h += T ? gauge("Summary", T.all) + `<div class="tg2">${gauge("Moving averages", T.ma)}${gauge("Oscillators", T.osc)}</div>
     <details class="tg-rows"><summary>All ${T.rows.length} signals</summary><table class="prints"><tbody>${T.rows.map(r => `<tr><td>${esc(r.name)}</td><td class="num">${inr(r.value)}</td><td class="${r.sig > 0 ? "up" : r.sig < 0 ? "down" : "mut"}">${r.sig > 0 ? "Bullish" : r.sig < 0 ? "Bearish" : "Neutral"}</td></tr>`).join("")}</tbody></table></details>
@@ -1021,8 +1021,8 @@ function analysisHtml(sym) {
   else if (!R.top.length) h += `<p class="note">None of the ${R.list.length} indicator rules tested held up on ${esc(sym)}: none made money after costs in both the earlier years and the recent test period. For this stock, no indicator has had a reliable edge.</p>`;
   else h += R.top.map((r, k) => `<div class="rec"><div class="rec-h"><b>${k + 1}. ${esc(r.name)}</b></div>
       <div class="rec-t"><span class="tag">${esc(r.family)}</span>${r.now ? '<span class="tag acc">rule says: in</span>' : '<span class="tag">rule says: out</span>'}</div>
-      <div class="rec-s">Unseen test period: <b class="${ud(r.te.ret)}">${pctS(r.te.ret)}</b> vs holding throughout <b class="${ud(R.buyHold.te.ret)}">${pctS(R.buyHold.te.ret)}</b><br>
-        Whole period: ${pctS(r.all.ret)} (holding throughout ${pctS(R.buyHold.all.ret)}) · worst drop ${pctS(r.all.dd)} · ${r.all.trades} trades${r.all.win != null ? ` · ${Math.round(r.all.win * 100)}% profitable` : ""} · in the market ${Math.round(r.all.exposure * 100)}% of days</div>
+      <div class="rec-s">Unseen test period: <b class="${ud(r.te.ret)}">${pctS(r.te.ret)}</b> vs holding throughout <b class="${ud(R.holdAll.te.ret)}">${pctS(R.holdAll.te.ret)}</b><br>
+        Whole period: ${pctS(r.all.ret)} (holding throughout ${pctS(R.holdAll.all.ret)}) · worst drop ${pctS(r.all.dd)} · ${r.all.trades} trades${r.all.win != null ? ` · ${Math.round(r.all.win * 100)}% profitable` : ""} · in the market ${Math.round(r.all.exposure * 100)}% of days</div>
       <button class="btn-line sm" data-rec="${k}">+ Add to chart</button></div>`).join("")
     + `<p class="note">How it works: each indicator is turned into its usual entry/exit rule and tested on ${esc(sym)}'s own daily prices from ${esc(R.from)} to ${esc(R.to)} (acted on the next day, 0.1% cost per trade).
       Rules are ranked on the first 70% of that history and checked on the last 30% (from ${esc(R.testFrom)}), which the ranking never saw. ${R.style ? `On this stock, <b>${esc(R.style.toLowerCase())}</b> rules have worked best.` : ""} Past results are not a forecast. Educational only, not advice.</p>`;
@@ -1044,10 +1044,10 @@ function renderDetails() {
       ${f ? stat("Market cap", f.mcap ? cr(f.mcap / 1e7) : "--") + stat("P/E", f.pe ? f.pe.toFixed(1) : "--") + stat("EPS", f.eps != null ? "₹" + inr(f.eps) : "--") + stat("Div yield", f.dy != null ? f.dy.toFixed(2) + "%" : "--")
         + stat("P/B", f.pb ? f.pb.toFixed(2) : "--") + stat("Beta", f.beta != null ? f.beta.toFixed(2) : "--") + stat("ROE", pctF(f.roe)) + stat("Debt/eq", f.de != null ? (f.de / 100).toFixed(2) : "--") : ""}</div>`;
   if (perf) html += `<div class="sec-t">Performance</div><div class="perf">${perf.map(([k, v]) => `<div class="${v == null ? "" : v >= 0 ? "pu" : "pd"}"><span>${k}</span><b class="${ud(v)}">${v == null ? "--" : sg(v, 1) + "%"}</b></div>`).join("")}</div>`;
-  if (f && (f.rec || f.tgt)) {
-    const pos = { strong_buy: 95, buy: 75, hold: 50, underperform: 25, sell: 5 }[f.rec] ?? 50, up = f.tgt ? (f.tgt / x.p - 1) * 100 : null;
+  if (f && (f.rec || f.est)) {
+    const pos = { strongly_positive: 95, positive: 75, neutral: 50, negative: 25, strongly_negative: 5 }[f.rec] ?? 50, up = f.est ? (f.est / x.p - 1) * 100 : null;
     html += `<div class="sec-t">Analyst view</div><div class="gauge"><i style="left:calc(${pos}% - 2px)"></i></div><div class="g-l"><span>Negative</span><span>Neutral</span><span>Positive</span></div>
-      <div class="stats" style="margin-top:10px">${stat("Consensus", f.rec ? REC[f.rec] || f.rec : "--")}${stat("Analysts", f.an ?? "--")}${stat("Price estimate", f.tgt ? "₹" + inr(f.tgt, 0) : "--")}${stat("Upside", up == null ? "--" : `<span class="${ud(up)}">${sg(up, 1)}%</span>`)}</div>
+      <div class="stats" style="margin-top:10px">${stat("Consensus", f.rec ? REC[f.rec] || f.rec : "--")}${stat("Analysts", f.an ?? "--")}${stat("Price estimate", f.est ? "₹" + inr(f.est, 0) : "--")}${stat("Upside", up == null ? "--" : `<span class="${ud(up)}">${sg(up, 1)}%</span>`)}</div>
       <p class="note">12-month analyst price estimates (Yahoo Finance). On average analysts are too optimistic.</p>`;
   }
   if (pick) html += `<div class="sec-t">B-Lab screen</div><div class="stats">${stat("Magic rank", "#" + pick.magic_rank + " of " + pick.of)}${stat("F-Score", pick.fscore + "/9")}${stat("Ret. on capital", pctF(pick.roc))}${stat("Earn. yield", pctF(pick.earnings_yield))}</div>`;
@@ -1059,7 +1059,7 @@ function renderDetails() {
       <p class="note">${s.etf ? `${esc(sec)} is an exchange-traded fund, not a company.` : `Company fundamentals are loaded for NIFTY 500 companies; ${esc(sec)} is outside it.`} Only NSE's official trading data is shown. Nothing is estimated.</p>`;
   $("#details").innerHTML = html;
   const more = $("#more"); if (more) more.onclick = () => { descOpen = !descOpen; renderDetails(); };
-  $$("#details [data-rec]").forEach(bt => bt.onclick = () => { const r = eng.recommended[+bt.dataset.rec]; if (!r) return; r.add.forEach(([id, p]) => eng.addIndicator(id, p)); go("terminal"); });
+  $$("#details [data-rec]").forEach(bt => bt.onclick = () => { const r = eng.suggested[+bt.dataset.rec]; if (!r) return; r.add.forEach(([id, p]) => eng.addIndicator(id, p)); go("terminal"); });
 }
 function renderPrints() {
   const it = intraOf(sec), rows = it ? (it.d || []) : [];

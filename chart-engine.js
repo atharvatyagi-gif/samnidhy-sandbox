@@ -295,15 +295,15 @@ export class ChartEngine {
     const groups = [...new Set(INDICATORS.map(d => d.group))];
     const list = q => groups.map(g => { const items = INDICATORS.filter(d => d.group === g && (!q || d.name.toLowerCase().includes(q) || d.id.includes(q)));
       return items.length ? `<h6>${esc(g)}</h6>` + items.map(d => `<button class="eng-ind${recIds.has(d.id) ? " rec" : ""}" data-id="${d.id}"><span>${esc(d.name)}</span><small>${d.pane === "main" ? "on price" : "own pane"}${this.inds.some(x => x.id === d.id) ? " · on chart" : ""}</small></button>`).join("") : ""; }).join("") || '<p class="eng-empty">No indicator matches.</p>';
-    const recIds = new Set((this.recommended || []).flatMap(r => r.add.map(a => a[0])));
-    const recHtml = (this.recommended || []).length ? `<h6>★ Recommended for ${esc(this.sym)} (tested on its past prices; see Details)</h6>` + this.recommended.map((r, k) => `<button class="eng-ind rec" data-rec="${k}"><span>${esc(r.name)}</span><small>adds ${r.add.map(a => esc(IND[a[0]].label({ ...defaults(a[0]), ...a[1] }))).join(" + ")}</small></button>`).join("") : "";
+    const recIds = new Set((this.suggested || []).flatMap(r => r.add.map(a => a[0])));
+    const recHtml = (this.suggested || []).length ? `<h6>★ Tried on ${esc(this.sym)}'s past prices (see Details)</h6>` + this.suggested.map((r, k) => `<button class="eng-ind rec" data-rec="${k}"><span>${esc(r.name)}</span><small>adds ${r.add.map(a => esc(IND[a[0]].label({ ...defaults(a[0]), ...a[1] }))).join(" + ")}</small></button>`).join("") : "";
     const { m } = this.modal("Indicators", `<input class="eng-q" type="search" placeholder="Search ${INDICATORS.length} indicators (e.g. RSI, EMA, Ichimoku)" aria-label="Search indicators"><div class="eng-list">${recHtml}${list("")}</div>
       <p class="eng-note">Click to add. You can add the same indicator more than once (e.g. EMA 9 and EMA 21). Hover a legend line on the chart to hide, change or remove it.</p>`);
     const q = m.querySelector(".eng-q"), L = m.querySelector(".eng-list");
     const paint = () => { const v = q.value.trim().toLowerCase(); L.innerHTML = (v ? "" : recHtml) + list(v); };
     q.focus(); q.oninput = paint;
     L.addEventListener("click", e => { const b = e.target.closest(".eng-ind"); if (!b) return;
-      if (b.dataset.rec != null) this.recommended[+b.dataset.rec].add.forEach(([id, p]) => this.addIndicator(id, p)); else this.addIndicator(b.dataset.id);
+      if (b.dataset.rec != null) this.suggested[+b.dataset.rec].add.forEach(([id, p]) => this.addIndicator(id, p)); else this.addIndicator(b.dataset.id);
       paint(); });
   }
   addIndicator(id, params) {

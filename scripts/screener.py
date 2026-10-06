@@ -38,6 +38,8 @@ import yfinance as yf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pick_movers import ROOT, load_config, load_universe  # noqa: E402
+sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parent))
+from analyst_fields import consensus  # noqa: E402
 
 OUT_DIR = ROOT / "data" / "screener"
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -267,10 +269,10 @@ def run():
             "debt_to_equity": clean(r["debt_to_equity"]), "dividend_yield": clean(r["dividend_yield"]),
             "held_institutions": clean(r["held_institutions"]), "held_insiders": clean(r["held_insiders"]),
             "analysts": int(r["analysts"]) if clean(r["analysts"]) else None,
-            "recommendation": r["recommendation"] if r["recommendation"] not in (None, "none") else None,
-            "recommendation_mean": clean(r["recommendation_mean"]),
-            "target_mean": clean(r["target_mean"]), "target_high": clean(r["target_high"]),
-            "target_low": clean(r["target_low"]),
+            "consensus": consensus(r["recommendation"]) if r["recommendation"] not in (None, "none") else None,       # neutral names (scripts/analyst_fields.py)
+            "consensus_score": clean(r["recommendation_mean"]),
+            "estimate_mean": clean(r["target_mean"]), "estimate_high": clean(r["target_high"]),
+            "estimate_low": clean(r["target_low"]),
             "eps": clean(r["eps"]), "shares_out": clean(r["shares_out"]), "employees": clean(r["employees"]),
             "website": r["website"], "city": r["city"], "beta": clean(r["beta"]), "summary": r["summary"],
         })

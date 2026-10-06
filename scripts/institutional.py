@@ -19,6 +19,8 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pick_movers import ROOT  # noqa: E402
+sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parent))
+from analyst_fields import flow_doc  # noqa: E402
 
 OUT = ROOT / "data" / "institutional" / "fii_dii.json"
 PAGE = "https://www.nseindia.com/reports/fii-dii"
@@ -60,8 +62,8 @@ def main():
         if key is None:
             continue
         day.setdefault(date, {"date": date})[key] = {
-            "buy_cr": float(r["buyValue"]), "sell_cr": float(r["sellValue"]), "net_cr": float(r["netValue"])}
-    hist = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {"days": []}
+            "in_cr": float(r["buyValue"]), "out_cr": float(r["sellValue"]), "net_cr": float(r["netValue"])}
+    hist = flow_doc(json.loads(OUT.read_text(encoding="utf-8"))) if OUT.exists() else {"days": []}      # older saved days used the sources' own names
     by_date = {d["date"]: d for d in hist["days"]}
     for date, d in day.items():
         if "fii" in d and "dii" in d:

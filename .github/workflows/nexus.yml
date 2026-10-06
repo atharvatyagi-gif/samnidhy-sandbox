@@ -60,6 +60,8 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
           LIMIT: ${{ github.event.inputs.limit || '40' }}
         run: python scripts/revenue_graph_builder.py --limit "$LIMIT"
 

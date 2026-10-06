@@ -17,6 +17,8 @@ import json
 import re
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import analyst_fields  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -31,7 +33,8 @@ def advanced_blocks() -> dict:
     A missing file becomes an empty block, and the page then says the data is not available."""
     files = (("screener-data", SCREENER / "latest.json"), ("live-data", SCREENER / "live.json"),
              ("institutional-data", DATA / "institutional" / "fii_dii.json"))
-    return {name: (read_json(f) if f.exists() else {}) for name, f in files}
+    conv = {"screener-data": analyst_fields.screener_doc, "institutional-data": analyst_fields.flow_doc}        # neutral analyst names (scripts/analyst_fields.py)
+    return {name: conv.get(name, lambda d: d)(read_json(f) if f.exists() else {}) for name, f in files}
 
 
 def read_json(path: Path):

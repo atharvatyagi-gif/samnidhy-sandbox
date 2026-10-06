@@ -315,13 +315,18 @@ class LLM:
         env = os.environ
         want = (provider or env.get("LLM_PROVIDER") or "auto").lower()
         self.cands = []
-        if want in ("auto", "groq") and env.get("GROQ_API_KEY"):
-            first = env.get("GROQ_MODEL") or "openai/gpt-oss-120b"
-            rest = [m.strip() for m in (env.get("GROQ_FALLBACK_MODELS") or "openai/gpt-oss-20b,qwen/qwen3.8-27b").split(",") if m.strip()]
-            self.cands += [("groq", m) for m in dict.fromkeys([first] + rest)]
-        if want in ("auto", "gemini") and env.get("GEMINI_API_KEY"):
-            gem = [env["GEMINI_MODEL"]] if env.get("GEMINI_MODEL") else ["gemini-flash-latest", "gemini-flash-lite-latest"]   # aliases: Google retires fixed names
-            self.cands += [("gemini", m) for m in gem]
+        # A second key (GROQ_API_KEY_1, GEMINI_API_KEY_1) has its OWN daily allowance, so its models are added after the first key's: candidate model "name#1" means "name, second key".
+        for prov, base in (("groq", "GROQ_API_KEY"), ("gemini", "GEMINI_API_KEY")):
+            keys = [("", base)] + [(f"#{i}", f"{base}_{i}") for i in (1, 2)]
+            have = [(tag, name) for tag, name in keys if env.get(name)]
+            if not (want in ("auto", prov) and have):
+                continue
+            if prov == "groq":
+                first = env.get("GROQ_MODEL") or "openai/gpt-oss-120b"
+                models = list(dict.fromkeys([first] + [m.strip() for m in (env.get("GROQ_FALLBACK_MODELS") or "openai/gpt-oss-20b,qwen/qwen3.8-27b").split(",") if m.strip()]))
+            else:
+                models = [env["GEMINI_MODEL"]] if env.get("GEMINI_MODEL") else ["gemini-flash-latest", "gemini-flash-lite-latest"]   # aliases: Google retires fixed names
+            self.cands += [(prov, m + tag) for tag, _ in have for m in models]
         self.provider = self.cands[0][0] if self.cands else None
         self.model = self.cands[0][1] if self.cands else None
         self.calls, self.max_calls, self.sleep, self.clock = 0, max_calls, sleep, clock
@@ -338,15 +343,17 @@ class LLM:
     def _call(self, cand, system, user):
         import requests
         prov, model = cand
+        model, _, idx = model.partition("#")                           # "name#1" = the model on the second key
+        keyname = ("GROQ_API_KEY" if prov == "groq" else "GEMINI_API_KEY") + (f"_{idx}" if idx else "")
         if prov == "groq":
             body = {"model": model, "temperature": 0, "response_format": {"type": "json_object"}, "max_completion_tokens": 3500,
                     "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
             if model.startswith("openai/gpt-oss"):
                 body["reasoning_effort"] = "low"
             return requests.post("https://api.groq.com/openai/v1/chat/completions", timeout=90, json=body,
-                                 headers={"Authorization": "Bearer " + os.environ["GROQ_API_KEY"], "User-Agent": UA})
+                                 headers={"Authorization": "Bearer " + os.environ[keyname], "User-Agent": UA})
         return requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", timeout=90,
-                             headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"], "User-Agent": UA},
+                             headers={"x-goog-api-key": os.environ[keyname], "User-Agent": UA},
                              json={"systemInstruction": {"parts": [{"text": system}]}, "contents": [{"role": "user", "parts": [{"text": user}]}],
                                    "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}})
 

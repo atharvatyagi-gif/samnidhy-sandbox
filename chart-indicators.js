@@ -355,7 +355,7 @@ export function technicals(b) {
   const md = macdA(c, 12, 26, 9); if (md.m[n] != null && md.sig[n] != null) add("osc", "MACD (12, 26)", md.m[n], md.m[n] > md.sig[n] ? 1 : md.m[n] < md.sig[n] ? -1 : 0);
   const w = willrA(b, 14); if (w[n] != null) add("osc", "Williams %R (14)", w[n], w[n] < -80 && w[n] > w[n - 1] ? 1 : w[n] > -20 && w[n] < w[n - 1] ? -1 : 0);
   const score = list => { const bu = list.filter(x => x.sig > 0).length, se = list.filter(x => x.sig < 0).length, ne = list.length - bu - se, s = list.length ? (bu - se) / list.length : 0;
-    return { buy: bu, sell: se, neutral: ne, score: s, label: s > 0.5 ? "Strongly bullish" : s > 0.1 ? "Bullish" : s < -0.5 ? "Strongly bearish" : s < -0.1 ? "Bearish" : "Neutral" }; };
+    return { bull: bu, bear: se, neutral: ne, score: s, label: s > 0.5 ? "Strongly bullish" : s > 0.1 ? "Bullish" : s < -0.5 ? "Strongly bearish" : s < -0.1 ? "Bearish" : "Neutral" }; };
   return { rows, ma: score(rows.filter(x => x.group === "ma")), osc: score(rows.filter(x => x.group === "osc")), all: score(rows) };
 }
 
@@ -400,7 +400,7 @@ function backtest(b, sig, from, to, cost = 0.001) {
   const yrs = n / 252;
   return { ret: eq - 1, cagr: yrs > 0 ? Math.pow(eq, 1 / yrs) - 1 : 0, sharpe: sd ? mu / sd * Math.sqrt(252) : 0, dd, trades, win: trades ? wins / trades : null, exposure: n ? inDays / n : 0 };
 }
-export function recommend(b) {
+export function suggest(b) {
   if (!b || b.length < 400) return null;
   const n = b.length, cut = Math.floor(n * 0.7), start = 200;
   const bh = (f, t) => backtest(b, b.map(() => true), f, t, 0);
@@ -411,8 +411,8 @@ export function recommend(b) {
     const score = enough ? Math.min(tr.sharpe, te.sharpe) * 0.6 + all.sharpe * 0.4 : -9;
     return { ...r, tr, te, all, score, now: sig[n - 1] === true };
   }).filter(Boolean).sort((a, c) => c.score - a.score);
-  const buyHold = { tr: bh(start, cut), te: bh(cut, n), all: bh(start, n) };
+  const holdAll = { tr: bh(start, cut), te: bh(cut, n), all: bh(start, n) };
   const fam = {}; res.slice(0, 5).forEach(r => fam[r.family] = (fam[r.family] || 0) + 1);
   const style = Object.entries(fam).sort((a, c) => c[1] - a[1])[0]?.[0];
-  return { list: res, top: res.filter(r => r.score > 0).slice(0, 3), buyHold, style, years: (n - start) / 252, from: b[start].time, to: b[n - 1].time, testFrom: b[cut].time };
+  return { list: res, top: res.filter(r => r.score > 0).slice(0, 3), holdAll, style, years: (n - start) / 252, from: b[start].time, to: b[n - 1].time, testFrom: b[cut].time };
 }

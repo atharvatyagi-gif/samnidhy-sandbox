@@ -482,7 +482,7 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .tools { min-height: 0; overflow-y: auto; scrollbar-width: none; gap: 1px; }
 .tools button { width: 32px; height: 30px; flex: none; }
 .tools .t-sep { flex: none; }
-/* technicals gauge + recommended indicators (Details panel) */
+/* technicals gauge + suggested indicators (Details panel) */
 .tg { margin: 6px 0 10px; }
 .tg-top { display: flex; justify-content: space-between; align-items: baseline; font: 12px var(--mono); }
 .tg-top b { font-size: 14px; } .tg-top b.up { color: var(--up); } .tg-top b.down { color: var(--down); }
