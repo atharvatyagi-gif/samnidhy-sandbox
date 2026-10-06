@@ -28,6 +28,7 @@ import revenue_graph_builder as rb  # noqa: E402
 
 ROOT = rb.ROOT
 PROMPT_VERSION = "rp-v1"
+MIN_SHARE = 0.0005                                        # below 0.05% of revenue a share is rounding noise: it would print as 0.0% and tell the impact score nothing
 SYSTEM = ("You read the related-party transactions note and the statement of profit and loss of an Indian company's annual report. Extract ONLY what the text states; never use outside "
           "knowledge; use null for anything not stated. Copy every quote exactly as written (verbatim, no paraphrase, no ellipses). Reply with ONE JSON object: "
           '{"revenue": null or {"value": number, "unit": string, "scope": "standalone"|"consolidated"|null, "column_heading": string, "page": integer, "quote": string}, '
@@ -128,6 +129,9 @@ def derive(answers, pages, meta, now, owner, index):
             r = val / rev[0]
             if not 0 < r <= 1:
                 notes.append(f"{name}: derived share {r:.3f} is outside (0, 1]")
+                continue
+            if r < MIN_SHARE:
+                notes.append(f"{name}: derived share {r:.5f} is below {MIN_SHARE:.2%} of revenue (noise), not kept")
                 continue
             per = meta.get("period")
             conf = round(rb.edge_conf(True, True, False, per, now) + 0.1, 2)           # quote .5 + named .2 + derived share .1 + recent period .1

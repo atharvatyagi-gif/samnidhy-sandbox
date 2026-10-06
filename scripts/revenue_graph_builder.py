@@ -603,6 +603,8 @@ def clean_saved_edge(e):
     """The checks of validate_answer applied to an edge that is already in the graph: None = drop it; a descriptor saved as an external company becomes an anonymous customer."""
     if not supply_quote_ok(e.get("q", "")):
         return None
+    if e.get("wd") == "derived" and (e.get("w") or 0) < 0.0005:           # rounding noise (related_party_shares.MIN_SHARE)
+        return None
     if e.get("cpn") and is_generic_name(e["cpn"]) and not e["s"].startswith("ANON_") and not e["d"].startswith("ANON_"):
         cp = e["d"] if e["own"] == e["s"] else e["s"]
         if cp.startswith("EXT_"):
