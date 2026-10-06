@@ -101,7 +101,8 @@ async function boot() {
   }
   const hp = new URLSearchParams(location.hash.slice(1));
   sec = hp.get("s") && S.map.has(hp.get("s")) ? hp.get("s") : (loadWatch()[0] || "RELIANCE");
-  $("#cmd").placeholder = `SYMBOL FUNCTION, e.g. RELIANCE CH · HELP for the list (${S.uni.count.toLocaleString("en-IN")} NSE securities)`;
+  if (/Mac|iPhone|iPad/.test(navigator.platform) && $("#cmd-k")) $("#cmd-k").textContent = "⌘K";
+  $("#cmd").placeholder = `Search or jump to… SYMBOL FUNCTION, e.g. RELIANCE CH · HELP for the list (${S.uni.count.toLocaleString("en-IN")} NSE securities)`;
   fillSectorSelect(); updIndCount(); buildTypeMenu(); renderAll();
   go(hp.get("v") || (hp.get("s") ? "terminal" : "brief"), true);
   openSec(sec);
@@ -1767,6 +1768,7 @@ $("#setup-btn").onclick = openOnboard;
 const FKEYS = { F1: "HELP", F2: "WATCH", F3: "CH", F4: "NEWS", F5: "MOV", F6: "MAP", F7: "SCR", F8: "OUT" };
 document.addEventListener("keydown", e => {
   const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); focusCmd(); return; }
   if (FKEYS[e.key] && !(!$("#onboard").hidden)) {
     e.preventDefault();
     const f = FUNC_CODES[FKEYS[e.key]];
