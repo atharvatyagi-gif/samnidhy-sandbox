@@ -1,0 +1,530 @@
+{
+ "note": "Order of work for the supply-chain graph and WHY (a hypothesis the run tests, not a statement about any filing).",
+ "rows": [
+  {
+   "sym": "TMPV",
+   "name": "Tata Motors Passenger Vehicles Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "TMCV",
+   "name": "Tata Motors Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "TATASTEEL",
+   "name": "Tata Steel Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "TATAPOWER",
+   "name": "Tata Power Company Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "TATACHEM",
+   "name": "Tata Chemicals Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "VOLTAS",
+   "name": "Voltas Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "ADANIENT",
+   "name": "Adani Enterprises Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "ADANIPORTS",
+   "name": "Adani Ports and Special Economic Zone Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "ADANIPOWER",
+   "name": "Adani Power Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "ADANIGREEN",
+   "name": "Adani Green Energy Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "ADANIENSOL",
+   "name": "Adani Energy Solutions Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "ATGL",
+   "name": "Adani Total Gas Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "ACC",
+   "name": "ACC Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "AMBUJACEM",
+   "name": "Ambuja Cements Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "GRASIM",
+   "name": "Grasim Industries Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "ULTRACEMCO",
+   "name": "UltraTech Cement Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "HINDALCO",
+   "name": "Hindalco Industries Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "M&M",
+   "name": "Mahindra & Mahindra Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "TECHM",
+   "name": "Tech Mahindra Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "BAJAJ-AUTO",
+   "name": "Bajaj Auto Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "JSWSTEEL",
+   "name": "JSW Steel Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "JSWENERGY",
+   "name": "JSW Energy Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "VEDL",
+   "name": "Vedanta Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "HINDZINC",
+   "name": "Hindustan Zinc Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "TIINDIA",
+   "name": "Tube Investments of India Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "COROMANDEL",
+   "name": "Coromandel International Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "TVSMOTOR",
+   "name": "TVS Motor Company Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "ASHOKLEY",
+   "name": "Ashok Leyland Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "BHARATFORG",
+   "name": "Bharat Forge Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "KEC",
+   "name": "KEC International Limited",
+   "group": "group",
+   "why": "Business-group company: SEBI LODR related-party notes list transactions with group companies, and some of those are listed (group companies are the most likely listed-to-listed edges)",
+   "n500": true
+  },
+  {
+   "sym": "MARUTI",
+   "name": "Maruti Suzuki India Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "EICHERMOT",
+   "name": "Eicher Motors Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "HEROMOTOCO",
+   "name": "Hero MotoCorp Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "UNOMINDA",
+   "name": "UNO Minda Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "EXIDEIND",
+   "name": "Exide Industries Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "ARE&M",
+   "name": "Amara Raja Energy & Mobility Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "BALKRISIND",
+   "name": "Balkrishna Industries Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "APOLLOTYRE",
+   "name": "Apollo Tyres Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "MRF",
+   "name": "MRF Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "SCHAEFFLER",
+   "name": "Schaeffler India Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "SANSERA",
+   "name": "Sansera Engineering Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "CEATLTD",
+   "name": "CEAT Limited",
+   "group": "auto",
+   "why": "Auto OEM or auto-component maker: customer concentration (a top customer above 10% of revenue) is routinely disclosed, and the customers are listed OEMs",
+   "n500": true
+  },
+  {
+   "sym": "DIXON",
+   "name": "Dixon Technologies (India) Limited",
+   "group": "ems",
+   "why": "Electronics manufacturing or electronic components: a few large customers account for most revenue, often listed consumer-electronics or auto companies",
+   "n500": true
+  },
+  {
+   "sym": "KAYNES",
+   "name": "Kaynes Technology India Limited",
+   "group": "ems",
+   "why": "Electronics manufacturing or electronic components: a few large customers account for most revenue, often listed consumer-electronics or auto companies",
+   "n500": true
+  },
+  {
+   "sym": "AMBER",
+   "name": "Amber Enterprises India Limited",
+   "group": "ems",
+   "why": "Electronics manufacturing or electronic components: a few large customers account for most revenue, often listed consumer-electronics or auto companies",
+   "n500": true
+  },
+  {
+   "sym": "CYIENTDLM",
+   "name": "Cyient DLM Limited",
+   "group": "ems",
+   "why": "Electronics manufacturing or electronic components: a few large customers account for most revenue, often listed consumer-electronics or auto companies",
+   "n500": false
+  },
+  {
+   "sym": "SYRMA",
+   "name": "Syrma SGS Technology Limited",
+   "group": "ems",
+   "why": "Electronics manufacturing or electronic components: a few large customers account for most revenue, often listed consumer-electronics or auto companies",
+   "n500": true
+  },
+  {
+   "sym": "PIIND",
+   "name": "PI Industries Limited",
+   "group": "chem",
+   "why": "Chemicals and specialty chemicals: long supply contracts with named customers and raw-material suppliers, with disclosed concentration",
+   "n500": true
+  },
+  {
+   "sym": "SRF",
+   "name": "SRF Limited",
+   "group": "chem",
+   "why": "Chemicals and specialty chemicals: long supply contracts with named customers and raw-material suppliers, with disclosed concentration",
+   "n500": true
+  },
+  {
+   "sym": "DEEPAKNTR",
+   "name": "Deepak Nitrite Limited",
+   "group": "chem",
+   "why": "Chemicals and specialty chemicals: long supply contracts with named customers and raw-material suppliers, with disclosed concentration",
+   "n500": true
+  },
+  {
+   "sym": "NAVINFLUOR",
+   "name": "Navin Fluorine International Limited",
+   "group": "chem",
+   "why": "Chemicals and specialty chemicals: long supply contracts with named customers and raw-material suppliers, with disclosed concentration",
+   "n500": true
+  },
+  {
+   "sym": "AARTIIND",
+   "name": "Aarti Industries Limited",
+   "group": "chem",
+   "why": "Chemicals and specialty chemicals: long supply contracts with named customers and raw-material suppliers, with disclosed concentration",
+   "n500": true
+  },
+  {
+   "sym": "UPL",
+   "name": "UPL Limited",
+   "group": "chem",
+   "why": "Chemicals and specialty chemicals: long supply contracts with named customers and raw-material suppliers, with disclosed concentration",
+   "n500": true
+  },
+  {
+   "sym": "ATUL",
+   "name": "Atul Limited",
+   "group": "chem",
+   "why": "Chemicals and specialty chemicals: long supply contracts with named customers and raw-material suppliers, with disclosed concentration",
+   "n500": true
+  },
+  {
+   "sym": "VINATIORGA",
+   "name": "Vinati Organics Limited",
+   "group": "chem",
+   "why": "Chemicals and specialty chemicals: long supply contracts with named customers and raw-material suppliers, with disclosed concentration",
+   "n500": false
+  },
+  {
+   "sym": "SYNGENE",
+   "name": "Syngene International Limited",
+   "group": "pharma",
+   "why": "Pharma contract manufacturing and API makers: concentration on a few innovator customers and listed API suppliers",
+   "n500": true
+  },
+  {
+   "sym": "PPLPHARMA",
+   "name": "Piramal Pharma Limited",
+   "group": "pharma",
+   "why": "Pharma contract manufacturing and API makers: concentration on a few innovator customers and listed API suppliers",
+   "n500": true
+  },
+  {
+   "sym": "NEULANDLAB",
+   "name": "Neuland Laboratories Limited",
+   "group": "pharma",
+   "why": "Pharma contract manufacturing and API makers: concentration on a few innovator customers and listed API suppliers",
+   "n500": true
+  },
+  {
+   "sym": "SUVEN",
+   "name": "Suven Life Sciences Limited",
+   "group": "pharma",
+   "why": "Pharma contract manufacturing and API makers: concentration on a few innovator customers and listed API suppliers",
+   "n500": false
+  },
+  {
+   "sym": "LUPIN",
+   "name": "Lupin Limited",
+   "group": "pharma",
+   "why": "Pharma contract manufacturing and API makers: concentration on a few innovator customers and listed API suppliers",
+   "n500": true
+  },
+  {
+   "sym": "CONCORDBIO",
+   "name": "Concord Biotech Limited",
+   "group": "pharma",
+   "why": "Pharma contract manufacturing and API makers: concentration on a few innovator customers and listed API suppliers",
+   "n500": true
+  },
+  {
+   "sym": "CGPOWER",
+   "name": "CG Power and Industrial Solutions Limited",
+   "group": "power",
+   "why": "Power equipment and utilities: equipment suppliers and the utilities and EPC companies that buy from them are all listed",
+   "n500": true
+  },
+  {
+   "sym": "POWERINDIA",
+   "name": "Hitachi Energy India Limited",
+   "group": "power",
+   "why": "Power equipment and utilities: equipment suppliers and the utilities and EPC companies that buy from them are all listed",
+   "n500": true
+  },
+  {
+   "sym": "GVT&D",
+   "name": "GE Vernova T&D India Limited",
+   "group": "power",
+   "why": "Power equipment and utilities: equipment suppliers and the utilities and EPC companies that buy from them are all listed",
+   "n500": true
+  },
+  {
+   "sym": "THERMAX",
+   "name": "Thermax Limited",
+   "group": "power",
+   "why": "Power equipment and utilities: equipment suppliers and the utilities and EPC companies that buy from them are all listed",
+   "n500": true
+  },
+  {
+   "sym": "KALPATARU",
+   "name": "Kalpataru Limited",
+   "group": "power",
+   "why": "Power equipment and utilities: equipment suppliers and the utilities and EPC companies that buy from them are all listed",
+   "n500": false
+  },
+  {
+   "sym": "NTPC",
+   "name": "NTPC Limited",
+   "group": "power",
+   "why": "Power equipment and utilities: equipment suppliers and the utilities and EPC companies that buy from them are all listed",
+   "n500": true
+  },
+  {
+   "sym": "POWERGRID",
+   "name": "Power Grid Corporation of India Limited",
+   "group": "power",
+   "why": "Power equipment and utilities: equipment suppliers and the utilities and EPC companies that buy from them are all listed",
+   "n500": true
+  },
+  {
+   "sym": "CESC",
+   "name": "CESC Limited",
+   "group": "power",
+   "why": "Power equipment and utilities: equipment suppliers and the utilities and EPC companies that buy from them are all listed",
+   "n500": true
+  },
+  {
+   "sym": "HAL",
+   "name": "Hindustan Aeronautics Limited",
+   "group": "capital",
+   "why": "Capital goods and defence electronics: public-sector and large private buyers, and listed component suppliers",
+   "n500": true
+  },
+  {
+   "sym": "BEL",
+   "name": "Bharat Electronics Limited",
+   "group": "capital",
+   "why": "Capital goods and defence electronics: public-sector and large private buyers, and listed component suppliers",
+   "n500": true
+  },
+  {
+   "sym": "LT",
+   "name": "Larsen & Toubro Limited",
+   "group": "capital",
+   "why": "Capital goods and defence electronics: public-sector and large private buyers, and listed component suppliers",
+   "n500": true
+  },
+  {
+   "sym": "SUZLON",
+   "name": "Suzlon Energy Limited",
+   "group": "capital",
+   "why": "Capital goods and defence electronics: public-sector and large private buyers, and listed component suppliers",
+   "n500": true
+  },
+  {
+   "sym": "INOXWIND",
+   "name": "Inox Wind Limited",
+   "group": "capital",
+   "why": "Capital goods and defence electronics: public-sector and large private buyers, and listed component suppliers",
+   "n500": true
+  },
+  {
+   "sym": "HAVELLS",
+   "name": "Havells India Limited",
+   "group": "capital",
+   "why": "Capital goods and defence electronics: public-sector and large private buyers, and listed component suppliers",
+   "n500": true
+  }
+ ]
+}

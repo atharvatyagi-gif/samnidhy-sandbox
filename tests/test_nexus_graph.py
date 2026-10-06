@@ -232,7 +232,8 @@ def test_discover_reads_annual_report_and_transcripts_and_survives_failures():
 
     def boom(*a, **k):
         raise RuntimeError("blocked")
-    assert rb.discover(None, "X", SRC, NOW, get=boom) == []
+    with pytest.raises(rb.DiscoverError):                              # a blocked NSE is an error to retry, never "no filing"
+        rb.discover(None, "X", SRC, NOW, get=boom)
 
 
 def test_run_without_a_key_does_nothing_and_budget_stops_the_run(monkeypatch, capsys):
@@ -330,3 +331,98 @@ def test_groups_of_companies_are_not_counterparties(label, kept):
 def test_parents_and_related_groups_are_not_counterparties(label):
     e, _, dropped = validate([edge(counterparty_name=label)])
     assert e == [] and "group" in dropped[0]
+
+
+# ---------------------------------------------------------------- the 2026-10-05 damage: a run without the stock universe
+
+def test_audit_rejects_a_graph_assembled_without_the_universe_and_reassembly_repairs_it(tmp_path, monkeypatch):
+    e, _, _ = validate([edge()])
+    results = {"BOSCHLTD": rec("BOSCHLTD", e)}
+    damaged = rb.assemble({"cos": {}}, results, [], [], 0.75, NOW)               # what a runner with no data/terminal/universe.json produced
+    assert damaged["coverage"]["companies_total"] == 0 and not [n for n in damaged["nodes"] if n["k"] == "co"]
+    problems = cg.audit(damaged)
+    assert any("companies_total is 0" in p for p in problems) and any("BOSCHLTD" in p and "not a listed-company node" in p for p in problems)
+    # repair from the saved edges with the universe present
+    monkeypatch.setattr(rb, "OUT", tmp_path / "g.json")
+    (tmp_path / "g.json").write_text(json.dumps(damaged), encoding="utf-8")
+    monkeypatch.setattr(rb, "load_universe", lambda: STOCKS)
+    fixed = rb.reassemble(log=lambda *a: None, now=NOW)
+    assert fixed["coverage"]["companies_total"] == len(STOCKS) and cg.audit(fixed) == []
+    assert any(n["k"] == "co" and n["id"] == "BOSCHLTD" for n in fixed["nodes"])
+
+
+def test_the_builder_refuses_to_touch_the_graph_without_a_universe(tmp_path, monkeypatch):
+    monkeypatch.setattr(rb, "TERM", tmp_path)                                     # no universe.json here
+    monkeypatch.setattr(rb, "OUT", tmp_path / "g.json")
+    (tmp_path / "g.json").write_text('{"keep": "me"}', encoding="utf-8")
+    with pytest.raises(rb.NoUniverse):
+        rb.load_universe()
+    with pytest.raises(rb.NoUniverse):
+        rb.reassemble(log=lambda *a: None)
+    assert (tmp_path / "g.json").read_text(encoding="utf-8") == '{"keep": "me"}'
+    assert rb.main(["--reassemble"]) == 0                                         # a message, never a crash and never a write
+    assert (tmp_path / "g.json").read_text(encoding="utf-8") == '{"keep": "me"}'
+
+
+def test_the_nexus_workflow_builds_the_universe_before_reading_filings():
+    yml = (Path(__file__).resolve().parent.parent / ".github" / "workflows" / "nexus.yml").read_text(encoding="utf-8")
+    assert yml.index("nse_eod.py") < yml.index("revenue_graph_builder.py")
+
+
+# ---------------------------------------------------------------- coverage: which pages and which transcript candidates are read
+
+def test_pages_that_state_a_share_beat_pages_that_only_repeat_topic_words():
+    boiler = "Our value chain, plant and manufacturing facility, raw material, supplier and procurement policy, BRSR value chain, capacity and utilisation."
+    share = "Our largest customer accounted for 24% of our revenue. Ind AS 108 operating segments. Customer A contributed 12% of revenue."
+    pages = [(1, boiler), (2, share), (3, "Nothing relevant here.")]
+    kw = SRC["keywords"]
+    plain = rb.select_pages(pages, kw, 2, 1)
+    weighted = rb.select_pages(pages, kw, 2, 1, bonus=SRC["page_bonus"])
+    assert [n for n, _ in plain] == [1] and [n for n, _ in weighted] == [2]          # with one slot, the sustainability page used to win
+
+
+def test_related_party_tables_are_selected():
+    rp = "Name of the related party | Nature of transaction | Purchase of goods | Sale of goods | Holding company | Fellow subsidiary"
+    assert [n for n, _ in rb.select_pages([(5, rp)], SRC["keywords"], 2, 5, bonus=SRC["page_bonus"])] == [5]
+
+
+def test_transcripts_rank_above_scheduling_notices_and_newest_first():
+    def row(desc, name, day):
+        return {"desc": desc, "attchmntText": "", "attchmntFile": f"https://x/{name}.pdf", "an_dt": f"{day:02d}-Sep-2026 10:00:00"}
+    rows = [row("Schedule of earnings call", "notice1", 20), row("Transcript of earnings call", "tr_old", 1), row("Audio recording of earnings call", "audio", 25),
+            row("Transcript of earnings call", "tr_new", 10), row("Analyst meet intimation", "notice2", 28)]
+    get = lambda path, params, referer=None: [] if "annual" in path else rows
+    docs = rb.discover(None, "X", {**SRC, "transcript_candidates": 3}, now=NOW.replace(month=10), get=get)
+    urls = [d["url"].rsplit("/", 1)[1] for d in docs if d["kind"] == "transcript"]
+    assert urls[:2] == ["tr_new.pdf", "tr_old.pdf"] and len(urls) == 3 and urls[2] in ("notice2.pdf", "notice1.pdf", "audio.pdf")    # notices only fill the remaining slots
+
+
+def test_a_failed_filing_list_is_an_error_not_an_empty_company():
+    def boom(path, params, referer=None):
+        raise RuntimeError("NSE paused after 5 failures")
+    with pytest.raises(rb.DiscoverError):
+        rb.discover(None, "X", SRC, now=NOW, get=boom)
+    ok_empty = lambda path, params, referer=None: []                                # NSE answered: there really is nothing
+    assert rb.discover(None, "X", SRC, now=NOW, get=ok_empty) == []
+
+
+def test_run_does_not_record_a_company_whose_filing_list_failed(tmp_path, monkeypatch):
+    monkeypatch.setattr(rb, "OUT", tmp_path / "g.json")
+    monkeypatch.setattr(rb, "CACHE", tmp_path / "cache")
+    monkeypatch.setattr(rb, "PACE_S", 0)
+    monkeypatch.setattr(rb, "load_universe", lambda: STOCKS)
+    monkeypatch.setattr(rb, "discover", lambda *a, **k: (_ for _ in ()).throw(rb.DiscoverError("blocked")))
+    doc, report = rb.run(["BOSCHLTD", "TATAMOTORS"], 5, False, False, None, None, None, now=NOW, log=lambda *a: None)
+    assert doc["cos"] == {} and all("will be retried" in r[1] or r[1].startswith("stopped") for r in report)
+
+
+def test_audit_sheet_samples_across_companies_and_shows_the_quote_and_fields():
+    import graph_audit_sheet as gs
+    e, _, _ = validate([edge()])
+    d = doc_from({"BOSCHLTD": rec("BOSCHLTD", e)})
+    rows = gs.sample(d, 5, 1)
+    text = gs.render(d, rows)
+    assert len(rows) == 1 and "Our largest customer, Tata Motors Limited" in text and "share: **24.0%**" in text and "share basis: **revenue**" in text and "page 12" in text
+    many = {"edges": [{"id": f"e{i}", "own": "AAA" if i < 30 else "BBB", "s": "AAA", "d": "X", "vq": True} for i in range(40)], "nodes": [], "fac": {}}
+    picked = gs.sample(many, 10, 3)
+    assert len(picked) == 10 and {p[0] for p in picked} == {"AAA", "BBB"} and sum(p[0] == "BBB" for p in picked) == 5     # round-robin: the small company is not drowned out

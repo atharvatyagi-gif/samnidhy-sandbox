@@ -1,0 +1,127 @@
+{
+ "_note": "SYNTHETIC test fixture. Invented companies and edges so the shock and impact logic can be tested without waiting for real data. Never published, never copied into data/.",
+ "v": 1,
+ "generated_utc": "2026-01-01T00:00:00Z",
+ "coverage": {
+  "companies_done": 4,
+  "companies_total": 4,
+  "edges": 3,
+  "facilities": 0
+ },
+ "cos": {
+  "SUPA": {
+   "at": "2026-01-01T00:00:00Z",
+   "edges": 1,
+   "fac": 0,
+   "notes": []
+  },
+  "CUSB": {
+   "at": "2026-01-01T00:00:00Z",
+   "edges": 2,
+   "fac": 0,
+   "notes": []
+  },
+  "CUSC": {
+   "at": "2026-01-01T00:00:00Z",
+   "edges": 0,
+   "fac": 0,
+   "notes": [
+    "no filing found"
+   ]
+  },
+  "CUSD": {
+   "at": "2026-01-01T00:00:00Z",
+   "edges": 0,
+   "fac": 0,
+   "notes": [
+    "annual: 120 pages, 6 relevant, 2 sent"
+   ]
+  }
+ },
+ "nodes": [
+  {
+   "id": "SUPA",
+   "k": "co",
+   "n": "SUPA",
+   "sym": "SUPA"
+  },
+  {
+   "id": "CUSB",
+   "k": "co",
+   "n": "CUSB",
+   "sym": "CUSB"
+  },
+  {
+   "id": "CUSC",
+   "k": "co",
+   "n": "CUSC",
+   "sym": "CUSC"
+  },
+  {
+   "id": "CUSD",
+   "k": "co",
+   "n": "CUSD",
+   "sym": "CUSD"
+  },
+  {
+   "id": "EXT_Z",
+   "k": "ext",
+   "n": "Unlisted Co"
+  }
+ ],
+ "edges": [
+  {
+   "id": "s1",
+   "own": "SUPA",
+   "s": "SUPA",
+   "d": "CUSB",
+   "rel": "supplies",
+   "w": 0.3,
+   "wb": "revenue",
+   "per": "FY2025-26",
+   "conf": 0.9,
+   "kind": "disclosed",
+   "comp": null,
+   "q": "synthetic",
+   "url": "u",
+   "pg": 1,
+   "vq": true
+  },
+  {
+   "id": "s2",
+   "own": "CUSB",
+   "s": "SUPA",
+   "d": "CUSB",
+   "rel": "supplies",
+   "w": 0.2,
+   "wb": "purchases",
+   "per": "FY2025-26",
+   "conf": 0.8,
+   "kind": "disclosed",
+   "comp": null,
+   "q": "synthetic",
+   "url": "u",
+   "pg": 1,
+   "vq": true
+  },
+  {
+   "id": "s3",
+   "own": "CUSB",
+   "s": "EXT_Z",
+   "d": "CUSB",
+   "rel": "supplies",
+   "w": 0.5,
+   "wb": "purchases",
+   "per": "FY2025-26",
+   "conf": 0.9,
+   "kind": "disclosed",
+   "comp": null,
+   "q": "synthetic",
+   "url": "u",
+   "pg": 1,
+   "vq": true
+  }
+ ],
+ "anon": {},
+ "fac": {}
+}

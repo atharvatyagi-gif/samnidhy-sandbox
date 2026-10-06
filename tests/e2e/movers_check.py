@@ -8,6 +8,7 @@ The real supply graph has no dependency between two listed companies with a stat
 served files to prove the shock rows render. Nothing is written to disk.
 """
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -128,7 +129,7 @@ def run():
         pg.click('#mov-kind [data-k="shock"]')
         pg.wait_for_timeout(2500)
         t = pg.inner_text("#mov-alt")
-        check("Supply-chain shocks with the real graph: says why there is nothing to rank, with the counts", "No supply-chain shock to show" in t and "companies" in t and "dependenc" in t, t[:200])
+        check("Supply-chain shocks with the real graph: says why there is nothing to rank, with the counts", "No supply-chain shock to show" in t and re.search(r"\d+ of \d+ companies read so far have a disclosed dependency on another listed company", t) is not None, t[:200])
         tab(pg, "movers", 300)
         check("the empty state is not an error", not errs, [errs[:3], pg._bad])
         b.close()

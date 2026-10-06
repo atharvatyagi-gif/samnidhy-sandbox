@@ -52,6 +52,12 @@ def audit(doc, anon_min=0.75, size_bytes=None):
         if k in seen:
             bad.append(f"{eid}: duplicate edge")
         seen.add(k)
+    cov = doc.get("coverage") or {}
+    if doc.get("edges") and not cov.get("companies_total"):
+        bad.append("coverage.companies_total is 0: the graph was assembled without the stock universe")
+    for own in sorted({e.get("own") for e in doc.get("edges", [])}):
+        if (nodes.get(own) or {}).get("k") != "co":
+            bad.append(f"{own}: owns edges but is not a listed-company node (the graph lost its company nodes)")
     for aid, a in doc.get("anon", {}).items():
         if a.get("resolved_to") and (a.get("conf", 0) < anon_min or not a.get("evidence")):
             bad.append(f"{aid}: resolved without enough evidence")

@@ -44,6 +44,9 @@ NAME_MIN = 92
 MAX_PDF_MB = 60
 
 
+PACE_S = 1.5                                               # seconds between companies: NSE's site blocks bursts
+
+
 def now_utc():
     return datetime.now(timezone.utc)
 
@@ -86,15 +89,18 @@ def pdf_pages(raw):
     return out
 
 
-def select_pages(pages, keywords, min_hits=2, max_pages=24, char_budget=None):
+def select_pages(pages, keywords, min_hits=2, max_pages=24, char_budget=None, bonus=None):
     """Pages that mention at least `min_hits` of the topic keywords. The best-scoring ones are kept first, up to `max_pages` and `char_budget`
-    characters in total (what the run can afford to send), and are returned in page order."""
+    characters in total (what the run can afford to send), and are returned in page order.
+    `bonus` = [{"re", "w"}]: pages that state a share of revenue or purchases, name the biggest counterparties or hold a related-party table score higher than pages
+    that merely repeat words like plant, raw material or value chain (sustainability chapters), so the few pages that can hold an edge are the ones sent."""
+    rx = [(re.compile(b["re"], re.I), b["w"]) for b in (bonus or [])]
     scored = []
     for no, text in pages:
         low = text.lower()
         hits = sum(1 for k in keywords if k in low)
         if hits >= min_hits:
-            scored.append((hits, no, text))
+            scored.append((hits + sum(w for r, w in rx if r.search(low)), no, text))
     scored.sort(key=lambda t: (-t[0], t[1]))
     keep, used = [], 0
     for item in scored[:max_pages]:
@@ -319,6 +325,7 @@ class LLM:
         self.provider = self.cands[0][0] if self.cands else None
         self.model = self.cands[0][1] if self.cands else None
         self.calls, self.max_calls, self.sleep, self.clock = 0, max_calls, sleep, clock
+        self.tokens = {}                                   # tokens the providers reported per model, for the run's cost report
         self.dead = set()                                  # candidates whose daily quota is used up (or that keep failing)
         self.fails = {}
         self._ready = {}                                   # per-candidate earliest next call (free-tier pacing: ~7,000 tokens a minute on Groq)
@@ -379,6 +386,7 @@ class LLM:
             self.fails[cand] = 0
             js = r.json()
             used = (js.get("usage") or {}).get("total_tokens") or (js.get("usageMetadata") or {}).get("totalTokenCount") or 0
+            self.tokens[cand[1]] = self.tokens.get(cand[1], 0) + used
             tpm, gap = (7000, 1.0) if cand[0] == "groq" else (200000, 6.5)
             self._ready[cand] = self.clock() + max(gap, used / tpm * 60.0)
             self.provider, self.model = cand
@@ -452,25 +460,27 @@ def discover(session, sym, src, now=None, get=None):
         if rows:
             r = rows[0]
             docs.append({"kind": "annual", "url": r["fileName"], "period": f"FY{r['fromYr']}-{str(r['toYr'])[-2:]}", "asof": f"{r['toYr']}-03-31"})
-    except Exception:  # noqa: BLE001 - a source that fails is reported by the caller, never fatal
-        pass
+    except Exception as e:  # noqa: BLE001
+        raise DiscoverError(f"annual-report list failed: {str(e)[:100]}") from e      # a failed call is NOT "no filing": the company must be retried, never recorded as empty
     try:
         frm = (now - timedelta(days=src["transcript_lookback_days"])).strftime("%d-%m-%Y")
         js = (get or session.get_json)(ep["announcements"]["path"], {**ep["announcements"]["params"], "symbol": sym, "from_date": frm, "to_date": now.strftime("%d-%m-%Y")},
                                        referer=base + ep["announcements"]["referer"])
         pat = re.compile(src["transcript_pattern"], re.I)
-        n = 0
-        for a in js if isinstance(js, list) else (js or {}).get("data", []):          # candidates: some are only notices, run() skips those after reading them
+        notice = re.compile(src.get("transcript_notice_pattern", "intimation|schedule of|invitation"), re.I)
+        cands = []
+        for a in js if isinstance(js, list) else (js or {}).get("data", []):
             url = a.get("attchmntFile") or ""
-            if url.lower().endswith(".pdf") and pat.search(f"{a.get('desc', '')} {a.get('attchmntText', '')}"):
+            text = f"{a.get('desc', '')} {a.get('attchmntText', '')}"
+            if url.lower().endswith(".pdf") and pat.search(text):
                 try:
                     d = datetime.strptime(a.get("an_dt", "")[:11], "%d-%b-%Y").date().isoformat()
                 except ValueError:
                     d = None
-                docs.append({"kind": "transcript", "url": url, "period": f"call {d}" if d else None, "asof": d})
-                n += 1
-                if n >= src.get("transcript_candidates", 5):
-                    break
+                rank = 2 if re.search("transcript", text, re.I) else 0 if notice.search(text) else 1      # a filing called a transcript first; scheduling notices last (they are only notices)
+                cands.append((-rank, -(int(d.replace("-", "")) if d else 0), url, d))
+        for _, _, url, d in sorted(cands)[: src.get("transcript_candidates", 5)]:
+            docs.append({"kind": "transcript", "url": url, "period": f"call {d}" if d else None, "asof": d})
     except Exception:  # noqa: BLE001
         pass
     return docs
@@ -486,7 +496,7 @@ def extract_filing(doc, fetcher, llm, src, now, llm_cache, log=print):
         return [], [], [f"{doc['kind']}: no readable text"], 0
     if doc["kind"] == "transcript" and sum(len(t) for _, t in pages) < src.get("min_transcript_chars", 6000):
         return [], [], ["transcript: too short to be a transcript (a notice); skipped"], 0
-    sel = select_pages(pages, src["keywords"], src["min_keyword_hits"], src["max_pages_per_filing"], src["max_chunks_per_filing"] * src["max_chunk_chars"])
+    sel = select_pages(pages, src["keywords"], src["min_keyword_hits"], src["max_pages_per_filing"], src["max_chunks_per_filing"] * src["max_chunk_chars"], src.get("page_bonus"))
     chunks = chunk_pages(sel, src["max_chunk_chars"])[: src["max_chunks_per_filing"]]
     edges, facs, notes = [], [], [f"{doc['kind']}: {len(pages)} pages, {len(sel)} relevant, {len(chunks)} sent"]
     answered = 0
@@ -615,10 +625,38 @@ def assemble(old, owner_results, stocks, houses, anon_min=0.75, now=None):
 
 # ------------------------------------------------------------------ driver
 
+class DiscoverError(Exception):
+    """NSE did not answer the filing list (blocked, paused, timed out). Different from an answer with no filings."""
+
+
+class NoUniverse(Exception):
+    """data/terminal/universe.json is missing or empty. Without it no company can be recognised as listed, so every owner would be saved as an unnamed external
+    node (this is what damaged the graph committed on 2026-10-05): refuse to write anything."""
+
+
+def load_universe():
+    stocks = load_json(TERM / "universe.json", {"stocks": []}).get("stocks", [])
+    if not stocks:
+        raise NoUniverse("data/terminal/universe.json is missing or empty (run scripts/nse_eod.py first): the graph is left untouched")
+    return stocks
+
+
+def reassemble(log=print, now=None):
+    """Rebuild nodes, ids and coverage from the edges already in data/supply_graph.json using the current universe. No network, no language model."""
+    now = now or now_utc()
+    stocks = load_universe()
+    houses = (load_json(ROOT / "data" / "config" / "business_houses.json", {}) or {}).get("houses", [])
+    old = load_json(OUT, {"cos": {}})
+    doc = assemble(old, {}, stocks, houses, load_cfg()["anon_resolve_min_conf"], now)
+    OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    log(f"reassembled {OUT.name}: {doc['coverage']}")
+    return doc
+
+
 def run(symbols, limit, refresh, dry, session, llm, fetcher, now=None, log=print):
     now = now or now_utc()
     cfg, src = load_cfg(), load_json(SRC)
-    stocks = load_json(TERM / "universe.json", {"stocks": []})["stocks"]
+    stocks = load_universe()
     houses = (load_json(ROOT / "data" / "config" / "business_houses.json", {}) or {}).get("houses", [])
     index = NameIndex(stocks, load_json(ROOT / "data" / "config" / "news_aliases.json", {}))
     old = load_json(OUT, {"cos": {}})
@@ -636,8 +674,14 @@ def run(symbols, limit, refresh, dry, session, llm, fetcher, now=None, log=print
         try:
             docs = discover(session, sym, src, now)
         except Exception as e:  # noqa: BLE001
-            report.append((sym, f"filings could not be listed: {e}"))
+            report.append((sym, f"filings could not be listed (will be retried): {e}"))
+            log("  %-12s %s" % report[-1])
+            if "paused" in str(e).lower() or sum(1 for r in report[-3:] if "could not be listed" in r[1]) >= 3:
+                report.append((sym, "stopped: NSE is not answering (three failures in a row); the run resumes from here next time"))
+                log("  " + report[-1][1])
+                break
             continue
+        time.sleep(PACE_S)
         if not docs:
             results[sym] = {"edges": [], "fac": [], "at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "notes": ["no filing found"]}
             report.append((sym, "no filing found"))
@@ -687,20 +731,32 @@ def main(argv=None):
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--refresh", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--max-calls", type=int, default=None, help="model calls allowed in this run (default: nexus.max_llm_calls_per_run)")
+    ap.add_argument("--reassemble", action="store_true", help="rebuild nodes and coverage from the saved edges (no network, no model)")
     a = ap.parse_args(argv)
     try:
         from aladin_env import load_env
         load_env()
     except Exception:  # noqa: BLE001
         pass
+    if a.reassemble:
+        try:
+            reassemble()
+        except NoUniverse as e:
+            print(e)
+        return 0
     cfg = load_cfg()
-    llm = LLM(max_calls=cfg["max_llm_calls_per_run"])
+    llm = LLM(max_calls=a.max_calls or cfg["max_llm_calls_per_run"])
     if llm.provider is None:
         print("No GROQ_API_KEY or GEMINI_API_KEY set: nothing to extract with. Add a free key to .env (see .env.example).")
         return 0
     from aladin_ticker_daemon import NseSession
     syms = [s.strip().upper() for s in a.symbols.split(",") if s.strip()]
-    run(syms, a.limit or cfg["filings_per_run"], a.refresh, a.dry_run, NseSession(), llm, Fetcher())
+    try:
+        run(syms, a.limit or cfg["filings_per_run"], a.refresh, a.dry_run, NseSession(), llm, Fetcher())
+    except NoUniverse as e:
+        print(e)
+    print(f"model calls this run: {llm.calls}; tokens reported by the providers: {sum(llm.tokens.values()):,} {llm.tokens}")
     return 0
 
 

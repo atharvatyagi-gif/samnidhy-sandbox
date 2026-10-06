@@ -6,6 +6,7 @@
    ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. */
 
 import { lanesAt, carrierOf, ageMin, ageText, isStale, shipTypeLabel, countIn } from "./desk-lanes.js";
+import { coverageState } from "./desk-deps.js";
 import { ageLabel } from "./desk-kin.js";
 
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.";
@@ -260,12 +261,7 @@ function companyTab() {
   return ({ overview: overviewTab, chain: chainTab, deps: depsTab, quant: quantTab, sent: sentTab, sources: sourcesTab })[cur.tab]();
 }
 function stockA() { return ((ctx.S.aladin || {}).stocks || {})[cur.id]; }
-function covLine(sym) {
-  const c = graph.cos && graph.cos[sym];
-  const n = edgesOf(sym).length;
-  if (!c) return `Not read yet: this company's filings have not been processed (${graph.coverage.companies_done} of ${graph.coverage.companies_total} listed companies have).`;
-  return `Filings read ${c.at ? c.at.slice(0, 10) : ""} · ${n} link${n === 1 ? "" : "s"} found.`;
-}
+function covLine(sym) { return coverageState(graph, sym).label; }
 function overviewTab() {
   const { esc } = ctx, sym = cur.id, a = stockA(), x = ctx.q(sym), A = ctx.S.aladin;
   const price = x ? `${ctx.inr(x.p)} <span class="${ctx.ud(x.pct)}">${x.pct != null ? ctx.sg(x.pct) + "%" : ""}</span>` : "—";

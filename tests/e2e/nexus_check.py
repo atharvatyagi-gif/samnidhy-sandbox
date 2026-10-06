@@ -125,7 +125,12 @@ def run():
         pg.fill("#al-q", SYM)
         pg.wait_for_timeout(700)
         row = pg.inner_text(f'tr[data-s="{SYM}"]')
-        check("ALADIN: Impact column shows the score (positive = adverse)", "+35" in row, row[:120].replace("\n", " "))
+        _x = json.loads((ROOT / "data" / "aladin" / "latest.json").read_text(encoding="utf-8"))["stocks"].get(SYM, {}).get("x")
+        if _x is None:
+            print("SKIP ALADIN Impact column: the local nightly file has no impact block for " + SYM + " (no usable listed-to-listed edge with a stated share yet)")
+        else:
+            _ip = _x["ip"] if _x.get("ip") is not None else -_x["i"] / 25                         # files written before the estimate was stored: undo the scale
+            check("ALADIN: the Impact column shows the linked-move estimate in % pts (not the model-only score)", f"{_ip:+.1f}" in row, row[:120].replace("\n", " "))
         check("ALADIN: Fundamental cell tooltip carries 'F x · I y'", pg.locator(f'tr[data-s="{SYM}"] [title^="F "]').count() >= 1 or pg.locator(f'tr[data-s="{SYM}"] .al-gc').count() >= 2)
         pg.click(f'tr[data-s="{SYM}"] .al-tg')
         pg.wait_for_timeout(400)

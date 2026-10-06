@@ -131,3 +131,33 @@ export function shockSentence(row) {
   const part = e.w == null ? `${row.cp} is linked to ${row.focal} (no share stated)` : `${row.cp} is ${Math.round(e.w * 100)}% of ${row.focal}'s ${noun}`;
   return `${role} ${row.cp} ${sgn(row.cpMove)} today · ${row.focal} ${sgn(row.focalMove)} · ${part} (${docLabel(e)}, conf ${(e.conf ?? 0).toFixed(1)}) — association, not proof of cause${row.stored ? " · move shown is the last close, not live" : ""}`;
 }
+
+/* ---------- what the graph knows (and does not know) about one company ---------- */
+const STALE_DAYS = 400;                                  // an annual report is a year old at most, plus time to file
+/* -> {code, label}: why a company shows what it shows. cos[sym] = {at, edges, fac, notes} written by the graph builder. */
+export function coverageState(graph, sym, nowMs = Date.now()) {
+  const c = graph && graph.cos && graph.cos[sym];
+  if (!c) return { code: "not_processed", label: "Not processed yet: this company's filings have not been read." };
+  const notes = (c.notes || []).join(" | ").toLowerCase();
+  const n = c.edges || 0;
+  if (/no filing found|could not be listed/.test(notes) && !n) return { code: "filing_unavailable", label: "Filing unavailable: no annual report or call transcript was found for it." };
+  if (/no readable text/.test(notes) && !n && !/\d+ pages/.test(notes)) return { code: "unreadable", label: "Unreadable scan: its filing is an image without text, so nothing could be read." };
+  const t = Date.parse(c.at || "");
+  if (Number.isFinite(t) && nowMs - t > STALE_DAYS * 86400000) return { code: "stale", label: `Stale: read ${c.at.slice(0, 10)}, more than ${STALE_DAYS} days ago.` };
+  if (!n) return { code: "read_none", label: "Filings read, no dependency disclosed: nothing in them names a customer or supplier with a quote." };
+  return { code: "read", label: `Filings read ${(c.at || "").slice(0, 10)}: ${n} dependenc${n === 1 ? "y" : "ies"} found.` };
+}
+
+/* the number that decides whether the impact score can say anything: stocks with a disclosed, quoted dependency on ANOTHER LISTED company with a stated share.
+   -> {focal: Set of stock symbols, edges: n}. A share measures the dependence of the node whose revenue (supplier side) or purchases (customer side) it is. */
+export function listedDependencyStocks(graph, min = MIN_CONF) {
+  const N = nodeMap(graph), focal = new Set();
+  let edges = 0;
+  for (const e of graph.edges || []) {
+    const s = N.get(e.s), d = N.get(e.d);
+    if (e.kind === "sector_io" || (e.conf ?? 0) < min || e.w == null || !s || !d || s.k !== "co" || d.k !== "co") continue;
+    edges++;
+    if (e.wb === "revenue") focal.add(e.s); else if (e.wb === "purchases") focal.add(e.d);
+  }
+  return { focal, edges };
+}

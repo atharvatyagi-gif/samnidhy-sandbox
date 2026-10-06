@@ -170,3 +170,42 @@ test("the real supply graph runs through every function without surprises", () =
   const h = houseDeps(g, cos.slice(0, 4).map(n => n.id), {});
   assert.ok(h.customers.length <= 5 && h.suppliers.length <= 5 && h.cover.members === 4);
 });
+
+/* ---------- coverage states and the "N of M" number ---------- */
+import { coverageState, listedDependencyStocks } from "../../desk-deps.js";
+const NOW = Date.parse("2026-10-06T00:00:00Z");
+
+test("every company gets one honest coverage state", () => {
+  const g = { cos: {
+    OK: { at: "2026-09-01T00:00:00Z", edges: 3, fac: 1, notes: ["annual: 100 pages"] },
+    NONE: { at: "2026-09-01T00:00:00Z", edges: 0, fac: 0, notes: ["annual: 120 pages, 6 relevant, 2 sent"] },
+    GONE: { at: "2026-09-01T00:00:00Z", edges: 0, fac: 0, notes: ["no filing found"] },
+    SCAN: { at: "2026-09-01T00:00:00Z", edges: 0, fac: 0, notes: ["annual: no readable text"] },
+    OLD: { at: "2024-01-01T00:00:00Z", edges: 2, fac: 0, notes: [] },
+  } };
+  assert.equal(coverageState(g, "MISSING", NOW).code, "not_processed");
+  assert.equal(coverageState(g, "GONE", NOW).code, "filing_unavailable");
+  assert.equal(coverageState(g, "SCAN", NOW).code, "unreadable");
+  assert.equal(coverageState(g, "OLD", NOW).code, "stale");
+  assert.equal(coverageState(g, "NONE", NOW).code, "read_none");
+  assert.equal(coverageState(g, "OK", NOW).code, "read");
+  assert.match(coverageState(g, "OK", NOW).label, /3 dependencies/);
+  assert.equal(coverageState(null, "X", NOW).code, "not_processed");
+});
+
+test("the synthetic graph: only listed-to-listed edges with a share count, attributed to the node the share measures", () => {
+  const g = JSON.parse(readFileSync(new URL("../fixtures/synthetic_graph.json", import.meta.url), "utf8"));
+  const L = listedDependencyStocks(g);
+  assert.equal(L.edges, 2);                                         // s3 has an unlisted end
+  assert.deepEqual([...L.focal].sort(), ["CUSB", "SUPA"]);           // s1: SUPA's revenue share (SUPA depends on CUSB); s2: CUSB's purchases share (CUSB depends on SUPA)
+  assert.equal(listedDependencyStocks({ nodes: [], edges: [] }).focal.size, 0);
+});
+
+test("the shock table on the synthetic graph is ranked by share x the counterparty's move", () => {
+  const g = JSON.parse(readFileSync(new URL("../fixtures/synthetic_graph.json", import.meta.url), "utf8"));
+  const shocks = [{ focal: "SUPA", cp: "CUSB", rel: "supplies", w: 0.30, conf: 0.9, dr: -6, edge: "s1", cp_ret: -0.06, focal_ret: -0.01 },
+                  { focal: "CUSB", cp: "SUPA", rel: "supplies", w: 0.20, conf: 0.8, dr: 4, edge: "s2", cp_ret: 0.04, focal_ret: 0.0 }];
+  const rows = rankShocks(shocks, g.edges, () => null);
+  assert.deepEqual(rows.map(r => r.edge), ["s1", "s2"]);
+  assert.match(shockSentence(rows[0]), /association, not proof of cause/);
+});

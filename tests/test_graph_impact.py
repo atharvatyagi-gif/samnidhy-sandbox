@@ -217,3 +217,19 @@ def test_a_stock_bar_on_a_day_the_index_did_not_trade_does_not_blank_the_latest_
     g = {"nodes": [], "edges": [E("e1", "A", "B", 0.4, "revenue")]}
     imp, _ = gi.build(g, closes, n2, CFG)
     assert imp["as_of"] == closes.index[-1].strftime("%Y-%m-%d") and "A" in imp["stocks"]
+
+
+def test_synthetic_fixture_graph_exposures_shocks_and_impact():
+    """tests/fixtures/synthetic_graph.json is invented (labelled so, never published): it lets the logic be proven without real filings."""
+    g = json.loads((ROOT / "tests" / "fixtures" / "synthetic_graph.json").read_text(encoding="utf-8"))
+    assert g["_note"].startswith("SYNTHETIC")
+    ex = gi.exposures(g, {"SUPA", "CUSB", "CUSC", "CUSD"}, 0.5)
+    assert {(f, i["cp"], i["w"]) for f, its in ex.items() for i in its} == {("SUPA", "CUSB", 0.30), ("CUSB", "SUPA", 0.20)}        # s3 has an unlisted end
+    closes, nifty = make_prices(420, seed=11, syms=["SUPA", "CUSB", "CUSC", "CUSD"])
+    closes.iloc[-1, closes.columns.get_loc("CUSB")] *= 0.85                                                                           # the customer drops 15% on the last day
+    imp, shocks = gi.build(g, closes, nifty, CFG)
+    x = imp["stocks"]["SUPA"]
+    assert x["ip"] < 0 and x["i"] > 0 and x["top"][0][0] == "CUSB"
+    assert x["i"] == pytest.approx(min(100, -25 * x["ip"]), abs=0.1)
+    assert [s["edge"] for s in shocks["shocks"]][0] == "s1" and shocks["shocks"][0]["focal"] == "SUPA"
+    assert "CUSC" not in imp["stocks"] and "CUSD" not in imp["stocks"]                                                                   # no disclosed dependency: not measured, never 0

@@ -4,7 +4,7 @@
    "Open in NEXUS". Expansions stay open across the page's polls, and live price changes patch existing cells instead of rebuilding the table.
    The wording is "linked move" and "association, not proof of cause": a counterparty's move does not cause a stock's.
    ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. */
-import { lineage, rankShocks, shockSentence, shareText, docLabel } from "./desk-deps.js";
+import { lineage, rankShocks, shockSentence, shareText, docLabel, listedDependencyStocks } from "./desk-deps.js";
 import { preload as alPreload, sentHtml } from "./desk-aladin.js";
 
 let ctx = null, kind = "price", horizon = 10, graph = null, graphLoading = null, shocks = null, moves = null, movesTried = false;
@@ -85,9 +85,9 @@ async function renderShocks(el) {
   if (!shocks || !graph) { el.innerHTML = '<p class="empty">The supply-chain data could not be loaded. Try again in a minute.</p>'; return; }
   const rows = shockRows();
   if (!rows.length) {
-    const N = new Map(graph.nodes.map(n => [n.id, n])), pairs = graph.edges.filter(e => e.kind !== "sector_io" && e.conf >= 0.5 && e.w != null && N.get(e.s) && N.get(e.s).k === "co" && N.get(e.d) && N.get(e.d).k === "co").length;
+    const L = listedDependencyStocks(graph), read = graph.coverage.companies_done, total = graph.coverage.companies_total;
     el.innerHTML = `<p class="asof">${shocks.as_of ? "Shocks as of " + esc(shocks.as_of) : "No shock scores have been computed yet"} · linked moves, not causes</p>
-      <p class="empty">No supply-chain shock to show. A shock needs a disclosed dependency between two listed companies with a stated share, and a counterparty that moves by at least 1.5 standard deviations beyond the market. The filings read so far (${graph.coverage.companies_done} companies) disclose ${pairs} such dependenc${pairs === 1 ? "y" : "ies"}, so there is nothing to rank yet. This fills in as more filings are read.</p>`;
+      <p class="empty">No supply-chain shock to show. <b>${L.focal.size} of ${read}</b> companies read so far have a disclosed dependency on another listed company with a stated share (${total ? `${read} of ${total} listed securities have been read` : `${read} companies read`}), through ${L.edges} such dependenc${L.edges === 1 ? "y" : "ies"}. A shock needs one of those and a counterparty that moves by at least 3 percentage points beyond the market over 5 days, so there is nothing to rank right now. This fills in as more filings are read.</p>`;
     return;
   }
   const sig = rows.map(r => r.edge).join(",");

@@ -41,6 +41,10 @@ jobs:
           pip install -r requirements.txt
           pip install pypdf jsonschema rapidfuzz
 
+      - name: NSE universe (the builder needs it to recognise listed companies; without it the graph is left untouched)
+        continue-on-error: true
+        run: '[ -f data/terminal/universe.json ] || python scripts/nse_eod.py'
+
       - name: Restore the filings and model-answer cache
         uses: actions/cache/restore@v4
         continue-on-error: true
