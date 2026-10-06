@@ -1,0 +1,3 @@
+BRANCH RULE (decided 2026-10-06, Option B): work on feature/aladin-nexus-desk. The owner authorises merging each finished, fully tested item into main (fast-forward or merge commit; never force-push, never rewrite history). Before each merge run that item's acceptance checks and paste the results; if any check fails, do not merge. Every automated data commit ends with [skip ci].
+
+Other standing rules: real data only (show "not measured" with a reason, never invent); no colour literals outside :root in terminal.css; banned words in new UI strings: buy, sell, target, recommendation, guaranteed (scripts/check_banned.py); keys live in the git-ignored .env and tests never read it.
