@@ -89,7 +89,7 @@ jobs:
           AISSTREAM_API_KEY: ${{ secrets.AISSTREAM_API_KEY }}
         run: |
           pip install -q websockets || true
-          python scripts/transport_snapshot.py
+          python scripts/aladin_telemetry.py --once
 
       - name: Rebuild the site
         run: python scripts/build_site.py

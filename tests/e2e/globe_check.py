@@ -3,8 +3,8 @@ Browser checks for the Globe's D3 views and the flight / vessel / hotspot / chok
 
   python tests/e2e/globe_check.py
 
-Uses the real local transport snapshot (python scripts/transport_snapshot.py --force) for flights. The vessel feed needs a key, so vessel tests inject clearly labelled
-TEST-ONLY ships into the served transport.json; a synthetic 2,500-flight / 1,500-vessel file measures the frame rate. Nothing is written to disk.
+Uses the real local telemetry snapshot (python scripts/aladin_telemetry.py --once --force) for flights. The vessel feed needs a key, so vessel tests inject clearly labelled
+TEST-ONLY ships into the served telemetry.json; a synthetic 2,500-flight / 1,500-vessel file measures the frame rate. Nothing is written to disk.
 """
 import json
 import random
@@ -18,24 +18,38 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from acceptance import BASE, check, ok, page_for  # noqa: E402
 
-TRANSPORT = json.loads((ROOT / "data" / "live_extra" / "transport.json").read_text(encoding="utf-8"))
-SHIPS = [[419000001, "TEST VESSEL ALPHA", 27.1, 56.3, 11.2, 200.0, 84, "SIKKA", "10-07 05:30"], [419000002, "TEST VESSEL BETA", 13.1, 43.4, 9.0, 120.0, 70, None, None]]   # TEST-ONLY
-CARGO = next((f for f in TRANSPORT["flights"] if f[8] == 1), None)
+TRANSPORT = json.loads((ROOT / "data" / "live_extra" / "aladin_telemetry.json").read_text(encoding="utf-8"))
+SHIPS = [[419000001, "TEST VESSEL ALPHA", 27.1, 56.3, 11.2, 200.0, 200.0, 84, "SIKKA", "10-07 05:30", 0], [419000002, "TEST VESSEL BETA", 13.1, 43.4, 9.0, 120.0, 120.0, 70, None, None, 0]]   # TEST-ONLY
+CARGO = next((f for f in TRANSPORT["flights"] if f[9] == 1), None)
 ANY = TRANSPORT["flights"][0]
+
+
+def fresh(j, age=20):
+    """The saved local file may be a day old; the test wants markers whose own fix time is recent (so they are not ghosts)."""
+    t = int(time.time() - age)
+    j["generated_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t))
+    for f in j.get("flights") or []:
+        f[10] = t
+    for v in j.get("vessels") or []:
+        v[10] = t
+    return j
 
 
 def with_vessels(route):
     r = route.fetch()
     j = r.json()
-    j["vessels"], j["vessels_reason"] = SHIPS, None
-    j["generated_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 120))     # the saved local file may be a day old; the test wants a fresh one
-    route.fulfill(response=r, body=json.dumps(j))
+    j["vessels"], j["reason"] = [list(v) for v in SHIPS], None
+    route.fulfill(response=r, body=json.dumps(fresh(j)))
 
 
 def old_snapshot(route):
     r = route.fetch()
     j = r.json()
     j["generated_utc"] = "2026-10-01T00:00:00Z"
+    for f in j.get("flights") or []:
+        f[10] = 1790000000                                                          # 2026-09-21: far past the extrapolation caps
+    for v in j.get("vessels") or []:
+        v[10] = 1790000000
     route.fulfill(response=r, body=json.dumps(j))
 
 
@@ -43,11 +57,10 @@ def big_snapshot(route):
     rnd = random.Random(7)
     r = route.fetch()
     j = r.json()
-    j["flights"] = [[f"f{i:05d}", f"XX{i}", rnd.uniform(-40, 60), rnd.uniform(-20, 130), 9000, 220, rnd.randint(0, 359), "Testland", i % 9 == 0 and 1 or 0] for i in range(2500)]
-    j["vessels"] = [[500000 + i, f"V{i}", rnd.uniform(-35, 45), rnd.uniform(-10, 125), 8, 90, 70, None, None] for i in range(1500)]
-    j["vessels_reason"] = None
-    j["generated_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 120))
-    route.fulfill(response=r, body=json.dumps(j))
+    j["flights"] = [[f"f{i:05d}", f"XX{i}", rnd.uniform(-40, 60), rnd.uniform(-20, 130), 9000, 220, rnd.randint(0, 359), 0, "Testland", i % 9 == 0 and 1 or 0, 0] for i in range(2500)]
+    j["vessels"] = [[500000 + i, f"V{i}", rnd.uniform(-35, 45), rnd.uniform(-10, 125), 8, 90, 90, 70, None, None, 0] for i in range(1500)]
+    j["reason"] = None
+    route.fulfill(response=r, body=json.dumps(fresh(j, 120)))
 
 
 def globe_tab(pg):
@@ -87,19 +100,19 @@ def click_item(pg, typ, kind=None):
 def run():
     with sync_playwright() as pw:
         # 1. nothing heavy before the viewer asks for it; then the globe
-        b, pg, errs, reqs = page_for(pw, routes={"**/transport.json*": with_vessels})
+        b, pg, errs, reqs = page_for(pw, routes={"**/telemetry.json*": with_vessels})
         pg.goto(BASE)
         pg.wait_for_timeout(5000)
         globe_tab(pg)
         check("Globe tab opens on the existing Map; the D3 libraries and the snapshot are not requested yet",
-              not any(("d3-geo" in u or "topojson" in u or "world-atlas" in u or "transport.json" in u) for u, _ in reqs) and pg.evaluate("!document.querySelector('#globe-map').hidden"))
+              not any(("d3-geo" in u or "topojson" in u or "world-atlas" in u or "telemetry.json" in u) for u, _ in reqs) and pg.evaluate("!document.querySelector('#globe-map').hidden"))
         check("the Map / Globe / Flat / List switch is there and the Map is on", pg.locator("#gd-mode button").count() == 4 and pg.get_attribute('#gd-mode [data-m="map"]', "aria-pressed") == "true")
         mode(pg, "globe", 4000)
-        check("Globe: the libraries and the snapshot are requested only now", any("d3-geo" in u for u, _ in reqs) and any("transport.json" in u for u, _ in reqs))
+        check("Globe: the libraries and the snapshot are requested only now", any("d3-geo" in u for u, _ in reqs) and any("telemetry.json" in u for u, _ in reqs))
         check("Globe: the canvas draws real pixels and has items", drawn(pg) and int(pg.get_attribute("#gd-canvas", "data-items")) >= 10, pg.get_attribute("#gd-canvas", "data-items"))
         check("Globe: the Leaflet map is hidden, the canvas shown", pg.evaluate("document.querySelector('#globe-map').hidden && !document.querySelector('#gd-wrap').hidden"))
         chip = pg.inner_text("#gd-chips")
-        check("snapshot chips: OpenSky age and attribution, AIS", "Flights · OpenSky" in chip and "min old" in chip.replace("under a minute old", "min old") and "Vessels · AISstream" in chip, chip[:200])
+        check("snapshot chips: source, cadence, newest fix age", "Flights · OpenSky" in chip and "refreshed about every" in chip and "newest fix" in chip and "Vessels · AISstream" in chip, chip[:200])
         check("the chip's tooltip carries the OpenSky attribution", "opensky-network.org" in (pg.get_attribute("#gd-chips .gd-chip", "title") or ""))
 
         n0 = len(items(pg))
@@ -204,16 +217,16 @@ def run():
         b.close()
 
         # 6. an old snapshot is greyed and says so
-        b, pg, errs, _ = page_for(pw, routes={"**/transport.json*": old_snapshot})
+        b, pg, errs, _ = page_for(pw, routes={"**/telemetry.json*": old_snapshot})
         pg.goto(BASE)
         pg.wait_for_timeout(5000)
         globe_tab(pg)
         mode(pg, "globe", 3500)
-        check("a snapshot older than its limit is labelled and greyed", "older than its limit" in pg.inner_text("#gd-chips") and pg.locator("#gd-chips .gd-chip.stale").count() >= 1, pg.inner_text("#gd-chips")[:140])
+        check("a snapshot whose fixes are older than the extrapolation caps says 'positions not live' and its markers are ghosts", "positions not live" in pg.inner_text("#gd-chips") and pg.locator("#gd-chips .gd-chip.stale").count() >= 1, pg.inner_text("#gd-chips")[:140])
         b.close()
 
         # 7. frame rate with 2,500 flights and 1,500 vessels at 4x slower CPU
-        b, pg, errs, _ = page_for(pw, throttle=4, routes={"**/transport.json*": big_snapshot})
+        b, pg, errs, _ = page_for(pw, throttle=4, routes={"**/telemetry.json*": big_snapshot})
         pg.goto(BASE)
         pg.wait_for_timeout(6000)
         globe_tab(pg)
@@ -249,12 +262,12 @@ def run():
         b.close()
 
         # 9. no snapshot published: honest, no errors
-        def no_transport(route):
+        def no_telemetry(route):
             r = route.fetch()
             m = r.json()
-            m.pop("transport", None)
+            m.pop("telemetry", None)
             route.fulfill(response=r, body=json.dumps(m))
-        b, pg, errs, _ = page_for(pw, routes={"**/desk_data.json*": no_transport})
+        b, pg, errs, _ = page_for(pw, routes={"**/desk_data.json*": no_telemetry})
         pg.goto(BASE)
         pg.wait_for_timeout(5000)
         globe_tab(pg)

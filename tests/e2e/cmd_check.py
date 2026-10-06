@@ -79,7 +79,8 @@ def run():
         run_cmd(pg, "FLIGHT ZZZ9999", 2500)
         check("FLIGHT with a snapshot but no such callsign: says so with the snapshot's age, invents nothing", "Not in the current snapshot (age" in msg(pg), msg(pg)[:140])
         run_cmd(pg, "VESSEL EVER GIVEN")
-        check("VESSEL with no AIS feed says the layer is off", "Vessel layer off" in msg(pg), msg(pg)[:100])
+        has_ais = bool(json.loads((ROOT / "data" / "live_extra" / "aladin_telemetry.json").read_text(encoding="utf-8")).get("vessels"))     # depends on whether this PC's snapshot was taken with an AIS key
+        check("VESSEL: with no AIS feed the layer is off; with one, an unknown name is 'not in the snapshot'", ("Not in the current snapshot" if has_ais else "Vessel layer off") in msg(pg), msg(pg)[:100])
 
         run_cmd(pg, "ALADIN INFY", 2500)
         check("ALADIN SYM: Tools tab filtered to the symbol and its row expanded", view_on(pg) == "v-lab" and pg.locator('tr.al-r[data-s="INFY"]').count() == 1 and pg.locator("tr.al-x").count() >= 1)
@@ -107,7 +108,7 @@ def run():
         check("MAP: Globe tab", view_on(pg) == "v-globe")
 
         # no flight snapshot published at all
-        b2, pg2, errs2, _ = page_for(pw, routes={"**/desk_data.json*": lambda route: route.fulfill(response=route.fetch(), body=json.dumps({k: v for k, v in route.fetch().json().items() if k != "transport"}))})
+        b2, pg2, errs2, _ = page_for(pw, routes={"**/desk_data.json*": lambda route: route.fulfill(response=route.fetch(), body=json.dumps({k: v for k, v in route.fetch().json().items() if k != "telemetry"}))})
         pg2.goto(BASE)
         pg2.wait_for_timeout(5500)
         run_cmd(pg2, "FLIGHT AIC101", 800)

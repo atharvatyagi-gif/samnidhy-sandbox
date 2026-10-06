@@ -23,6 +23,9 @@ export function init(c) {
   if (store.get()) setTimeout(connect, 1500);
 }
 export function onTick(cb) { listeners.add(cb); return () => listeners.delete(cb); }
+const teleListeners = new Set();
+/* flight and vessel telemetry from the same daemon socket: {type:"telemetry", t, cadence_s, full, fl, ve, gone} (full on connect, deltas after) */
+export function onTelemetry(cb) { teleListeners.add(cb); return () => teleListeners.delete(cb); }
 export function emitTick(batch) { listeners.forEach(cb => { try { cb(batch); } catch (e) { /* one bad listener must not stop the rest */ } }); }
 export const enabled = () => store.get();
 /* which feed the daemon is using: "angel" (Angel One, real-time) or "nse-web" (the free web feed, polled about every 3 s); null until the daemon has said hello */
@@ -70,6 +73,7 @@ function convert(q) {
 }
 
 function onMsg(m) {
+  if (m.type === "telemetry") { teleListeners.forEach(cb => { try { cb(m); } catch (e) { /* one bad listener must not stop the rest */ } }); return; }   // independent of the price feed
   if (ctx.LIVE.ok) return;                                    // the relay feed wins
   if (m.type === "hello") {
     connected = !!m.ok; fails = 0; lastTickAt = Date.now(); clearInterval(poll); poll = null; src = m.src || null;

@@ -26,7 +26,7 @@ SITE = ROOT / "site"
 STATIC = ["index.html", "landing.css", "landing.js", "auth.html", "auth-check.js", "config.js",
           "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js",
           "chart-engine.js", "chart-indicators.js", "mode-dock.js", "globe-map.js",
-          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js"]
+          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js"]
 TERMINAL = ROOT / "data" / "terminal"
 # Scripts/styles that pages load. Browsers keep these for a while (GitHub Pages: 10 min, some longer), so an
 # update could mix a new page with an old script. Every reference gets ?v=<hash of the file>, which changes
@@ -34,7 +34,7 @@ TERMINAL = ROOT / "data" / "terminal"
 # ORDER MATTERS: a file must come AFTER every file it imports (desk-map imports desk-aladin, which imports desk-ticks), because each file is stamped with
 # the hashes of the files before it. Out of order, an import keeps its plain address while the page loads the hashed one, and the browser runs the file
 # twice as two separate modules (one of them never initialised). tests/test_build_assets.py checks this.
-ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-ticks.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-movers.js", "desk-sectors.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
+ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-ticks.js", "desk-kin.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-movers.js", "desk-sectors.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
 
 
 def geo_summary(g: dict) -> dict:
@@ -125,12 +125,12 @@ def main() -> None:
             "houses": DATA / "config" / "business_houses.json", "paper": DATA / "paper_trades" / "portfolio.json", "method": DATA / "config" / "aladin_method.json",
             "graph": DATA / "supply_graph.json", "shocks": DATA / "aladin" / "shocks.json",
             "lanes": DATA / "config" / "trade_lanes.json", "moves": DATA / "aladin" / "moves.json",
-            "transport": DATA / "live_extra" / "transport.json"}                 # the ONE file from live_extra that is published: positions from OpenSky / AISstream, never the tick feed
+            "telemetry": DATA / "live_extra" / "aladin_telemetry.json"}             # the ONE file from live_extra that is published: positions from OpenSky / AISstream, never the tick feed
     present = {}
     for key, src in desk.items():
         present[key] = src.exists()
         if src.exists():
-            shutil.copyfile(src, SITE / {"aladin": "aladin.json", "sentiment": "sentiment.json", "geo": "geo.json", "houses": "houses.json", "paper": "paper.json", "method": "aladin_method.json", "graph": "supply_graph.json", "shocks": "shocks.json", "lanes": "trade_lanes.json", "transport": "transport.json", "moves": "aladin_moves.json"}[key])
+            shutil.copyfile(src, SITE / {"aladin": "aladin.json", "sentiment": "sentiment.json", "geo": "geo.json", "houses": "houses.json", "paper": "paper.json", "method": "aladin_method.json", "graph": "supply_graph.json", "shocks": "shocks.json", "lanes": "trade_lanes.json", "telemetry": "telemetry.json", "moves": "aladin_moves.json"}[key])
     # geo.json itself loads only when the Globe tab is opened; this tiny summary (a few hundred bytes) is what the regime strip and the Brief read.
     present["geo_summary"] = False
     if present.get("geo"):

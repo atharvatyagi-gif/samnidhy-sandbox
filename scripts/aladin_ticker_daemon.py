@@ -632,7 +632,7 @@ def health_json(hub, source, clients, port):
             "stale": hub.stale(), "clients": len(clients), "port": port, "poll_latency_ms": source.latency_ms}
 
 
-async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=None):
+async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=None, telemetry=None):
     from websockets.asyncio.server import serve as ws_serve, broadcast
     stop = stop or asyncio.Event()
     clients = set()
@@ -643,6 +643,8 @@ async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=Non
         try:
             await ws.send(json.dumps(hello()))
             await ws.send(json.dumps({"type": "snap", "q": hub.ticks}, separators=(",", ":")))
+            if telemetry is not None:                                  # a full telemetry snapshot on connect, deltas afterwards (same socket, no second port)
+                await ws.send(json.dumps(telemetry.snapshot(), separators=(",", ":")))
             async for raw in ws:
                 try:
                     m = json.loads(raw)
@@ -659,7 +661,10 @@ async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=Non
 
     def process_request(conn, request):
         if request.path.split("?")[0] == "/health":
-            resp = conn.respond(http.HTTPStatus.OK, json.dumps(health_json(hub, source, clients, port)))
+            h = health_json(hub, source, clients, port)
+            if telemetry is not None:
+                h["telemetry"] = {**telemetry.status, "cadence_s": telemetry.cadence_s, "flights": len(telemetry.state.fl), "vessels": len(telemetry.state.ve)}
+            resp = conn.respond(http.HTTPStatus.OK, json.dumps(h))
             resp.headers["Content-Type"] = "application/json"
             return resp
         return None
@@ -687,7 +692,10 @@ async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=Non
 
     async with ws_serve(handler, host, port, origins=ALLOWED_ORIGINS, process_request=process_request):
         runner = source.run(hub, broadcast_fn, stop) if hasattr(source, "run") else run_source(source, hub, broadcast_fn, stop)
-        await asyncio.gather(runner, dumper())
+        jobs = [runner, dumper()]
+        if telemetry is not None:
+            jobs.append(telemetry.run(lambda m: clients and broadcast(clients, json.dumps(m, separators=(",", ":"))), stop))
+        await asyncio.gather(*jobs)
 
 
 def main(argv=None):
@@ -697,6 +705,7 @@ def main(argv=None):
     ap.add_argument("--source", default=os.environ.get("ALADIN_SOURCE", "auto"), choices=["auto", "nse-web", "angel"])
     ap.add_argument("--port", type=int, default=int(os.environ.get("ALADIN_WS_PORT", 0)) or None)
     ap.add_argument("--interval", type=float, default=3.0, help="seconds between poll rounds (min 2)")
+    ap.add_argument("--no-telemetry", action="store_true", help="do not run the flight and vessel telemetry loop (also off when ALADIN_TELEMETRY=0)")
     a = ap.parse_args(argv)
     import aladin_env
     aladin_env.announce("aladin_ticker_daemon")
@@ -730,8 +739,13 @@ def main(argv=None):
     else:
         hub.src_name = "angel"
         print(f"ALADIN ticker daemon | source angel | ws://127.0.0.1:{port}/ws/ticks | window Mon-Fri 09:00-15:45 IST | every NSE stock, pushed. Ctrl+C to stop.")
+    telemetry = None
+    if not a.no_telemetry and os.environ.get("ALADIN_TELEMETRY", "1") != "0":
+        from aladin_telemetry import Telemetry
+        telemetry = Telemetry()
+        print(f"Telemetry: flights from OpenSky ({telemetry.flight.mode}), vessels " + (telemetry.vessel.name if telemetry.vessel else "off: " + str(telemetry.vessel_reason)))
     try:
-        asyncio.run(serve(hub, source, port, dump_path=ROOT / "data" / "live_extra" / "ticks.json"))
+        asyncio.run(serve(hub, source, port, dump_path=ROOT / "data" / "live_extra" / "ticks.json", telemetry=telemetry))
     except KeyboardInterrupt:
         pass
     return 0

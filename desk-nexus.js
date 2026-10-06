@@ -6,6 +6,7 @@
    ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. */
 
 import { lanesAt, carrierOf, ageMin, ageText, isStale, shipTypeLabel, countIn } from "./desk-lanes.js";
+import { ageLabel } from "./desk-kin.js";
 
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.";
 const REL = { supplies: "supplies", equipment_for: "equipment for", raw_material_from: "raw material from", logistics_for: "logistics for", related_party: "related party", customer_of: "customer of" };
@@ -46,7 +47,7 @@ async function loadExtra() {
   if (!MOVING.has(cur.type)) return;
   const f = files();
   await Promise.all([
-    ctx.S.transport || !f.transport ? 0 : ctx.getJSON("transport.json", true).then(j => { ctx.S.transport = j; }).catch(() => 0),
+    ctx.S.transport || !f.telemetry ? 0 : ctx.getJSON("telemetry.json", true).then(j => { ctx.S.transport = j; }).catch(() => 0),
     extra.lanes || !f.lanes ? 0 : ctx.getJSON("trade_lanes.json", false).then(j => { extra.lanes = j; }).catch(() => 0),
     ctx.S.geo || !f.geo ? 0 : ctx.getJSON("geo.json").then(j => { ctx.S.geo = j; }).catch(() => 0),
     ctx.S.aladin || !f.aladin ? 0 : ctx.getJSON("aladin.json").then(j => { ctx.S.aladin = j; }).catch(() => 0),
@@ -203,7 +204,8 @@ function laneBlock(lat, lon, kind) {
   const rows = L.flatMap(l => (l.exposure || []).map(e => ({ ...e, lane: l.name, laneId: l.id })));
   return `<p class="mut">Inside: ${L.map(l => ctx.esc(l.name)).join("; ")}.</p>${exposureTable(rows, false)}<p class="mut">${ctx.esc(extra.lanes.note)}</p>`;
 }
-const snapNote = k => { const T = ctx.S.transport; return T ? `<p class="mut">${ctx.esc(T.sources[k].attribution)} Snapshot ${ctx.esc(ageText(ageMin(T.generated_utc)))}${isStale(T) ? " (older than its limit: treat as out of date)" : ""}. Positions are not live.</p>` : ""; };
+const fixText = fix => fix ? `${new Date(fix * 1000).toISOString().slice(0, 16).replace("T", " ")} UTC (${ageLabel(Date.now() / 1000 - fix)} ago)` : "not reported";
+const snapNote = k => { const T = ctx.S.transport; return T ? `<p class="mut">${ctx.esc((((T.sources || {})[k]) || {}).attribution || "")} Snapshot ${ctx.esc(ageText(ageMin(T.generated_utc)))}${isStale(T) ? " (older than its limit: treat as out of date)" : ""}. Positions are not live.</p>` : ""; };
 
 function flightPanel() {
   const { esc } = ctx, T = ctx.S.transport, f = flightRow(cur.id);
@@ -212,16 +214,16 @@ function flightPanel() {
   const c = carrierOf(f[1], T.carriers), op = c ? `${esc(c.name)} <span class="mut">(inferred from the callsign prefix ${esc(c.prefix)})</span>` : '<span class="mut">Operator not identified from the callsign</span>';
   return `<table class="tbl sm"><tbody><tr><th>Callsign</th><td>${esc(f[1] || "—")}</td></tr><tr><th>ICAO24 (aircraft address)</th><td>${esc(f[0])}</td></tr><tr><th>Operator</th><td>${op}</td></tr>
     <tr><th>Freighter airline?</th><td>${c ? (c.cargo ? "Yes: this airline flies dedicated freighters" : "No: a passenger airline") : "Unknown"} <span class="mut">(says nothing about what is on board)</span></td></tr>
-    <tr><th>Registered in</th><td>${esc(f[7] || "—")}</td></tr><tr><th>Position</th><td>${f[2].toFixed(3)}, ${f[3].toFixed(3)}</td></tr><tr><th>Altitude</th><td>${f[4] == null ? "—" : Math.round(f[4]).toLocaleString("en-IN") + " m"}</td></tr>
-    <tr><th>Speed</th><td>${f[5] == null ? "—" : Math.round(f[5] * 3.6) + " km/h"}</td></tr><tr><th>Heading</th><td>${f[6] == null ? "—" : f[6] + "°"}</td></tr>${FIXED_ROWS(c ? esc(c.name) + ' <span class="mut">(inferred from the callsign prefix)</span>' : NM)}</tbody></table>
+    <tr><th>Registered in</th><td>${esc(f[8] || "—")}</td></tr><tr><th>Position</th><td>${f[2].toFixed(3)}, ${f[3].toFixed(3)}</td></tr><tr><th>Altitude</th><td>${f[4] == null ? "—" : Math.round(f[4]).toLocaleString("en-IN") + " m"}</td></tr>
+    <tr><th>Speed</th><td>${f[5] == null ? "—" : Math.round(f[5] * 3.6) + " km/h"}</td></tr><tr><th>Heading</th><td>${f[6] == null ? "—" : f[6] + "°"}</td></tr><tr><th>Climb</th><td>${f[7] == null ? "—" : f[7] + " m/s"}</td></tr><tr><th>Position time (the source's own)</th><td>${esc(fixText(f[10]))}</td></tr>${FIXED_ROWS(c ? esc(c.name) + ' <span class="mut">(inferred from the callsign prefix)</span>' : NM)}</tbody></table>
     <div class="sec-t">Lane-level exposure (inference, not this shipment)</div>${laneBlock(f[2], f[3], "air")}${snapNote("flights")}`;
 }
 function vesselPanel() {
   const { esc } = ctx, T = ctx.S.transport, v = vesselRow(cur.id);
-  if (!T || !T.vessels) return `<p class="note">${esc((T && T.vessels_reason) || "Vessel layer off: no AIS key.")}</p>`;
+  if (!T || !T.vessels) return `<p class="note">${esc((T && (T.reason || T.vessels_reason)) || "Vessel layer off: no AIS key.")}</p>`;
   if (!v) return `<p class="note">Not in the current snapshot (age ${esc(ageText(ageMin(T.generated_utc)))}). Ships move: it may have left the areas covered.</p>`;
-  return `<table class="tbl sm"><tbody><tr><th>Name</th><td>${esc(v[1] || "not broadcast")}</td></tr><tr><th>MMSI</th><td>${esc(v[0])}</td></tr><tr><th>Type</th><td>${esc(shipTypeLabel(v[6]))}</td></tr>
-    <tr><th>Destination (as broadcast)</th><td>${esc(v[7] || "not broadcast")}</td></tr><tr><th>ETA (as broadcast)</th><td>${esc(v[8] || "not broadcast")}</td></tr><tr><th>Position</th><td>${v[2].toFixed(3)}, ${v[3].toFixed(3)}</td></tr>
+  return `<table class="tbl sm"><tbody><tr><th>Name</th><td>${esc(v[1] || "not broadcast")}</td></tr><tr><th>MMSI</th><td>${esc(v[0])}</td></tr><tr><th>Type</th><td>${esc(shipTypeLabel(v[7]))}</td></tr>
+    <tr><th>Destination (as broadcast)</th><td>${esc(v[8] || "not broadcast")}</td></tr><tr><th>ETA (as broadcast)</th><td>${esc(v[9] || "not broadcast")}</td></tr><tr><th>Position time (the source's own)</th><td>${esc(fixText(v[10]))}</td></tr><tr><th>Position</th><td>${v[2].toFixed(3)}, ${v[3].toFixed(3)}</td></tr>
     <tr><th>Speed / course</th><td>${v[4] == null ? "—" : v[4] + " kn"} / ${v[5] == null ? "—" : Math.round(v[5]) + "°"}</td></tr>${FIXED_ROWS(NM)}</tbody></table>
     <div class="sec-t">Lane-level exposure (inference, not this shipment)</div>${laneBlock(v[2], v[3], "sea")}${snapNote("vessels")}`;
 }

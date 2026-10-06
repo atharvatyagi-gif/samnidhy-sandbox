@@ -1,0 +1,478 @@
+{
+ "_note": "REAL AISstream messages recorded 2026-10-06 09:32 UTC over a 25 s listening window (key removed)",
+ "messages": [
+  {
+   "recv_ts": 1791279132,
+   "msg": {
+    "MetaData": {
+     "MMSI": 601970000,
+     "MMSI_String": 601970000,
+     "ShipName": "FLAME THORN         ",
+     "latitude": -33.90733,
+     "longitude": 18.42351,
+     "time_utc": "2026-10-06 09:32:08.800161837 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 1,
+      "RepeatIndicator": 0,
+      "UserID": 601970000,
+      "Valid": true,
+      "NavigationalStatus": 7,
+      "RateOfTurn": 0,
+      "Sog": 0.1,
+      "PositionAccuracy": true,
+      "Longitude": 18.42351,
+      "Latitude": -33.90733,
+      "Cog": 360,
+      "TrueHeading": 326,
+      "Timestamp": 8,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": true,
+      "CommunicationState": 98629
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279135,
+   "msg": {
+    "MetaData": {
+     "MMSI": 601938800,
+     "MMSI_String": 601938800,
+     "ShipName": "MADIBA 1",
+     "latitude": -33.90315,
+     "longitude": 18.42302,
+     "time_utc": "2026-10-06 09:32:11.042710927 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 3,
+      "RepeatIndicator": 0,
+      "UserID": 601938800,
+      "Valid": true,
+      "NavigationalStatus": 0,
+      "RateOfTurn": -128,
+      "Sog": 0,
+      "PositionAccuracy": false,
+      "Longitude": 18.423015000000003,
+      "Latitude": -33.903150000000004,
+      "Cog": 330.1,
+      "TrueHeading": 511,
+      "Timestamp": 10,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": false,
+      "CommunicationState": 1091
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279136,
+   "msg": {
+    "MetaData": {
+     "MMSI": 538011859,
+     "MMSI_String": 538011859,
+     "ShipName": "AM PURPOSE          ",
+     "latitude": -33.86326,
+     "longitude": 18.446,
+     "time_utc": "2026-10-06 09:32:11.117927675 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 3,
+      "RepeatIndicator": 0,
+      "UserID": 538011859,
+      "Valid": true,
+      "NavigationalStatus": 1,
+      "RateOfTurn": 0,
+      "Sog": 0,
+      "PositionAccuracy": false,
+      "Longitude": 18.445996666666666,
+      "Latitude": -33.863261666666666,
+      "Cog": 195,
+      "TrueHeading": 253,
+      "Timestamp": 10,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": false,
+      "CommunicationState": 0
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279137,
+   "msg": {
+    "MetaData": {
+     "MMSI": 205493000,
+     "MMSI_String": 205493000,
+     "ShipName": "MINERAL MAURITIUS   ",
+     "latitude": -34.68444,
+     "longitude": 18.37201,
+     "time_utc": "2026-10-06 09:32:11.370845232 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 1,
+      "RepeatIndicator": 0,
+      "UserID": 205493000,
+      "Valid": true,
+      "NavigationalStatus": 0,
+      "RateOfTurn": 4,
+      "Sog": 8,
+      "PositionAccuracy": false,
+      "Longitude": 18.372006666666667,
+      "Latitude": -34.68444,
+      "Cog": 299.8,
+      "TrueHeading": 284,
+      "Timestamp": 9,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": false,
+      "CommunicationState": 33189
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279141,
+   "msg": {
+    "MetaData": {
+     "MMSI": 601087000,
+     "MMSI_String": 601087000,
+     "ShipName": "SISTRO",
+     "latitude": -33.90623,
+     "longitude": 18.42649,
+     "time_utc": "2026-10-06 09:32:12.434166781 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 1,
+      "RepeatIndicator": 0,
+      "UserID": 601087000,
+      "Valid": true,
+      "NavigationalStatus": 7,
+      "RateOfTurn": 0,
+      "Sog": 0,
+      "PositionAccuracy": false,
+      "Longitude": 18.426485,
+      "Latitude": -33.90623333333333,
+      "Cog": 309.8,
+      "TrueHeading": 46,
+      "Timestamp": 11,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": false,
+      "CommunicationState": 49272
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279147,
+   "msg": {
+    "MetaData": {
+     "MMSI": 240858000,
+     "MMSI_String": 240858000,
+     "ShipName": "DIONE               ",
+     "latitude": -34.31908,
+     "longitude": 18.14513,
+     "time_utc": "2026-10-06 09:32:16.069749252 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 1,
+      "RepeatIndicator": 0,
+      "UserID": 240858000,
+      "Valid": true,
+      "NavigationalStatus": 0,
+      "RateOfTurn": 0,
+      "Sog": 8.4,
+      "PositionAccuracy": false,
+      "Longitude": 18.145133333333334,
+      "Latitude": -34.31908333333333,
+      "Cog": 163,
+      "TrueHeading": 167,
+      "Timestamp": 15,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": false,
+      "CommunicationState": 33364
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279148,
+   "msg": {
+    "MetaData": {
+     "MMSI": 305146000,
+     "MMSI_String": 305146000,
+     "ShipName": "INDUSTRIALCHALLENGER",
+     "latitude": -33.91458,
+     "longitude": 18.4386,
+     "time_utc": "2026-10-06 09:32:16.512633577 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 1,
+      "RepeatIndicator": 0,
+      "UserID": 305146000,
+      "Valid": true,
+      "NavigationalStatus": 0,
+      "RateOfTurn": 11,
+      "Sog": 1.9,
+      "PositionAccuracy": false,
+      "Longitude": 18.4386,
+      "Latitude": -33.91458333333333,
+      "Cog": 319.3,
+      "TrueHeading": 137,
+      "Timestamp": 60,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": false,
+      "CommunicationState": 98918
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279150,
+   "msg": {
+    "MetaData": {
+     "MMSI": 601739000,
+     "MMSI_String": 601739000,
+     "ShipName": "SARAH BAARTMAN      ",
+     "latitude": -33.91737,
+     "longitude": 18.45017,
+     "time_utc": "2026-10-06 09:32:20.091174656 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 3,
+      "RepeatIndicator": 0,
+      "UserID": 601739000,
+      "Valid": true,
+      "NavigationalStatus": 8,
+      "RateOfTurn": -128,
+      "Sog": 0,
+      "PositionAccuracy": true,
+      "Longitude": 18.450165000000002,
+      "Latitude": -33.91737,
+      "Cog": 360,
+      "TrueHeading": 511,
+      "Timestamp": 19,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": true,
+      "CommunicationState": 1859
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279150,
+   "msg": {
+    "MetaData": {
+     "MMSI": 601124000,
+     "MMSI_String": 601124000,
+     "ShipName": "UMBILO              ",
+     "latitude": -33.91392,
+     "longitude": 18.45139,
+     "time_utc": "2026-10-06 09:32:22.611853065 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 1,
+      "RepeatIndicator": 0,
+      "UserID": 601124000,
+      "Valid": true,
+      "NavigationalStatus": 5,
+      "RateOfTurn": 127,
+      "Sog": 0.6,
+      "PositionAccuracy": true,
+      "Longitude": 18.451385000000002,
+      "Latitude": -33.91392,
+      "Cog": 112.4,
+      "TrueHeading": 342,
+      "Timestamp": 23,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": false,
+      "CommunicationState": 49227
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279151,
+   "msg": {
+    "MetaData": {
+     "MMSI": 601339000,
+     "MMSI_String": 601339000,
+     "ShipName": "BLUEBELL            ",
+     "latitude": -33.90728,
+     "longitude": 18.42511,
+     "time_utc": "2026-10-06 09:32:26.455946528 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 1,
+      "RepeatIndicator": 0,
+      "UserID": 601339000,
+      "Valid": true,
+      "NavigationalStatus": 7,
+      "RateOfTurn": 0,
+      "Sog": 0,
+      "PositionAccuracy": true,
+      "Longitude": 18.42511,
+      "Latitude": -33.90727666666667,
+      "Cog": 360,
+      "TrueHeading": 46,
+      "Timestamp": 26,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": true,
+      "CommunicationState": 2238
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279154,
+   "msg": {
+    "MetaData": {
+     "MMSI": 538012970,
+     "MMSI_String": 538012970,
+     "ShipName": "FLAG EVI            ",
+     "latitude": -34.62059,
+     "longitude": 18.42129,
+     "time_utc": "2026-10-06 09:32:31.84641975 +0000 UTC"
+    },
+    "MessageType": "PositionReport",
+    "Message": {
+     "PositionReport": {
+      "MessageID": 1,
+      "RepeatIndicator": 0,
+      "UserID": 538012970,
+      "Valid": true,
+      "NavigationalStatus": 0,
+      "RateOfTurn": 0,
+      "Sog": 9,
+      "PositionAccuracy": false,
+      "Longitude": 18.421285,
+      "Latitude": -34.62058666666667,
+      "Cog": 298.9,
+      "TrueHeading": 295,
+      "Timestamp": 19,
+      "SpecialManoeuvreIndicator": 0,
+      "Spare": 0,
+      "Raim": false,
+      "CommunicationState": 81956
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279145,
+   "msg": {
+    "MetaData": {
+     "MMSI": 601938800,
+     "MMSI_String": 601938800,
+     "ShipName": "MADIBA 1",
+     "latitude": -33.90315,
+     "longitude": 18.42302,
+     "time_utc": "2026-10-06 09:32:13.57933167 +0000 UTC"
+    },
+    "MessageType": "ShipStaticData",
+    "Message": {
+     "ShipStaticData": {
+      "AisVersion": 1,
+      "CallSign": "ZS6620",
+      "Destination": "ROBBEN ISLAND",
+      "Dimension": {
+       "A": 16,
+       "B": 14,
+       "C": 4,
+       "D": 4
+      },
+      "Dte": false,
+      "Eta": {
+       "Day": 25,
+       "Hour": 0,
+       "Minute": 0,
+       "Month": 12
+      },
+      "FixType": 1,
+      "ImoNumber": 1467866,
+      "MaximumStaticDraught": 1.7,
+      "MessageID": 5,
+      "Name": "MADIBA 1",
+      "RepeatIndicator": 0,
+      "Spare": false,
+      "Type": 69,
+      "UserID": 601938800,
+      "Valid": true
+     }
+    }
+   }
+  },
+  {
+   "recv_ts": 1791279152,
+   "msg": {
+    "MetaData": {
+     "MMSI": 259539000,
+     "MMSI_String": 259539000,
+     "ShipName": "SAGA SEA            ",
+     "latitude": -33.91588,
+     "longitude": 18.45436,
+     "time_utc": "2026-10-06 09:32:28.125593018 +0000 UTC"
+    },
+    "MessageType": "ShipStaticData",
+    "Message": {
+     "ShipStaticData": {
+      "AisVersion": 2,
+      "CallSign": "LNSK   ",
+      "Destination": "CAPE TOWN           ",
+      "Dimension": {
+       "A": 30,
+       "B": 62,
+       "C": 2,
+       "D": 14
+      },
+      "Dte": false,
+      "Eta": {
+       "Day": 5,
+       "Hour": 10,
+       "Minute": 0,
+       "Month": 9
+      },
+      "FixType": 1,
+      "ImoNumber": 7390416,
+      "MaximumStaticDraught": 8.5,
+      "MessageID": 5,
+      "Name": "SAGA SEA            ",
+      "RepeatIndicator": 0,
+      "Spare": false,
+      "Type": 30,
+      "UserID": 259539000,
+      "Valid": true
+     }
+    }
+   }
+  }
+ ]
+}

@@ -220,8 +220,8 @@ setInterval(() => {
 // Each module gets the same ctx and renders only after its tab is first opened. Optional data files are listed in
 // desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
 // while a file hasn't been produced yet.
-const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json", lanes: "trade_lanes.json", transport: "transport.json", moves: "aladin_moves.json" };
-const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "transport", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
+const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json", lanes: "trade_lanes.json", telemetry: "telemetry.json", moves: "aladin_moves.json" };
+const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "telemetry", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
 function deskCtx() { return { renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
 function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); }
@@ -1624,8 +1624,8 @@ function execCmd(p) {
 function runText(raw, quiet) {
   const first = raw.trim().split(/\s+/)[0].toUpperCase();
   if (first === "HOUSE" && !S.houseList) { S.houseList = []; getJSON("houses.json", false).then(j => { S.houseList = (j.houses || []).map(h => ({ id: h.id, name: h.name })); runText(raw, quiet); }).catch(() => runText(raw, quiet)); return true; }
-  if ((first === "FLIGHT" || first === "VESSEL") && !S.transport && (S.deskMan || {}).transport && !S.transportTried) {
-    S.transportTried = true; getJSON("transport.json", true).then(j => { S.transport = j; runText(raw, quiet); }).catch(() => runText(raw, quiet)); return true;
+  if ((first === "FLIGHT" || first === "VESSEL") && !S.transport && (S.deskMan || {}).telemetry && !S.transportTried) {
+    S.transportTried = true; getJSON("telemetry.json", true).then(j => { S.transport = j; runText(raw, quiet); }).catch(() => runText(raw, quiet)); return true;
   }
   if (first === "GEO" && !S.geo && (S.deskMan || {}).geo) { (S.geoTried = S.geoTried || GeoDesk.preload().catch(() => null)).then(() => { S.geo = S.geo || { regions: [] }; runText(raw, quiet); }); return true; }
   const p = Cmd.parseCmd(raw, cmdCtx());

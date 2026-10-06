@@ -1,12 +1,15 @@
 /* Globe tab, second view: a D3 orthographic globe (or a flat Natural Earth map) drawn on a canvas, with the NEXUS layers: geopolitical hotspots, chokepoints with
    the vessel count inside each, cargo flights, other flights, vessels, plants named in filings, and trade lanes. "Map" is the existing Leaflet map and stays the default.
    The D3 libraries (d3-geo, topojson-client, d3-quadtree, world-atlas, all pinned) load from jsDelivr only when someone switches to Globe or Flat.
-   Data files (trade_lanes.json, transport.json, supply_graph.json, geo.json) load lazily the first time a non-Map view opens. Positions come from one workflow
-   snapshot and are greyed out when older than the snapshot's own limit. A flight's callsign prefix says who operates it, never what it carries.
+   Data files (trade_lanes.json, telemetry.json, supply_graph.json, geo.json) load lazily the first time a non-Map view opens. Positions come from one workflow
+   snapshot (or, on the PC running the local daemon, from its live telemetry messages). Each marker is moved along its reported course from its own fix time,
+   and drawn as a faint ghost once its fix is older than the extrapolation cap: from then on nobody knows where it is. A flight's callsign prefix says who operates it, never what it carries.
    Click or tap anything: it opens the same NEXUS panel as everywhere else. "List" is the keyboard and screen-reader equivalent of the canvas.
    Speed: the entity list is built once per data or layer change, not per frame; the globe projects points with its own orthographic formula (one sine and cosine per
    point); same-style points are drawn as one batched path; the canvas is only resized when its size really changed.
    ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. */
+import { extrapolate, flightKin, vesselKin, docFromFull, applyTelemetry, ageLabel, CAPS } from "./desk-kin.js";
+import { onTelemetry } from "./desk-ticks.js";
 import { hotspotColor, hotspotRadius, isStale, ageMin, ageText, countIn, filterItems, mergeLayers } from "./desk-lanes.js";
 
 const D3 = { geo: "https://cdn.jsdelivr.net/npm/d3-geo@3.1.1/+esm", topo: "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm", qt: "https://cdn.jsdelivr.net/npm/d3-quadtree@3.0.1/+esm",
@@ -22,7 +25,7 @@ const data = { lanes: null, transport: null, graph: null };
 let canvas = null, g2 = null, tip = null, W = 0, H = 0, dpr = 1, proj = null, pathGen = null, ro = null;
 let rot = [-78, -18], zoom = 1, pan = [0, 0], items = [], qtree = null, qDirty = true, raf = 0, press = null, moved = 0, ents = null, colors = null, colorsKey = null;
 
-export function init(c) { ctx = c; try { layers = mergeLayers(DEFAULTS, JSON.parse(localStorage.getItem(LS))); } catch (e) { /* stored switches are only a convenience */ } }
+export function init(c) { ctx = c; onTelemetry(onLive); try { layers = mergeLayers(DEFAULTS, JSON.parse(localStorage.getItem(LS))); } catch (e) { /* stored switches are only a convenience */ } }
 const files = () => ctx.S.deskMan || {};
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
 const saveLayers = () => { try { localStorage.setItem(LS, JSON.stringify(layers)); } catch (e) { /* ignore */ } };
@@ -70,10 +73,10 @@ function setMode(m) {
 /* ---------- data (lazy) and libraries (lazy) ---------- */
 function ensureData() {
   if (loadingData) return loadingData;
-  const one = (key, file, set) => files()[key] ? ctx.getJSON(file, key === "transport").then(set).catch(() => { }) : Promise.resolve();
+  const one = (key, file, set) => files()[key] ? ctx.getJSON(file, key === "telemetry").then(set).catch(() => { }) : Promise.resolve();
   loadingData = Promise.all([
     one("lanes", "trade_lanes.json", j => { data.lanes = j; }),
-    one("transport", "transport.json", j => { data.transport = j; ctx.S.transport = j; }),
+    one("telemetry", "telemetry.json", j => { data.transport = j; ctx.S.transport = j; }),
     one("graph", "supply_graph.json", j => { data.graph = j; }),
     ctx.S.geo || !files().geo ? 0 : ctx.getJSON("geo.json").then(j => { ctx.S.geo = j; }).catch(() => { }),
   ]).finally(() => { setTimeout(() => { loadingData = null; }, 60000); });                // re-read the snapshot at most once a minute
@@ -91,17 +94,17 @@ function ensureLib() {
 function regions() { return ((ctx.S.geo || {}).regions || []).filter(r => r.lat != null && r.lon != null); }
 const geom = e => { e.la = e.lat * RAD; e.lo = e.lon * RAD; e.sl = Math.sin(e.la); e.cl = Math.cos(e.la); return e; };
 function build() {
-  const out = [], T = data.transport, stale = isStale(T);
+  const out = [], T = data.transport;
   if (layers.hot) for (const r of regions()) out.push(geom({ layer: "hot", type: "hotspot", id: r.id, name: r.name, row: r, lat: r.lat, lon: r.lon, score: r.score, kind: r.kind }));
   if (layers.choke && data.lanes) for (const c of data.lanes.chokepoints) {
     const n = T && T.vessels ? countIn(T.vessels, c.bbox) : null;
     out.push(geom({ layer: "choke", type: "chokepoint", id: c.id, name: c.name, row: c, lat: c.lat, lon: c.lon, bbox: c.bbox, count: n }));
   }
   if (T) for (const f of T.flights || []) {
-    const cargo = f[8] === 1;
-    if ((cargo && layers.cargo) || (!cargo && layers.air)) out.push(geom({ layer: cargo ? "cargo" : "air", type: "flight", id: f[0], name: f[1] || f[0], row: f, lat: f[2], lon: f[3], hdg: f[6], stale }));
+    const cargo = f[9] === 1;
+    if ((cargo && layers.cargo) || (!cargo && layers.air)) out.push(geom({ layer: cargo ? "cargo" : "air", type: "flight", id: f[0], name: f[1] || f[0], row: f, lat: f[2], lon: f[3], hdg: f[6], kin: flightKin(f), cap: CAPS.flight }));
   }
-  if (layers.ship && T && T.vessels) for (const v of T.vessels) out.push(geom({ layer: "ship", type: "vessel", id: String(v[0]), name: v[1] || String(v[0]), row: v, lat: v[2], lon: v[3], stale }));
+  if (layers.ship && T && T.vessels) for (const v of T.vessels) out.push(geom({ layer: "ship", type: "vessel", id: String(v[0]), name: v[1] || String(v[0]), row: v, lat: v[2], lon: v[3], hdg: v[5] != null ? v[5] : v[6], kin: vesselKin(v), cap: CAPS.vessel }));
   if (layers.plant && data.graph) for (const [id, f] of Object.entries(data.graph.fac || {})) if (f.lat != null) out.push(geom({ layer: "plant", type: "facility", id, name: f.n, row: f, lat: f.lat, lon: f.lon, prec: f.geo_prec }));
   return out;
 }
@@ -110,8 +113,8 @@ function detailOf(e) {                                                   // text
   const r = e.row;
   if (e.type === "hotspot") return `${r.kind || "region"} · ${r.score == null ? "building baseline" : r.level + " " + r.score}`;
   if (e.type === "chokepoint") return e.count == null ? "vessel count not available" : `${e.count} vessel${e.count === 1 ? "" : "s"} in the snapshot`;
-  if (e.type === "flight") return `${r[7] || "origin country unknown"} · ${r[4] == null ? "altitude n/a" : Math.round(r[4]) + " m"}`;
-  if (e.type === "vessel") return r[7] ? "to " + r[7] : "destination not broadcast";
+  if (e.type === "flight") return `${r[8] || "origin country unknown"} · ${r[4] == null ? "altitude n/a" : Math.round(r[4]) + " m"}`;
+  if (e.type === "vessel") return r[8] ? "to " + r[8] : "destination not broadcast";
   return `${r.co} · ${r.geo_prec === "exact" ? "exact location" : "approximate (" + (r.geo_prec || "?") + ")"}`;
 }
 
@@ -120,19 +123,35 @@ function paintLayerBox() {
   const T = data.transport;
   ctx.$("#gd-layers").innerHTML = LAYERS.map(([k, l]) => {
     const off = k === "ship" && T && !T.vessels;
-    return `<label class="nx-chk" ${off ? `title="${ctx.esc(T.vessels_reason || "No vessel feed")}"` : ""}><input type="checkbox" data-layer="${k}" ${layers[k] ? "checked" : ""} ${off ? "disabled" : ""}> ${l}</label>`;
+    return `<label class="nx-chk" ${off ? `title="${ctx.esc(T.reason || T.vessels_reason || "No vessel feed")}"` : ""}><input type="checkbox" data-layer="${k}" ${layers[k] ? "checked" : ""} ${off ? "disabled" : ""}> ${l}</label>`;
   }).join("");
 }
 function chips() {
   const el = ctx.$("#gd-chips"); if (!el) return;
   const T = data.transport;
-  if (!files().transport) { el.innerHTML = '<span class="gd-chip off">Flights and vessels: no snapshot published yet</span>'; return; }
+  if (!T && !files().telemetry) { el.innerHTML = '<span class="gd-chip off">Flights and vessels: no snapshot published yet</span>'; return; }
   if (!T) { el.innerHTML = mode === "map" ? '<span class="gd-chip">Flights and vessels: open Globe, Flat or List to load the snapshot</span>' : '<span class="gd-chip">Loading the snapshot…</span>'; return; }
-  const old = isStale(T), m = ageMin(T.generated_utc), fs = T.sources.flights, vs = T.sources.vessels;
-  const nf = (T.flights || []).length, nc = (T.flights || []).filter(f => f[8] === 1).length;
-  el.innerHTML = `<span class="gd-chip${old ? " stale" : ""}" title="${ctx.esc(fs.attribution)}">Flights · OpenSky · ${ctx.esc(ageText(m))} · ${nf} aircraft (${nc} on freighter callsigns)${old ? " · older than its limit, greyed out" : ""}</span>
-    <span class="gd-chip${T.vessels ? (old ? " stale" : "") : " off"}" title="${ctx.esc(vs.attribution)}">${T.vessels ? `Vessels · AISstream · ${ctx.esc(ageText(m))} · ${T.vessels.length} ships` : "Vessels · AISstream · layer off: " + ctx.esc(T.vessels_reason || "no feed")}</span>`;
+  const nowS = Date.now() / 1000, fs = (T.sources || {}).flights || {}, vs = (T.sources || {}).vessels;
+  const newest = rows => rows && rows.length ? Math.max(...rows.map(r => r[r.length - 1])) : null;
+  const fAge = newest(T.flights) == null ? null : nowS - newest(T.flights), vAge = newest(T.vessels) == null ? null : nowS - newest(T.vessels);
+  const fOld = fAge == null || fAge > CAPS.flight, vOld = vAge == null || vAge > CAPS.vessel;
+  const cad = T.cadence_s ? `refreshed about every ${ageLabel(T.cadence_s)}` : "refresh rate unknown";
+  const nf = (T.flights || []).length, nc = (T.flights || []).filter(f => f[9] === 1).length;
+  const live = T.live ? "LIVE · THIS PC · " : "";
+  el.innerHTML = `<span class="gd-chip${fOld ? " stale" : ""}" title="${ctx.esc(fs.attribution || "")}">${live}Flights · ${ctx.esc(fs.name || "OpenSky")} · ${cad} · newest fix ${ctx.esc(ageLabel(fAge))} old · ${nf} aircraft (${nc} on freighter callsigns)${fOld ? " · positions not live" : ""}</span>
+    <span class="gd-chip${T.vessels ? (vOld ? " stale" : "") : " off"}" title="${ctx.esc((vs && vs.attribution) || "")}">${T.vessels ? `${live}Vessels · ${ctx.esc((vs && vs.name) || "AIS")} · newest fix ${ctx.esc(ageLabel(vAge))} old · ${T.vessels.length} ships${vOld ? " · positions not live" : ""}` : "Vessels · layer off: " + ctx.esc(T.reason || T.vessels_reason || "no feed")}</span>`;
 }
+
+/* messages from the local daemon (only arrive on the PC running it): a full snapshot, then deltas. The public snapshot is ignored while they flow. */
+let liveDoc = null, redrawT = 0;
+function onLive(m) {
+  if (!ctx || m.type !== "telemetry") return;
+  liveDoc = m.full || !liveDoc ? docFromFull(m) : applyTelemetry(liveDoc, m);
+  data.transport = liveDoc; ctx.S.transport = liveDoc; ents = null;
+  if (mounted) { paintLayerBox(); render(); }
+  if (!redrawT) redrawT = setInterval(() => { if (mounted && !document.hidden && (mode === "globe" || mode === "flat")) schedule(); }, 1000);   // markers glide between reports
+}
+const liveNow = () => !!liveDoc && Date.now() / 1000 - liveDoc.lastMsgAt < 180;
 
 /* ---------- rendering ---------- */
 function render() {
@@ -189,24 +208,31 @@ function draw() {
   if (layers.lane && data.lanes) for (const l of data.lanes.lanes) { g2.beginPath(); pathGen({ type: "LineString", coordinates: l.path }); g2.strokeStyle = l.kind === "air" ? P.ink3 : P.gold; g2.globalAlpha = 0.55; g2.lineWidth = 1; g2.setLineDash(l.kind === "air" ? [3, 4] : []); g2.stroke(); g2.setLineDash([]); g2.globalAlpha = 1; }
 
   const all = entities(), hit = [], air = [], ships = [], cargo = [];
-  let staleFlag = false;
+  const nowS = Date.now() / 1000;
   for (const e of all) {
+    if (e.kin) {                                                  // flights and vessels: where is it now, from its own fix time
+      const k = extrapolate(e.kin, nowS, e.cap);
+      if (k.lat !== e.lat || k.lon !== e.lon) { e.lat = k.lat; e.lon = k.lon; geom(e); }
+      e.ghost = k.ghost; e.age = k.age;
+    }
     const p = at(e); if (!p) continue;
-    e.x = p[0]; e.y = p[1]; if (e.stale) staleFlag = true;
+    e.x = p[0]; e.y = p[1];
     if (e.layer === "air") { air.push(e); hit.push({ x: e.x, y: e.y, r: 4, e, i: hit.length }); }
     else if (e.layer === "ship") { ships.push(e); hit.push({ x: e.x, y: e.y, r: 4, e, i: hit.length }); }
     else if (e.layer === "cargo") { cargo.push(e); hit.push({ x: e.x, y: e.y, r: 6, e, i: hit.length }); }
   }
-  const a = staleFlag ? 0.35 : 1;
-  // other flights: one batched path of small dots
-  if (air.length) { g2.globalAlpha = a; g2.beginPath(); for (const e of air) { g2.moveTo(e.x + 1.7, e.y); g2.arc(e.x, e.y, 1.7, 0, 7); } g2.fillStyle = P.ink3; g2.fill(); }
-  // vessels: one batched path of small squares
-  if (ships.length) { g2.globalAlpha = a; g2.beginPath(); for (const e of ships) g2.rect(e.x - 2.5, e.y - 2.5, 5, 5); g2.fillStyle = P.acc; g2.fill(); }
-  // cargo flights: little aircraft shapes pointing along their heading, one path
-  if (cargo.length) {
-    g2.globalAlpha = a; g2.beginPath();
-    for (const e of cargo) { const h = (e.hdg || 0) * RAD, s = Math.sin(h), c = Math.cos(h), v = (px, py) => [e.x + px * c - py * s, e.y + px * s + py * c], A = v(0, -6), B = v(4, 5), C = v(0, 3), D = v(-4, 5); g2.moveTo(A[0], A[1]); g2.lineTo(B[0], B[1]); g2.lineTo(C[0], C[1]); g2.lineTo(D[0], D[1]); g2.closePath(); }
-    g2.fillStyle = P.gold; g2.fill();
+  for (const [a, pick] of [[1, e => !e.ghost], [0.3, e => e.ghost]]) {            // live markers solid, ghosts (older than the cap: position not live) faint
+    const A = air.filter(pick), S = ships.filter(pick), C = cargo.filter(pick);
+    // other flights: one batched path of small dots
+    if (A.length) { g2.globalAlpha = a; g2.beginPath(); for (const e of A) { g2.moveTo(e.x + 1.7, e.y); g2.arc(e.x, e.y, 1.7, 0, 7); } g2.fillStyle = P.ink3; g2.fill(); }
+    // vessels: one batched path of small squares
+    if (S.length) { g2.globalAlpha = a; g2.beginPath(); for (const e of S) g2.rect(e.x - 2.5, e.y - 2.5, 5, 5); g2.fillStyle = P.acc; g2.fill(); }
+    // cargo flights: little aircraft shapes pointing along their heading, one path
+    if (C.length) {
+      g2.globalAlpha = a; g2.beginPath();
+      for (const e of C) { const h = (e.hdg || 0) * RAD, s = Math.sin(h), c = Math.cos(h), v = (px, py) => [e.x + px * c - py * s, e.y + px * s + py * c], A1 = v(0, -6), B = v(4, 5), C1 = v(0, 3), D = v(-4, 5); g2.moveTo(A1[0], A1[1]); g2.lineTo(B[0], B[1]); g2.lineTo(C1[0], C1[1]); g2.lineTo(D[0], D[1]); g2.closePath(); }
+      g2.fillStyle = P.gold; g2.fill();
+    }
   }
   g2.globalAlpha = 1;
   // the few big things on top: plants, chokepoints, hotspots
@@ -283,7 +309,7 @@ function renderList() {
 
 /* called by the page's slow poll: pick up a newer snapshot without a reload */
 export async function refresh() {
-  if (!ctx || !mounted || mode === "map" || !files().transport) return;
-  try { const j = await ctx.getJSON("transport.json"); if (!data.transport || j.generated_utc !== data.transport.generated_utc) { data.transport = j; ctx.S.transport = j; ents = null; paintLayerBox(); render(); } } catch (e) { /* keep the last snapshot */ }
+  if (!ctx || !mounted || mode === "map" || !files().telemetry || liveNow()) return;
+  try { const j = await ctx.getJSON("telemetry.json"); if (!data.transport || j.generated_utc !== data.transport.generated_utc) { data.transport = j; ctx.S.transport = j; ents = null; paintLayerBox(); render(); } } catch (e) { /* keep the last snapshot */ }
 }
 export const currentMode = () => mode;

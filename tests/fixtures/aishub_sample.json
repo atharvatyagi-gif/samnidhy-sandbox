@@ -1,0 +1,58 @@
+{
+ "_note": "synthetic_from_docs: AISHub is members-only so no real response could be recorded; shape follows https://www.aishub.net/api (JSON is [header, [records]]; TIME is 'YYYY-MM-DD HH:MM:SS GMT').",
+ "response": [
+  {
+   "ERROR": false,
+   "USERNAME": "member",
+   "FORMAT": "HUMAN",
+   "LATITUDE_MIN": 0,
+   "LATITUDE_MAX": 30,
+   "LONGITUDE_MIN": 50,
+   "LONGITUDE_MAX": 80,
+   "RECORDS": 3
+  },
+  [
+   {
+    "MMSI": 419000001,
+    "TIME": "2026-10-06 09:00:00 GMT",
+    "LONGITUDE": 72.8,
+    "LATITUDE": 18.9,
+    "COG": 45.0,
+    "SOG": 12.3,
+    "HEADING": 47,
+    "NAME": "MV TEST ONE",
+    "CALLSIGN": "VTAA",
+    "TYPE": 70,
+    "DEST": "MUNDRA",
+    "ETA": "10-12 06:00"
+   },
+   {
+    "MMSI": 419000002,
+    "TIME": "2026-10-06 09:01:00 GMT",
+    "LONGITUDE": 60.1,
+    "LATITUDE": 20.2,
+    "COG": 360,
+    "SOG": 102.3,
+    "HEADING": 511,
+    "NAME": "MV TEST TWO",
+    "CALLSIGN": "VTAB",
+    "TYPE": 80,
+    "DEST": "",
+    "ETA": "00-00 24:60"
+   },
+   {
+    "MMSI": 419000003,
+    "TIME": "2026-10-06 09:01:00 GMT",
+    "LONGITUDE": 0,
+    "LATITUDE": 0,
+    "COG": 1,
+    "SOG": 1,
+    "HEADING": 1,
+    "NAME": "NULL ISLAND",
+    "TYPE": 70,
+    "DEST": "",
+    "ETA": ""
+   }
+  ]
+ ]
+}
