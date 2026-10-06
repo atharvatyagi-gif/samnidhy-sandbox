@@ -2,6 +2,7 @@
 # verbatim quote, finds facility coordinates (OpenStreetMap Nominatim, 1 request a second), audits the result and saves
 # data/supply_graph.json. The next Live prices run publishes it (build_site.py), the nightly ALADIN run scores it.
 # Weekly: filings change a few times a year, and the free model quotas (Groq 200k tokens a day per model) are the limit.
+# The derived-share step reads the related-party notes of companies already in the graph (it resumes where it stopped and skips finished ones).
 # Every step may fail: the repository keeps the previous graph, and the file is only saved when check_graph.py says "ok".
 # Commits end in "[skip ci]" and touch nothing but data/supply_graph.json.
 name: NEXUS graph
@@ -64,6 +65,16 @@ jobs:
           GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
           LIMIT: ${{ github.event.inputs.limit || '40' }}
         run: python scripts/revenue_graph_builder.py --limit "$LIMIT"
+
+      - name: Derived revenue shares from the related-party notes (companies already read, 40 a week, marked derived)
+        continue-on-error: true
+        timeout-minutes: 60
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+        run: python scripts/related_party_shares.py --limit 40 --max-calls 150
 
       - name: Find facility coordinates
         continue-on-error: true

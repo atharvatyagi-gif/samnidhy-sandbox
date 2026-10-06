@@ -62,3 +62,13 @@ def test_heartbeat_fires_the_sentiment_workflow_and_globe_workflow_runs_geo():
     assert "geo_tension.py" in globe and "data/aladin/geo.json" in globe
     daily = " ".join(s.get("run", "") for s in steps(load("daily-update.yml")))
     assert "terminal_fund.py" in daily and "check_houses.py" in daily
+
+
+def test_nexus_workflow_reads_filings_then_derives_shares_then_geocodes_and_audits_before_saving():
+    d = load("nexus.yml")
+    runs = [s.get("run", "") for s in steps(d)]
+    order = [next(i for i, r in enumerate(runs) if k in r) for k in ("nse_eod.py", "revenue_graph_builder.py", "related_party_shares.py", "geocode_facilities.py", "check_graph.py")]
+    assert order == sorted(order)
+    step = next(s for s in steps(d) if "related_party_shares.py" in s.get("run", ""))
+    assert step["continue-on-error"] is True and step["timeout-minutes"] == 60 and "--limit 40" in step["run"]
+    assert {"GROQ_API_KEY", "GEMINI_API_KEY", "GROQ_API_KEY_1", "GEMINI_API_KEY_1"} <= set(step["env"])
