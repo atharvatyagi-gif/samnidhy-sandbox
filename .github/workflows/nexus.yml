@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write
+  actions: read                 # lets the last step read this run's own step list for the run report
 
 concurrency:
   group: nexus
@@ -95,3 +96,19 @@ jobs:
             git pull --rebase origin main
             git push origin HEAD:main
           fi
+
+      - name: Run report (steps, durations, outputs, fallbacks)
+        if: always()
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/run_report.py --workflow nexus
+
+      - name: Upload the run report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-report-nexus
+          path: run_report.json
+          if-no-files-found: ignore

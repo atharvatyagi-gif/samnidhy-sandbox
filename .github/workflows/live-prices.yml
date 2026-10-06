@@ -23,6 +23,7 @@ on:
 
 permissions:
   contents: read
+  actions: read                 # lets the last step read this run's own step list for the run report
   pages: write
   id-token: write
 
@@ -105,6 +106,22 @@ jobs:
         run: |
           echo "::error::Live prices could not be fetched; see the step above. The page says prices are unavailable."
           exit 1
+
+      - name: Run report (steps, durations, outputs, fallbacks)
+        if: always()
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/run_report.py --workflow live-prices
+
+      - name: Upload the run report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-report-live-prices
+          path: run_report.json
+          if-no-files-found: ignore
 
   publish:                      # a few seconds; the only part that waits its turn for GitHub Pages
     needs: live

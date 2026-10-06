@@ -22,7 +22,7 @@ def test_aladin_nightly_triggers_limits_and_order():
     assert on["workflow_run"]["workflows"] == ["Daily update"] and on["workflow_run"]["types"] == ["completed"] and "workflow_dispatch" in on
     job = list(d["jobs"].values())[0]
     assert "conclusion == 'success'" in job["if"] and job["timeout-minutes"] == 150
-    assert d["permissions"] == {"contents": "write"} and d["concurrency"] == {"group": "aladin", "cancel-in-progress": False}
+    assert d["permissions"] == {"contents": "write", "actions": "read"} and d["concurrency"] == {"group": "aladin", "cancel-in-progress": False}
     runs = [s.get("run", "") for s in steps(d)]
     order = [next(i for i, r in enumerate(runs) if k in r) for k in ("aladin_fund.py", "aladin_filings.py", "aladin_model.py", "paper_trader.py")]
     assert order == sorted(order)

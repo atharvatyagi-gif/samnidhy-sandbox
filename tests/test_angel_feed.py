@@ -324,3 +324,73 @@ def test_the_optional_requirements_match_the_relays():
     r = (ROOT / "relay" / "requirements.txt").read_text(encoding="utf-8")
     for lib in ("smartapi-python", "pyotp", "websocket-client", "logzero"):
         assert lib in a and lib in r
+
+
+
+# ---------------------------------------------------------------- session expiry (mocked: no Angel One account is needed)
+def _feed_with_clock(clock, logins, fail_login=False):
+    class Api:
+        def __init__(self, api_key):
+            pass
+
+        def generateSession(self, code, mpin, totp):
+            logins.append((code, totp))
+            if fail_login:
+                raise ConnectionError("down")
+            return {"status": True, "data": {"jwtToken": f"JWT{len(logins)}"}}
+
+        def getfeedToken(self):
+            return f"FEED{len(logins)}"
+    f = af.AngelFeed(ENV, lambda s, r: None, smart_connect=Api, totp=lambda secret: "123456", clock=lambda: clock[0])
+    f._login()
+    return f
+
+
+def test_a_healthy_session_is_not_replaced():
+    clock, logins = [1000.0], []
+    f = _feed_with_clock(clock, logins)
+    clock[0] += 3600
+    f._ensure_session()
+    assert len(logins) == 1 and f.relogins == 0 and f.session["jwt"] == "JWT1"
+
+
+def test_a_session_older_than_the_limit_is_renewed_before_the_next_connection():
+    clock, logins = [1000.0], []
+    f = _feed_with_clock(clock, logins)
+    clock[0] += af.AngelFeed.SESSION_MAX_S + 1
+    f._ensure_session()
+    f._ensure_session()                                                             # a second call right after must not log in again
+    assert len(logins) == 2 and f.relogins == 1 and f.session == {"jwt": "JWT2", "feed": "FEED2"}
+
+
+def test_a_rejected_connection_triggers_a_fresh_login_and_the_reconnect_uses_the_new_token():
+    clock, logins, news = [1000.0], [], []
+
+    class WS:
+        def __init__(self, jwt, key, client, feed, max_retry_attempt=3):
+            news.append(jwt)
+
+        def connect(self):
+            if len(news) == 1:
+                self.on_error(self, "Invalid Token: session expired")
+                raise ConnectionError("closed")
+            f.stop()
+    f = _feed_with_clock(clock, logins)
+    f.ws_cls, f.sleep, f.token_sym = WS, lambda s: None, {"NSE:1": "AAA"}
+    f._run_conn(0, [{"exchangeType": 1, "tokens": ["1"]}])
+    assert news == ["JWT1", "JWT2"] and f.relogins == 1 and f.auth_bad is False
+
+
+def test_a_failed_relogin_is_noted_without_secrets_and_the_old_token_stays():
+    clock, logins = [1000.0], []
+    f = _feed_with_clock(clock, logins)
+    f.smart_connect = lambda api_key: type("A", (), {"generateSession": lambda self, *a: (_ for _ in ()).throw(ConnectionError("down mpin=1234")), "getfeedToken": lambda self: "x"})()
+    f.auth_bad = True
+    f._ensure_session()
+    assert f.session["jwt"] == "JWT1" and f.auth_bad is True and "relogin failed" in f.status["last_error"] and "1234" not in f.status["last_error"]
+
+
+def test_tick_decoding_to_the_documented_row():
+    row = af.tick_row({"token": "1", "exchange_type": 1, "last_traded_price": 123456, "open_price_of_the_day": 120000, "high_price_of_the_day": 125000,
+                       "low_price_of_the_day": 119000, "closed_price": 121000, "volume_trade_for_the_day": 777, "exchange_timestamp": 1790000000000}, {"NSE:1": "AAA"})
+    assert row[0] == "AAA" and row[1][:5] == [1234.56, 1200.0, 1250.0, 1190.0, 1210.0] and row[1][5] == 777 and row[1][6] == 1790000000000      # [ltp, open, high, low, prev_close, volume, exchange_ms], paise to rupees

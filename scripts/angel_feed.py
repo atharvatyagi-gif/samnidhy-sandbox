@@ -73,8 +73,12 @@ def token_groups(sym_token, per_conn=PER_CONN, max_conn=MAX_CONN):
 class AngelFeed:
     """Logs in, loads the instrument list and keeps up to 3 WebSocket connections open, handing every usable tick to `on_row(sym, row)` (called from the feed's threads)."""
 
-    def __init__(self, env, on_row, http_get=None, smart_connect=None, totp=None, ws_cls=None, sleep=time.sleep):
-        self.env, self.on_row, self.sleep = env, on_row, sleep
+    SESSION_MAX_S = 18 * 3600                                                     # Angel One sessions end daily: log in again well before a stale token is all we have
+    AUTH_WORDS = ("token", "unauthor", "401", "403", "forbidden", "session", "invalid")
+
+    def __init__(self, env, on_row, http_get=None, smart_connect=None, totp=None, ws_cls=None, sleep=time.sleep, clock=time.time):
+        self.env, self.on_row, self.sleep, self.clock = env, on_row, sleep, clock
+        self.session_at, self.auth_bad, self.relogins = 0.0, False, 0
         self.http_get, self.smart_connect, self.totp, self.ws_cls = http_get, smart_connect, totp, ws_cls
         self.token_sym, self.sym_token, self.session = {}, {}, {}
         self.stop_flag = threading.Event()
@@ -99,6 +103,11 @@ class AngelFeed:
             self.sym_token, self.token_sym = parse_master(self.http_get(MASTER_URL, timeout=60).json())
         except Exception as e:  # noqa: BLE001
             raise RuntimeError(f"instrument list could not be read ({type(e).__name__})") from None
+        self._login()
+        self.status.update(symbols=len(self.sym_token) - len(INDEXES))
+
+    def _login(self):
+        """One login (TOTP included). Raises RuntimeError with no secret in the message."""
         api = self.smart_connect(api_key=self.env["ANGEL_API_KEY"])
         try:
             res = api.generateSession(self.env["ANGEL_CLIENT_CODE"], self.env["ANGEL_MPIN"], self.totp(self.env["ANGEL_TOTP_SECRET"]))
@@ -107,7 +116,22 @@ class AngelFeed:
         if not res or not res.get("status"):
             raise RuntimeError("Angel One refused the login: " + str((res or {}).get("message") or "no reason given")[:80])
         self.session = {"jwt": res["data"]["jwtToken"], "feed": api.getfeedToken()}
-        self.status.update(login_at=datetime.now(IST).isoformat(timespec="seconds"), symbols=len(self.sym_token) - len(INDEXES))
+        self.session_at, self.auth_bad = self.clock(), False
+        self.status.update(login_at=datetime.now(IST).isoformat(timespec="seconds"))
+
+    def _ensure_session(self):
+        """Before every (re)connect: a session older than SESSION_MAX_S, or one a connection reported as rejected, is replaced. A failed re-login is noted and retried on the
+        next cycle; the old token is kept meanwhile (it may still work)."""
+        if self.smart_connect is None or not (self.auth_bad or self.clock() - self.session_at > self.SESSION_MAX_S):
+            return                                                                  # (never prepared, or still fresh)
+        with self._lock:
+            if not (self.auth_bad or self.clock() - self.session_at > self.SESSION_MAX_S):
+                return                                                              # another connection thread already renewed it
+            try:
+                self._login()
+                self.relogins += 1
+            except RuntimeError as e:
+                self.status["last_error"] = f"relogin failed: {e}"
 
     def _on_data(self, msg):
         r = tick_row(msg, self.token_sym)
@@ -129,15 +153,22 @@ class AngelFeed:
         key, client = self.env["ANGEL_API_KEY"], self.env["ANGEL_CLIENT_CODE"]
         while not self.stop_flag.is_set():
             try:
+                self._ensure_session()
                 sws = self.ws_cls(self.session["jwt"], key, client, self.session["feed"], max_retry_attempt=3)
                 sws.on_open = lambda ws: (sws.subscribe(f"blab{i}", 2, groups), self._conn(+1))
                 sws.on_data = lambda ws, m: self._on_data(m)
-                sws.on_error = lambda ws, e: self.status.__setitem__("last_error", f"feed {i}: {str(e)[:80]}")
+                sws.on_error = lambda ws, e: self._on_error(i, e)
                 sws.on_close = lambda ws: self._conn(-1)
                 sws.connect()
             except Exception as e:  # noqa: BLE001 - reconnect forever
                 self.status["last_error"] = f"feed {i} stopped: {type(e).__name__}"
             self.sleep(5)
+
+    def _on_error(self, i, e):
+        text = str(e)
+        self.status["last_error"] = f"feed {i}: {text[:80]}"
+        if any(w in text.lower() for w in self.AUTH_WORDS):
+            self.auth_bad = True                                                    # the next reconnect logs in again first
 
     def _conn(self, d):
         with self._lock:

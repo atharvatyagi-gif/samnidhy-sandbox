@@ -23,6 +23,7 @@ on:
 
 permissions:
   contents: write
+  actions: read                 # lets the last step read this run's own step list for the run report
 
 concurrency:
   group: aladin
@@ -134,3 +135,19 @@ jobs:
               sleep $((i * 5))
             done
           fi
+
+      - name: Run report (steps, durations, outputs, fallbacks)
+        if: always()
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/run_report.py --workflow aladin
+
+      - name: Upload the run report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-report-aladin
+          path: run_report.json
+          if-no-files-found: ignore
