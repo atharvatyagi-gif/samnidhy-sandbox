@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-06T02:01:21+00:00",
+  "generated_on": "2026-10-06T03:30:58+00:00",
   "session_date": "2026-10-05",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -49,7 +49,7 @@
         "turnover_crore": 705.74
       },
       "latest_close": 290.6,
-      "trailing_pe": 8.364997,
+      "trailing_pe": 7.687831,
       "market_cap": 135361191936,
       "history": {
         "first_date": "2021-09-28",
@@ -194,7 +194,7 @@
         "turnover_crore": 309.25
       },
       "latest_close": 168.27,
-      "trailing_pe": 20.056019,
+      "trailing_pe": 20.981297,
       "market_cap": 271107784704,
       "history": {
         "first_date": "2021-09-28",
@@ -308,7 +308,7 @@
       "NUVAMA.NS": 0.035775,
       "ESCORTS.NS": 0.089228,
       "DMART.NS": 0.013571,
-      "PFOCUS.NS": 0.034992,
+      "PFOCUS.NS": 0.034993,
       "BANDHANBNK.NS": 0.032779
     },
     "DMART.NS": {
@@ -322,7 +322,7 @@
     "PFOCUS.NS": {
       "SCI.NS": 0.064381,
       "NUVAMA.NS": 0.045106,
-      "ESCORTS.NS": 0.034992,
+      "ESCORTS.NS": 0.034993,
       "DMART.NS": 0.005698,
       "PFOCUS.NS": 0.325411,
       "BANDHANBNK.NS": 0.040457
@@ -1137,7 +1137,7 @@
         1417.98,
         1445.48,
         1465.18,
-        1409.65,
+        1409.64,
         1511.85,
         1472.07,
         1522.79,
@@ -1177,7 +1177,7 @@
         1511.74,
         1605.87,
         1655.97,
-        1677.51,
+        1677.5,
         1590.0,
         1627.56,
         1717.82,
@@ -1287,7 +1287,7 @@
         3640.01,
         3780.41,
         3758.9,
-        3596.12,
+        3596.11,
         3718.57,
         3978.7,
         4221.31,
