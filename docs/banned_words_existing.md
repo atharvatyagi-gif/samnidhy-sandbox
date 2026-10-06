@@ -1,0 +1,44 @@
+# Existing wording that contains a banned word (buy, sell, target, recommend, guaranteed)
+
+**Nothing in this list has been changed.** Reply with *approve*, *modify (and how)* or *keep* for each row number.
+
+- **Base commit:** `925a4f5` (the commit `feature/aladin-nexus-desk` branched from: the parent of the first NEXUS commit `762a3db`). Line numbers below are at that commit; the same lines have moved a few lines down in today's files (for example `terminal.js:984` is now `:994`).
+- **Method:** `git grep -n -i -E "buy|sell|target|recommend|guarantee" 925a4f5 -- expert-terminal.html terminal.css terminal.js chart-engine.js config.js 'scripts/*.py' ...`, plus every key and short value of the JSON files `build_site.py` serves (read from a fresh `site/` build).
+- **Not counted, because it is not wording:** the DOM property `e.target` / `ev.target` (terminal.js 28 lines, chart-engine.js 5, mostly click handlers) and the link attribute `target="_blank"` (expert-terminal.html 2 lines, terminal.js and chart-engine.js a few more). A user never sees them. `config.js` has no hit.
+- **`scripts/check_banned.py`** (the check for NEW wording) reports **0 hits** in everything new in this build (the new `desk-*.js` modules including `desk-kin.js`, the new HTML blocks, our config JSON, the README block, and every key of every served JSON including the telemetry file). Its `--existing` mode lists the 5 older lines at the end of table A.
+
+## A. The files named in the brief
+
+| # | File:line (base) | Exact string | Does a user see it? | What produces it | Proposed neutral replacement |
+|---|---|---|---|---|---|
+| 1 | `chart-engine.js:299` | `★ Recommended for ${sym} (tested on its past prices; see Details)` | **Yes**: the heading above the suggested indicators in the chart's Indicators menu | hard-coded label | `★ Tried on ${sym}'s past prices (see Details)` |
+| 2 | `terminal.js:984` (REC map) | `strong_buy: "Strongly positive", buy: "Positive", hold: "Neutral", underperform: "Negative", sell: "Strongly negative"` | **No.** The words are only the *keys*; the labels shown are already neutral ("Strongly positive" ...) in the Details panel's "Analyst view" | code reading a data field (`f.rec`, see row 11) | keep the labels; rename the keys only if row 11 is approved (then also change this map) |
+| 3 | `terminal.js:1038` | `{ strong_buy: 95, buy: 75, hold: 50, underperform: 25, sell: 5 }[f.rec]` | No: positions the gauge marker; keys only | same data field | same as row 2 |
+| 4 | `terminal.js:1038` and `:1040` (`f.tgt`) | `f.tgt` (price estimate) | The *value* is shown, labelled **"Price estimate"** and "12-month analyst price estimates (Yahoo Finance)"; the word target is only in the field name | served `t/fund.json` key `tgt` (from Yahoo's targetMeanPrice) | keep (the label is already neutral); key rename optional |
+| 5 | `terminal.js:1003` | `${sc.sell} bearish · ${sc.neutral} neutral · ${sc.buy} bullish` | The visible words are **bearish / neutral / bullish**; `sell`/`buy` are property names | `technicals()` in `chart-indicators.js:358` returns `{buy, sell, neutral}` | rename the properties to `bull` / `bear` (no visible change) |
+| 6 | `chart-indicators.js:358` | `return { buy: bu, sell: se, neutral: ne, score: s, label: ... "Strongly bullish" ... }` | No: property names; the visible labels are already Bullish / Bearish | code | same as row 5 |
+| 7 | `terminal.js:1014-1015`, `chart-indicators.js:414,417` | `R.buyHold.te.ret`, `buyHold` | The visible text says **"holding throughout"**; `buyHold` is a property name | code | rename to `holdAll` (no visible change) |
+| 8 | `terminal.js:12,1000-1001,1052`, `chart-engine.js:298,306`, `chart-indicators.js:403` | `recommend(...)`, `eng.recommended`, `data-rec`, `recIds` | No: function and attribute names | code | rename to `suggest` / `suggested` (no visible change) |
+| 9 | `terminal.css:485` | `/* technicals gauge + recommended indicators (Details panel) */` | No: a CSS comment | comment | `/* technicals gauge + suggested indicators ... */` |
+| 10 | `landing.js:88,91` | `var target = +b.dataset.count ... gsap.to(obj, { v: target ...` | No: a variable name in an animation | code | `var end = ...` (no visible change) |
+| 11 | `scripts/terminal_fund.py:31-32` -> served `t/fund.json` | keys `tgt`, `tgt_hi`, `tgt_lo`, `rec`; values `"strong_buy"` (76 stocks) and `"buy"` (144 stocks) | No page prints these values: they are mapped to neutral labels first (rows 2-3). They are served data | Yahoo's `recommendationKey` and `targetMeanPrice` passed through | at write time map `strong_buy -> strongly_positive`, `buy -> positive`, `hold -> neutral`, `underperform -> negative`, `sell -> strongly_negative`; rename `tgt* -> est*` (then rows 2-4 follow) |
+| 12 | `scripts/screener.py:192-195,270-273` -> served `screener.json` | keys `recommendation`, `recommendation_mean`, `target_mean`, `target_high`, `target_low`; values `"buy"` (3) and `"strong_buy"` (1) | The Advanced page reads them (see table B, rows 17-19) | Yahoo fields passed through | rename keys to `consensus`, `consensus_score`, `estimate_mean/high/low` and map the values as in row 11 (the Advanced page then follows) |
+| 13 | `scripts/institutional.py:63` -> served `institutional.json` | keys `buy_cr`, `sell_cr` | No page reads these two keys (the terminal and the Advanced page use `net_cr`); the Advanced page's own text about buying and selling is table B, row 21 | NSE's FII/DII report fields | rename to `in_cr` / `out_cr` |
+| 14 | `scripts/institutional.py:2` | docstring "Daily FII/FPI and DII net buying" | No: a Python docstring | comment | optional |
+| 15 | `scripts/predict_model.py:13` | docstring "Target 1 if the stock's 20-trading-day return beats NIFTY 50's" | No: a Python docstring (the model's own prediction target) | comment | `Label 1 if ...` (optional) |
+| 16 | `terminal.js:1013, 1024, 1025, 1048` (the 5 lines `check_banned.py --existing` prints) | rows 2, 3, 5, 7 again | as above | as above | as above |
+
+## B. Outside the brief's list: the Advanced page and the Sandbox (found while checking)
+
+| # | File:line (base) | Exact string | Does a user see it? | What produces it | Proposed |
+|---|---|---|---|---|---|
+| 17 | `advanced.html:32551` | `recoWord = { strong_buy: "Strong buy", buy: "Buy", hold: "Hold", underperform: "Underperform", sell: "Sell" }` | **Yes**: the analyst-rating chip in the screener table and detail card | hard-coded label map over `recommendation` | `Strongly positive`, `Positive`, `Neutral`, `Negative`, `Strongly negative` (the terminal already uses these) |
+| 18 | `advanced.html:32746-32753` | `"... to average target"`, `Avg`, `12-month targets from brokerage analysts` | **Yes** | hard-coded text over `target_*` fields | `... to the average analyst estimate`; `12-month price estimates from brokerage analysts` |
+| 19 | `advanced.html:390-391` | heading `Analyst consensus and targets`; text `rate stocks from 1 (strong buy) to 5 (sell) and publish 12-month price targets` | **Yes** (the explainer card) | hard-coded text | `Analyst consensus and price estimates`; `rate stocks from 1 (strongly positive) to 5 (strongly negative) and publish 12-month price estimates` |
+| 20 | `advanced.html:373`, `:413`; `dashboard.html:1806` | `Tested does not mean guaranteed` / `do not guarantee future returns` / `Past returns don't guarantee future ones` | **Yes**: these are **cautions** (they say the opposite of a promise) but contain the banned word | hard-coded text | `A test result is not a promise`; `do not promise future returns` |
+| 21 | `advanced.html:308, 394-395, 32506, 32510-32511` | `whether big institutions are buying or selling`; `bought and sold`; `Net buying (+) or selling (−)`; `net buyers / net sellers` | **Yes**: describes what institutions did, not advice | hard-coded text | keep (factual description of flows) **or** `adding or reducing`; your call |
+| 22 | `dashboard.html:726-727, 809-810, 1467-1468, 5139` and ~25 explainer lines | `Buy` / `Sell` buttons and chips, order-book terms (bid = buyer, ask = seller), `buy and hold` | **Yes**, but this is the **Sandbox order-book simulator**: `Buy`/`Sell` are the two sides of an order the student places in a simulation, and the glossary teaches market mechanics. Nothing here tells anyone to buy or sell a real stock | hard-coded teaching text | **keep** (renaming the two sides of an order would make the simulator wrong); say if you want it changed anyway |
+
+## C. What I would do on your "approve"
+
+Rows 1, 17, 18, 19, 20 are visible wording: a one-line change each. Rows 5-10 are identifier renames with no visible change (safe, but a larger diff). Rows 11-13 change served data (keys and values) and must change together with rows 2-4 and 17-19, so they are one change: the analyst fields become `consensus` / `estimate` end to end. Row 22 I recommend keeping. Row 21 is your call.
