@@ -16,8 +16,8 @@ const fmt = (v, d) => v == null || isNaN(v) ? "—" : Math.abs(v) >= 1e7 ? (v / 
   : Number(v).toLocaleString("en-IN", { minimumFractionDigits: d === "vol" ? 0 : Math.abs(v) >= 1000 ? 1 : 2, maximumFractionDigits: d === "vol" ? 0 : Math.abs(v) >= 1000 ? 1 : 2 });
 const uid = () => "i" + Math.random().toString(36).slice(2, 9);
 
-export const THEME = { bg: "#061a10", text: "#a39679", grid: "rgba(181,166,130,0.07)", border: "rgba(181,166,130,0.25)", up: "#00e060", down: "#e0a060",
-  upFill: "rgba(0,224,96,0.9)", cross: "rgba(181,166,130,0.5)", label: "#11352a", ink: "#e8dcc3", acc: "#00e060" };
+export const THEME = { bg: "#09090b", text: "#8b8b94", grid: "rgba(39,39,42,0.5)", border: "#27272a", up: "#22c55e", down: "#ef4444",
+  upFill: "rgba(34,197,94,0.9)", cross: "#3f3f46", label: "#27272a", ink: "#fafafa", acc: "#fafafa" };
 export const CHART_TYPES = [["candle", "Candles"], ["hollow", "Hollow candles"], ["heikin", "Heikin-Ashi"], ["bars", "Bars"], ["line", "Line"], ["area", "Area"], ["baseline", "Baseline"]];
 export const TOOLS = {
   cursor: { name: "Cursor", pts: 0 }, trend: { name: "Trend line", pts: 2 }, ray: { name: "Ray", pts: 2 }, ext: { name: "Extended line", pts: 2 },
@@ -80,7 +80,7 @@ export class ChartEngine {
     if (!b.length) { this.lg.innerHTML = ""; return; }
     const chart = this.chart = L.createChart(this.el, {
       autoSize: true,
-      layout: { background: { type: "solid", color: THEME.bg }, textColor: THEME.text, fontFamily: "'IBM Plex Mono', Consolas, monospace", fontSize: 11, attributionLogo: false,
+      layout: { background: { type: "solid", color: THEME.bg }, textColor: THEME.text, fontFamily: "'JetBrains Mono', Consolas, monospace", fontSize: 11, attributionLogo: false,
         panes: { separatorColor: "rgba(181,166,130,0.22)", separatorHoverColor: "rgba(0,224,96,0.35)", enableResize: true } },
       grid: { vertLines: { color: THEME.grid }, horzLines: { color: THEME.grid } },
       rightPriceScale: { borderColor: THEME.border, scaleMargins: { top: 0.1, bottom: this.inds.some(i => i.id === "vol" && i.vis) ? 0.2 : 0.08 } },
@@ -95,9 +95,9 @@ export class ChartEngine {
     else if (t === "hollow") this.main = chart.addSeries(L.CandlestickSeries, { ...base, upColor: "rgba(0,0,0,0)", downColor: THEME.down, borderUpColor: THEME.up, borderDownColor: THEME.down, wickUpColor: THEME.up, wickDownColor: THEME.down });
     else if (t === "bars") this.main = chart.addSeries(L.BarSeries, { ...base, upColor: THEME.up, downColor: THEME.down, thinBars: false });
     else if (t === "line") this.main = chart.addSeries(L.LineSeries, { ...base, color: THEME.acc, lineWidth: 2 });
-    else if (t === "area") this.main = chart.addSeries(L.AreaSeries, { ...base, lineColor: THEME.acc, topColor: "rgba(0,224,96,0.25)", bottomColor: "rgba(0,224,96,0.02)", lineWidth: 2 });
+    else if (t === "area") this.main = chart.addSeries(L.AreaSeries, { ...base, lineColor: THEME.acc, topColor: "rgba(250,250,250,0.18)", bottomColor: "rgba(250,250,250,0)", lineWidth: 2 });
     else this.main = chart.addSeries(L.BaselineSeries, { ...base, baseValue: { type: "price", price: b[0].c }, topLineColor: THEME.up, bottomLineColor: THEME.down,
-      topFillColor1: "rgba(0,224,96,0.25)", topFillColor2: "rgba(0,224,96,0.03)", bottomFillColor1: "rgba(224,160,96,0.03)", bottomFillColor2: "rgba(224,160,96,0.25)", lineWidth: 2 });
+      topFillColor1: "rgba(250,250,250,0.18)", topFillColor2: "rgba(0,224,96,0.03)", bottomFillColor1: "rgba(224,160,96,0.03)", bottomFillColor2: "rgba(224,160,96,0.25)", lineWidth: 2 });
     // indicators are calculated first: some (Ichimoku, Alligator) draw into the future, which needs empty future bars
     const calcs = this.inds.map(ins => { const def = IND[ins.id]; if (!def || (def.intradayOnly && !this.intraday)) return null; try { return def.calc(b, ins.params); } catch (e) { return {}; } });
     let extra = 0;
@@ -343,7 +343,7 @@ export class ChartEngine {
   snapshot() {
     if (!this.chart) return null;
     const cv = this.chart.takeScreenshot(), ctx = cv.getContext("2d"), dpr = cv.width / this.el.clientWidth;
-    ctx.save(); ctx.scale(dpr, dpr); ctx.font = "600 12px 'IBM Plex Mono', Consolas, monospace";
+    ctx.save(); ctx.scale(dpr, dpr); ctx.font = "600 12px 'JetBrains Mono', Consolas, monospace";
     let y = 18;
     for (const r of this.lg.querySelectorAll('.lg-pane[data-p="0"] .lg-row')) { ctx.fillStyle = "rgba(6,26,16,0.75)"; const t = r.textContent.replace(/\s+/g, " ").trim(); ctx.fillRect(6, y - 13, ctx.measureText(t).width + 8, 17); ctx.fillStyle = THEME.ink; ctx.fillText(t, 10, y); y += 18; }
     ctx.fillStyle = "rgba(232,220,195,0.55)"; ctx.fillText("B-LAB DESK · NSE data, educational use", 10, this.el.clientHeight - 38); ctx.restore();
@@ -508,7 +508,7 @@ export class ChartEngine {
     const W = this.chart.timeScale().width(), Hh = size.height;
     const list = this.placing ? [...this.drawings, this.placing] : this.drawings;
     ctx.save(); ctx.lineCap = "round";
-    const label = (text, x, y, color, align = "left", bg = "rgba(6,26,16,0.85)") => { ctx.font = "600 11px 'IBM Plex Mono', Consolas, monospace"; const w = ctx.measureText(text).width;
+    const label = (text, x, y, color, align = "left", bg = "rgba(9,9,11,0.85)") => { ctx.font = "600 11px 'JetBrains Mono', Consolas, monospace"; const w = ctx.measureText(text).width;
       const bx = align === "right" ? x - w - 8 : align === "center" ? x - w / 2 - 4 : x; ctx.fillStyle = bg; ctx.fillRect(bx, y - 12, w + 8, 16); ctx.fillStyle = color; ctx.fillText(text, bx + 4, y); };
     for (const d of list) {
       const g = this.geom(d, W, Hh); if (!g) continue;
@@ -517,7 +517,7 @@ export class ChartEngine {
       if (g.seg) { ctx.beginPath(); ctx.moveTo(g.seg[0], g.seg[1]); ctx.lineTo(g.seg[2], g.seg[3]); ctx.stroke(); }
       if (d.type === "hline" || d.type === "hray") label(fmt(d.a.p), W - 4, g.seg[1] - 4, d.color, "right");
       if (d.type === "rect") { const [x1, y1, x2, y2] = g.box; ctx.fillStyle = d.color + "22"; ctx.fillRect(x1, y1, x2 - x1, y2 - y1); ctx.strokeRect(x1, y1, x2 - x1, y2 - y1); }
-      if (d.type === "text") { ctx.font = "600 13px 'IBM Plex Sans', sans-serif"; ctx.fillStyle = "rgba(6,26,16,0.8)"; const w = ctx.measureText(d.text || "").width; ctx.fillRect(g.box[0], g.box[1], w + 8, 20); ctx.fillStyle = d.color; ctx.fillText(d.text || "", g.box[0] + 4, g.box[1] + 15); if (sel) { ctx.strokeRect(g.box[0], g.box[1], w + 8, 20); } }
+      if (d.type === "text") { ctx.font = "600 13px 'Inter', sans-serif"; ctx.fillStyle = "rgba(9,9,11,0.8)"; const w = ctx.measureText(d.text || "").width; ctx.fillRect(g.box[0], g.box[1], w + 8, 20); ctx.fillStyle = d.color; ctx.fillText(d.text || "", g.box[0] + 4, g.box[1] + 15); if (sel) { ctx.strokeRect(g.box[0], g.box[1], w + 8, 20); } }
       if (d.type === "fib") {
         const [x1, , x2] = g.box, pa = d.a.p, pb = d.b.p;
         let prevY = null;
