@@ -1,22 +1,23 @@
 """
-NEXUS impact score: how exposed a stock is, through the dependencies its own filings disclose, to what its customers/suppliers are doing.
+NEXUS impact score: how exposed a stock is, through the dependencies its own filings disclose, to what its listed customers and suppliers are doing.
 
-For focal stock i and each disclosed edge to a listed counterparty j on which i depends:
-    I_i = clip( -100 * sum_j  w_ij * conf_ij * tanh(z_j / 2),  -100, +100 )          positive = adverse
-  w_ij  the dependency share (summed over edges, capped at 1). An edge counts for i only when i is the supplier and the share is of i's REVENUE,
-        or i is the customer and the share is of i's PURCHASES - i.e. only shares that measure i's own dependence.
-  z_j   counterparty j's 5-day return after removing its NIFTY 50 beta (beta from the previous 250 days, so no look-ahead), divided by its own
-        residual volatility, capped at +/-3.
-Everything is "as of" the last close; it is computed nightly, never intraday. Sector-level edges (kind sector_io) never count.
+For focal stock i and each disclosed edge to a listed counterparty j on which i depends (all as of the same close as the other fronts, nightly, never intraday):
+    dR_j        counterparty j's beta-adjusted RESIDUAL return in %, summed over `impact_window_d` trading days (default 5). Beta is estimated on the 250 days
+                that END BEFORE the window starts (so the window never leaks into its own beta), against NIFTY 50, on split-adjusted closes; capped at +/- dr_cap_pct (15).
+    impact_pct  = sum_j dR_j * w_ij * conf_ij       w_ij is the share as a fraction (0-1); conf_ij the deterministic rubric (quote verified 0.5, counterparty named
+                0.2, share stated 0.2, period recent 0.1). This is the "linked-move estimate (% pts)" users see.
+    I           = clip(-impact_scale * impact_pct, -100, +100)         impact_scale k = 25: a linked estimate of -4 pts maps to I = +100. POSITIVE I = ADVERSE.
+                I appears only inside the model: F_adj = clip(F - I, -100, 100). k is a prior; it is never tuned on the test period.
+A share is attributed only to the node whose revenue or purchases it measures (`wb`): a supplier's revenue share is the SUPPLIER's dependence on the customer, a
+customer's purchases share is the CUSTOMER's dependence on the supplier. The counterparty's exposure back to i is unknown unless separately disclosed. Sector-level edges never count.
 
-It also writes the shock table (counterparties with |z| >= 1.5 and the linked stocks' moves that day) and a walk-forward test of whether the
-signal predicts the focal stock's next-5-day residual return at all. If that test's t-statistic is below 2 the impact term is labelled
-"prior, unvalidated". The weights are fixed; they are never tuned to pass the test.
+It also writes the shock table (counterparties whose |dR| >= shock_min_pct and the linked stocks' moves that day) and a walk-forward test of whether the lagged impact_pct
+predicts the focal stock's next-5-day residual return (rank correlation, Newey-West t; windows 1, 3 and 5 days are reported for information, only the configured window
+decides). Fewer than 200 edge-days of data means "cannot validate: insufficient data", never a result. If t < 2 the impact term is "prior, unvalidated".
 
     python scripts/graph_impact.py            -> data/aladin/impact.json, data/aladin/shocks.json
 """
 import json
-import math
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,11 +31,12 @@ GRAPH = ROOT / "data" / "supply_graph.json"
 CFG = ROOT / "data" / "config" / "aladin_config.json"
 OUT = ROOT / "data" / "aladin" / "impact.json"
 SHOCKS = ROOT / "data" / "aladin" / "shocks.json"
-BETA_WIN, WINDOW, Z_CAP = 250, 5, 3.0
+BETA_WIN, WINDOW, DR_CAP, SCALE, SHOCK_MIN = 250, 5, 15.0, 25.0, 3.0
+MIN_EDGE_DAYS = 200
 
 
 def load_cfg():
-    base = {"min_conf": 0.5, "z_cap": Z_CAP, "impact_window_d": WINDOW, "concentration_min": 0.10}
+    base = {"min_conf": 0.5, "dr_cap_pct": DR_CAP, "impact_scale": SCALE, "impact_window_d": WINDOW, "shock_min_pct": SHOCK_MIN, "concentration_min": 0.10}
     try:
         base.update(json.loads(CFG.read_text(encoding="utf-8")).get("nexus", {}))
     except (OSError, ValueError):
@@ -42,21 +44,14 @@ def load_cfg():
     return base
 
 
-def residuals(rets, mret, win=BETA_WIN):
-    """Daily returns minus beta * market, beta estimated on the PREVIOUS `win` days (shifted by one day)."""
+def window_dr(rets, mret, window=WINDOW, cap=DR_CAP, win=BETA_WIN):
+    """dR_j(d) in % pts for every date d: the sum over the `window` days ending at d of (r_j - beta_j * r_market), with beta_j estimated on the `win` days that
+    end at d - window (shifted by the window length), capped at +/- cap. Uses only data up to d."""
     var = mret.rolling(win, min_periods=win // 2).var()
-    out = {}
-    for c in rets.columns:
-        beta = (rets[c].rolling(win, min_periods=win // 2).cov(mret) / var).shift(1)
-        out[c] = rets[c] - beta * mret
-    return pd.DataFrame(out)
-
-
-def zscores(resid, window=WINDOW, hist=BETA_WIN, cap=Z_CAP):
-    """5-day cumulative residual / (residual volatility over the earlier `hist` days * sqrt(window)), capped."""
-    cum = resid.rolling(window, min_periods=window).sum()
-    sd = resid.shift(window).rolling(hist, min_periods=hist // 2).std()
-    return (cum / (sd * math.sqrt(window))).clip(-cap, cap)
+    beta = rets.rolling(win, min_periods=win // 2).cov(mret).div(var, axis=0).shift(window)
+    cum_r = rets.rolling(window, min_periods=window).sum()
+    cum_m = mret.rolling(window, min_periods=window).sum()
+    return ((cum_r - beta.mul(cum_m, axis=0)) * 100).clip(-cap, cap)
 
 
 def exposures(graph, listed, min_conf=0.5):
@@ -76,19 +71,29 @@ def exposures(graph, listed, min_conf=0.5):
     return out
 
 
-def impact_from(z_row, items):
-    """-> (I in [-100, 100], rows [[cp, rel, w, z, conf]]) using only counterparties that have a z-score."""
+def impact_from(dr_row, items, scale=SCALE):
+    """-> (impact_pct, I in [-100, 100], rows [[cp, rel, w, dR_pct, conf]]) using only counterparties that have a dR; (None, None, []) when none do."""
     tot, rows = 0.0, []
     for it in items:
-        z = z_row.get(it["cp"])
-        if z is None or not np.isfinite(z):
+        d = dr_row.get(it["cp"])
+        if d is None or not np.isfinite(d):
             continue
-        tot += it["w"] * it["conf"] * math.tanh(z / 2)
-        rows.append([it["cp"], it["rel"], it["w"], round(float(z), 2), it["conf"]])
+        tot += d * it["w"] * it["conf"]
+        rows.append([it["cp"], it["rel"], it["w"], round(float(d), 2), it["conf"]])
     if not rows:
-        return None, []
-    rows.sort(key=lambda r: -abs(r[2] * r[4] * math.tanh(r[3] / 2)))
-    return round(float(np.clip(-100 * tot, -100, 100)), 1), rows
+        return None, None, []
+    rows.sort(key=lambda r: -abs(r[2] * r[4] * r[3]))
+    return round(float(tot), 3), round(float(np.clip(-scale * tot, -100, 100)), 1), rows
+
+
+def impact_pct_panel(dr, exp, min_w=0.0):
+    """date x focal DataFrame of impact_pct = sum_j dR_j * w * conf over the focal's edges with w >= min_w (NaN where no counterparty has a value)."""
+    cols = {}
+    for f, its in exp.items():
+        its = [i for i in its if i["w"] >= min_w and i["cp"] in dr.columns]
+        if its:
+            cols[f] = pd.concat([dr[i["cp"]] * (i["w"] * i["conf"]) for i in its], axis=1).sum(axis=1, min_count=1)
+    return pd.DataFrame(cols)
 
 
 def newey_west_t(x, lags=5):
@@ -101,66 +106,88 @@ def newey_west_t(x, lags=5):
     return float(fit.tvalues[0]), len(x)
 
 
-def validate(z, resid, exp, min_w=0.10, horizon=5, step=5, warm=BETA_WIN + 60):
-    """Walk-forward: on every `step`-th day, the signal of each focal stock (what its counterparties' z-scores say, weighted by w*conf, positive = good news)
-    is rank-correlated across stocks with the focal's own NEXT-`horizon`-day residual return. Reports mean rank correlation and its Newey-West t-statistic."""
-    items = {f: [i for i in its if i["w"] >= min_w] for f, its in exp.items()}
-    items = {f: its for f, its in items.items() if its and f in resid.columns}
-    fwd = resid.rolling(horizon).sum().shift(-horizon)
-    ics, dates = [], z.index
-    for k in range(warm, len(dates) - horizon, step):
-        d = dates[k]
-        sig, tgt = [], []
+def validate(rets, mret, exp, window=WINDOW, cap=DR_CAP, min_w=0.10, horizon=5, step=5, warm=BETA_WIN + 60, windows=(1, 3, 5)):
+    """Walk-forward: on every `step`-th day, the lagged impact_pct of each focal stock (edges with w >= min_w) is rank-correlated across stocks with the focal's own
+    NEXT-`horizon`-day residual return (beta known at the signal date). Reports the mean rank correlation and its Newey-West t-statistic for the configured window,
+    and for the other windows for information. Fewer than MIN_EDGE_DAYS (edge, day) observations -> cannot validate."""
+    items = {f: [i for i in its if i["w"] >= min_w and i["cp"] in rets.columns] for f, its in exp.items() if f in rets.columns}
+    items = {f: its for f, its in items.items() if its}
+    base = {"horizon": horizon, "focal_stocks": len(items), "min_w": min_w, "min_edge_days": MIN_EDGE_DAYS, "window_d": window}
+    if not items:
+        return {**base, "edge_days": 0, "n_dates": 0, "ic_mean": None, "t": None}
+    var = mret.rolling(BETA_WIN, min_periods=BETA_WIN // 2).var()
+    beta_now = rets.rolling(BETA_WIN, min_periods=BETA_WIN // 2).cov(mret).div(var, axis=0)                     # known at the signal date: no shift needed
+    fwd = (rets.rolling(horizon).sum().shift(-horizon) - beta_now.mul(mret.rolling(horizon).sum().shift(-horizon), axis=0)) * 100
+
+    def run(win):
+        dr = window_dr(rets, mret, win, cap)
+        panel = impact_pct_panel(dr, items, min_w)
+        edge_days = 0
         for f, its in items.items():
-            vals = [(i["w"] * i["conf"], z.at[d, i["cp"]]) for i in its if i["cp"] in z.columns and np.isfinite(z.at[d, i["cp"]])]
-            y = fwd.at[d, f]
-            if vals and np.isfinite(y):
-                sig.append(sum(w * zz for w, zz in vals))
-                tgt.append(y)
-        if len(sig) >= 5:
-            r = pd.Series(sig).rank().corr(pd.Series(tgt).rank())
-            if np.isfinite(r):
-                ics.append(r)
-    t, n = newey_west_t(ics, lags=max(1, horizon // step + 1))
-    return {"horizon": horizon, "n_dates": n, "ic_mean": round(float(np.mean(ics)), 4) if ics else None, "t": round(t, 2) if t is not None else None,
-            "focal_stocks": len(items), "min_w": min_w}
+            ok = fwd[f].notna()
+            for i in its:
+                edge_days += int((dr[i["cp"]].notna() & ok).iloc[warm:].sum())
+        ics = []
+        for k in range(warm, len(panel.index) - horizon, step):
+            d = panel.index[k]
+            row, y = panel.loc[d], fwd.loc[d]
+            both = [f for f in panel.columns if np.isfinite(row.get(f, np.nan)) and np.isfinite(y.get(f, np.nan))]
+            if len(both) >= 5:
+                r = pd.Series([row[f] for f in both]).rank().corr(pd.Series([y[f] for f in both]).rank())
+                if np.isfinite(r):
+                    ics.append(r)
+        t, n = newey_west_t(ics, lags=max(1, horizon // step + 1))
+        return {"edge_days": edge_days, "n_dates": n, "ic_mean": round(float(np.mean(ics)), 4) if ics else None, "t": round(t, 2) if t is not None else None}
+
+    main_res = run(window)
+    out = {**base, **main_res}
+    if main_res["edge_days"] >= MIN_EDGE_DAYS:
+        out["windows"] = {str(w): (main_res if w == window else run(w)) for w in windows}
+    return out
 
 
 def build(graph, closes, nifty, cfg, now=None):
     """closes: DataFrame (date x symbol) of adjusted closes; nifty: Series. -> (impact doc, shocks doc)."""
     now = now or datetime.now(timezone.utc)
+    window, cap, scale = cfg.get("impact_window_d", WINDOW), cfg.get("dr_cap_pct", DR_CAP), cfg.get("impact_scale", SCALE)
+    closes = closes.loc[closes.index.isin(nifty.index)]            # the index calendar rules: a stock bar on a day the index did not trade (a holiday print) would blank every window containing it
     listed = set(closes.columns)
     exp = exposures(graph, listed, cfg["min_conf"])
     need = sorted({f for f in exp} | {i["cp"] for its in exp.values() for i in its})
     rets = closes[need].pct_change()
     m = nifty.pct_change().reindex(rets.index)
-    resid = residuals(rets, m)
-    z = zscores(resid, cfg.get("impact_window_d", WINDOW), BETA_WIN, cfg.get("z_cap", Z_CAP))
-    last = z.dropna(how="all").index[-1] if len(z.dropna(how="all")) else None
+    dr = window_dr(rets, m, window, cap) if need else pd.DataFrame()
+    valid = dr.dropna(how="all") if len(dr.columns) else dr
+    last = valid.index[-1] if len(valid) else None
     items, shocks = {}, []
     if last is not None:
-        zl = z.loc[last].to_dict()
+        dl = dr.loc[last].to_dict()
         for f, its in exp.items():
-            i, rows = impact_from(zl, its)
+            ip, i, rows = impact_from(dl, its, scale)
             if i is not None:
-                items[f] = {"i": i, "n": len(rows), "top": rows[:5]}
+                items[f] = {"i": i, "ip": ip, "n": len(rows), "top": rows[:5]}
         day = rets.loc[last]
+        smin = cfg.get("shock_min_pct", SHOCK_MIN)
         for f, its in exp.items():
             for it in its:
-                zj = zl.get(it["cp"])
-                if zj is not None and np.isfinite(zj) and abs(zj) >= 1.5:
-                    shocks.append({"focal": f, "cp": it["cp"], "rel": it["rel"], "w": it["w"], "conf": it["conf"], "z": round(float(zj), 2), "edge": it["edge"],
+                dj = dl.get(it["cp"])
+                if dj is not None and np.isfinite(dj) and abs(dj) >= smin:
+                    shocks.append({"focal": f, "cp": it["cp"], "rel": it["rel"], "w": it["w"], "conf": it["conf"], "dr": round(float(dj), 2), "edge": it["edge"],
                                    "cp_ret": round(float(day[it["cp"]]), 4) if np.isfinite(day[it["cp"]]) else None,
                                    "focal_ret": round(float(day[f]), 4) if np.isfinite(day[f]) else None})
-        shocks.sort(key=lambda s: -(s["w"] * abs(s["z"])))
-    val = validate(z, resid, exp) if exp else {"n_dates": 0, "t": None}
-    ok = val.get("t") is not None and val["t"] >= 2
+        shocks.sort(key=lambda s: -(s["w"] * abs(s["dr"])))
+    val = validate(rets, m, exp, window, cap) if exp else {"n_dates": 0, "t": None, "edge_days": 0, "min_edge_days": MIN_EDGE_DAYS}
+    ok = val.get("t") is not None and val["edge_days"] >= MIN_EDGE_DAYS and val["t"] >= 2
+    if val["edge_days"] < MIN_EDGE_DAYS:
+        note = f"Impact term: cannot validate: insufficient data ({val['edge_days']} edge-days, {MIN_EDGE_DAYS} needed)"
+    else:
+        note = "Impact term: validated" if ok else "Impact term: prior, unvalidated"
     asof = last.strftime("%Y-%m-%d") if last is not None else None
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    impact = {"generated_utc": stamp, "as_of": asof, "window_d": cfg.get("impact_window_d", WINDOW), "market": "NIFTY 50",
-              "validation": {**val, "validated": bool(ok), "note": "Impact term: validated" if ok else "Impact term: prior, unvalidated"},
+    impact = {"generated_utc": stamp, "as_of": asof, "window_d": window, "market": "NIFTY 50", "scale": scale, "dr_cap_pct": cap,
+              "validation": {**val, "validated": bool(ok), "note": note},
               "coverage": {"focal_stocks": len(items), "edges_used": sum(len(v) for v in exp.values())}, "stocks": items}
-    return impact, {"generated_utc": stamp, "as_of": asof, "min_abs_z": 1.5, "shocks": shocks[:200]}
+    return impact, {"generated_utc": stamp, "as_of": asof, "min_abs_dr_pct": cfg.get("shock_min_pct", SHOCK_MIN), "shocks": shocks[:200]}
 
 
 def main(argv=None):
@@ -187,7 +214,7 @@ def main(argv=None):
     SHOCKS.write_text(json.dumps(shocks, separators=(",", ":")), encoding="utf-8")
     v = impact["validation"]
     print(f"impact as of {impact['as_of']}: {impact['coverage']['focal_stocks']} stocks scored, {len(shocks['shocks'])} shocks; "
-          f"lead-lag test: IC {v.get('ic_mean')}, t {v.get('t')} over {v.get('n_dates')} dates -> {v['note']}")
+          f"lead-lag test: IC {v.get('ic_mean')}, t {v.get('t')} over {v.get('n_dates')} dates, {v.get('edge_days')} edge-days -> {v['note']}")
     return 0
 
 

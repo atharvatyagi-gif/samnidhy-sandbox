@@ -9878,6 +9878,81 @@
 }
 },
 {
+"name": "worked example: dR -6.0, w 0.24, conf 0.9 gives I +32.4 and F_adj -22.4",
+"in": {
+"p_tech": 0.5,
+"F": 10,
+"S": null,
+"sweep": null,
+"w": {
+"wF": 0.2,
+"wS": 0.12,
+"wSweep": 0.18
+},
+"I": 32.4
+},
+"out": {
+"p": 0.4888,
+"q": 0.5112,
+"T": 0.0,
+"conf": "Low",
+"agree": "1/2"
+},
+"hand": {
+"p": 0.4888
+}
+},
+{
+"name": "adverse impact larger than the fundamental flips its sign",
+"in": {
+"p_tech": 0.5,
+"F": 10,
+"S": null,
+"sweep": null,
+"w": {
+"wF": 0.2,
+"wS": 0.12,
+"wSweep": 0.18
+},
+"I": 100
+},
+"out": {
+"p": 0.4551,
+"q": 0.5449,
+"T": 0.0,
+"conf": "Medium",
+"agree": "1/2"
+},
+"hand": {
+"p": 0.4551
+}
+},
+{
+"name": "favourable impact (negative I) adds to the fundamental",
+"in": {
+"p_tech": 0.5,
+"F": 10,
+"S": null,
+"sweep": null,
+"w": {
+"wF": 0.2,
+"wS": 0.12,
+"wSweep": 0.18
+},
+"I": -32.4
+},
+"out": {
+"p": 0.5212,
+"q": 0.4788,
+"T": 0.0,
+"conf": "Low",
+"agree": "1/2"
+},
+"hand": {
+"p": 0.5212
+}
+},
+{
 "name": "custom weights",
 "in": {
 "p_tech": 0.55,

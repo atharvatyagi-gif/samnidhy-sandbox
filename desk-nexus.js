@@ -429,7 +429,7 @@ function edgePanel() {
     <tr><th>Share</th><td>${shareTxt(e)}</td></tr><tr><th>Period</th><td>${esc(e.per || "—")}</td></tr><tr><th>Confidence</th><td>${e.conf.toFixed(2)} <span class="mut">(quote verified 0.5, counterparty named 0.2, share stated 0.2, period recent 0.1)</span></td></tr>
     <tr><th>Read from</th><td>${esc(e.doc)} · page ${e.pg} · <a href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">source</a></td></tr></tbody></table>
     <div class="sec-t">Quote</div><blockquote class="nx-quote">“${esc(e.q)}”</blockquote>
-    ${s ? `<p>Counterparty ${esc(s.cp)}: 5-day residual move z ${s.z > 0 ? "+" : ""}${s.z}; it moved ${s.cp_ret == null ? "—" : (s.cp_ret * 100).toFixed(1) + "%"} on the day, and ${esc(s.focal)} ${s.focal_ret == null ? "—" : (s.focal_ret * 100).toFixed(1) + "%"}.</p>` : ""}
+    ${s ? `<p>Counterparty ${esc(s.cp)}: 5-day beta-adjusted move ${s.dr > 0 ? "+" : ""}${s.dr} % pts; it moved ${s.cp_ret == null ? "—" : (s.cp_ret * 100).toFixed(1) + "%"} on the day, and ${esc(s.focal)} ${s.focal_ret == null ? "—" : (s.focal_ret * 100).toFixed(1) + "%"}.</p>` : ""}
     <p class="mut">A linked move is an association, not proof of cause. Model estimate only.</p>`;
 }
 function facilityPanel() {

@@ -44,6 +44,11 @@ add("impact missing changes nothing", 0.6, F=40, S=10, I=None, expect=None)
 add("impact makes agreement lose the fundamental lean", 0.7, F=30, S=30, I=40, expect={"agree": "2/3"})
 for p, F, I in itertools.product([0.2, 0.5, 0.8], [None, -90, 0, 60], [None, -100, -30, 0, 25, 100]):
     add(f"impact grid p={p} F={F} I={I}", p, F, 15, None, I=I)
+# worked example (override 17): counterparty residual dR = -6.0 %, share 0.24, conf 0.9 -> impact_pct = -1.296 -> I = clip(-25 * -1.296) = +32.4;
+# with F = 10: F_adj = 10 - 32.4 = -22.4; p_tech = 0.5: z = 0.2 * -0.224 = -0.0448 -> p = 1/(1+e^0.0448) = 0.4888
+add("worked example: dR -6.0, w 0.24, conf 0.9 gives I +32.4 and F_adj -22.4", 0.5, F=10, I=32.4, expect={"p": 0.4888})
+add("adverse impact larger than the fundamental flips its sign", 0.5, F=10, I=100, expect={"p": 0.4551})        # F_adj = -90 -> z = -0.18 -> 0.4551
+add("favourable impact (negative I) adds to the fundamental", 0.5, F=10, I=-32.4, expect={"p": 0.5212})           # F_adj = 42.4 -> z = 0.0848 -> 0.5212
 add("custom weights", 0.55, F=50, S=50, sweep=50, w={"wF": 0.4, "wS": 0.0, "wSweep": 0.1})
 out = Path(__file__).resolve().parent / "fixtures" / "combiner_cases.json"
 out.write_text(json.dumps({"note": "Contract for combine_py (Python) and combine() (JavaScript). 'hand' values were worked out independently.", "cases": cases}, indent=0), encoding="utf-8")

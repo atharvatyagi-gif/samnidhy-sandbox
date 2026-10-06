@@ -578,7 +578,7 @@ def build_stock_entries(L, per, drv, fund, sentiment, cfg, hmm_last, jumps, pair
         xi = imp.get(sym)
         I = xi["i"] if xi else None
         if xi:                                                         # supply-chain impact: [score, counterparties used, top rows, as of]
-            e["x"] = {"i": xi["i"], "n": xi["n"], "top": xi["top"], "asof": (impact or {}).get("as_of")}
+            e["x"] = {"i": xi["i"], "ip": xi.get("ip"), "n": xi["n"], "top": xi["top"], "asof": (impact or {}).get("as_of")}
             e["cov"]["x"] = 1
         comb = {str(h): combine_py(float(per[h][i]), Fsc, S, None, w, I=I) for h in per}
         e["comb"] = {k: [v["p"], v["conf"], v["agree"]] for k, v in comb.items()}

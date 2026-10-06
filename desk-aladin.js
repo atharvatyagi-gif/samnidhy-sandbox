@@ -141,18 +141,19 @@ function gauge(sc, why) {
   const v = Math.max(-100, Math.min(100, sc));
   return `<span class="al-g" title="${v > 0 ? "+" : ""}${Math.round(v)} on a scale of -100 to +100"><i class="mid"></i><b class="${v > 5 ? "up" : v < -5 ? "down" : "flat"}" style="left:${50 + v / 2}%"></b></span><span class="al-gv ${ctx.ud(v)}">${v > 0 ? "+" : ""}${Math.round(v)}</span>`;
 }
-/* the impact score is adverse when positive: same track as the other gauges, but a high value is drawn in the "down" colour */
-function igauge(v, asof) {
-  const x = Math.max(-100, Math.min(100, v));
-  return `<span class="al-g" title="Supply-chain impact ${x > 0 ? "+" : ""}${Math.round(x)} (positive = adverse), as of ${ctx.esc(asof || "?")}"><i class="mid"></i><b class="${x > 5 ? "down" : x < -5 ? "up" : "flat"}" style="left:${50 + x / 2}%"></b></span><span class="al-gv ${ctx.ud(-x)}">${x > 0 ? "+" : ""}${Math.round(x)}</span>`;
+/* the linked-move estimate in % pts (what users see; the model-only score I = clip(-25 * estimate, -100, 100) never appears): counterparties' beta-adjusted moves x share x confidence */
+function igauge(ip, asof) {
+  if (ip == null || !Number.isFinite(ip)) return '<span class="mut al-na">—</span>';
+  return `<span class="al-gv ${ctx.ud(ip)}" title="Linked-move estimate ${ip > 0 ? "+" : ""}${ip.toFixed(2)} % pts: what the disclosed listed counterparties did over 5 days (beta-adjusted), times their share of this company's revenue or purchases, times confidence. Association, not proof of cause. As of ${ctx.esc(asof || "?")}">${ip > 0 ? "+" : ""}${ip.toFixed(1)}</span>`;
 }
+const linked = x => x == null ? null : x.ip != null ? x.ip : x.i != null ? -x.i / 25 : null;      // files written before the estimate was stored: undo the scale
 const REL = { supplies: "supplies", equipment_for: "equipment for", raw_material_from: "raw material from", logistics_for: "logistics for", related_party: "related party", customer_of: "customer of" };
 function impactBlock(sym, a) {
   const { esc } = ctx, w = (ctx.S.aladin || {}).weights || {}, x = a && a.x;
   if (!x) return `<div class="sec-t">Supply-chain impact</div><p class="mut">Not measured: no disclosed dependency of this company on a listed company, or the supply-chain data does not cover it yet.</p>`;
-  const rows = (x.top || []).map(([cp, rel, sh, z, cf]) => `<tr><td><button class="lnk" data-nexus="company:${esc(cp)}">${esc(cp)}</button></td><td>${esc(REL[rel] || rel)}</td><td class="r">${Math.round(sh * 100)}%</td><td class="r ${ctx.ud(z)}">${z > 0 ? "+" : ""}${num(z, 1)}</td><td class="r">${num(cf, 2)}</td></tr>`).join("");
-  return `<div class="sec-t">Supply-chain impact</div><p>Impact ${x.i > 0 ? "+" : ""}${num(x.i, 1)} (positive = adverse) from ${x.n} disclosed dependenc${x.n === 1 ? "y" : "ies"}, as of ${esc(x.asof || "?")}. <span class="mut">${w.impact_validated ? "Impact term: validated" : "Impact term: prior, unvalidated"}</span></p>
-    <table class="tbl sm al-imp"><thead><tr><th>Counterparty</th><th>Link</th><th class="r">Share</th><th class="r">z</th><th class="r">Conf</th></tr></thead><tbody>${rows}</tbody></table>
+  const rows = (x.top || []).map(([cp, rel, sh, dr, cf]) => `<tr><td><button class="lnk" data-nexus="company:${esc(cp)}">${esc(cp)}</button></td><td>${esc(REL[rel] || rel)}</td><td class="r">${Math.round(sh * 100)}%</td><td class="r ${ctx.ud(dr)}">${dr > 0 ? "+" : ""}${num(dr, 1)}</td><td class="r">${num(cf, 2)}</td></tr>`).join("");
+  return `<div class="sec-t">Supply-chain impact</div><p>Linked-move estimate ${linked(x) > 0 ? "+" : ""}${num(linked(x), 2)} % pts (negative = the companies it depends on fell) from ${x.n} disclosed dependenc${x.n === 1 ? "y" : "ies"}, as of ${esc(x.asof || "?")}. <span class="mut">${w.impact_validated ? "Impact term: validated" : (((w.impact || {}).note || "").replace(/^Impact term: /, "Impact term: ") || "Impact term: prior, unvalidated")}</span></p>
+    <table class="tbl sm al-imp"><thead><tr><th>Counterparty</th><th>Link</th><th class="r">Share</th><th class="r">5-day move (% pts)</th><th class="r">Conf</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="mut">Association, not proof of cause: a linked move is not a reason this stock will follow.</p>`;
 }
 function dots(k, n) { return n ? "●".repeat(k) + "○".repeat(n - k) : "—"; }
@@ -227,7 +228,7 @@ function visibleRows() {
   if (st.conf) rows = rows.filter(r => r.c && r.c.conf === st.conf);
   const withP = rows.filter(r => r.c), noP = rows.filter(r => !r.c);
   const by = (f, dir = 1) => (a, b) => dir * ((f(a) ?? -1e9) - (f(b) ?? -1e9));
-  const keys = { sym: r => r.sym, n: r => r.u.n, last: r => (ctx.q(r.sym) || {}).p, chg: r => (ctx.q(r.sym) || {}).pct, pup: r => r.c && r.c.p, pdn: r => r.c && r.c.q, F: r => r.c && r.c.Fadj, I: r => r.c && r.c.I,
+  const keys = { sym: r => r.sym, n: r => r.u.n, last: r => (ctx.q(r.sym) || {}).p, chg: r => (ctx.q(r.sym) || {}).pct, pup: r => r.c && r.c.p, pdn: r => r.c && r.c.q, F: r => r.c && r.c.Fadj, I: r => (r.c && r.c.I != null ? -r.c.I / 25 : null),
     T: r => r.c && r.c.T, S: r => r.c && r.c.S, sw: r => sweepOf(r.sym), swabs: r => Math.abs(sweepOf(r.sym) || 0), agree: r => r.c && r.c.agree_k, conf: r => r.c && ({ Low: 0, Medium: 1, High: 2 })[r.c.conf], cov: r => r.a && ((r.a.cov.f || 0) + (r.a.cov.t || 0) + (r.a.cov.s || 0)) };
   let list;
   if (st.sort) {
@@ -249,8 +250,8 @@ function rowHtml(r, i) {
   const first = `<tr class="al-r${open ? " on" : ""}" data-s="${esc(r.sym)}"><td class="mut">${i + 1}</td><td class="sym"><button class="al-tg" aria-expanded="${open}" aria-label="${open ? "Hide" : "Show"} details for ${esc(r.sym)}">${open ? "▾" : "▸"}</button> ${esc(r.sym)}${tag}</td><td class="co al-hide2">${esc(u.n || "")}</td>
     <td class="num al-last">${x ? inr(x.p) : "—"}</td><td class="num al-chg ${x ? ud(x.pct) : "mut"}">${x && x.pct != null ? sg(x.pct) + "%" : "—"}</td>
     <td class="num al-pup">${pup}</td><td class="num al-pdn al-hide">${c ? pctTxt(c.q) : "—"}</td>
-    <td class="al-gc">${ft ? `<span class="mut" title="${esc(ft.why)}">${esc(ft.t)}</span>` : c && c.I != null ? `<span title="F ${Math.round(c.F ?? 0)} · I ${Math.round(c.I)}">${gauge(c.Fadj)}</span>` : gauge(a.f.sc)}</td>
-    <td class="al-gc al-hide">${a && a.x ? igauge(a.x.i, a.x.asof) : '<span class="mut al-na" title="No disclosed dependency on a listed company">—</span>'}</td><td class="al-gc">${c ? gauge(c.T) : '<span class="mut">—</span>'}</td>
+    <td class="al-gc">${ft ? `<span class="mut" title="${esc(ft.why)}">${esc(ft.t)}</span>` : c && c.I != null ? `<span title="F ${Math.round(c.F ?? 0)}">${gauge(c.Fadj)}</span>` : gauge(a.f.sc)}</td>
+    <td class="al-gc al-hide">${a && a.x ? igauge(linked(a.x), a.x.asof) : '<span class="mut al-na" title="No disclosed dependency on a listed company">—</span>'}</td><td class="al-gc">${c ? gauge(c.T) : '<span class="mut">—</span>'}</td>
     <td class="al-sc">${sentHtml(r.sym, true)}</td><td class="al-sw al-hide">${sweepHtml(r.sym)}</td><td class="al-ag al-hide" title="How many of the available views lean the same way as P(up)">${c ? dots(c.agree_k, c.agree_n) : "—"}</td>
     <td class="al-hide">${c ? `<span class="tag${c.conf === "High" ? " acc" : ""}">${c.conf}</span>` : "—"}</td><td class="al-hide">${covHtml(a)}</td></tr>`;
   return first + (open ? `<tr class="al-x"><td colspan="15">${detailHtml(r)}</td></tr>` : "");
@@ -490,7 +491,7 @@ export function renderAladinMini(sym) {
   const pct = Math.round(c.p * 100);
   return head + `<div class="ol-mini"><div class="tg-top"><span class="mut">P(up) in ${ph} trading days</span><b class="${c.p >= 0.55 ? "up" : c.p <= 0.45 ? "down" : ""}">${pct}%</b></div>
     <div class="tg-bar"><i style="left:calc(${pct}% - 2px)"></i></div>
-    <div class="al-mini-g"><span>Fundamental ${ft ? `<span class="mut" title="${ctx.esc(ft.why)}">${ft.t}</span>` : c.I != null ? `<span title="F ${Math.round(c.F ?? 0)} · I ${Math.round(c.I)}">${gauge(c.Fadj)}</span>` : gauge(a.f.sc)}</span><span>Technical ${gauge(c.T)}</span>${a.x ? `<span>Impact ${igauge(a.x.i, a.x.asof)}</span>` : ""}</div>
+    <div class="al-mini-g"><span>Fundamental ${ft ? `<span class="mut" title="${ctx.esc(ft.why)}">${ft.t}</span>` : c.I != null ? `<span title="F ${Math.round(c.F ?? 0)}">${gauge(c.Fadj)}</span>` : gauge(a.f.sc)}</span><span>Technical ${gauge(c.T)}</span>${a.x ? `<span>Impact ${igauge(a.x.i, a.x.asof)}</span>` : ""}</div>
     <div class="al-mini-s">${sentHtml(sym, true)}</div>
     <div class="tg-n">Confidence ${c.conf} · ${c.agree} views agree</div>
     <p class="note">${ctx.esc(reliabilityText(a.t.p[ph], ph))}</p>
