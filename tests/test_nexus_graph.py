@@ -426,3 +426,18 @@ def test_audit_sheet_samples_across_companies_and_shows_the_quote_and_fields():
     many = {"edges": [{"id": f"e{i}", "own": "AAA" if i < 30 else "BBB", "s": "AAA", "d": "X", "vq": True} for i in range(40)], "nodes": [], "fac": {}}
     picked = gs.sample(many, 10, 3)
     assert len(picked) == 10 and {p[0] for p in picked} == {"AAA", "BBB"} and sum(p[0] == "BBB" for p in picked) == 5     # round-robin: the small company is not drowned out
+
+
+def test_the_default_order_reads_the_priority_companies_first(tmp_path, monkeypatch):
+    stocks = [{"s": s, "n": s, "board": "Main", "series": "EQ", "n500": i < 2, "avgv20": 1, "c": 1} for i, s in enumerate(["BIG1", "BIG2", "PRIO1", "PRIO2", "DONE1"])]
+    monkeypatch.setattr(rb, "OUT", tmp_path / "g.json")
+    monkeypatch.setattr(rb, "CACHE", tmp_path / "cache")
+    monkeypatch.setattr(rb, "PACE_S", 0)
+    monkeypatch.setattr(rb, "load_universe", lambda: stocks)
+    (tmp_path / "g.json").write_text(json.dumps({"cos": {"DONE1": {"at": "2026-01-01T00:00:00Z"}}, "edges": [], "nodes": [], "fac": {}}), encoding="utf-8")
+    real = rb.load_json
+    monkeypatch.setattr(rb, "load_json", lambda p, d=None: {"rows": [{"sym": "PRIO2"}, {"sym": "PRIO1"}, {"sym": "DONE1"}]} if str(p).endswith("nexus_priority.json") else real(p, d))
+    seen = []
+    monkeypatch.setattr(rb, "discover", lambda sess, sym, src, now=None: seen.append(sym) or [])
+    rb.run([], 3, False, True, None, None, None, now=NOW, log=lambda *a: None)
+    assert seen == ["PRIO2", "PRIO1", "BIG1"]                    # priority order first, a finished company is not repeated, then the usual n500/liquidity order

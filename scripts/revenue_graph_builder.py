@@ -666,6 +666,9 @@ def run(symbols, limit, refresh, dry, session, llm, fetcher, now=None, log=print
         main.sort(key=lambda s: (not s.get("n500"), -((s.get("avgv20") or 0) * (s.get("c") or 0))))
         symbols = [s["s"] for s in main]
         symbols.sort(key=lambda s: done.get(s, {}).get("at", ""))   # oldest-refreshed (never-done first), stable on the n500/liquidity order
+        prio = [r["sym"] for r in (load_json(ROOT / "data" / "config" / "nexus_priority.json", {}) or {}).get("rows", [])]
+        first = [x for x in prio if x not in done and any(x == m["s"] for m in main)]       # the companies most likely to give listed-to-listed edges go first (scripts/nexus_priority.py)
+        symbols = first + [x for x in symbols if x not in set(first)]
     todo = [s for s in symbols if refresh or s not in done][: limit]
     llm_cache = CACHE / "llm"
     llm_cache.mkdir(parents=True, exist_ok=True)
