@@ -6,7 +6,7 @@
    ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. */
 
 import { lanesAt, carrierOf, ageMin, ageText, isStale, shipTypeLabel, countIn } from "./desk-lanes.js";
-import { coverageState } from "./desk-deps.js";
+import { coverageState, shareText, derivedNote } from "./desk-deps.js";
 import { ageLabel } from "./desk-kin.js";
 
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.";
@@ -62,7 +62,7 @@ const lab = id => { const n = nodeOf(id); return n && n.k === "co" ? id : (n && 
 const minConf = () => 0.5;
 const pct = (v, d = 0) => v == null ? "—" : (v * 100).toFixed(d) + "%";
 const move = sym => { const q = ctx.q(sym); return q && q.pct != null ? `<span class="${ctx.ud(q.pct)}">${ctx.sg(q.pct)}%</span>` : '<span class="mut">—</span>'; };
-const shareTxt = e => e.w == null ? '<span class="mut">no share stated</span>' : `${Math.round(e.w * 100)}% of ${e.wb === "revenue" ? "the supplier's revenue" : "the customer's purchases"}`;
+const shareTxt = e => e.w == null ? '<span class="mut">no share stated</span>' : ctx.esc(shareText(e));
 
 /* ---------- shell ---------- */
 function shell() {
@@ -422,7 +422,7 @@ function edgePanel() {
   const s = ((shocks || {}).shocks || []).find(x => x.edge === e.id);
   const end = id => { const n = nodeOf(id); return n && n.k === "co" ? `<button class="lnk" data-nexus="company:${esc(id)}">${esc(id)}</button> ${esc(nameOf(id))} ${move(id)}` : `${esc((n && n.n) || id)} <span class="mut">${esc(KIND[(n || {}).k] || "")}</span>`; };
   return `<table class="tbl sm"><tbody><tr><th>Supplier</th><td>${end(e.s)}</td></tr><tr><th>Customer</th><td>${end(e.d)}</td></tr><tr><th>Link</th><td>${esc(REL[e.rel] || e.rel)}${e.comp ? ` · ${esc(e.comp)}` : ""}</td></tr>
-    <tr><th>Share</th><td>${shareTxt(e)}</td></tr><tr><th>Period</th><td>${esc(e.per || "—")}</td></tr><tr><th>Confidence</th><td>${e.conf.toFixed(2)} <span class="mut">(quote verified 0.5, counterparty named 0.2, share stated 0.2, period recent 0.1)</span></td></tr>
+    <tr><th>Share</th><td>${shareTxt(e)}${derivedNote(e) ? `<div class="mut">${esc(derivedNote(e))}</div>` : ""}</td></tr><tr><th>Period</th><td>${esc(e.per || "—")}</td></tr><tr><th>Confidence</th><td>${e.conf.toFixed(2)} <span class="mut">(quote verified 0.5, counterparty named 0.2, share stated 0.2, period recent 0.1)</span></td></tr>
     <tr><th>Read from</th><td>${esc(e.doc)} · page ${e.pg} · <a href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">source</a></td></tr></tbody></table>
     <div class="sec-t">Quote</div><blockquote class="nx-quote">“${esc(e.q)}”</blockquote>
     ${s ? `<p>Counterparty ${esc(s.cp)}: 5-day beta-adjusted move ${s.dr > 0 ? "+" : ""}${s.dr} % pts; it moved ${s.cp_ret == null ? "—" : (s.cp_ret * 100).toFixed(1) + "%"} on the day, and ${esc(s.focal)} ${s.focal_ret == null ? "—" : (s.focal_ret * 100).toFixed(1) + "%"}.</p>` : ""}

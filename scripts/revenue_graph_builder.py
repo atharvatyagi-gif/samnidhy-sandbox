@@ -181,6 +181,28 @@ GROUP_WORDS = re.compile(r"\b(suppliers|vendors|partners|clients|customers|produ
                          r"contractors|manufacturers|sellers|companies|firms|brands|institutions|banks|governments|utilities|agencies|operators|"
                          r"tier[- ]?\d|small|key|parent|holding|subsidiar(?:y|ies)|associates?|promoters?|group|affiliates?)\b", re.I)
 
+# What an edge's own quote must NOT be. Three kinds of sentence were being read as supply relationships:
+#  * deals that are not supply: an acquisition, merger, stake or joint venture (kept only when the same sentence also says goods or services are sold or bought);
+#  * things that are not a transaction or have not happened: an award or recognition, "we are in discussions to supply", "expecting new bids", "plan to", "likely to" (dropped even when the sentence also says supply);
+#  * a descriptor instead of a company: "a major customer based in USA", "our largest supplier" (these are ANONYMOUS counterparties, never named ones).
+NOT_SUPPLY = re.compile(r"\b(acqui\w+|merger|amalgamat\w+|joint venture|investment in|invested in|stake in|subscri\w+)\b", re.I)
+SUPPLY_WORDS = re.compile(r"\b(suppl\w+|purchas\w+|procur\w+|vendors?|customers?|sold|sells?|sales?|revenue|orders?|PPAs?|power purchase)\b", re.I)
+NOT_YET = re.compile(r"\b(awards?|awarded|recogni\w+|in discussions?|in talks|expecting|expect to|plan(?:s|ning)? to|proposed|intend(?:s|ed)? to|looking to|aims? to|exploring|likely to|bids?|bidding)\b", re.I)
+GENERIC_NAME = re.compile(r"^\s*(?:(?:a|an|one|the|our|its|this|that)\s+)?(?:(?:major|largest|top|key|single|biggest|principal|leading|large|important|main|primary|significant|anchor)\s+)?"
+                          r"(?:\w+\s+){0,2}?(customer|client|supplier|vendor|distributor|buyer|counterparty|licensee|licensor)\b", re.I)
+
+
+def supply_quote_ok(quote):
+    """False for a sentence that is not a statement of an existing supply relationship (see NOT_SUPPLY / NOT_YET)."""
+    if NOT_YET.search(quote or ""):
+        return False
+    return not (NOT_SUPPLY.search(quote or "") and not SUPPLY_WORDS.search(quote or ""))
+
+
+def is_generic_name(name):
+    return bool(name) and bool(GENERIC_NAME.match(name.strip())) and not re.search(r"\b(limited|ltd|inc|corp|llc|gmbh|ag|plc|pvt|private)\b", name, re.I)
+
+
 def validate_answer(raw, pages_by_no, meta, now, schema):
     """raw: parsed JSON from the model. -> (edges, facilities, dropped: list[str]). Never raises on bad content."""
     import jsonschema
@@ -219,6 +241,11 @@ def validate_answer(raw, pages_by_no, meta, now, schema):
         w = e.get("w")
         if w is not None and not share_in_quote(w, e["quote"]):
             w = None                                       # a number the text does not show is not kept
+        if not supply_quote_ok(e["quote"]):
+            dropped.append("quote is not a statement of an existing supply relationship (deal, award or something not yet happened)")
+            continue
+        if is_generic_name(e.get("counterparty_name")):           # "a major customer based in USA" is an anonymous customer, not a company called that
+            e = {**e, "counterparty_anon_label": e.get("counterparty_anon_label") or e["counterparty_name"].strip(), "counterparty_name": None}
         named = bool((e.get("counterparty_name") or "").strip())
         anon = (e.get("counterparty_anon_label") or "").strip()
         if not named and not anon:
@@ -542,7 +569,7 @@ def to_graph_edges(owner, items, index):
         s, d = (owner, cp) if e["direction"] == "customer" else (cp, owner)
         out.append({"own": owner, "s": s, "d": d, "rel": e["rel"], "w": e["w"], "wb": e["wb"], "per": e["per"], "tier": 1, "comp": e["comp"],
                     "conf": e["conf"], "kind": "disclosed", "url": e["url"], "pg": e["pg"], "q": e["q"], "vq": True, "doc": e["doc"],
-                    "cpn": e["name"] or e["anon"]})
+                    "cpn": e["name"] or e["anon"], **({"wd": e["wd"], "calc": e["calc"]} if e.get("wd") else {})})       # a derived share carries its two numbers (related_party_shares.py)
     return out
 
 
@@ -572,6 +599,18 @@ def resolve_anon(edges, min_conf=0.75):
 
 # ------------------------------------------------------------------ assembling the document
 
+def clean_saved_edge(e):
+    """The checks of validate_answer applied to an edge that is already in the graph: None = drop it; a descriptor saved as an external company becomes an anonymous customer."""
+    if not supply_quote_ok(e.get("q", "")):
+        return None
+    if e.get("cpn") and is_generic_name(e["cpn"]) and not e["s"].startswith("ANON_") and not e["d"].startswith("ANON_"):
+        cp = e["d"] if e["own"] == e["s"] else e["s"]
+        if cp.startswith("EXT_"):
+            aid = "ANON_%s_%s" % (e["own"], re.sub(r"[^A-Z0-9]+", "_", e["cpn"].upper()).strip("_"))
+            e = {**e, "s": aid if e["s"] == cp else e["s"], "d": aid if e["d"] == cp else e["d"]}
+    return e
+
+
 def assemble(old, owner_results, stocks, houses, anon_min=0.75, now=None):
     """old: previous document; owner_results: {sym: {"edges":[...], "fac":[...], "at": iso, "notes": [...]}} replaces those owners' records."""
     now = now or now_utc()
@@ -585,6 +624,7 @@ def assemble(old, owner_results, stocks, houses, anon_min=0.75, now=None):
             facs[fid] = {"co": sym, "n": f["name"], "kind": f["kind"], "addr": f["addr"], "cap": f["cap"], "util": f["util"], "prod": f["prod"], "eq": f["eq"],
                          "url": f["url"], "pg": f["pg"], "q": f["q"], "lat": None, "lon": None, "geo_prec": None}
         cos[sym] = {"at": r["at"], "edges": len(r["edges"]), "fac": len(r["fac"]), "notes": r["notes"][:6]}
+    edges = [x for x in (clean_saved_edge(e) for e in edges) if x is not None]
     # dedupe: same pair/relation/period/component keeps the stronger record
     best = {}
     for e in edges:
