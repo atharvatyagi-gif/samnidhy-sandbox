@@ -121,3 +121,12 @@ def test_the_impact_score_can_use_a_derived_share():
     g = rb.assemble(rps.merge(graph_with([]), "SUPPLIER", rows, {"at": "x", "derived": 1, "notes": []}), {}, STOCKS, [], 0.75, NOW)
     ex = gi.exposures(g, {"SUPPLIER", "BIGCO"}, 0.5)
     assert [(i["cp"], i["w"]) for i in ex["SUPPLIER"]] == [("BIGCO", 0.2501)]
+
+
+def test_a_share_below_005_percent_is_noise_and_is_not_kept_even_if_saved_earlier():
+    pages = {**PAGES, 40: PAGES[40] + " Bigco Motors Limited Sale of goods 0.50 980.00"}
+    items, notes = run(txs=[tx(value=0.5, quote="Bigco Motors Limited Sale of goods 0.50 980.00")], pages=pages)            # 0.5 / 5,000 = 0.01%
+    assert items == [] and any("noise" in n for n in notes)
+    tiny = {"own": "SUPPLIER", "s": "SUPPLIER", "d": "BIGCO", "rel": "supplies", "w": 0.0, "wb": "revenue", "wd": "derived", "q": "Bigco Motors Limited Sale of goods 0.50 980.00", "conf": 0.9}
+    assert rb.clean_saved_edge(tiny) is None
+    assert rb.clean_saved_edge({**tiny, "w": 0.0034}) is not None
