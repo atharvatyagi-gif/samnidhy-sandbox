@@ -1,1 +1,1 @@
-{"generated_utc":"2026-10-06T09:23:18Z","as_of":null,"window_d":5,"market":"NIFTY 50","validation":{"n_dates":0,"t":null,"validated":false,"note":"Impact term: prior, unvalidated"},"coverage":{"focal_stocks":0,"edges_used":0},"stocks":{}}
+{"generated_utc":"2026-10-06T19:42:47Z","as_of":null,"window_d":5,"market":"NIFTY 50","scale":25,"dr_cap_pct":15,"validation":{"n_dates":0,"t":null,"edge_days":0,"min_edge_days":200,"validated":false,"note":"Impact term: cannot validate: insufficient data (0 edge-days, 200 needed)"},"coverage":{"focal_stocks":0,"edges_used":0},"stocks":{}}
