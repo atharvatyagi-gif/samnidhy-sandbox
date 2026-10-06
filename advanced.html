@@ -65,7 +65,7 @@
   .block-head .idx {font-family: var(--mono); font-size: 0.78rem; color: var(--beige); border: 1px solid rgba(233,220,192,0.4); border-radius: 5px; padding: 1px 6px;}
   .block-head h2 {margin: 0; font-size: 1.35rem;}
   .block-intro {color: var(--text-secondary); max-width: 840px; margin: 6px 0 18px; font-size: 0.95rem;}
-  .card {background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;}
+  .card {background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;}
   .label {font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);}
   .chip {display: inline-flex; align-items: center; gap: 5px; font-size: 0.76rem; font-weight: 600; border-radius: 999px; padding: 2px 9px; border: 1px solid transparent; white-space: nowrap;}
   .chip.g {color: var(--accent); background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3);}
@@ -232,6 +232,11 @@
   @keyframes fin { from {opacity: 0; transform: translateY(4px);} to {opacity: 1; transform: none;} }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after {animation: none !important; transition: none !important;} }
 
+  .kv.core {grid-template-columns: repeat(5, minmax(0,1fr));} @media (max-width: 860px) { .kv.core {grid-template-columns: repeat(2, minmax(0,1fr));} }
+  .more {margin-top: 10px;} .more summary {cursor: pointer; list-style: none; font-size: 0.8rem; color: var(--text-secondary); padding: 6px 0;}
+  .more summary::-webkit-details-marker {display: none;} .more summary::before {content: "▸ "; } .more[open] summary::before {content: "▾ ";}
+  .more[open] summary {font-size: 0; } .more[open] summary::after {content: "Hide details"; font-size: 0.8rem;}
+  .sub-q {font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 10px 0 6px;}
   /* Midnight Slate: flat, mono numerals, 1px focus */
   body { font-family: var(--sans); }
   .num, .num * { font-family: var(--mono); font-variant-numeric: tabular-nums; }
@@ -3802,16 +3807,24 @@
     const f = v => v == null ? "–" : Number(v).toFixed(1);
     const fund = `<div class="sub-h">Fundamentals · why it was picked</div>
       <div class="fund"><div>
-        <div class="kv">
-          <div><span>Magic rank</span><b>#${p.magic_rank}</b><small>of ${p.of}</small></div>
-          <div><span>Return on capital</span><b>${pct(p.roc)}</b><small>rank ${p.rank_roc}</small></div>
-          <div><span>Earnings yield</span><b>${pct(p.earnings_yield)}</b><small>rank ${p.rank_ey}</small></div>
-          <div><span>P/E</span><b>${f(p.pe)}</b></div><div><span>P/B</span><b>${f(p.pb)}</b></div>
-          <div><span>ROE</span><b>${p.roe == null ? "–" : pct(p.roe)}</b></div>
+        <div class="kv core">
+          <div><span>P/E</span><b>${f(p.pe)}</b></div>
+          <div><span>EPS</span><b>${inr(p.eps)}</b></div>
           <div><span>Market cap</span><b style="font-size:0.9rem">${cr(p.market_cap_cr)}</b></div>
-          <div><span>EBIT</span><b style="font-size:0.9rem">${cr(p.ebit_cr)}</b></div>
-          <div><span>Debt / equity</span><b>${p.debt_to_equity == null ? "–" : (p.debt_to_equity / 100).toFixed(2)}</b></div>
+          <div><span>Dividend yield</span><b>${p.dividend_yield == null ? "–" : Number(p.dividend_yield).toFixed(2) + "%"}</b></div>
+          <div><span>ROE</span><b>${p.roe == null ? "–" : pct(p.roe)}</b></div>
         </div>
+        <details class="more"><summary>View details</summary>
+          <div class="sub-q">Valuation</div>
+          <div class="kv"><div><span>P/B</span><b>${f(p.pb)}</b></div>
+            <div><span>Earnings yield</span><b>${pct(p.earnings_yield)}</b><small>rank ${p.rank_ey}</small></div>
+            <div><span>EBIT</span><b style="font-size:0.9rem">${cr(p.ebit_cr)}</b></div></div>
+          <div class="sub-q">Profitability</div>
+          <div class="kv"><div><span>Magic rank</span><b>#${p.magic_rank}</b><small>of ${p.of}</small></div>
+            <div><span>Return on capital</span><b>${pct(p.roc)}</b><small>rank ${p.rank_roc}</small></div></div>
+          <div class="sub-q">Leverage</div>
+          <div class="kv"><div><span>Debt / equity</span><b>${p.debt_to_equity == null ? "–" : (p.debt_to_equity / 100).toFixed(2)}</b></div></div>
+        </details>
         <div class="why"><b>Why it's on the list:</b> it earns ${pct(p.roc, 0)} a year on the capital it uses (${cr(p.ebit_cr)} EBIT on ${cr(p.capital_cr)} of capital)
           and its earnings yield is ${pct(p.earnings_yield)} (${cr(p.ebit_cr)} EBIT against an enterprise value of ${cr(p.ev_cr)}). Combined, that ranks
           #${p.magic_rank} of the ${p.of} healthy companies. Figures from the annual report ending ${esc(p.fy_end)}.</div>
