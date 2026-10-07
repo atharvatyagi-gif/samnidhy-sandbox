@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-fx-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#09090b">
 <script src="reload-home.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
 <style>
   :root {--surface-1: #121214; --surface-2: #121214; --page-plane: #09090b; --text-primary: #fafafa; --text-secondary: #a1a1aa; --text-muted: #8b8b94; --gridline: #27272a; --baseline: #27272a; --border: #27272a; --success: #22c55e; --critical: #ef4444; --warning: #a1a1aa; --accent: #22c55e; --accent-strong: #22c55e; --on-color: #09090b; --beige: #fafafa; --beige-2: #a1a1aa; --sand: #8b8b94; --g-flat: #18181b; --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace; color-scheme: dark;}
   * {box-sizing: border-box;}
@@ -248,6 +249,19 @@
   .f-fill, .tgt .line { background: #52525b; } .f-row:last-child .f-fill { background: #fafafa; }
   .meter, .meter.rev { background: #27272a; }
 *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
+
+  /* interaction layer (advanced-fx.js): flat, no glow */
+  .f-row {cursor: pointer; border-radius: 8px; transition: background-color 150ms;} .f-row:hover, .f-row:focus-visible {background: #18181b;}
+  .f-cap {margin: 10px 4px 0; font-size: 0.82rem; color: var(--text-muted); min-height: 1.4em;}
+  .topnav a {transition: color 150ms, border-color 150ms; border-bottom: 2px solid transparent;} .topnav a[aria-current="true"] {color: var(--text-primary); border-bottom-color: var(--text-primary);}
+  #matrix tbody tr {transition: background-color 150ms;} #matrix tbody tr:hover {background: #18181b;}
+  .w-item {transition: background-color 150ms, border-color 150ms;}
+  .fx-tick-up {background: rgba(34,197,94,0.18);} .fx-tick-down {background: rgba(239,68,68,0.18);}
+  .fx-tick-up, .fx-tick-down {transition: background-color 1.2s;}
+  @media (max-width: 640px) {
+    .topbar .wrap {flex-wrap: wrap; gap: 8px 10px; padding-top: 8px; padding-bottom: 8px;}
+    .topnav {order: 5; flex-basis: 100%; overflow-x: auto; white-space: nowrap;} .topbar .spacer, .status-pill {display: none;}
+  }
 </style>
 </head>
 <body>
@@ -3883,5 +3897,8 @@
 })();
 </script>
 <script src="mode-dock.js"></script>
+<script src="fx.js"></script>
+<script src="transitions.js"></script>
+<script src="advanced-fx.js"></script>
 </body>
 </html>
