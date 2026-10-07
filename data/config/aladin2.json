@@ -1,0 +1,46 @@
+{
+  "_doc": {
+    "signal_labels": "neutral = BULLISH SIGNAL / BEARISH SIGNAL / NO EDGE; directional = BUY / SELL / HOLD style. The only switch for wording (decision 3). The mandatory disclaimer shows in both modes.",
+    "horizons_d": "forecast horizons in trading days",
+    "primary_horizon_d": "horizon used for the headline signal",
+    "universe": "min_adv_inr_cr = minimum 20-day average traded value in Rs crore; min_history_d = minimum daily bars; exclude = boards/types left out",
+    "costs": "per leg, in basis points of traded value (1 bp = 0.01%). Statutory rates as of 2026 (NSE cash/F&O, SEBI, GST, stamp); check against the broker contract note before relying on them. slippage_bps_by_adv_decile: index 0 = most liquid decile, 9 = least liquid, per leg.",
+    "eval": "expanding walk-forward; test_d block length; purge_d + embargo_d between train and test; min_trades_oos per strategy; fdr_q Benjamini-Hochberg level; n_boot bootstrap resamples",
+    "lifecycle": "probation_days of live paper-forward evidence; promote_psr probabilistic-Sharpe threshold; CUSUM retire threshold and minimum days; cap on active strategies per stock",
+    "calibration": "method, minimum resolved forecasts, max expected calibration error, rolling window in days",
+    "forecast": "quantile levels, simulated paths, conformal window, tolerance on realised interval coverage",
+    "risk": "risk_per_trade_pct of capital; kelly_fraction_cap; max_position_pct; max_sector_pct; max_open_signals; adv_participation_max of average daily volume",
+    "states": "product-state thresholds for Validated",
+    "compute": "nightly budget in minutes; discovery budget in minutes",
+    "backtest": "assumed_order_inr is the reference order size used for the participation check; circuit_proxy_min_move is the smallest |close/prev close - 1| of a one-price day that counts as a circuit-limit lock (no fill)"
+  },
+  "horizons_d": [1, 5, 10, 20, 60],
+  "primary_horizon_d": 10,
+  "signal_labels": "neutral",
+  "universe": {"min_adv_inr_cr": 2.0, "min_history_d": 750, "exclude": ["SME", "ETF"]},
+  "costs": {
+    "brokerage_bps": 3,
+    "stt_delivery_bps": 10,
+    "stt_intraday_bps": 2.5,
+    "exchange_bps": 0.35,
+    "sebi_bps": 0.1,
+    "gst_on_fees": 0.18,
+    "stamp_bps": 1.5,
+    "stamp_intraday_bps": 0.3,
+    "futures": {"brokerage_bps": 1, "stt_sell_bps": 2, "exchange_bps": 0.183, "stamp_buy_bps": 0.2},
+    "slippage_bps_by_adv_decile": [2, 3, 4, 6, 8, 10, 14, 18, 25, 35]
+  },
+  "eval": {"folds": "expanding", "min_train_d": 500, "test_d": 63, "purge_d": 20, "embargo_d": 5, "min_trades_oos": 30, "fdr_q": 0.10, "n_boot": 2000},
+  "lifecycle": {"probation_days": 60, "promote_psr": 0.95, "retire_cusum_h": 5.0, "retire_min_days": 40, "max_active_per_stock": 4},
+  "calibration": {"method": "isotonic", "min_n": 300, "ece_max": 0.05, "window_d": 250},
+  "forecast": {"quantiles": [0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975], "paths": 2000, "conformal_window_d": 500, "coverage_tol": 0.04},
+  "risk": {"risk_per_trade_pct": 1.0, "kelly_fraction_cap": 0.25, "max_position_pct": 10, "max_sector_pct": 30, "max_open_signals": 20, "adv_participation_max": 0.05},
+  "states": {"validated": {"min_oos_trades": 60, "min_live_days": 60, "ece_max": 0.05, "net_expectancy_bps_min": 5}},
+  "compute": {"nightly_budget_min": 110, "discovery_budget_min": 25},
+  "backtest": {"assumed_order_inr": 100000, "circuit_proxy_min_move": 0.02},
+  "labels": {
+    "neutral": {"bull": "BULLISH SIGNAL", "bear": "BEARISH SIGNAL", "none": "NO EDGE", "range": "forecast range", "level": "price level likelihood", "plan_level": "profit level"},
+    "directional": {"bull": "BUY", "bear": "SELL", "none": "HOLD", "range": "price range", "level": "price target probability", "plan_level": "price target"}
+  },
+  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results."
+}
