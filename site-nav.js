@@ -12,8 +12,9 @@
 
   function build() {
     if (!document.documentElement.hasAttribute("data-site-nav") || document.querySelector(".fx-nav")) return;
+    var keepOwn = document.documentElement.getAttribute("data-site-nav") === "static";   // pages with their own sticky header and progress bar
     var prog = el("div", { "class": "fx-progress", "data-fx": "progress", "aria-hidden": "true" });
-    var nav = el("header", { "class": "fx-nav", role: "banner" });
+    var nav = el("div", { "class": "fx-nav" + (keepOwn ? " fx-static" : "") });          // a <div> so it never adds a second banner landmark
     var bar = el("nav", { "aria-label": "Site", style: "display:contents" });
     bar.appendChild(el("a", { "class": "fx-brand", href: base + "index.html" }, "B-Lab Cohort"));
     links.slice(0, 1).forEach(function (l) { bar.appendChild(el("a", Object.assign({ href: base + l[1] }, here === l[1] ? { "aria-current": "page" } : {}), l[0])); });
@@ -23,7 +24,7 @@
     wrap.appendChild(btn); wrap.appendChild(menu); bar.appendChild(wrap);
     links.slice(1).forEach(function (l) { bar.appendChild(el("a", Object.assign({ href: base + l[1] }, here === l[1] ? { "aria-current": "page" } : {}), l[0])); });
     nav.appendChild(bar);
-    document.body.insertBefore(nav, document.body.firstChild); document.body.insertBefore(prog, document.body.firstChild);
+    document.body.insertBefore(nav, document.body.firstChild); if (!keepOwn) document.body.insertBefore(prog, document.body.firstChild);
     if (window.FX) window.FX.init(document.body);
 
     var loaded = false;
@@ -52,7 +53,7 @@
   }
 
   function footer() {
-    if (!document.documentElement.hasAttribute("data-site-nav") || document.querySelector(".fx-footer")) return;
+    if (!document.documentElement.hasAttribute("data-site-nav") || document.querySelector(".fx-footer") || document.querySelector("footer")) return;   // pages with their own footer keep it (site-footer.js adds the refresh time)
     var f = el("footer", { "class": "fx-footer" });
     var p = el("p", {}, "Educational analysis only. Not investment advice."); f.appendChild(p);
     var t = el("p", { "class": "fx-num" }); f.appendChild(t);

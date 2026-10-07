@@ -74,6 +74,7 @@ html.motion.fx-ready [data-fx="draw"].fx-in { stroke-dashoffset: 0; }
 .fx-nav a:hover, .fx-nav button:hover { color: var(--fx-ink); background: var(--fx-hover); }
 .fx-nav [aria-current="page"] { color: var(--fx-ink); }
 .fx-nav .fx-brand { color: var(--fx-ink); font-weight: 700; letter-spacing: -0.01em; margin-right: 8px; padding-left: 0; }
+.fx-nav.fx-static { position: relative; z-index: 5; }
 .fx-nav .fx-spacer { flex: 1; }
 .fx-days { position: absolute; top: calc(100% + 6px); left: 0; min-width: 220px; max-height: 60vh; overflow: auto; padding: 6px; background: var(--fx-card); border: 1px solid var(--fx-line); border-radius: var(--fx-r-card); }
 .fx-days[hidden] { display: none; }

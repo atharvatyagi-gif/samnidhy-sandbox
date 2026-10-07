@@ -92,7 +92,7 @@ def main() -> None:
         }).replace('src="mode-dock.js"', 'src="../mode-dock.js"')
            .replace('href="site.css"', 'href="../site.css"')
            .replace('src="fx.js"', 'src="../fx.js"').replace('src="transitions.js"', 'src="../transitions.js"')
-           .replace('src="session-scrubber.js"', 'src="../session-scrubber.js"').replace('src="site-footer.js"', 'src="../site-footer.js"')
+           .replace('src="session-scrubber.js"', 'src="../session-scrubber.js"').replace('src="site-footer.js"', 'src="../site-footer.js"').replace('src="site-nav.js"', 'src="../site-nav.js"')
            .replace('href="favicon.svg"', 'href="../favicon.svg"').replace('href="apple-touch-icon.png"', 'href="../apple-touch-icon.png"')
            .replace('href="manifest.webmanifest"', 'href="../manifest.webmanifest"')
            .replace('rel="canonical" href="https://atharvatyagi-gif.github.io/samnidhy-sandbox/sandbox.html"', f'rel="canonical" href="https://atharvatyagi-gif.github.io/samnidhy-sandbox/days/{f.stem}.html"')

@@ -144,6 +144,20 @@
     <div class="pillars-progress" aria-hidden="true"><i></i></div>
   </section>
 
+  <!-- ================= TRY THE SCREEN (shown only when screener.json carries the real F-Score counts) ================= -->
+  <section class="try" id="try" hidden>
+    <p class="eyebrow">Try the screen</p>
+    <h2 class="try-title">How strict is the health check?</h2>
+    <p class="try-lead">The screen keeps companies whose annual reports score well on nine yes/no health questions (the Piotroski F-Score). Move the slider to see how many of today's stocks would stay in at each threshold.</p>
+    <div class="try-card">
+      <label for="try-range">Minimum F-Score: <b id="try-k" class="fx-num">6</b> out of 9</label>
+      <input id="try-range" type="range" min="0" max="9" step="1" value="6" aria-describedby="try-out">
+      <div class="try-bar" aria-hidden="true"><i id="try-fill"></i></div>
+      <p id="try-out" class="try-out" aria-live="polite"></p>
+      <p class="try-note">Counts are from the latest daily screen, among stocks with complete annual-report data. The site's own rule is the value shown under "Rule 1" on the Advanced page. This is a way to understand the screen, not a prediction.</p>
+    </div>
+  </section>
+
   <!-- ================= A DAY IN THE LAB (real schedule, from the site's own workflows) ================= -->
   <section class="day" id="day">
     <p class="eyebrow">A day in the lab</p>
