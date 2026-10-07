@@ -52,6 +52,19 @@ def universe(cfg):
     return rows
 
 
+def universe_pit(cfg, min_adv_cr=0.25):
+    """Every Main-board non-ETF stock with a price file and today's 20-day average traded value >= min_adv_cr. The point-in-time top-N filter is applied later (evaluate.attach_benchmark)."""
+    u = json.load(open(L.TERM / "universe.json"))["stocks"]; allv = [(s.get("avgv20") or 0) * (s.get("c") or 0) / 1e7 for s in u if s.get("board") == "Main" and not s.get("etf")]
+    rows = []
+    for s in u:
+        if s.get("board") != "Main" or s.get("etf") or not (L.TERM / "daily" / f"{s['s']}.json").exists():
+            continue
+        adv = (s.get("avgv20") or 0) * (s.get("c") or 0) / 1e7
+        if adv >= min_adv_cr:
+            rows.append((s["s"], s.get("ind") or "Unknown", C.adv_decile(adv, allv)))
+    return rows
+
+
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--workers", type=int, default=12); ap.add_argument("--limit", type=int, default=0); ap.add_argument("--out", default="data/aladin2/phase2_report.json")
     ap.add_argument("--events", default="data/aladin2/phase2_events.jsonl.gz"); a = ap.parse_args()
@@ -62,6 +75,7 @@ def main():
     with ProcessPoolExecutor(a.workers) as ex:
         U = {sd.sym: sd for sd in ex.map(_build, jobs, chunksize=2) if sd is not None}
     print(f"built {len(U)} stocks in {time.time() - t0:.0f}s", flush=True)
+    E.attach_benchmark(U, cal)
     strategies = R.all_strategies(); selectable = [s for s in strategies if not s.baseline]
     t1 = time.time(); res = E.walk_forward(U, strategies, cal, cfg, seed=1); print(f"walk-forward {time.time() - t1:.0f}s", flush=True)
     rows_ = res["rows"]; rows_ = rows_[rows_["entry_date"] >= pd.Timestamp(cfg["eval"]["first_test"])]

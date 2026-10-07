@@ -86,6 +86,8 @@ class StockData:
     sym: str
     sector: str
     dr: np.ndarray                       # daily simple returns aligned to the master calendar (NaN where the stock has no bar)
+    adv: object = None                   # trailing 250-day average traded value (Rs crore) aligned to the calendar, for the point-in-time universe
+    decile: int = 5                      # liquidity decile 0 (most liquid) .. 9 used for the cost model
     trades: dict = field(default_factory=dict)   # sid -> dict(e, x, net, bars) integer calendar positions and floats, sorted by entry
 
 
@@ -97,7 +99,8 @@ def build_stock(sym, sector, px, F, strategies, cal, decile, cfg, nifty=None, de
     dr = np.full(len(cal), np.nan); r = (px["c"] / px["c"].shift() - 1).where(~px["suspect_action"]).values
     ok = (pos < len(cal)) & (cal[np.minimum(pos, len(cal) - 1)] == px.index.values)
     dr[pos[ok]] = r[ok]
-    sd = StockData(sym, sector, dr)
+    adv = np.full(len(cal), np.nan); av = (px["c"] * px["v"]).rolling(250, min_periods=120).mean().values / 1e7; adv[pos[ok]] = av[ok]
+    sd = StockData(sym, sector, dr, adv, decile)
     for s in strategies:
         sig = s.signal(ctx); rule = dict(s.rule)
         if rule["type"] == "atr_trail":
@@ -119,6 +122,34 @@ def _mu(dr, a, b):
     return float(v.mean()) if len(v) > 20 else 0.0
 
 
+def attach_benchmark(U, cal, top=None):
+    """Benchmark for every trade = what the EQUAL-WEIGHT UNIVERSE earned over the same trade days (sum of the universe's mean daily return from entry to exit), so
+    excess = the trade's net return minus the market's move while it was held. Two benchmarks were rejected after testing: (1) the stock's own drift over the
+    test block (ex post) rewards rules that buy after sell-offs, because the sell-off sits inside the block average; (2) the stock's trailing drift (ex ante) rewards
+    trend rules, because drift is persistent and winners kept drifting up. The market-wide benchmark carries neither bias.
+    top=N makes the universe POINT-IN-TIME: on each day only the N stocks with the highest trailing 250-day average traded value as of the PREVIOUS day are members; the
+    benchmark averages those members only, and a trade counts only if its stock was a member on the day before entry. Today's index list is not used, so the look-ahead
+    in 'is in the NIFTY 500 today' (which favours stocks that rose) is gone; survival to today is still required (delisted stocks have no data)."""
+    M = np.vstack([sd.dr for sd in U.values()]); M = np.where(np.isfinite(M), M, np.nan)
+    if top:
+        A = np.vstack([sd.adv for sd in U.values()]); A = np.where(np.isfinite(A), A, -1.0)
+        rank = (-A).argsort(axis=0).argsort(axis=0); mem = (rank < top) & (A > 0)
+        mem = np.concatenate([np.zeros((mem.shape[0], 1), bool), mem[:, :-1]], axis=1)             # membership known at the previous close
+        for i, sd in enumerate(U.values()):
+            sd.member = mem[i]
+        M = np.where(mem, M, np.nan)
+    mkt = np.nanmean(M, axis=0); mkt = np.where(np.isfinite(mkt), mkt, 0.0)
+    cm = np.r_[0.0, np.cumsum(mkt)]                                           # cm[i] = sum of mkt over positions < i
+    for sd in U.values():
+        for sid, t in list(sd.trades.items()):
+            if top:
+                keep = sd.member[t["e"]]
+                if not keep.all():
+                    t = {k: v[keep] for k, v in t.items()}; sd.trades[sid] = t
+            t["bm"] = cm[t["x"]] - cm[t["e"]]                                    # days e .. x-1, which is `bars` days
+    return U
+
+
 def window(sd, sid, win_start, train_end):
     """Excess returns of the pair's trades inside [win_start, train_end] (entered after win_start, exited by train_end). -> (excess array, entry positions, exit positions)."""
     t = sd.trades.get(sid)
@@ -127,8 +158,7 @@ def window(sd, sid, win_start, train_end):
     m = (t["e"] >= win_start) & (t["x"] <= train_end)
     if not m.any():
         return np.empty(0), np.empty(0, int), np.empty(0, int)
-    mu = _mu(sd.dr, win_start, train_end + 1)
-    return t["net"][m] - t["bars"][m] * mu, t["e"][m], t["x"][m]
+    return t["net"][m] - t["bm"][m], t["e"][m], t["x"][m]
 
 
 # ------------------------------------------------------------------ selection (the production step)
@@ -249,20 +279,20 @@ def walk_forward(U, strategies, cal, cfg, seed=0, log=print, max_folds=None, ret
             if not m.any():
                 continue
             ev_ = elig.get(pair) or {}
-            ex = np.where(m)[0]; mu_t = _mu(sd.dr, a, b + 1)
+            ex = np.where(m)[0]
             order = ex[np.argsort(t["x"][ex])]; cut_after = None; kept = []
             tr_mean = ev_.get("shrunk_bps", 0.0) / 1e4; tr_sd = ev_.get("sd") or float(np.std(t["net"][:200])) or 0.02
             S = 0.0
             for i in order:
                 if cut_after is not None and t["e"][i] > cut_after:
                     continue
-                excess = t["net"][i] - t["bars"][i] * mu_t
+                excess = t["net"][i] - t["bm"][i]
                 kept.append(i)
                 S = max(0.0, S + (tr_mean - excess) / tr_sd - lc["cusum_k"])
                 if S > lc["retire_cusum_h"] and cut_after is None:
                     cut_after = t["x"][i]; alarms[pair] = {"cusum": round(S, 2), "h": lc["retire_cusum_h"], "at": str(cal[min(t["x"][i], len(cal) - 1)].date())}
             for i in kept:
-                excess = t["net"][i] - t["bars"][i] * mu_t
+                excess = t["net"][i] - t["bm"][i]
                 rows.append((sym, sid, k, rec.state, int(t["e"][i]), int(t["x"][i]), float(t["net"][i]), float(t["bars"][i]), float(excess), sd.sector))
                 pending.setdefault(pair, []).append((int(t["x"][i]), float(excess)))
                 n_tr += 1; n_act += rec.state == "Active"
@@ -288,26 +318,41 @@ def baseline_rows(U, cal, cfg, sid, which="all"):
         k = np.searchsorted(starts, t["e"], side="right") - 1
         ok = (k >= 0) & (t["e"] <= ends[np.clip(k, 0, None)])
         for i in np.where(ok)[0]:
-            a, b = FL[k[i]]; mu = _mu(sd.dr, a, b + 1)
-            out.append((sym, sid, int(k[i]), "baseline", int(t["e"][i]), int(t["x"][i]), float(t["net"][i]), float(t["bars"][i]), float(t["net"][i] - t["bars"][i] * mu), sd.sector))
+            a, b = FL[k[i]]; mu = t["bm"][i]
+            out.append((sym, sid, int(k[i]), "baseline", int(t["e"][i]), int(t["x"][i]), float(t["net"][i]), float(t["bars"][i]), float(t["net"][i] - mu), sd.sector))
     R_ = pd.DataFrame(out, columns=["sym", "sid", "fold", "state", "e", "x", "net", "bars", "excess", "sector"])
     R_["entry_date"] = cal[R_["e"].values] if len(R_) else pd.DatetimeIndex([])
     return R_
 
 
+def block_len(bars):
+    """Block length, in months, for the month-level bootstrap: twice the average holding time, so trades that overlap in time stay in the same resampled block."""
+    return max(1, int(math.ceil(2.0 * float(bars) / 21.0)))
+
+
+def _month_arrays(rows, col):
+    g = rows.groupby(rows["entry_date"].dt.to_period("M"))[col].agg(["sum", "count"]).sort_index()
+    return g["sum"].values.astype(float), g["count"].values.astype(float)
+
+
+def _block_means(s, c, n_boot, block, rng):
+    """Circular block bootstrap over the month series: resampled mean per trade."""
+    n = len(s); nb = -(-n // block); st = rng.integers(0, n, size=(n_boot, nb, 1)); idx = ((st + np.arange(block)) % n).reshape(n_boot, -1)[:, :n]
+    return s[idx].sum(1) / c[idx].sum(1)
+
+
 def month_bootstrap(rows, col, n_boot=2000, seed=0):
-    """Mean of `col` per trade with a 95% interval from resampling CALENDAR MONTHS (trades in the same month share the market, so they are not independent)."""
+    """Mean of `col` per trade with a 95% interval from resampling BLOCKS OF CALENDAR MONTHS (trades in the same or neighbouring months share the market and, for long holds,
+    overlap in time, so they are not independent). Block length = twice the average holding time."""
     if len(rows) == 0:
         return None
-    g = rows.groupby(rows["entry_date"].dt.to_period("M"))[col].agg(["sum", "count"]); rng = np.random.default_rng(seed)
-    idx = rng.integers(0, len(g), size=(n_boot, len(g))); s = g["sum"].values[idx].sum(1); c = g["count"].values[idx].sum(1); b = s / c
-    return {"n_trades": int(len(rows)), "n_months": int(len(g)), "mean_bps": round(float(rows[col].mean() * 1e4), 2), "ci95_bps": [round(float(np.percentile(b, 2.5) * 1e4), 2), round(float(np.percentile(b, 97.5) * 1e4), 2)]}
+    s, c = _month_arrays(rows, col); b = _block_means(s, c, n_boot, block_len(rows["bars"].mean()), np.random.default_rng(seed))
+    return {"n_trades": int(len(rows)), "n_months": int(len(s)), "block_months": block_len(rows["bars"].mean()), "mean_bps": round(float(rows[col].mean() * 1e4), 2), "ci95_bps": [round(float(np.percentile(b, 2.5) * 1e4), 2), round(float(np.percentile(b, 97.5) * 1e4), 2)]}
 
 
 def month_p(rows, col="excess", n_boot=4000, seed=0):
-    """One-sided p-value that the mean of `col` is > 0, resampling calendar months (centred bootstrap). Used for POOLED (strategy-level, not stock-level) evidence."""
-    g = rows.groupby(rows["entry_date"].dt.to_period("M"))[col].agg(["sum", "count"]); rng = np.random.default_rng(seed)
-    idx = rng.integers(0, len(g), size=(n_boot, len(g))); b = g["sum"].values[idx].sum(1) / g["count"].values[idx].sum(1)
+    """One-sided p-value that the mean of `col` is > 0, block-bootstrapping calendar months (centred). Used for POOLED (strategy-level, not stock-level) evidence."""
+    s, c = _month_arrays(rows, col); b = _block_means(s, c, n_boot, block_len(rows["bars"].mean()), np.random.default_rng(seed))
     m = rows[col].mean(); return float((np.sum((b - m) >= m) + 1) / (n_boot + 1))
 
 
@@ -315,7 +360,7 @@ def describe(rows, label):
     if len(rows) == 0:
         return {"label": label, "n_trades": 0}
     d = {"label": label, "excess_vs_stock_drift": month_bootstrap(rows, "excess"), "net_per_trade": month_bootstrap(rows, "net"),
-         "win_rate": round(float((rows["net"] > 0).mean()), 4), "avg_bars": round(float(rows["bars"].mean()), 1), "net_per_day_in_market_bps": round(float(rows["net"].sum() / rows["bars"].sum() * 1e4), 2),
+         "win_rate": round(float((rows["net"] > 0).mean()), 4), "avg_bars": round(float(rows["bars"].mean()), 1), "net_per_day_in_market_bps": round(float(rows["net"].sum() / rows["bars"].sum() * 1e4), 2), "excess_per_day_in_market_bps": round(float(rows["excess"].sum() / rows["bars"].sum() * 1e4), 2),
          "stocks": int(rows["sym"].nunique())}
     x = rows["net"].values
     if len(x) > 10 and x.std() > 0:

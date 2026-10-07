@@ -29,10 +29,10 @@
   "excess_vs_stock_drift": {
    "n_trades": 74799,
    "n_months": 172,
-   "mean_bps": -52.03,
+   "mean_bps": -22.32,
    "ci95_bps": [
-    -82.97,
-    -20.99
+    -29.09,
+    -15.19
    ]
   },
   "net_per_trade": {
@@ -59,10 +59,10 @@
   "excess_vs_stock_drift": {
    "n_trades": 802139,
    "n_months": 172,
-   "mean_bps": -184.89,
+   "mean_bps": 4.22,
    "ci95_bps": [
-    -211.46,
-    -156.23
+    -7.69,
+    18.21
    ]
   },
   "net_per_trade": {
@@ -231,181 +231,265 @@
  "transitions": {},
  "pooled_by_strategy_oos": [
   {
-   "strategy": "reversal5_vol_1.0",
-   "family": "reversion",
-   "trades": 14356,
-   "excess_bps": 118.37,
+   "strategy": "donchian_100",
+   "family": "trend",
+   "trades": 4924,
+   "excess_bps": 689.0,
    "ci95_bps": [
-    65.1,
-    169.97
+    417.91,
+    997.59
    ],
    "p": 0.00024993751562109475,
    "bh_pass": true
   },
   {
-   "strategy": "reversal5_vol_1.5",
-   "family": "reversion",
-   "trades": 9012,
-   "excess_bps": 153.87,
+   "strategy": "donchian_55",
+   "family": "trend",
+   "trades": 7648,
+   "excess_bps": 314.22,
    "ci95_bps": [
-    87.29,
-    216.84
+    194.38,
+    458.0
    ],
    "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "ma_cross_10_50",
+   "family": "trend",
+   "trades": 16289,
+   "excess_bps": 160.33,
+   "ci95_bps": [
+    94.51,
+    232.99
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "ma_cross_20_100",
+   "family": "trend",
+   "trades": 8564,
+   "excess_bps": 480.52,
+   "ci95_bps": [
+    296.64,
+    684.61
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "ma_cross_50_200",
+   "family": "trend",
+   "trades": 5040,
+   "excess_bps": 911.1,
+   "ci95_bps": [
+    672.1,
+    1183.78
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "tsmom_250_skip21",
+   "family": "trend",
+   "trades": 16393,
+   "excess_bps": 203.19,
+   "ci95_bps": [
+    128.33,
+    284.9
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "tsmom_120_skip21",
+   "family": "trend",
+   "trades": 24834,
+   "excess_bps": 127.31,
+   "ci95_bps": [
+    68.24,
+    195.77
+   ],
+   "p": 0.0007498125468632841,
+   "bh_pass": true
+  },
+  {
+   "strategy": "rel_strength_60_0",
+   "family": "relative",
+   "trades": 35240,
+   "excess_bps": 43.05,
+   "ci95_bps": [
+    15.61,
+    74.26
+   ],
+   "p": 0.005248687828042989,
+   "bh_pass": true
+  },
+  {
+   "strategy": "rel_strength_60_5",
+   "family": "relative",
+   "trades": 32424,
+   "excess_bps": 31.56,
+   "ci95_bps": [
+    6.54,
+    60.29
+   ],
+   "p": 0.012996750812296926,
    "bh_pass": true
   },
   {
    "strategy": "reversal5_vol_2.0",
    "family": "reversion",
    "trades": 4956,
-   "excess_bps": 208.3,
+   "excess_bps": 41.15,
    "ci95_bps": [
-    111.35,
-    290.28
+    -0.82,
+    91.0
    ],
-   "p": 0.00024993751562109475,
-   "bh_pass": true
-  },
-  {
-   "strategy": "bb_z_below_1.5",
-   "family": "reversion",
-   "trades": 35409,
-   "excess_bps": 79.6,
-   "ci95_bps": [
-    34.97,
-    125.48
-   ],
-   "p": 0.000999750062484379,
-   "bh_pass": true
-  },
-  {
-   "strategy": "bb_z_below_2.0",
-   "family": "reversion",
-   "trades": 21891,
-   "excess_bps": 90.72,
-   "ci95_bps": [
-    33.47,
-    146.11
-   ],
-   "p": 0.0012496875781054736,
-   "bh_pass": true
-  },
-  {
-   "strategy": "bb_z_below_2.5",
-   "family": "reversion",
-   "trades": 9703,
-   "excess_bps": 105.98,
-   "ci95_bps": [
-    34.33,
-    173.32
-   ],
-   "p": 0.0012496875781054736,
-   "bh_pass": true
-  },
-  {
-   "strategy": "rsi2_below_5",
-   "family": "reversion",
-   "trades": 42736,
-   "excess_bps": 29.53,
-   "ci95_bps": [
-    -0.04,
-    56.58
-   ],
-   "p": 0.017745563609097726,
-   "bh_pass": true
-  },
-  {
-   "strategy": "gapfill_3pct",
-   "family": "reversion",
-   "trades": 10450,
-   "excess_bps": 14.61,
-   "ci95_bps": [
-    -58.29,
-    93.15
-   ],
-   "p": 0.36440889777555613,
+   "p": 0.045238690327418146,
    "bh_pass": false
   },
   {
-   "strategy": "rsi2_below_10",
-   "family": "reversion",
-   "trades": 69581,
-   "excess_bps": 4.53,
+   "strategy": "rel_strength_60_10",
+   "family": "relative",
+   "trades": 28066,
+   "excess_bps": 19.15,
    "ci95_bps": [
-    -21.81,
-    27.7
+    -1.68,
+    42.36
    ],
-   "p": 0.3836540864783804,
+   "p": 0.05573606598350413,
    "bh_pass": false
   },
   {
-   "strategy": "gapfill_2pct",
-   "family": "reversion",
-   "trades": 20798,
-   "excess_bps": 8.39,
+   "strategy": "tsmom_60_skip21",
+   "family": "trend",
+   "trades": 41827,
+   "excess_bps": 14.21,
    "ci95_bps": [
-    -42.95,
-    61.48
+    -4.11,
+    34.95
    ],
-   "p": 0.3926518370407398,
+   "p": 0.09397650587353162,
    "bh_pass": false
   },
   {
-   "strategy": "rsi2_below_15",
-   "family": "reversion",
-   "trades": 89614,
-   "excess_bps": -6.95,
+   "strategy": "hi52_within_10",
+   "family": "trend",
+   "trades": 25204,
+   "excess_bps": 3.08,
    "ci95_bps": [
-    -30.64,
-    15.2
+    -17.59,
+    24.27
    ],
-   "p": 0.7278180454886278,
+   "p": 0.3896525868532867,
+   "bh_pass": false
+  },
+  {
+   "strategy": "reversal5_vol_1.5",
+   "family": "reversion",
+   "trades": 9012,
+   "excess_bps": 3.32,
+   "ci95_bps": [
+    -26.26,
+    36.69
+   ],
+   "p": 0.39540114971257184,
+   "bh_pass": false
+  },
+  {
+   "strategy": "reversal5_vol_1.0",
+   "family": "reversion",
+   "trades": 14356,
+   "excess_bps": -7.08,
+   "ci95_bps": [
+    -29.99,
+    18.9
+   ],
+   "p": 0.7035741064733817,
+   "bh_pass": false
+  },
+  {
+   "strategy": "donchian_20",
+   "family": "trend",
+   "trades": 18041,
+   "excess_bps": -19.66,
+   "ci95_bps": [
+    -51.72,
+    14.33
+   ],
+   "p": 0.8720319920019995,
    "bh_pass": false
   },
   {
    "strategy": "delivery_surge_40",
    "family": "flow",
    "trades": 788,
-   "excess_bps": -50.89,
+   "excess_bps": -49.3,
    "ci95_bps": [
-    -154.45,
-    50.49
+    -101.45,
+    3.56
    ],
-   "p": 0.8212946763309172,
+   "p": 0.9650087478130467,
    "bh_pass": false
   },
   {
-   "strategy": "gapfill_1pct",
+   "strategy": "bb_z_below_2.5",
    "family": "reversion",
-   "trades": 53614,
-   "excess_bps": -16.63,
+   "trades": 9703,
+   "excess_bps": -29.08,
    "ci95_bps": [
-    -45.55,
-    13.53
+    -57.04,
+    3.9
    ],
-   "p": 0.8645338665333666,
+   "p": 0.9767558110472382,
    "bh_pass": false
   },
   {
-   "strategy": "delivery_surge_20",
-   "family": "flow",
-   "trades": 7876,
-   "excess_bps": -60.22,
+   "strategy": "gapfill_3pct",
+   "family": "reversion",
+   "trades": 10450,
+   "excess_bps": -46.77,
    "ci95_bps": [
-    -112.26,
-    -10.11
+    -86.68,
+    -7.28
    ],
-   "p": 0.9912521869532617,
+   "p": 0.989502624343914,
+   "bh_pass": false
+  },
+  {
+   "strategy": "rsi2_below_5",
+   "family": "reversion",
+   "trades": 42736,
+   "excess_bps": -13.98,
+   "ci95_bps": [
+    -23.93,
+    -3.16
+   ],
+   "p": 0.9967508122969257,
+   "bh_pass": false
+  },
+  {
+   "strategy": "bb_z_below_2.0",
+   "family": "reversion",
+   "trades": 21891,
+   "excess_bps": -25.02,
+   "ci95_bps": [
+    -41.53,
+    -4.7
+   ],
+   "p": 0.9995001249687578,
    "bh_pass": false
   },
   {
    "strategy": "atr_channel_1.5",
    "family": "volatility",
    "trades": 21976,
-   "excess_bps": -430.85,
+   "excess_bps": -202.88,
    "ci95_bps": [
-    -504.9,
-    -353.2
+    -233.97,
+    -172.57
    ],
    "p": 1.0,
    "bh_pass": false
@@ -414,10 +498,10 @@
    "strategy": "atr_channel_2.0",
    "family": "volatility",
    "trades": 17744,
-   "excess_bps": -517.29,
+   "excess_bps": -210.52,
    "ci95_bps": [
-    -587.26,
-    -447.24
+    -242.53,
+    -179.08
    ],
    "p": 1.0,
    "bh_pass": false
@@ -426,10 +510,10 @@
    "strategy": "atr_channel_3.0",
    "family": "volatility",
    "trades": 9272,
-   "excess_bps": -698.59,
+   "excess_bps": -222.71,
    "ci95_bps": [
-    -762.29,
-    -631.5
+    -264.67,
+    -178.52
    ],
    "p": 1.0,
    "bh_pass": false
@@ -438,10 +522,10 @@
    "strategy": "bb_squeeze_break_10",
    "family": "volatility",
    "trades": 9074,
-   "excess_bps": -98.02,
+   "excess_bps": -50.08,
    "ci95_bps": [
-    -143.33,
-    -50.99
+    -67.57,
+    -30.76
    ],
    "p": 1.0,
    "bh_pass": false
@@ -450,58 +534,58 @@
    "strategy": "bb_squeeze_break_20",
    "family": "volatility",
    "trades": 13713,
-   "excess_bps": -105.93,
+   "excess_bps": -52.65,
    "ci95_bps": [
-    -147.55,
-    -61.35
+    -67.67,
+    -36.12
    ],
    "p": 1.0,
    "bh_pass": false
   },
   {
-   "strategy": "donchian_100",
-   "family": "trend",
-   "trades": 4924,
-   "excess_bps": -2216.32,
+   "strategy": "bb_z_below_1.5",
+   "family": "reversion",
+   "trades": 35409,
+   "excess_bps": -27.05,
    "ci95_bps": [
-    -2546.38,
-    -1849.42
+    -40.8,
+    -9.92
    ],
    "p": 1.0,
    "bh_pass": false
   },
   {
-   "strategy": "donchian_20",
-   "family": "trend",
-   "trades": 18041,
-   "excess_bps": -412.22,
+   "strategy": "delivery_surge_20",
+   "family": "flow",
+   "trades": 7876,
+   "excess_bps": -43.03,
    "ci95_bps": [
-    -481.3,
-    -341.62
+    -60.49,
+    -25.23
    ],
    "p": 1.0,
    "bh_pass": false
   },
   {
-   "strategy": "donchian_55",
-   "family": "trend",
-   "trades": 7648,
-   "excess_bps": -1251.61,
+   "strategy": "gapfill_1pct",
+   "family": "reversion",
+   "trades": 53614,
+   "excess_bps": -36.26,
    "ci95_bps": [
-    -1401.22,
-    -1094.45
+    -46.37,
+    -25.93
    ],
    "p": 1.0,
    "bh_pass": false
   },
   {
-   "strategy": "hi52_within_10",
-   "family": "trend",
-   "trades": 25204,
-   "excess_bps": -294.87,
+   "strategy": "gapfill_2pct",
+   "family": "reversion",
+   "trades": 20798,
+   "excess_bps": -41.39,
    "ci95_bps": [
-    -327.19,
-    -260.68
+    -65.16,
+    -17.08
    ],
    "p": 1.0,
    "bh_pass": false
@@ -510,46 +594,10 @@
    "strategy": "hi52_within_5",
    "family": "trend",
    "trades": 29866,
-   "excess_bps": -193.81,
+   "excess_bps": -26.29,
    "ci95_bps": [
-    -215.67,
-    -171.16
-   ],
-   "p": 1.0,
-   "bh_pass": false
-  },
-  {
-   "strategy": "ma_cross_10_50",
-   "family": "trend",
-   "trades": 16289,
-   "excess_bps": -389.91,
-   "ci95_bps": [
-    -498.17,
-    -277.4
-   ],
-   "p": 1.0,
-   "bh_pass": false
-  },
-  {
-   "strategy": "ma_cross_20_100",
-   "family": "trend",
-   "trades": 8564,
-   "excess_bps": -1150.38,
-   "ci95_bps": [
-    -1355.02,
-    -937.84
-   ],
-   "p": 1.0,
-   "bh_pass": false
-  },
-  {
-   "strategy": "ma_cross_50_200",
-   "family": "trend",
-   "trades": 5040,
-   "excess_bps": -1917.47,
-   "ci95_bps": [
-    -2303.18,
-    -1543.29
+    -38.53,
+    -14.01
    ],
    "p": 1.0,
    "bh_pass": false
@@ -558,86 +606,38 @@
    "strategy": "nr7_break",
    "family": "volatility",
    "trades": 45216,
-   "excess_bps": -51.38,
+   "excess_bps": -47.87,
    "ci95_bps": [
-    -71.16,
-    -31.46
+    -53.11,
+    -42.71
    ],
    "p": 1.0,
    "bh_pass": false
   },
   {
-   "strategy": "rel_strength_60_0",
-   "family": "relative",
-   "trades": 35240,
-   "excess_bps": -299.35,
+   "strategy": "rsi2_below_10",
+   "family": "reversion",
+   "trades": 69581,
+   "excess_bps": -19.63,
    "ci95_bps": [
-    -337.17,
-    -259.82
+    -26.83,
+    -11.93
    ],
    "p": 1.0,
    "bh_pass": false
   },
   {
-   "strategy": "rel_strength_60_10",
-   "family": "relative",
-   "trades": 28066,
-   "excess_bps": -346.07,
+   "strategy": "rsi2_below_15",
+   "family": "reversion",
+   "trades": 89614,
+   "excess_bps": -21.63,
    "ci95_bps": [
-    -376.04,
-    -316.05
-   ],
-   "p": 1.0,
-   "bh_pass": false
-  },
-  {
-   "strategy": "rel_strength_60_5",
-   "family": "relative",
-   "trades": 32424,
-   "excess_bps": -323.3,
-   "ci95_bps": [
-    -357.34,
-    -288.57
-   ],
-   "p": 1.0,
-   "bh_pass": false
-  },
-  {
-   "strategy": "tsmom_120_skip21",
-   "family": "trend",
-   "trades": 24834,
-   "excess_bps": -390.81,
-   "ci95_bps": [
-    -470.37,
-    -306.08
-   ],
-   "p": 1.0,
-   "bh_pass": false
-  },
-  {
-   "strategy": "tsmom_250_skip21",
-   "family": "trend",
-   "trades": 16393,
-   "excess_bps": -618.77,
-   "ci95_bps": [
-    -772.79,
-    -477.27
-   ],
-   "p": 1.0,
-   "bh_pass": false
-  },
-  {
-   "strategy": "tsmom_60_skip21",
-   "family": "trend",
-   "trades": 41827,
-   "excess_bps": -256.85,
-   "ci95_bps": [
-    -295.91,
-    -220.51
+    -27.26,
+    -15.25
    ],
    "p": 1.0,
    "bh_pass": false
   }
  ],
- "runtime_s": 117
+ "runtime_s": 140
 }

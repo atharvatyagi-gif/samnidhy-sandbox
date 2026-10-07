@@ -82,9 +82,10 @@ def add_live(rec, excess_returns):
     rec.live_returns.extend(list(excess_returns)); rec.live_n = len(rec.live_returns)
 
 
-def step(rec, date, eligible, fresh=True, alarm=None, cfg=None, days_since=None, score=0.0, evidence=None):
+def step(rec, date, eligible, fresh=True, alarm=None, cfg=None, days_since=None, score=0.0, evidence=None, live_test=None):
     """Advance one record at a block boundary. `eligible` = passes the protocol on data up to now; `fresh` = (for Retired) eligibility rests on post-retirement data;
-    `alarm` = a live CUSUM / drift alarm raised during the last block (dict) or None; days_since = calendar days since rec.since. Returns a list of events."""
+    `alarm` = a live CUSUM / drift alarm raised during the last block (dict) or None; days_since = calendar days since rec.since.
+    `live_test` = optional (ok, evidence) replacing the per-trade PSR promotion test (used for POOLED strategy records, whose live evidence is clustered by month). Returns a list of events."""
     lc = cfg["lifecycle"]; ev = []; evidence = evidence or {}
     ds = days_since if days_since is not None else 0
     if rec.state == "Candidate":
@@ -96,7 +97,10 @@ def step(rec, date, eligible, fresh=True, alarm=None, cfg=None, days_since=None,
             ev.append(_log(rec, date, "Demoted", "live alarm" if alarm else "no longer passes the evaluation protocol", {**evidence, **(alarm or {})}))
         else:
             n = rec.live_n; p = psr_of(rec.live_returns) if n >= 3 else 0.0
-            if ds >= lc["probation_days"] and n >= lc.get("min_live_trades", 10) and p >= lc["promote_psr"] and float(np.mean(rec.live_returns)) >= 0:
+            if live_test is not None:
+                if ds >= lc["probation_days"] and live_test[0]:
+                    ev.append(_log(rec, date, "Active", "paper-forward evidence holds up", {**evidence, **live_test[1]}))
+            elif ds >= lc["probation_days"] and n >= lc.get("min_live_trades", 10) and p >= lc["promote_psr"] and float(np.mean(rec.live_returns)) >= 0:
                 ev.append(_log(rec, date, "Active", f"{n} live paper trades over {ds} days, PSR {p:.2f}", {**evidence, "live_n": n, "live_psr": round(p, 3), "live_mean_bps": round(float(np.mean(rec.live_returns)) * 1e4, 1)}))
     elif rec.state == "Active":
         if alarm or not eligible:

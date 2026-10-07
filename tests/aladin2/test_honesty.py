@@ -13,7 +13,7 @@ from scripts.aladin2.strategies import registry as R
 def world():
     cfg0 = X.zero_costs(C.load_cfg()); cfg, cal = X.experiment_cfg(cfg0)
     specs = [("noise", 20_000 + i, 0, 0.5) for i in range(40)] + [("reversion", 30_000 + i, 80, 0.5) for i in range(8)]
-    U, meta = X.build_universe(specs, cfg, workers=4)
+    U, meta = X.build_universe(specs, cfg, workers=4); E.attach_benchmark(U, cal)
     sel = [s for s in R.all_strategies() if s.family not in ("relative", "flow")]
     res = E.walk_forward(U, sel, cal, cfg, seed=3, log=None, max_folds=24)
     return U, meta, res, cfg

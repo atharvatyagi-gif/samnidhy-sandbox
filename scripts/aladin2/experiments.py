@@ -70,7 +70,7 @@ def run(null_n, planted_n, costs, workers, seed=0, n=6000, log=print, lookback=N
                 specs.append((kind, 50_000 + k, st, 0.5)); k += 1
     for j in range(extra_vanish):
         specs.append(("vanishing", 70_000 + j, int(120 * scale), 0.5))
-    t = time.time(); U, meta = build_universe(specs, cfg, workers, n); log(f"built {len(U)} synthetic stocks in {time.time() - t:.0f}s")
+    t = time.time(); U, meta = build_universe(specs, cfg, workers, n); E.attach_benchmark(U, cal); log(f"built {len(U)} synthetic stocks in {time.time() - t:.0f}s")
     selectable = [s for s in R.all_strategies() if s.family not in ("relative", "flow")]
     t = time.time(); res = E.walk_forward(U, selectable, cal, cfg, seed=seed, log=log); log(f"walk-forward {time.time() - t:.0f}s")
     recs = res["records"]; folds = res["folds"]; ev = res["events"]

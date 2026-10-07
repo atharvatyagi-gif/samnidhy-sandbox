@@ -1,74 +1,50 @@
-# ALADIN 2.0, Phase 2: strategies and the evaluation machine (2026-10-07)
+# ALADIN 2.0, Phase 2 (and 2b): strategies, the evaluation machine, pooled-first selection (2026-10-08)
 
-Branch `feature/aladin-learning`. Nothing pushed or merged. `python -m pytest tests/aladin2` : **80 tests pass** (19 s).
+Branch `feature/aladin-learning`. Nothing pushed or merged. `python -m pytest tests/aladin2` : **84 tests pass**.
 
-## What was built
-- `strategies/` : 34 selectable strategies in 5 families (trend 11, reversion 12, volatility 6, relative strength 3, delivery flow 2) plus the naive 12-1 momentum baseline. Every strategy has a unit test for look-ahead (future prices changed, data truncated), and a hash for the multiple-testing count (34 distinct).
-  **Not built yet:** fundamental/quality, event, text/graph and ML families (brief families 6-9). They need point-in-time fundamentals and events and their own ML protocol.
-- `evaluate.py` : nested walk-forward (63-day blocks, 20-day purge + 5-day embargo, 2,000-day selection window), stationary block bootstrap, Benjamini-Hochberg across all (stock x strategy) pairs of a block (q = 0.10), empirical-Bayes shrinkage (sector, else universe), plateau, yearly-stability and recent-window checks, beats-naive-momentum check, CUSUM inside the block. `select()` is the production step; `walk_forward()` replays it block by block.
-- `lifecycle.py` : Candidate, Probation, Active, Demoted, Retired, with PSR/DSR, CUSUM, cap of 4 active per stock, fresh-evidence re-entry; every transition returns an evidence event (tested through the whole path).
-- `experiments.py`, `run_phase2.py`: the honesty experiments and the real-data run.
+## CORRECTION to my earlier Phase 2 message (read this first)
+My first Phase 2 summary said short-term reversal rules earned +80 to +208 bps per trade and survived correction. **That was an artifact of my benchmark and is withdrawn.**
+I measured "excess" against the stock's own average daily return over the test block. The sell-off that triggers a reversal signal sits inside that very block, so the benchmark was dragged down exactly for the trades that buy after drops. I then tried the stock's trailing drift (ex ante) and got the opposite bias, in favour of trend rules (drift persists, winners keep rising). Both are rejected in `evaluate.attach_benchmark` (docstring). The benchmark used from here on is the **equal-weight universe's return over the same trade days** (market-adjusted), which carries neither bias. The reversal result vanishes under it (reversal5_vol_2.0: +29 bps per trade, 95% interval -12 to +77, p = 0.11, not significant). The robustness file I built for it has been deleted. Tests now cover the benchmark and the point-in-time rules.
 
-## 1. The gate question: does ALADIN as a policy beat the baselines net of costs?
-**No. It never trades.** NIFTY 500 members with 20-day average traded value >= Rs 2 crore (425 stocks, survivor-only list), 56 unseen blocks from 2012-07 to 2026-10, real cost model (liquidity decile 0-9), 2,951 to 6,532 (stock x strategy) pairs tested per block. **FDR-passing pairs: 0 in all 56 blocks.** Probation/Active strategies: 0. Paper trades: 0. Share of stocks with any evidence: 0%. The best single pair in the latest block had p = 0.001 against a BH threshold of about 0.1/6,425 = 1.6e-5, which is what chance alone produces among 6,425 tests.
+A second bias found and removed: "is in the NIFTY 500 **today**" already favours stocks that rose. The pooled work below uses a **point-in-time universe**: on each day only the 500 stocks with the highest trailing 250-day traded value *as of the previous close* count (1,445 stocks built from every liquid main-board name). Survival to today is still required (delisted stocks have no data), so a survivorship bias of unknown sign remains.
 
-So the stock-by-stock selection policy defined in the brief adds nothing measurable here: every stock reads "No edge" (Learning). I did not loosen any threshold.
+## What exists
+- 34 strategies in 5 families (trend 11, reversion 12, volatility 6, relative strength 3, delivery flow 2) plus a naive 12-1 momentum baseline; each has a look-ahead unit test. Not built: fundamental, event, text/graph, ML families.
+- `evaluate.py`: nested walk-forward, bootstrap, BH false-discovery control, empirical-Bayes shrinkage, stability/plateau/recent-window checks, market-adjusted benchmark, **block bootstrap over calendar months (block = twice the holding time, because long trend trades overlap)**.
+- `lifecycle.py`: Candidate, Probation, Active, Demoted, Retired with PSR/DSR, CUSUM, active cap, fresh-evidence re-entry; every transition emits an evidence event.
+- `pooled.py` (new, the design you chose): strategies are promoted on pooled evidence across the universe, then each stock's own record tilts or vetoes.
 
-Baselines on the same unseen blocks (excess = trade net of costs minus what simply owning the stock earned over the same days; 95% intervals resample calendar months):
+## 1. Per-stock selection (the original design), real data
+NIFTY 500 liquid members, 425 stocks, 56 unseen blocks 2012-2026, real costs, 2,951 to 6,532 pairs per block: **0 pairs pass the false-discovery filter in any block** (best pair p = 0.001 against a bar near 1.6e-5). Unchanged by the benchmark correction: per-stock evidence is too thin (30-70 trades with 5-15% standard deviation against a 0.5% cost).
 
-| Rule | Trades | Excess vs owning the stock |
-|---|---|---|
-| ALADIN policy (Probation + Active) | 0 | n/a |
-| Naive 12-1 momentum, every stock | 74,799 | **-52 bps** [-83, -21] |
-| All 34 strategies, every stock, no selection | 802,139 | **-185 bps** [-211, -156] |
-| Buy and hold | | 0 by definition |
-| Outlook model | | per-row predictions were never saved; only its yearly AUC (0.534) exists |
+## 2. Pooled-first selection, nested walk-forward (point-in-time top-500 universe)
+Strategies are promoted when, using only earlier data, the pooled mean excess passes BH (q = 0.10) across the 34 strategies, its lower bound is above 0, neighbouring settings agree, at least 60% of years are positive and the last 500 days are still positive. Replay over the same 56 blocks; paper-trading every Probation or Active strategy:
 
-## 2. What the data does say: pooled evidence per strategy (34 pre-defined hypotheses, month-clustered bootstrap, BH q = 0.10, no selection)
-Seven strategies clear it, all short-term reversal / oversold rules, long only:
+| | Trades | Avg days held | Excess per trade (95% interval, month blocks) | Excess per day invested | Win rate |
+|---|---|---|---|---|---|
+| Pooled-first policy, Probation + Active (with stock veto) | 4,663 | 73 | **+123 bps** [+9, +263] | **+1.7 bps** | 37% |
+| Same, no stock veto | 5,387 | 68 | +142 bps [+11, +271] | +2.1 bps | 37% |
+| **Active tier only** | 496 | 113 | +12 bps [-200, +221] (not distinguishable from zero) | **+0.1 bps** | 30% |
+| Naive 12-1 momentum, every stock | 103,841 | 10 | -20 bps [-27, -13] | -2.0 bps | 49% |
+| All 34 strategies, no selection | 1,116,628 | 15 | -11 bps [-22, +3] | -0.7 bps | 43% |
 
-| Strategy | Trades | Excess per trade | 95% interval | p |
-|---|---|---|---|---|
-| reversal5_vol_2.0 (5-day drop of 2 sigma + volume surge, hold 10d) | 4,956 | +208 bps | [+111, +290] | 0.0002 |
-| reversal5_vol_1.5 | 9,012 | +154 | [+87, +217] | 0.0002 |
-| reversal5_vol_1.0 | 14,356 | +118 | [+65, +170] | 0.0002 |
-| bb_z_below_2.5 | 9,703 | +106 | [+34, +173] | 0.0012 |
-| bb_z_below_2.0 | 21,891 | +91 | [+33, +146] | 0.0012 |
-| bb_z_below_1.5 | 35,409 | +80 | [+35, +125] | 0.0010 |
-| rsi2_below_5 | 42,736 | +30 | [0, +57] | 0.018 |
+Reading it plainly: the policy beats the naive baseline, but **it is weak and unstable.** It was promoting something in only 7 of 56 blocks (trades happened in 48 of 172 months), strategies churned (15 Probation to Demoted, 15 Demoted to Retired, 10 re-entries), the gain is concentrated in 2014 (+703 bps) and 2016 (+171), it was negative in 2015, 2024 (-144) and 2025 (-49), and the Active tier, the one meant to be trusted, shows no excess. The stock veto did not help. I would not call this an edge.
 
-Everything trend-following, breakout, relative-strength and delivery-surge is flat or negative. Diagnostic (post hoc, for reversal5_vol_1.5): excess was positive in 14 of 15 calendar years, negative in 2020 (-104 bps), +171 bps without 2020.
+### Pooled evidence over the whole 2012-2026 unseen period (34 pre-defined hypotheses, BH q = 0.10, no selection)
+**7 of 34 pass, all trend-following**: ma_cross_50_200 (+682 bps per trade, +4.9 per day, [+326, +1,072]), donchian_100 (+523, +4.7/day), ma_cross_20_100 (+376, +4.8/day), donchian_55 (+228, +3.3/day), tsmom_250 (+140, +3.1/day), ma_cross_10_50 (+116, +2.9/day), tsmom_120 (+83, +3.0/day). Reversal, breakout, volatility, relative-strength and delivery rules do not pass. These per-day figures (+3 to +5 bps a day, roughly 8-12% a year while invested, over an equal-weight market, after costs) are the best honest estimate of a trend-following edge in this data; but see the instability above: the same rules were not provable at the time in most blocks.
 
-**Why this is NOT yet a claim of edge:**
-1. **Survivorship.** The universe is today's NIFTY 500. A stock that fell sharply and was then delisted or demoted is missing, and buying sell-offs is exactly the strategy that benefits most from that. The true figure is lower by an amount I cannot measure from free data. Today's liquidity filter is also applied to the past.
-2. **Fills.** Entries are at the next open after a sell-off with a Rs 1 lakh reference order; real fills in panicking stocks, circuit days and wider spreads would be worse than the decile slippage assumes.
-3. It is a **pooled** result about a strategy across hundreds of stocks, not evidence that any one stock will behave that way.
+## 3. Why I am not calling any of this an edge yet
+1. Survival to today is required, so the loser tail (delisted names) is missing. Trend rules would partly have avoided losers and partly never held them: the sign is unknown.
+2. The benchmark question already cost one false result. The market-adjusted benchmark is the cleanest I have, not a proof.
+3. Instability: real-time promotion was intermittent and the last two years are negative.
+4. Trend trades are long (40-140 days) with a 30-37% win rate: they pay off through a few large winners; the evidence rests on tails.
 
-## 3. Honesty tests (brief 6.7)
-- **Noise, zero costs, 2,000 series x 29 strategies = 58,000 pairs, 64 blocks:** pairs ever promoted **0**; blocks with any promotion **0%** (limit q = 10%). Full run: `data/aladin2/honesty_null2000_zerocost.json`.
-- **Noise with real costs, 2,000 series:** pairs ever promoted **0 of 58,000**; blocks with any promotion 0% (`honesty_null2000_realcost.json`).
-- **Planted edges** (60 noise + 108 planted series, zero costs, evidence window 4,000 days; 6,000-day series; false-discovery proportion among promoted = 0 of all promotions in the noise-only runs, 0.7% in the mixed pilot): found with power
-  - reversion at all three strengths tested: **12 of 12 each (100%)**;
-  - momentum: 92% (strength 120), 58% (240), 25% (480);
-  - regime-dependent: 92% (240), 67-75% (480).
-  The planted momentum and regime strengths are enormous (a drifting component whose standard deviation is 1.2% to 4.8% a day; an edge of that size explains many percent of 20-day returns, versus well under 1% in real markets). **A realistic small edge is far below what stock-level evidence can detect.** The momentum power falls at the largest strength only because the synthetic paths become degenerate.
-- **Vanishing edge: NOT met.** With 48 planted-then-vanishing series, the strategies live at the vanishing point took a **median of 628 days (90th percentile 1,157)** to be demoted. The lifecycle rules are tested and correct (`test_lifecycle.py`), but a per-trade standard deviation of about 8% against an edge of about 1% means a loss of edge cannot be seen faster. The CUSUM never fires on a small shift. I did not tune it to pass; a recent-window rule I added cut the median only modestly.
+## 4. Honesty experiments (brief 6.7)
+Rerunning with the corrected benchmark (the earlier numbers are retired). Pending in the background: planted edges, 2,000 noise series with real costs and with zero costs. They will be added in `data/aladin2/honesty_*.json` and to this report. For orientation, before the correction: noise 0 of 58,000 pairs promoted; planted reversion found 12 of 12, momentum 92% at its middle strength; a vanished edge took a median 628 days to be demoted (a real limitation, not met).
 
-## 4. Why the per-stock design fails here (the measured reason)
-A stock-strategy pair has 30-70 trades in the window, each with a standard deviation of 5-15% against a cost of about 0.5%. Even a real edge of 1% per trade has t of about 1, and with thousands of pairs the BH bar is t of about 4.5. This is the multiple-testing price the brief asked me to pay. It is the honest result, and it is also what the Phase 0 numbers (IC t = 7.8 only after pooling 300,000 predictions) already suggested.
-
-## 5. What I propose next (needs your decision; it changes the brief)
-**Option 1 (recommended):** pooled-first evidence. Test each strategy across the whole universe or sector (month-clustered, BH over strategies, as in section 2), promote a *strategy* when pooled evidence holds up out of sample, and let per-stock data only *tilt* it (shrinkage, abstaining on stocks where the strategy has clearly failed). This gives real signals (today: the reversal family) while keeping per-stock "No edge" honest. Before building on it, test survivorship as far as free data allows (stocks that fell > 50% and later went illiquid; fills on sell-off days at realistic spreads).
-**Option 2:** keep the brief as written. The product would show "No edge" for every stock until some pair clears q = 0.10, possibly for a very long time.
-**Option 3:** stop at the evidence: report to students that the free-data technical strategies tested do not beat owning the stocks, apart from short-term reversal pending the survivorship check.
-
-## 6. Other items
-- Compute: real run 117 s on 14 cores (build 43 s, replay 40 s); 2,000-series null replay about 25 minutes.
-- Product-state shares: Validated 0%, Provisional 0%, Learning 100% (unchanged).
-- Delivery % history: 2020-01 to 2022-08 downloaded and the backfill resumes after a crash fix (a non-UTF8 file); the two delivery strategies had few trades.
-- Config additions: `eval.data_start/first_test/select_lookback_d/boot_*/stab_*/recent_*`, `lifecycle.min_live_trades/cusum_k`.
-- Raw outputs: `data/aladin2/phase2_report.json`, `phase2_events.jsonl.gz`, `honesty_*.json`.
+## 5. Product states and compute
+Validated 0%, Provisional 0%, Learning 100%: nothing has a live record. Per-stock run 117 s; pooled-first run about 3 minutes on 14 cores; universe build (1,445 stocks x 35 strategies) about 3 minutes.
 
 ## GATE: what I need from you
-1. Choose Option 1, 2 or 3 (or your own).
-2. Keep the strategy count at 34? More strategies raise the multiple-testing bar; fundamentals/events/ML families are not built.
+1. Phase 3 (forecast ranges, calibration) does not depend on the signal question: a forecast range with honest coverage is useful even where there is no directional edge. OK to proceed with Phase 3 now, with directional signals shown only as "NO EDGE" unless a strategy is Active?
+2. Or first spend one more experiment on the trend result: a delisting-risk stress test and a run on a smaller-cap universe (free data may not allow this).
