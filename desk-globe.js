@@ -9,6 +9,7 @@
    point); same-style points are drawn as one batched path; the canvas is only resized when its size really changed.
    ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. */
 import * as G3 from "./desk-globe3d.js";
+import * as GL from "./desk-globe-layers.js";
 import { extrapolate, flightKin, vesselKin, docFromFull, applyTelemetry, ageLabel, CAPS } from "./desk-kin.js";
 import { onTelemetry } from "./desk-ticks.js";
 import { MAP_COLORS, hotspotColor, hotspotRadius, isStale, ageMin, ageText, countIn, filterItems, mergeLayers } from "./desk-lanes.js";
@@ -16,18 +17,21 @@ import { MAP_COLORS, hotspotColor, hotspotRadius, isStale, ageMin, ageText, coun
 const D3 = { geo: "https://cdn.jsdelivr.net/npm/d3-geo@3.1.1/+esm", topo: "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm", qt: "https://cdn.jsdelivr.net/npm/d3-quadtree@3.0.1/+esm",
   world: "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json" };
 const LS = "blab.globe.layers";
-const LAYERS = [["hot", "Hotspots", true], ["choke", "Chokepoints", true], ["cargo", "Cargo flights", true], ["air", "Other flights", false], ["ship", "Vessels", true], ["plant", "Plants (filings)", true], ["lane", "Trade lanes", true]];
+const LAYERS = [["hot", "Geopolitical news attention", true], ["choke", "Chokepoints", true], ["cargo", "Cargo flights", true], ["air", "Other flights", false], ["ship", "Vessels", true], ["plant", "Plants (filings)", true], ["lane", "Trade lanes", true], ...GL.EXTRA];
 const DEFAULTS = Object.fromEntries(LAYERS.map(([k, , d]) => [k, d]));
 const MAX_LIST = 300, RAD = Math.PI / 180;
 
 let manWaited = false, ctx = null, mounted = false, mode = "map", lib = null, libFailed = null, loadingLib = null, loadingData = null;
 let layers = { ...DEFAULTS }, listQ = "", interacting = false, settleT = 0;
 const data = { lanes: null, transport: null, graph: null };
+const store = {};                                                  // globe/layers/*.json (cables, shipping lanes, power plants, company facilities): read only when their layer is on
+let base = "dark";
+let baseNote = "";
 let c2d = null, gl = null, g3 = null, g3Failed = null, engine = "d3", follow = false;
 let canvas = null, g2 = null, tip = null, W = 0, H = 0, dpr = 1, proj = null, pathGen = null, ro = null;
 let rot = [-78, -18], zoom = 1, pan = [0, 0], items = [], qtree = null, qDirty = true, raf = 0, press = null, moved = 0, ents = null, colors = null, colorsKey = null;
 
-export function init(c) { ctx = c; onTelemetry(onLive); try { layers = mergeLayers(DEFAULTS, JSON.parse(localStorage.getItem(LS))); } catch (e) { /* stored switches are only a convenience */ } }
+export function init(c) { ctx = c; onTelemetry(onLive); try { layers = mergeLayers(DEFAULTS, JSON.parse(localStorage.getItem(LS))); } catch (e) { /* stored switches are only a convenience */ } try { base = localStorage.getItem("blab.globe.base") || "dark"; if (!GL.BASES.some(b => b[0] === base)) base = "dark"; } catch (e) { /* default base */ } }
 const files = () => ctx.S.deskMan || {};
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
 const saveLayers = () => { try { localStorage.setItem(LS, JSON.stringify(layers)); } catch (e) { /* ignore */ } };
@@ -41,7 +45,12 @@ export function mount() {
     <button class="btn-line sm" id="gd-follow" hidden aria-pressed="false">Follow</button>
     <div class="gd-layers" id="gd-layers" hidden></div><div class="gd-chips" id="gd-chips"></div>`;
   bar.addEventListener("click", e => { const m = e.target.closest("[data-m]"); if (m) setMode(m.dataset.m); if (e.target.closest("#gd-follow")) toggleFollow(); });
-  bar.addEventListener("change", e => { const k = e.target.dataset && e.target.dataset.layer; if (k) { layers[k] = e.target.checked; saveLayers(); ents = null; legend(); render(); } });
+  bar.addEventListener("change", e => {
+    const b = e.target.dataset && e.target.dataset.base;
+    if (b) { base = b; try { localStorage.setItem("blab.globe.base", b); } catch (err) { /* ignore */ } if (g3 && engine === "3d") g3.setBase(b); chips(); return; }
+    const k = e.target.dataset && e.target.dataset.layer;
+    if (k) { layers[k] = e.target.checked; saveLayers(); ents = null; legend(); render(); GL.loadFiles(layers, store, ctx.getJSON).then(() => { ents = null; legend(); render(); }); }
+  });
   const wrap = ctx.$("#gd-wrap");
   canvas = c2d = ctx.$("#gd-canvas"); tip = ctx.$("#gd-tip");
   if (wrap && canvas) {
@@ -96,7 +105,7 @@ async function start3d(m) {
   try {
     if (!g3) {
       g3 = await G3.create({ canvas: gl, wrap: ctx.$("#gd-wrap"), ctx, lib, hooks: {
-        pick: e => ctx.openNexus({ type: e.type, id: e.id }),
+        pick: e => pickEntity(e), baseOk: () => chips(), baseFail: (k, why) => { baseNote = `The ${k === "sat" ? "Satellite" : "Streets"} base could not load (${why}); showing Dark.`; base = "dark"; paintLayerBox(); chips(); },
         hover: (e, x, y) => { if (!tip) return; if (!e) { tip.hidden = true; return; } tip.innerHTML = `<b>${ctx.esc(e.name)}</b><br><span class="mut">${ctx.esc(e.type)} · ${ctx.esc(detailOf(e))}</span>`; tip.hidden = false; tip.style.left = Math.min(x + 12, (g3.W || 600) - 230) + "px"; tip.style.top = Math.max(4, y + 12) + "px"; },
         select: id => { const b = ctx.$("#gd-follow"); if (b) { b.hidden = !id; if (!id) { follow = false; b.setAttribute("aria-pressed", "false"); b.classList.remove("on"); } } },
         follow: on => { follow = on; const b = ctx.$("#gd-follow"); if (b) { b.setAttribute("aria-pressed", String(on)); b.classList.toggle("on", on); } },
@@ -105,7 +114,7 @@ async function start3d(m) {
       } });
     }
     engine = "3d"; setCanvas("3d"); gl.__g3 = g3;                       // (the browser tests read g3.stats())
-    g3.open(m);
+    g3.open(m); g3.setBorders(layers.border); if (base !== "dark") g3.setBase(base);
     chips();
   } catch (e) { fall3d(String((e && e.message) || e).slice(0, 80)); }
 }
@@ -123,6 +132,7 @@ function ensureData() {
   }
   const one = (key, file, set) => files()[key] ? ctx.getJSON(file, key === "telemetry").then(set).catch(() => { }) : Promise.resolve();
   loadingData = Promise.all([
+    GL.loadFiles(layers, store, ctx.getJSON),
     one("lanes", "trade_lanes.json", j => { data.lanes = j; }),
     one("telemetry", "telemetry.json", j => { data.transport = j; ctx.S.transport = j; }),
     one("graph", "supply_graph.json", j => { data.graph = j; }),
@@ -154,10 +164,12 @@ function build() {
   }
   if (layers.ship && T && T.vessels) for (const v of T.vessels) out.push(geom({ layer: "ship", type: "vessel", id: String(v[0]), name: v[1] || String(v[0]), row: v, lat: v[2], lon: v[3], hdg: v[5] != null ? v[5] : v[6], kin: vesselKin(v), cap: CAPS.vessel }));
   if (layers.plant && data.graph) for (const [id, f] of Object.entries(data.graph.fac || {})) if (f.lat != null) out.push(geom({ layer: "plant", type: "facility", id, name: f.n, row: f, lat: f.lat, lon: f.lon, prec: f.geo_prec }));
+  out.push(...GL.entities(layers, store, ctx.S.globe));
   return out;
 }
 const entities = () => ents || (ents = build());
 function detailOf(e) {                                                   // text is made only when someone looks at it (tooltip, list), never per frame
+  if (GL.EXTRA_TYPES.has(e.type)) return GL.detail(e);
   const r = e.row;
   if (e.type === "hotspot") return `${r.kind || "region"} · ${r.score == null ? "building baseline" : r.level + " " + r.score}`;
   if (e.type === "chokepoint") return e.count == null ? "vessel count not available" : `${e.count} vessel${e.count === 1 ? "" : "s"} in the snapshot`;
@@ -169,7 +181,8 @@ function detailOf(e) {                                                   // text
 /* ---------- the bar ---------- */
 function paintLayerBox() {
   const T = data.transport;
-  ctx.$("#gd-layers").innerHTML = LAYERS.map(([k, l]) => {
+  const bases = `<div class="gd-bases" role="radiogroup" aria-label="Base map">${GL.BASES.map(([k, l]) => `<label class="nx-chk"><input type="radio" name="gd-base" data-base="${k}" ${base === k ? "checked" : ""}> ${l}</label>`).join("")}</div>`;
+  ctx.$("#gd-layers").innerHTML = bases + LAYERS.map(([k, l]) => {
     const off = k === "ship" && T && !T.vessels;
     return `<label class="nx-chk" ${off ? `title="${ctx.esc(T.reason || T.vessels_reason || "No vessel feed")}"` : ""}><input type="checkbox" data-layer="${k}" ${layers[k] ? "checked" : ""} ${off ? "disabled" : ""}> ${l}</label>`;
   }).join("");
@@ -187,6 +200,7 @@ function legend() {
   if (layers.ship) rows.push([dot(MAP_COLORS.ship, "sq"), "Vessel"]);
   if (layers.plant) rows.push([dot("var(--acc)"), "Plant (exact)"], [ring("var(--acc)"), "Plant (approximate)"]);
   if (layers.lane) rows.push([`<i style="background:${MAP_COLORS.lane};height:2px;border-radius:0"></i>`, "Trade lane"]);
+  for (const [c, label, kind] of GL.legendRows(layers)) rows.push([kind === "line" ? `<i style="background:${c};height:2px;border-radius:0"></i>` : dot(c), label]);
   el.innerHTML = rows.map(([sw, label]) => `<span class="gl-item">${sw}${ctx.esc(label)}</span>`).join("");
 }
 function chips() {
@@ -210,6 +224,8 @@ function chips() {
 function extraChips() {
   const { esc } = ctx, out = [];
   if ((mode === "globe" || mode === "flat") && g3Failed) out.push(`<span class="gd-chip stale" title="${esc(g3Failed)}">Flat 2D map: the 3D globe could not start (${esc(g3Failed)})</span>`);
+  if (baseNote) out.push(`<span class="gd-chip stale">${esc(baseNote)}</span>`);
+  else if (base !== "dark" && engine !== "3d" && (mode === "globe" || mode === "flat")) out.push(`<span class="gd-chip">Satellite and Streets base maps need the 3D globe; this view shows Dark.</span>`);
   if (engine === "3d" && g3 && g3.gov.reduced) out.push(`<span class="gd-chip stale" title="The frame rate dropped, so ${g3.gov.name === "no_trails" ? "trails are off" : g3.gov.name === "cap_2000" ? "trails are off and at most 2,000 markers are drawn" : "trails are off, at most 2,000 markers are drawn and the sharpness is lowered"}; it steps back up after 10 s of smooth frames">Reduced detail</span>`);
   return out.join("");
 }
@@ -229,7 +245,7 @@ const liveNow = () => !!liveDoc && Date.now() / 1000 - liveDoc.lastMsgAt < 180;
 function render() {
   chips();
   if (mode === "list") return renderList();
-  if (engine === "3d" && g3 && (mode === "globe" || mode === "flat")) { g3.sync(entities(), data.lanes, layers); return; }
+  if (engine === "3d" && g3 && (mode === "globe" || mode === "flat")) { g3.setLines(GL.lineSets(layers, store)); g3.setBorders(layers.border); g3.sync(entities(), data.lanes, layers); return; }
   if (mode === "globe" || mode === "flat") schedule();
 }
 /* called while the viewer is dragging or zooming */
@@ -277,7 +293,12 @@ function draw() {
   if (!interacting) { g2.strokeStyle = P.rule; g2.lineWidth = 1; g2.stroke(); }
   g2.beginPath(); pathGen(lib.land); g2.fillStyle = P.land; g2.fill();
   if (!interacting) { g2.strokeStyle = P.rule; g2.lineWidth = 0.6; g2.stroke(); }
+  if (layers.border && lib.countries) { g2.beginPath(); pathGen({ type: "FeatureCollection", features: lib.countries.features }); g2.strokeStyle = P.ink3; g2.globalAlpha = 0.65; g2.lineWidth = 0.8; g2.stroke(); g2.globalAlpha = 1; }
   if (lib.india && !interacting) { g2.beginPath(); pathGen(lib.india); g2.strokeStyle = P.acc; g2.lineWidth = 1.2; g2.stroke(); }
+  for (const set of GL.lineSets(layers, store)) {
+    g2.beginPath(); for (const line of set.lines) pathGen({ type: "LineString", coordinates: line });
+    g2.strokeStyle = set.color; g2.globalAlpha = set.alpha; g2.lineWidth = set.width * 0.8; g2.stroke(); g2.globalAlpha = 1;
+  }
   if (layers.lane && data.lanes) for (const l of data.lanes.lanes) { g2.beginPath(); pathGen({ type: "LineString", coordinates: l.path }); g2.strokeStyle = MAP_COLORS.lane; g2.globalAlpha = 0.55; g2.lineWidth = 1; g2.setLineDash(l.kind === "air" ? [3, 4] : []); g2.stroke(); g2.setLineDash([]); g2.globalAlpha = 1; }
 
   const all = entities(), hit = [], air = [], ships = [], cargo = [];
@@ -312,7 +333,14 @@ function draw() {
   for (const e of all) {
     if (e.type === "flight" || e.type === "vessel" || e.x == null || !at(e)) continue;
     const x = e.x, y = e.y; let r = 6;
-    if (e.type === "facility") { g2.beginPath(); g2.arc(x, y, 4.5, 0, 7); if (e.prec === "exact") { g2.fillStyle = P.acc; g2.fill(); } else { g2.strokeStyle = P.acc; g2.lineWidth = 1.6; g2.stroke(); } r = 6; }
+    if (GL.EXTRA_TYPES.has(e.type)) {
+      const c = e.type === "quake" ? GL.COLORS.quake : e.type === "natural" ? GL.COLORS.nat : e.type === "asset" ? GL.COLORS.asset : e.type === "powerplant" ? (GL.COLORS.fuel[e.fuel] || "#8a8a8a") : GL.COLORS.alert;
+      r = e.type === "quake" ? Math.max(3, Math.min(10, (e.mag || 4.5) * 1.6)) : e.type === "powerplant" ? Math.max(2.5, Math.min(6, (e.mw || 100) / 400 + 2)) : 4.5;
+      g2.beginPath();
+      if (e.type === "natural" || e.type === "asset" || e.type === "disruption") { g2.moveTo(x, y - r); g2.lineTo(x + r, y); g2.lineTo(x, y + r); g2.lineTo(x - r, y); g2.closePath(); }
+      else if (e.type === "alert") g2.rect(x - r, y - r, 2 * r, 2 * r); else g2.arc(x, y, r, 0, 7);
+      if (e.type === "quake") { g2.globalAlpha = 0.35; g2.fillStyle = c; g2.fill(); g2.globalAlpha = 1; g2.strokeStyle = c; g2.lineWidth = 1.2; g2.stroke(); } else { g2.fillStyle = c; g2.fill(); }
+    } else if (e.type === "facility") { g2.beginPath(); g2.arc(x, y, 4.5, 0, 7); if (e.prec === "exact") { g2.fillStyle = P.acc; g2.fill(); } else { g2.strokeStyle = P.acc; g2.lineWidth = 1.6; g2.stroke(); } r = 6; }
     else if (e.type === "chokepoint") {
       const b = e.bbox, A = at(geom({ lat: b[1], lon: b[0] })), C = at(geom({ lat: b[3], lon: b[2] }));
       if (A && C) { g2.strokeStyle = P.acc; g2.lineWidth = 1; g2.setLineDash([2, 2]); g2.strokeRect(Math.min(A[0], C[0]), Math.min(A[1], C[1]), Math.abs(C[0] - A[0]), Math.abs(C[1] - A[1])); g2.setLineDash([]); }
@@ -327,6 +355,14 @@ function draw() {
   }
   items = hit; qDirty = true;
   canvas.dataset.items = String(hit.length); canvas.dataset.mode = mode;
+}
+
+/* a click: the NEXUS panel for what it knows (flights, vessels, hotspots, chokepoints, plants named in filings); a small source card for hazards, power plants and company facilities */
+function pickEntity(e) {
+  if (!GL.EXTRA_TYPES.has(e.type)) { ctx.openNexus({ type: e.type, id: e.id }); return; }
+  const wrap = ctx.$("#gd-wrap"); if (!wrap) return;
+  let c = ctx.$("#gd-card"); if (!c) { c = document.createElement("div"); c.id = "gd-card"; c.className = "gd-card"; c.setAttribute("role", "dialog"); wrap.appendChild(c); c.addEventListener("click", ev => { if (ev.target.closest(".gd-card-x")) c.hidden = true; }); }
+  c.innerHTML = GL.card(e, ctx.esc); c.hidden = false;
 }
 
 /* ---------- interaction: drag to rotate (or pan the flat map), wheel to zoom, click to open NEXUS ---------- */
@@ -367,7 +403,7 @@ function onUp(ev) {
   const was = press; press = null;
   if (!was || moved > 5) return;
   const rc = canvas.getBoundingClientRect(), e = nearest(ev.clientX - rc.left, ev.clientY - rc.top, ev.pointerType === "touch");
-  if (e) ctx.openNexus({ type: e.type, id: e.id });
+  if (e) pickEntity(e);
 }
 
 /* ---------- list view: every entity as a row, filterable, keyboard reachable ---------- */

@@ -24,3 +24,11 @@ html.fx-boot body > :not(.fx-boot-ov) { visibility: hidden; animation: fxBootFai
 .term.focus .rail { display: flex; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 120ms ease-out, visibility 0s 120ms; }
 .rail-view:not([hidden]) { animation: fxViewIn 140ms ease-out; }
 @media (prefers-reduced-motion: reduce) { .term, .rail, .term.focus .rail { transition: none; } .rail-view:not([hidden]) { animation: none; } }
+
+/* Globe: base-map choice and the click card for hazards, power plants and company facilities */
+.gd-bases { display: flex; flex-wrap: wrap; gap: 4px 14px; width: 100%; padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--rule); }
+.gd-card { position: absolute; top: 10px; right: 10px; z-index: 6; width: min(300px, calc(100% - 20px)); padding: 12px 14px; background: var(--card); border: 1px solid var(--rule-2); border-radius: var(--r-card); color: var(--ink-2); font-size: 12.5px; }
+.gd-card[hidden] { display: none; }
+.gd-card h5 { margin: 0 24px 6px 0; color: var(--ink); font-size: 14px; } .gd-card table { width: 100%; border-collapse: collapse; } .gd-card td { padding: 2px 0; vertical-align: top; } .gd-card td:first-child { color: var(--ink-3); padding-right: 10px; white-space: nowrap; }
+.gd-card .fp-src { margin: 8px 0 0; color: var(--ink-3); font-size: 11px; } .gd-card a { color: var(--ink); }
+.gd-card-x { position: absolute; top: 6px; right: 8px; width: 24px; height: 24px; color: var(--ink-3); font-size: 18px; line-height: 1; } .gd-card-x:hover { color: var(--ink); }

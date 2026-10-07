@@ -152,7 +152,7 @@ def run(which="all"):
             pg.wait_for_timeout(600)
             after = pg.evaluate("() => { const c = document.querySelector('#gd-gl'); const g = c && c.__g3; return g ? { geometries: g.renderer.info.memory.geometries, textures: g.renderer.info.memory.textures } : null }")
             check(f"20 open/close cycles: geometries and textures do not grow {samples[0]} -> {samples[-1]} (max seen {max(g for g, _ in samples)}, {max(t for _, t in samples)})",
-                  max(g for g, _ in samples) <= samples[1][0] + 2 and max(t for _, t in samples) <= samples[1][1] + 1 and samples[-1] == samples[1], samples[:4])
+                  max(g for g, _ in samples) <= samples[1][0] + 2 and max(t for _, t in samples) <= samples[1][1] + 1 and samples[-1][0] <= samples[1][0] and samples[-1][1] <= samples[1][1], samples[:4])
             check(f"after leaving the Globe the renderer holds nothing: {after}", after is not None and after["geometries"] <= 2 and after["textures"] <= 1, after)
             check("memory cycles: 0 console errors", not errs, errs[:3])
             b.close()
