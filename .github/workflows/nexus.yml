@@ -63,6 +63,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
           GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          PYTHONUNBUFFERED: "1"
           LIMIT: ${{ github.event.inputs.limit || '120' }}
         timeout-minutes: 170
         run: python scripts/revenue_graph_builder.py --limit "$LIMIT" --max-calls 420    # about 8 model calls and 20 s a call per company: ~50 companies a day, ~2.5 hours
@@ -75,6 +78,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
           GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          PYTHONUNBUFFERED: "1"
         run: python scripts/related_party_shares.py --limit 40 --max-calls 150
 
       - name: Find facility coordinates

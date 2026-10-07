@@ -569,3 +569,20 @@ def test_unnamed_counterparties_get_the_same_scrutiny_as_named_ones():
     ok_q = "The Company has one customer whose revenue represents 37% of the Company's total revenue"
     good, _, _ = validate([edge(counterparty_name=None, counterparty_anon_label="one customer", w=0.37, w_basis="revenue", quote=ok_q)], pages={12: ok_q})
     assert len(good) == 1 and good[0]["anon"] == "one customer" and good[0]["w"] == 0.37
+
+
+def test_a_quota_reply_without_the_word_day_does_not_stall_the_run(monkeypatch):
+    import requests
+    monkeypatch.setenv("GROQ_API_KEY", "x")
+    slept = []
+
+    class R:
+        status_code, headers, text = 429, {}, "Resource has been exhausted (e.g. check quota)."
+
+        def raise_for_status(self):
+            pass
+    monkeypatch.setattr(requests, "post", lambda *a, **k: R())
+    llm = rb.LLM(sleep=slept.append, clock=lambda: 0.0)
+    with pytest.raises(rb.LLMBudget):
+        llm.complete("s", "u")
+    assert len(slept) <= 2 * len(llm.cands), "each model is given up after three rate-limit replies, not retried for minutes"

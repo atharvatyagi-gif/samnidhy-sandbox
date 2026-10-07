@@ -442,6 +442,7 @@ class LLM:
         self.tokens = {}                                   # tokens the providers reported per model, for the run's cost report
         self.dead = set()                                  # candidates whose daily quota is used up (or that keep failing)
         self.fails = {}
+        self.r429 = {}                                     # consecutive rate-limit replies per candidate (reset by an answer)
         self._ready = {}                                   # per-candidate earliest next call (free-tier pacing: ~7,000 tokens a minute on Groq)
 
     @property
@@ -470,7 +471,7 @@ class LLM:
         import requests
         if self.calls >= self.max_calls:
             raise LLMBudget(f"the run's limit of {self.max_calls} model calls is used up")
-        for attempt in range(8):
+        for attempt in range(8 + 3 * len(self.cands)):                   # room for every model to be given up (three rate-limit replies each) before the filing is
             live = [c for c in self.cands if c not in self.dead]
             if not live:
                 raise LLMBudget("the free daily quota is used up on every configured model; the run resumes tomorrow from where it stopped")
@@ -487,6 +488,10 @@ class LLM:
                 if "per day" in r.text.lower() or "(tpd)" in r.text.lower() or "daily" in r.text.lower():
                     self.dead.add(cand)                                    # this model's day is over: use the next one
                     continue
+                self.r429[cand] = self.r429.get(cand, 0) + 1
+                if self.r429[cand] >= 3:                                   # a quota reply that does not say "per day" (Gemini's): three in a row with no answer between = used up for this run
+                    self.dead.add(cand)
+                    continue
                 self.sleep(min(90, float(r.headers.get("retry-after", 2 ** (attempt + 1)))))
                 continue
             if r.status_code >= 500:
@@ -500,6 +505,7 @@ class LLM:
             r.raise_for_status()
             self.calls += 1                                   # only answered requests use up the budget; retries do not
             self.fails[cand] = 0
+            self.r429[cand] = 0
             js = r.json()
             used = (js.get("usage") or {}).get("total_tokens") or (js.get("usageMetadata") or {}).get("totalTokenCount") or 0
             self.tokens[cand[1]] = self.tokens.get(cand[1], 0) + used
