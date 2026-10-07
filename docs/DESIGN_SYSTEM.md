@@ -1,0 +1,41 @@
+# Design system and motion (public pages)
+
+Flat "Midnight Slate": no shadows, glow, blur or gradients; separation is a 1px border. The expert terminal does not load these files.
+
+## Files
+| File | Role |
+|---|---|
+| `site.css` | tokens (`--fx-*`) under `<html data-fx-theme="dark">` and the `.fx-*` components |
+| `fx.js` | effects switched on with `data-fx="..."` (one shared rAF loop, pauses off-screen / hidden tab) |
+| `transitions.js` | page transitions: native cross-document View Transitions where supported, else a circular curtain; never delays navigation more than 700 ms |
+| `site-nav.js` | opt in with `<html data-site-nav>`: slim nav, Archive day picker (reads `days.json`), reading-progress line, footer with the disclaimer and last refresh (`status.json`) |
+| `styleguide.html` | hidden demo of every component (not linked, `noindex`) |
+
+All four scripts/styles are in `STATIC` and `ASSETS` in `scripts/build_site.py`, so they are cache-stamped. `days.json` (saved sessions, newest first) is written by the build.
+
+## Tokens
+Canvas `#09090b`, card `#121214`, hover `#18181b`, border `#27272a`, text `#fafafa` / `#a1a1aa` / `#8b8b94` (the dimmest allowed), bull `#22c55e`, bear `#ef4444`. Radius 6 px (inputs, buttons) and 12 px (cards). Motion: `--fx-dur-1..4` (150/300/600/900 ms), `--fx-ease-out`, `--fx-ease-in-out`. Numbers use `.fx-num` (mono, tabular).
+
+## Effects (`data-fx`)
+`reveal` and `stagger` (rise in on scroll) · `split` (word-by-word headline; original text kept in `aria-label`) · `count` (`data-count`, `data-decimals`, `data-prefix`, `data-suffix`; the real value is always the page text) · `draw` (SVG path) · `tilt` · `magnetic` · `spotlight` (a 1px edge line follows the cursor) · `marquee` (`data-speed` seconds) · `parallax` (`data-speed`) · `progress`.
+Combine with spaces: `data-fx="tilt spotlight"`.
+
+## Rules
+- Progressive enhancement: with reduced motion or no JavaScript everything is visible and static. Only below-the-fold elements are pre-hidden, so nothing flashes.
+- Animate only `transform`, `opacity`, `clip-path`. Effects are idempotent and each one is wrapped in `try/catch`.
+- Keyboard: every control has a visible 1px focus outline; the Archive picker uses arrow keys and Esc. Touch targets >= 44 px.
+- New copy never uses the banned words (`scripts/check_banned.py`). Numbers shown on a page come from real data.
+
+## Add a new effect
+```js
+FX.register("shine", el => { /* set up; use FX.tick(fn) / FX.untick(fn) for per-frame work */ });
+```
+Then put `data-fx="shine"` on an element. Add its CSS to `site.css`, a demo to `styleguide.html`, and a line here.
+
+## Use on a page
+```html
+<html lang="en" data-fx-theme="dark" data-site-nav>
+<link rel="stylesheet" href="site.css">
+<script src="fx.js"></script><script src="transitions.js"></script><script src="site-nav.js"></script>
+```
+Inside `days/` use `../site.css` etc. The build stamps every reference with `?v=<hash>`.

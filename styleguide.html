@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-fx-theme="dark" data-site-nav>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Style guide · B-Lab Cohort</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<style>
+  body { margin: 0; line-height: 1.6; }
+  main > * { min-width: 0; }
+  main { max-width: 1100px; margin: 0 auto; padding: 48px 20px 80px; display: grid; gap: 40px; }
+  h1 { font-size: clamp(32px, 6vw, 64px); letter-spacing: -0.03em; line-height: 1.05; margin: 0; }
+  h2 { font: 600 12px var(--fx-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fx-ink-3); margin: 0 0 14px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .big { font-size: 40px; font-weight: 600; }
+  svg { width: 100%; height: 80px; } path { fill: none; stroke: var(--fx-up); stroke-width: 2; }
+  p { color: var(--fx-ink-2); margin: 0; }
+</style>
+</head>
+<body>
+<main>
+  <header><h1 data-fx="split">Design system and motion components</h1>
+  <p data-fx="reveal" style="margin-top:16px">Internal page, not linked from the site. Values below are placeholders that show the components; no real data is shown here.</p></header>
+
+  <section><h2>Tokens</h2><div class="grid" data-fx="stagger">
+    <div class="fx-card">Canvas <span class="fx-num">#09090b</span></div><div class="fx-card">Card <span class="fx-num">#121214</span></div>
+    <div class="fx-card">Border <span class="fx-num">#27272a</span></div><div class="fx-card"><span class="fx-up fx-num">Bull #22c55e</span> · <span class="fx-down fx-num">Bear #ef4444</span></div>
+  </div></section>
+
+  <section><h2>Count-up (data-fx="count")</h2><div class="grid">
+    <div class="fx-card"><div class="big fx-num" data-fx="count" data-count="1234" >1234</div><p>whole number</p></div>
+    <div class="fx-card"><div class="big fx-num" data-fx="count" data-count="12.5" data-decimals="1" data-suffix="%">12.5%</div><p>with decimals and a suffix</p></div>
+  </div></section>
+
+  <section><h2>Tilt, spotlight, magnetic</h2><div class="grid">
+    <div class="fx-card" data-fx="tilt spotlight"><b>Tilt + spotlight</b><p>A 1px edge line follows the cursor. No glow.</p></div>
+    <div class="fx-card"><a class="fx-btn primary" href="#" data-fx="magnetic" data-no-transition>Magnetic button</a> <a class="fx-btn" href="#" data-no-transition>Secondary</a></div>
+  </div></section>
+
+  <section><h2>SVG draw</h2><div class="fx-card"><svg viewBox="0 0 300 80" preserveAspectRatio="none" aria-hidden="true"><path data-fx="draw" d="M0 60 L40 50 L80 58 L120 30 L160 40 L200 18 L240 28 L300 8"/></svg></div></section>
+
+  <section><h2>Marquee</h2><div class="fx-marquee" data-fx="marquee" data-speed="40"><div class="fx-marquee-track">
+    <span class="fx-marquee-item"><b>SYMBOL</b> 0.00 <span class="fx-up">▲ +0.00%</span></span>
+    <span class="fx-marquee-item"><b>SYMBOL</b> 0.00 <span class="fx-down">▼ −0.00%</span></span>
+    <span class="fx-marquee-item"><b>SYMBOL</b> 0.00 <span class="fx-up">▲ +0.00%</span></span>
+  </div></div></section>
+
+  <section><h2>Skeleton</h2><div class="fx-card"><div class="fx-skel" style="height:18px;width:60%"></div><div class="fx-skel" style="height:18px;width:40%;margin-top:10px"></div></div></section>
+
+  <section><h2>Reveal (scroll down)</h2><div class="fx-card" data-fx="reveal" style="margin-top:60vh">Fades and rises when it enters the viewport. Visible without JavaScript or with reduced motion.</div></section>
+</main>
+<script src="fx.js"></script>
+<script src="transitions.js"></script>
+<script src="site-nav.js"></script>
+</body>
+</html>

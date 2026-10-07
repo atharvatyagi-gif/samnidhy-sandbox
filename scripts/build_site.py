@@ -26,10 +26,10 @@ from embed_data import ADVANCED_PATH, DATA, HTML_PATH, SCREENER, advanced_blocks
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
-STATIC = ["index.html", "landing.css", "landing.js", "auth.html", "auth-check.js", "config.js",
+STATIC = ["index.html", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "styleguide.html", "auth.html", "auth-check.js", "config.js",
           "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js",
           "chart-engine.js", "chart-indicators.js", "mode-dock.js", "globe-map.js",
-          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js"]
+          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe3d.js"]
 TERMINAL = ROOT / "data" / "terminal"
 # Scripts/styles that pages load. Browsers keep these for a while (GitHub Pages: 10 min, some longer), so an
 # update could mix a new page with an old script. Every reference gets ?v=<hash of the file>, which changes
@@ -37,7 +37,7 @@ TERMINAL = ROOT / "data" / "terminal"
 # ORDER MATTERS: a file must come AFTER every file it imports (desk-map imports desk-aladin, which imports desk-ticks), because each file is stamped with
 # the hashes of the files before it. Out of order, an import keeps its plain address while the page loads the hashed one, and the browser runs the file
 # twice as two separate modules (one of them never initialised). tests/test_build_assets.py checks this.
-ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-ticks.js", "desk-kin.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-movers.js", "desk-sectors.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
+ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-ticks.js", "desk-kin.js", "desk-kin-live.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-movers.js", "desk-sectors.js", "desk-globe3d.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
 
 
 def geo_summary(g: dict) -> dict:
@@ -149,6 +149,9 @@ def main() -> None:
     (SITE / "desk_data.json").write_text(json.dumps(present), encoding="utf-8")
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
         (SITE / "screener.json").write_text(json.dumps(analyst_fields.screener_doc(json.loads((SCREENER / "latest.json").read_text(encoding="utf-8"))), ensure_ascii=False), encoding="utf-8")
+
+    # list of saved sessions for the shared nav's Archive picker (newest first)
+    (SITE / "days.json").write_text(json.dumps([{"date": f.stem} for f in reversed(archive)], ensure_ascii=False), encoding="utf-8")
 
     version_assets()
     (SITE / ".nojekyll").write_text("", encoding="utf-8")  # tell GitHub Pages to serve files as-is

@@ -1,0 +1,101 @@
+/* Site design system (public pages): flat "Midnight Slate" tokens + motion components.
+   Opt in per page with <html data-fx-theme="dark">. Never loaded by the expert terminal, so nothing here can leak into it.
+   Rules: no shadows, no glow, no blur, no gradients. Separation is a 1px border. Motion only touches transform / opacity / clip-path.
+   Motion is opt-in: everything is visible and static unless <html class="motion"> is set (fx.js sets it when the visitor has not asked for reduced motion). */
+
+:root[data-fx-theme="dark"] {
+  --fx-bg: #09090b; --fx-card: #121214; --fx-hover: #18181b; --fx-line: #27272a; --fx-line-2: #3f3f46; --fx-focus: #52525b;
+  --fx-ink: #fafafa; --fx-ink-2: #a1a1aa; --fx-ink-3: #8b8b94;
+  --fx-up: #22c55e; --fx-down: #ef4444;
+  --fx-r: 6px; --fx-r-card: 12px;
+  --fx-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fx-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --fx-ease-out: cubic-bezier(.2, .8, .2, 1); --fx-ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --fx-dur-1: 150ms; --fx-dur-2: 300ms; --fx-dur-3: 600ms; --fx-dur-4: 900ms;
+  --fx-nav-h: 52px;
+  color-scheme: dark;
+}
+:root[data-fx-theme="dark"] body { background: var(--fx-bg); color: var(--fx-ink); font-family: var(--fx-sans); }
+.fx-num { font-family: var(--fx-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.fx-up { color: var(--fx-up); } .fx-down { color: var(--fx-down); }
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 1px solid var(--fx-focus); outline-offset: 2px; }
+
+/* ---------- surfaces ---------- */
+.fx-card { background: var(--fx-card); border: 1px solid var(--fx-line); border-radius: var(--fx-r-card); padding: 24px; transition: border-color var(--fx-dur-1), background-color var(--fx-dur-1); }
+.fx-card:hover, .fx-card:focus-within { border-color: var(--fx-line-2); }
+.fx-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border-radius: var(--fx-r); border: 1px solid var(--fx-line-2);
+  background: transparent; color: var(--fx-ink); font: 600 14px var(--fx-sans); text-decoration: none; cursor: pointer; transition: background-color var(--fx-dur-1), color var(--fx-dur-1), border-color var(--fx-dur-1); }
+.fx-btn:hover { background: var(--fx-hover); }
+.fx-btn.primary { background: var(--fx-ink); color: var(--fx-bg); border-color: var(--fx-ink); }
+.fx-btn.primary:hover { background: var(--fx-ink-2); border-color: var(--fx-ink-2); }
+
+/* ---------- reveal on scroll (only below-the-fold elements are pre-hidden, so there is never a flash) ---------- */
+html.motion.fx-ready [data-fx="reveal"].fx-pre, html.motion.fx-ready [data-fx="stagger"].fx-pre > * { opacity: 0; transform: translateY(18px); }
+html.motion [data-fx="reveal"], html.motion [data-fx="stagger"] > * { transition: opacity var(--fx-dur-3) var(--fx-ease-out), transform var(--fx-dur-3) var(--fx-ease-out); }
+html.motion [data-fx="stagger"] > * { transition-delay: calc(var(--i, 0) * 70ms); }
+html.motion.fx-ready [data-fx="reveal"].fx-in, html.motion.fx-ready [data-fx="stagger"].fx-in > * { opacity: 1; transform: none; }
+
+/* ---------- split headings: each word rises out of a clip ---------- */
+.fx-w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
+.fx-w > span { display: inline-block; }
+html.motion.fx-ready [data-fx="split"].fx-pre .fx-w > span { transform: translateY(110%); }
+html.motion [data-fx="split"] .fx-w > span { transition: transform var(--fx-dur-4) var(--fx-ease-out); transition-delay: calc(var(--i, 0) * 60ms); }
+html.motion.fx-ready [data-fx="split"].fx-in .fx-w > span { transform: none; }
+
+/* ---------- SVG draw ---------- */
+html.motion.fx-ready [data-fx="draw"].fx-pre { stroke-dashoffset: var(--len, 1000); }
+html.motion [data-fx="draw"] { stroke-dasharray: var(--len, 1000); transition: stroke-dashoffset 1.4s var(--fx-ease-out); }
+html.motion.fx-ready [data-fx="draw"].fx-in { stroke-dashoffset: 0; }
+
+/* ---------- tilt / magnetic / spotlight (flat: a 1px edge line follows the cursor, no glow) ---------- */
+[data-fx="tilt"], [data-fx="magnetic"] { transition: transform var(--fx-dur-2) var(--fx-ease-out); will-change: auto; }
+[data-fx="tilt"].fx-live, [data-fx="magnetic"].fx-live { transition: transform 80ms linear; will-change: transform; }
+[data-fx="spotlight"] { position: relative; overflow: hidden; }
+[data-fx="spotlight"]::after { content: ""; position: absolute; left: 0; top: 0; height: 1px; width: 38%; background: var(--fx-ink-2); opacity: 0;
+  transform: translateX(calc(var(--mx, 50%) - 19%)); transition: opacity var(--fx-dur-2); pointer-events: none; }
+[data-fx="spotlight"]:hover::after { opacity: .9; }
+[data-fx="spotlight"]:hover { background-color: var(--fx-hover); }
+
+/* ---------- marquee tape ---------- */
+.fx-marquee { min-width: 0; max-width: 100%; contain: paint; overflow: hidden; white-space: nowrap; border-block: 1px solid var(--fx-line); background: var(--fx-card); }
+.fx-marquee-track { display: inline-flex; gap: 40px; padding: 10px 20px; animation: fx-scroll var(--fx-speed, 60s) linear infinite; }
+.fx-marquee:hover .fx-marquee-track, .fx-marquee.fx-off .fx-marquee-track { animation-play-state: paused; }
+.fx-marquee-item { font: 500 13px var(--fx-mono); font-variant-numeric: tabular-nums; color: var(--fx-ink-2); }
+.fx-marquee-item b { color: var(--fx-ink); margin-right: 6px; }
+@keyframes fx-scroll { to { transform: translateX(-50%); } }
+
+/* ---------- reading progress ---------- */
+.fx-progress { position: fixed; left: 0; top: 0; right: 0; height: 2px; z-index: 1001; transform-origin: 0 50%; transform: scaleX(0); background: var(--fx-ink); pointer-events: none; }
+
+/* ---------- shared nav ---------- */
+.fx-nav { position: sticky; top: 0; z-index: 1000; display: flex; align-items: center; gap: 4px; height: var(--fx-nav-h); padding: 0 20px;
+  background: var(--fx-bg); border-bottom: 1px solid var(--fx-line); font: 500 14px var(--fx-sans); }
+.fx-nav a, .fx-nav button { color: var(--fx-ink-2); text-decoration: none; background: none; border: 0; font: inherit; cursor: pointer; padding: 8px 12px; border-radius: var(--fx-r); min-height: 44px; display: inline-flex; align-items: center; transition: color var(--fx-dur-1), background-color var(--fx-dur-1); }
+.fx-nav a:hover, .fx-nav button:hover { color: var(--fx-ink); background: var(--fx-hover); }
+.fx-nav [aria-current="page"] { color: var(--fx-ink); }
+.fx-nav .fx-brand { color: var(--fx-ink); font-weight: 700; letter-spacing: -0.01em; margin-right: 8px; padding-left: 0; }
+.fx-nav .fx-spacer { flex: 1; }
+.fx-days { position: absolute; top: calc(100% + 6px); left: 0; min-width: 220px; max-height: 60vh; overflow: auto; padding: 6px; background: var(--fx-card); border: 1px solid var(--fx-line); border-radius: var(--fx-r-card); }
+.fx-days[hidden] { display: none; }
+.fx-days a { display: flex; justify-content: space-between; width: 100%; font-family: var(--fx-mono); font-size: 13px; }
+.fx-has-days { position: relative; }
+@media (max-width: 640px) { .fx-nav { padding: 0 8px; overflow-x: auto; } .fx-nav .fx-brand { display: none; } .fx-days { position: fixed; left: 8px; right: 8px; top: calc(var(--fx-nav-h) + 4px); } }
+
+/* ---------- shared footer ---------- */
+.fx-footer { border-top: 1px solid var(--fx-line); padding: 28px 20px 40px; color: var(--fx-ink-3); font: 13px/1.6 var(--fx-sans); text-align: center; }
+.fx-footer a { color: var(--fx-ink-2); }
+
+/* ---------- page transition curtain (fallback when cross-document View Transitions are unavailable) ---------- */
+.fx-curtain { position: fixed; inset: 0; z-index: 2000; background: var(--fx-bg, #09090b); pointer-events: none; clip-path: circle(0% at var(--cx, 50%) var(--cy, 50%)); }
+.fx-curtain.go { clip-path: circle(150% at var(--cx, 50%) var(--cy, 50%)); transition: clip-path 360ms var(--fx-ease-in-out); }
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 200ms; }
+
+/* ---------- loading skeleton (flat, no shimmer glow) ---------- */
+.fx-skel { background: var(--fx-hover); border-radius: var(--fx-r); min-height: 1em; animation: fx-pulse 1.4s ease-in-out infinite; }
+@keyframes fx-pulse { 50% { opacity: .55; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+  .fx-marquee-track { animation: none; }
+}
