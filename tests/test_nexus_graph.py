@@ -25,8 +25,8 @@ def edge(**kw):
     return base
 
 
-def validate(edges, facs=()):
-    return rb.validate_answer({"edges": edges, "facilities": list(facs)}, {12: PAGE12}, META, NOW, SRC["schema"])
+def validate(edges, facs=(), pages=None):
+    return rb.validate_answer({"edges": edges, "facilities": list(facs)}, pages or {12: PAGE12}, META, NOW, SRC["schema"])
 
 
 # ---------------------------------------------------------------- quotes and numbers
@@ -121,7 +121,8 @@ def test_edge_direction_s_is_supplier_d_is_customer():
 
 def test_unlisted_and_anonymous_counterparties():
     ix = rb.NameIndex(STOCKS)
-    e, _, _ = validate([edge(counterparty_name="Acme Overseas GmbH")])
+    q = "Our largest customer, Acme Overseas GmbH, accounted for 24% of our revenue"
+    e, _, _ = validate([edge(counterparty_name="Acme Overseas GmbH", quote=q)], pages={12: q + " during FY2024-25."})
     assert rb.to_graph_edges("BOSCHLTD", e, ix)[0]["d"].startswith("EXT_")
     e2, _, _ = validate([edge(counterparty_name=None, counterparty_anon_label="Customer A", quote="Customer A contributed 31% of revenue", w=0.31)])
     assert rb.to_graph_edges("BOSCHLTD", e2, ix)[0]["d"] == "ANON_BOSCHLTD_CUSTOMER_A"
@@ -140,7 +141,7 @@ def test_anonymous_customer_resolves_only_with_the_counterpartys_own_filing():
     d = doc_from({"BOSCHLTD": rec("BOSCHLTD", anon)})
     assert d["anon"]["ANON_BOSCHLTD_CUSTOMER_A"]["resolved_to"] is None
     assert [n["k"] for n in d["nodes"] if n["id"].startswith("ANON_")] == ["anon"]
-    theirs = [{**validate([edge()])[0][0], "name": "Bosch Limited", "direction": "supplier", "wb": "purchases", "w": 0.05}]
+    theirs = [{**validate([edge()])[0][0], "name": "Bosch Limited", "direction": "supplier", "wb": "purchases", "w": 0.05, "q": "Bosch Limited supplies us 5% of our purchases"}]
     d2 = doc_from({"BOSCHLTD": rec("BOSCHLTD", anon), "TATAMOTORS": rec("TATAMOTORS", theirs)})
     a = d2["anon"]["ANON_BOSCHLTD_CUSTOMER_A"]
     assert a["resolved_to"] == "TATAMOTORS" and a["evidence"] and a["conf"] >= 0.75
@@ -322,8 +323,9 @@ def test_daily_quota_moves_to_the_next_model_and_ends_the_run_when_all_are_used(
                                          ("key suppliers", False), ("MSMEs / small producers", False), ("supply chain partners", False),
                                          ("large mining OEMs", False), ("North American recreational off-highway vehicle OEM", True)])
 def test_groups_of_companies_are_not_counterparties(label, kept):
-    q = "Our largest customer, Tata Motors Limited, accounted for 24% of our revenue"
-    e, _, dropped = validate([edge(counterparty_name=None if label == "Customer A" else label, counterparty_anon_label="Customer A" if label == "Customer A" else None, quote=q)])
+    q = f"Our largest customer, {label}, accounted for 24% of our revenue"
+    e, _, dropped = validate([edge(counterparty_name=None if label == "Customer A" else label, counterparty_anon_label="Customer A" if label == "Customer A" else None, quote=q)],
+                             pages={12: q + " during FY2024-25."})
     assert bool(e) == kept, (label, dropped)
 
 
@@ -507,3 +509,20 @@ def test_saved_edges_are_cleaned_by_the_same_rules_when_the_graph_is_reassembled
     d = rb.assemble({"cos": {}, "edges": [e1, e2]}, {}, STOCKS, [], 0.75, NOW)
     assert len(d["edges"]) == 1 and d["edges"][0]["d"] == "ANON_BOSCHLTD_MAJOR_CUSTOMER_BASED_IN_USA"
     assert [n["k"] for n in d["nodes"] if n["id"].startswith("ANON_")] == ["anon"] and cg.audit(d) == []
+
+
+def test_an_edge_whose_quote_does_not_name_the_counterparty_is_not_kept():
+    assert rb.names_the_counterparty("Maharashtra Scooters Ltd.", "Maharashtra Scooters Limited Purchases 0.18") is True
+    assert rb.names_the_counterparty("GE", "these are all commercial activities as per the purchase order with GE, what") is True
+    assert rb.names_the_counterparty("Maharashtra Scooters Ltd.", "Purchases - - 0.18 -") is False                       # a table row with no name in it
+    assert rb.names_the_counterparty("", "anything") is False
+    pages = {12: "Purchases 0.18 0.2 and later Maharashtra Scooters Limited is a related party."}
+    e = edge(counterparty_name="Maharashtra Scooters Ltd.", w=None, w_basis=None, quote="Purchases 0.18 0.2", direction="supplier", period="FY2024-25")
+    good, _, dropped = rb.validate_answer({"edges": [e], "facilities": []}, pages, META, NOW, SRC["schema"])
+    assert good == [] and any("does not name the counterparty" in d for d in dropped)
+    ok_e = edge(counterparty_name="Maharashtra Scooters Ltd.", w=None, w_basis=None, quote="Maharashtra Scooters Limited is a related party", direction="supplier")
+    good, _, dropped = rb.validate_answer({"edges": [ok_e], "facilities": []}, pages, META, NOW, SRC["schema"])
+    assert len(good) == 1 and not dropped
+    saved = {"own": "BOSCHLTD", "s": "EXT_X", "d": "BOSCHLTD", "rel": "supplies", "w": None, "wb": None, "per": "FY2025-26", "tier": 1, "comp": None, "conf": 0.8, "kind": "disclosed",
+             "url": "u", "pg": 1, "q": "Purchases 0.03 - 0.65 -", "vq": True, "doc": "annual", "cpn": "Bajaj Auto Technology Ltd."}
+    assert rb.clean_saved_edge(saved) is None and rb.clean_saved_edge({**saved, "q": "Purchases from Bajaj Auto Technology Ltd. 0.03"}) is not None

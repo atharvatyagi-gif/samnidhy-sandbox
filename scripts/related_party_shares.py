@@ -136,6 +136,9 @@ def derive(answers, pages, meta, now, owner, index):
             if not val:
                 notes.append(f"{name}: {info}")
                 continue
+            if not rb.names_the_counterparty(name, info["q"]):
+                notes.append(f"{name}: the quote does not name the counterparty")
+                continue
             if info["sc"] and rev[1]["sc"] and info["sc"] != rev[1]["sc"]:
                 notes.append(f"{name}: standalone and consolidated numbers are not comparable")
                 continue
