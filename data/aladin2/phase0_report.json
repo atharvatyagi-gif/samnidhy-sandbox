@@ -1,0 +1,62 @@
+{
+ "buy_and_hold_equal_weight": {
+  "dates": 660,
+  "gross_mean_pct": 0.638,
+  "net_mean_pct": 0.638,
+  "net_vs_universe_pct": 0.0,
+  "net_vs_universe_ci95_pct": [
+   0.0,
+   0.0
+  ],
+  "net_mean_ci95_pct": [
+   0.169,
+   1.075
+  ]
+ },
+ "naive_momentum_12_1": {
+  "dates": 658,
+  "gross_mean_pct": 0.775,
+  "net_mean_pct": 0.275,
+  "net_vs_universe_pct": -0.374,
+  "net_vs_universe_ci95_pct": [
+   -0.473,
+   -0.278
+  ],
+  "net_mean_ci95_pct": [
+   -0.166,
+   0.707
+  ]
+ },
+ "aladin_top_decile": {
+  "dates": 660,
+  "gross_mean_pct": 1.196,
+  "net_mean_pct": 0.696,
+  "net_vs_universe_pct": 0.058,
+  "net_vs_universe_ci95_pct": [
+   -0.161,
+   0.279
+  ],
+  "net_mean_ci95_pct": [
+   0.304,
+   1.095
+  ]
+ },
+ "random_walk_reference": {
+  "p_up": 0.4977,
+  "brier": 0.25
+ },
+ "aladin_probability": {
+  "brier_raw_p": 0.2508,
+  "note": "raw uncalibrated rank-averaged score; calibration is nested in data/aladin/latest.json"
+ },
+ "sample": {
+  "rows": 317627,
+  "stocks": 1594,
+  "from": "2013-01-04",
+  "to": "2026-09-15",
+  "cost_bps_round_trip_placeholder": 50.0,
+  "hold_days": 10,
+  "entry": "next open",
+  "adv_filter_cr": 2.0
+ }
+}
