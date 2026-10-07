@@ -2,7 +2,7 @@
 The masthead chip tells which local feed is running (needs `python scripts/dev_preview.py --no-browser`):   python tests/e2e/ticks_check.py
 
 The page's local tick connection (ws://127.0.0.1:8787/ws/ticks) is replaced by a scripted one, so no daemon and no Angel One login are needed. Checks that
-  * a daemon saying src "angel" shows "REAL-TIME · NSE (THIS PC)", and one saying "nse-web" shows "LIVE · NSE WEB (THIS PC, ~3 s)";
+  * a daemon saying src "angel" shows "REAL-TIME · NSE (THIS PC)", and one saying "nse-web" shows "LIVE · NSE WEB (THIS PC, 1-3 min)";
   * the connect message names the feed, ticks update prices, and sweeps arrive;
   * nothing logs a console error.
 """
@@ -26,7 +26,7 @@ def scripted(src):
 
 def run():
     with sync_playwright() as pw:
-        for src, want in (("angel", "REAL-TIME · NSE (THIS PC)"), ("nse-web", "LIVE · NSE WEB (THIS PC, ~3 s)")):
+        for src, want in (("angel", "REAL-TIME · NSE (THIS PC)"), ("nse-web", "LIVE · NSE WEB (THIS PC, 1-3 min)")):
             b, pg, errs, _ = page_for(pw, init="localStorage.setItem('aladin.ticks','1')")
             pg.route_web_socket("ws://127.0.0.1:8787/ws/ticks", scripted(src))
             pg.goto(BASE)

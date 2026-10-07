@@ -7,7 +7,7 @@ Smoke test of the live price feed the local tick daemon uses.
 
 FREE NSE WEB FEED (--source nse; needs no account and no keys). Stages: session (NSE's cookie handshake), endpoints (each list answers: rows, how long it took), coverage (how many
 stocks and indices get a live price: gainers/losers, most active, and the futures-and-options stocks' spot prices), freshness (age of the newest exchange time stamp), movement
-(a second round later: how many prices changed). It is NSE's own website data, polled about every 3 seconds: live for the stocks above (a few hundred), unofficial, and it can
+(a second round later: how many prices changed). It is NSE's own website data and NSE refreshes each list only every 1 to 3 minutes (measured 7 Oct 2026), so the movement stage listens for 150 seconds by default. Live for the stocks above (a few hundred), unofficial, and it can
 change shape; every other stock stays on the delayed Yahoo prices.
 
 ANGEL ONE (--source angel) is for an account holder only: it needs a demat account and the four ANGEL_* keys, and tests them.
@@ -177,25 +177,38 @@ def run_nse(seconds=20, session=None, daemon=None, now=None, clock=time.time, sl
     else:
         results.append(stage("freshness", age is not None and age < 120, f"newest exchange time stamp is {age:.0f} s old" if age is not None else "no time stamp in the data", out=out))
     t0 = clock()
-    sleep(max(0, seconds))
-    r2, _ = one_round()
-    s2 = {}
-    for n, (rows, _) in r2.items():
-        if rows and n != "indices":
-            for sym, t in rows.items():
-                s2.setdefault(sym, t) if n == "futures-and-options stocks" else s2.__setitem__(sym, t)
-    moved = sum(1 for sym, t in s2.items() if sym in stocks and t[0] != stocks[sym][0])
     if not open_now:
         results.append(stage("movement", None, "market closed: prices do not move", t0, out))
-    else:
-        results.append(stage("movement", moved > 0, f"{moved} of {len(s2)} prices changed in {seconds:.0f} s", t0, out))
+        return (0 if all(r is not False for r in results) else 1), results
+    # NSE refreshes each list in bursts every 1-3 minutes, so ask every 10 s for `seconds` and note WHEN each list changed
+    prev = {n: {s: t[0] for s, t in (rows or {}).items()} for n, (rows, _) in r1.items() if n != "indices"}
+    changed_at, moved_syms = {}, set()
+    elapsed = 0.0
+    while True:
+        sleep(min(10.0, max(0.0, seconds - elapsed)) if seconds > 0 else 0)
+        elapsed += min(10.0, max(0.0, seconds - elapsed)) if seconds > 0 else 0
+        rn, _ = one_round()
+        for n, (rows, _) in rn.items():
+            if n == "indices" or rows is None:
+                continue
+            now_px = {s: t[0] for s, t in rows.items()}
+            diff = [s for s, px in now_px.items() if s in prev.get(n, {}) and px != prev[n][s]]
+            if diff and n not in changed_at:
+                changed_at[n] = elapsed
+            moved_syms.update(diff)
+            prev[n] = now_px
+        if elapsed >= seconds:
+            break
+    when = "; ".join(f"{n} changed at +{t:.0f} s" for n, t in changed_at.items())
+    results.append(stage("movement", len(moved_syms) > 0, (f"{len(moved_syms)} stocks changed price in {elapsed:.0f} s ({when}); NSE refreshes each list every 1-3 minutes" if moved_syms
+                                                           else f"no price changed in {elapsed:.0f} s: NSE refreshes each list only every 1-3 minutes, try --seconds 240"), t0, out))
     return (0 if all(r is not False for r in results) else 1), results
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Check the live price feed: the free NSE web feed (default without Angel One keys) or Angel One (account holders; never prints a secret)")
     ap.add_argument("--source", choices=["auto", "nse", "angel"], default="auto", help="auto: Angel One when its four keys exist, otherwise the free NSE feed")
-    ap.add_argument("--seconds", type=float, default=30, help="how long to listen (default 30; the free feed waits this long between its two rounds)")
+    ap.add_argument("--seconds", type=float, default=None, help="how long to listen (default 30 for Angel One, 150 for the free feed, whose lists refresh every 1-3 minutes)")
     ap.add_argument("--symbols", default=",".join(DEFAULT_SYMBOLS), help="comma separated NSE symbols (default 5 large ones)")
     a = ap.parse_args(argv)
     try:
@@ -209,9 +222,9 @@ def main(argv=None):
     if use_nse:
         if a.source == "auto":
             print("No Angel One keys set: checking the free NSE web feed instead (that is the feed the daemon uses without keys).")
-        code, _ = run_nse(a.seconds)
+        code, _ = run_nse(150 if a.seconds is None else a.seconds)
     else:
-        code, _ = run(os.environ, syms, a.seconds)
+        code, _ = run(os.environ, syms, 30 if a.seconds is None else a.seconds)
     print("RESULT:", "ALL STAGES PASSED" if code == 0 else "SOMETHING FAILED (see above)" if code == 1 else "KEYS MISSING")
     return code
 

@@ -235,10 +235,10 @@ The Excel file and `private/` are never committed or published; `firestore.rules
 
 ### Local tick feed (optional, runs on your own PC)
 
-`scripts/aladin_ticker_daemon.py` serves live prices only to your own browser at `ws://127.0.0.1:8787/ws/ticks`. It has two sources: the free NSE website feed (the default, no account needed: the index levels plus about 300 stocks, namely NSE's own movers and most-active lists and the spot prices of the futures-and-options stocks, polled about every 3 seconds; every other stock keeps its delayed price) and, if you have your own Angel One SmartAPI login, Angel One's WebSocket feed (every NSE stock, pushed in real time).
+`scripts/aladin_ticker_daemon.py` serves live prices only to your own browser at `ws://127.0.0.1:8787/ws/ticks`. It has two sources: the free NSE website feed (the default, no account needed: the index levels plus about 300 stocks, namely NSE's own movers and most-active lists and the spot prices of the futures-and-options stocks, NSE refreshes these lists in bursts about every 1 to 3 minutes, measured on 7 Oct 2026, so faster polling returns the same numbers; every other stock keeps its delayed price) and, if you have your own Angel One SmartAPI login, Angel One's WebSocket feed (every NSE stock, pushed in real time).
 
 1. `scripts/start_aladin_local.bat` (Windows) or `scripts/start_aladin_local.sh` (Mac/Linux). Leave it running.
-2. In the desk's command line type `TICKS ON`. The top-right chip then reads "LIVE · NSE WEB (THIS PC, ~3 s)" for the free feed, or "REAL-TIME · NSE (THIS PC)" for Angel One. `TICKS OFF` stops it.
+2. In the desk's command line type `TICKS ON`. The top-right chip then reads "LIVE · NSE WEB (THIS PC, 1-3 min)" for the free feed, or "REAL-TIME · NSE (THIS PC)" for Angel One. `TICKS OFF` stops it.
 
 Things to know:
 - It is a polled website feed, not an exchange feed: other stocks keep their delayed price (the age is shown). It only runs Mon-Fri 09:00-15:45 IST.
