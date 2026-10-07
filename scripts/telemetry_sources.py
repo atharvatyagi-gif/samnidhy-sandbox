@@ -294,25 +294,36 @@ class AisstreamSource:
     async def listen(self, boxes, seconds, book=None):
         """A short listening window (workflow snapshot)."""
         book = book or AisBook()
-        async with self._conn()(AIS_URL) as ws:
-            await ws.send(json.dumps(ais_subscription(self.key, boxes)))
-            loop = asyncio.get_event_loop()
-            end = loop.time() + seconds
-            while True:
-                left = end - loop.time()
-                if left <= 0:
-                    break
-                try:
-                    raw = await asyncio.wait_for(ws.recv(), timeout=left)
-                except asyncio.TimeoutError:
-                    break
-                try:
-                    msg = json.loads(raw)
-                except (ValueError, TypeError):
-                    continue
-                if isinstance(msg, dict) and "error" in msg:
-                    raise RuntimeError(str(msg["error"])[:100])
-                book.merge(msg)
+        got = 0
+        try:
+            async with self._conn()(AIS_URL) as ws:
+                await ws.send(json.dumps(ais_subscription(self.key, boxes)))
+                loop = asyncio.get_event_loop()
+                end = loop.time() + seconds
+                while True:
+                    left = end - loop.time()
+                    if left <= 0:
+                        break
+                    try:
+                        raw = await asyncio.wait_for(ws.recv(), timeout=left)
+                    except asyncio.TimeoutError:
+                        break
+                    try:
+                        msg = json.loads(raw)
+                    except (ValueError, TypeError):
+                        continue
+                    if isinstance(msg, dict) and "error" in msg:
+                        raise RuntimeError(str(msg["error"])[:100])
+                    got += 1
+                    book.merge(msg)
+        except Exception as e:  # noqa: BLE001
+            # A server that drops the connection ("no close frame received or sent", seen from GitHub's runners) must not cost the ships that already arrived:
+            # keep them. Only when NOTHING arrived is it an error the layer reports.
+            if type(e).__name__.startswith("ConnectionClosed") or isinstance(e, (ConnectionError, OSError)):
+                if got == 0:
+                    raise RuntimeError(f"AISstream closed the connection before sending anything ({type(e).__name__}: {str(e)[:60]})") from None
+            else:
+                raise
         return book.rows()
 
     async def stream(self, boxes, book, stop, on_update=None):

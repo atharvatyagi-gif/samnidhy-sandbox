@@ -488,3 +488,48 @@ def test_trade_lane_file_is_complete_exact_and_honest():
     text = json.dumps(lanes).lower()
     for w in ("buy", "sell", "target", "recommendation", "guaranteed"):
         assert f" {w} " not in text and f'"{w}' not in text
+
+
+class ConnectionClosedError(Exception):
+    """Stands in for websockets.exceptions.ConnectionClosedError (the class name is what the code recognises)."""
+
+
+def _ais_ws(messages, then_raise=None):
+    class WS:
+        def __init__(self):
+            self.q = list(messages)
+
+        async def send(self, m):
+            pass
+
+        async def recv(self):
+            if self.q:
+                return self.q.pop(0)
+            if then_raise:
+                raise then_raise
+            await asyncio.sleep(10)
+
+    class Ctx:
+        async def __aenter__(self):
+            return WS()
+
+        async def __aexit__(self, *a):
+            return False
+    return lambda url: Ctx()
+
+
+def test_a_dropped_ais_connection_keeps_the_ships_that_already_arrived():
+    fx = json.loads((FIX / "aisstream_messages.json").read_text(encoding="utf-8"))
+    msgs = [json.dumps(m["msg"]) for m in fx["messages"]]
+    src = ts.AisstreamSource("K", connect=_ais_ws(msgs, then_raise=ConnectionClosedError("no close frame received or sent")))
+    rows = asyncio.run(src.listen([{"id": "x", "bbox": [0, 0, 1, 1]}], 5))
+    assert rows and all(len(r) == 11 for r in rows)                               # the ships from before the drop are kept
+
+
+def test_a_connection_dropped_before_anything_arrived_is_an_error_the_layer_reports():
+    src = ts.AisstreamSource("K", connect=_ais_ws([], then_raise=ConnectionClosedError("no close frame received or sent")))
+    with pytest.raises(RuntimeError, match="closed the connection before sending anything"):
+        asyncio.run(src.listen([{"id": "x", "bbox": [0, 0, 1, 1]}], 5))
+    other = ts.AisstreamSource("K", connect=_ais_ws([], then_raise=ValueError("a real bug")))
+    with pytest.raises(ValueError):                                                 # anything that is not a dropped connection still surfaces
+        asyncio.run(other.listen([{"id": "x", "bbox": [0, 0, 1, 1]}], 5))
