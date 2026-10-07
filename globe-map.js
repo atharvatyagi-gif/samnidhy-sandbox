@@ -25,6 +25,13 @@ function loadCss(href, mark) {
 function loadScript(src) {
   return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error(src + " failed to load")); document.head.appendChild(s); });
 }
+/* every country's border (not India alone) as a switchable overlay: Natural Earth via world-atlas, drawn from the same pinned files the 3D globe uses */
+const TOPO_JS = "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js", WORLD_JSON = "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json";
+async function countryBorders() {
+  if (!window.topojson) await loadScript(TOPO_JS);
+  const w = await fetch(WORLD_JSON).then(r => { if (!r.ok) throw new Error("world map " + r.status); return r.json(); });
+  return window.topojson.mesh(w, w.objects.countries);                 // one line set: each shared border is drawn once
+}
 function loadLeaflet() {
   if (window.L && window.L.markerClusterGroup) return Promise.resolve();
   if (leafletLoad) return leafletLoad;
@@ -277,6 +284,14 @@ export class GlobeMap {
       this.layerControl.addOverlay(this.cableLayer, "Submarine cables");
       this.layerControl.addOverlay(this.plantLayer, "Power plants, India ≥100MW");
       this.layerControl.addOverlay(this.assetLayer, "Company facilities (Wikidata)");
+      this.borderLayer = window.L.layerGroup();
+      this.layerControl.addOverlay(this.borderLayer, "Country borders");
+      let bordersLoaded = false;                                   // the world-atlas file is fetched only when the overlay is first switched on (or Satellite is chosen), not when the tab opens
+      this.borderLayer.on("add", () => {
+        if (bordersLoaded) return; bordersLoaded = true;
+        countryBorders().then(g => window.L.geoJSON(g, { style: { color: "#a1a1aa", weight: 0.9, opacity: 0.75, fill: false }, interactive: false }).addTo(this.borderLayer)).catch(() => { bordersLoaded = false; });
+      });
+      this.map.on("baselayerchange", e => { if (e.name === BASEMAPS.sat.name) this.borderLayer.addTo(this.map); });
       this.laneLayer.addTo(this.map); this.cableLayer.addTo(this.map);   // on by default so the map shows them without a click
     }
   }

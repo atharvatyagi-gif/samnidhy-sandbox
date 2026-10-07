@@ -5,6 +5,7 @@
    analysis only, not investment advice. */
 import { makeEntity, applyFix, renderPos, isGhost, isGone, isStill, Trail, PickGrid, Governor, TELE } from "./desk-kin-live.js";
 import { hotspotColor, hotspotRadius, MAP_COLORS } from "./desk-lanes.js";
+import { EXTRA_TYPES, COLORS as LC, tileCanvas } from "./desk-globe-layers.js";
 
 export const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js";
 const RAD = Math.PI / 180, R = 1;
@@ -120,24 +121,51 @@ class Globe3D {
     this.resize();
     this.start();
   }
-  /* the land, borders, India and a faint graticule, drawn once into a 4096 x 2048 texture with d3-geo (equirectangular) */
+  /* the base map is drawn into one texture: ocean, a faint graticule and the land (Dark), or Esri tiles (Satellite / Streets); every country's border (not India alone) is then
+     drawn over it in a colour that stays readable on that base. One texture, one mesh: switching the base or the borders only redraws it, it adds no per-frame cost. */
   bake() {
-    const T = this.T, { geo, land, countries, india } = this.o.lib;
+    const { geo, land } = this.o.lib;
     const W = 4096, H = 2048, c = document.createElement("canvas"); c.width = W; c.height = H;
     const g = c.getContext("2d"), proj = geo.geoEquirectangular().fitExtent([[0, 0], [W, H]], { type: "Sphere" }), path = geo.geoPath(proj, g);
     g.fillStyle = css("--card"); g.fillRect(0, 0, W, H);
     g.beginPath(); path(geo.geoGraticule10()); g.strokeStyle = css("--rule"); g.globalAlpha = 0.5; g.lineWidth = 1; g.stroke(); g.globalAlpha = 1;
     g.beginPath(); path(land); g.fillStyle = css("--sunken"); g.fill();
-    g.beginPath(); for (const f of countries.features) path(f); g.strokeStyle = css("--rule-2"); g.lineWidth = 1.2; g.stroke();
-    if (india) { g.beginPath(); path(india); g.strokeStyle = css("--acc"); g.lineWidth = 2.6; g.stroke(); }
-    this.tex = new T.CanvasTexture(c); this.tex.colorSpace = T.SRGBColorSpace; this.tex.anisotropy = this.software ? 1 : Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+    this.baseSrc = { dark: c }; this.base = "dark"; this.bordersOn = this.bordersOn !== false;
+    this.compose();
   }
+  compose() {
+    const T = this.T, { geo, countries, india } = this.o.lib, W = 4096, H = 2048;
+    const c = this.compCanvas || (this.compCanvas = document.createElement("canvas")); c.width = W; c.height = H;
+    const g = c.getContext("2d"); g.drawImage(this.baseSrc[this.base], 0, 0);
+    if (this.bordersOn) {
+      const proj = geo.geoEquirectangular().fitExtent([[0, 0], [W, H]], { type: "Sphere" }), path = geo.geoPath(proj, g), dark = this.base === "dark";
+      g.lineJoin = "round"; g.beginPath(); for (const f of countries.features) path(f);
+      g.strokeStyle = dark ? css("--ink-3") : this.base === "sat" ? "rgba(255,255,255,0.8)" : "rgba(60,60,60,0.85)"; g.globalAlpha = dark ? 0.75 : 1; g.lineWidth = 1.6; g.stroke(); g.globalAlpha = 1;
+      if (india) { g.beginPath(); path(india); g.strokeStyle = css("--acc"); g.lineWidth = 2.4; g.globalAlpha = 0.9; g.stroke(); g.globalAlpha = 1; }
+    }
+    if (!this.tex) { this.tex = new T.CanvasTexture(c); this.tex.colorSpace = T.SRGBColorSpace; this.tex.anisotropy = this.software ? 1 : Math.min(8, this.renderer.capabilities.getMaxAnisotropy()); }
+    else this.tex.needsUpdate = true;
+    if (this.globeMesh && this.wake) this.wake();
+  }
+  /* Dark (the vector base), Satellite or Streets (Esri tiles, the same three as the standard Map); a base that cannot load leaves the current one and says so */
+  async setBase(kind) {
+    if (!this.opened || kind === this.base) return;
+    try {
+      if (!this.baseSrc[kind]) this.baseSrc[kind] = await tileCanvas(kind);
+      if (!this.opened) return;
+      this.base = kind; this.compose();
+      this.hooks.baseOk && this.hooks.baseOk(kind);
+    } catch (e) { this.hooks.baseFail && this.hooks.baseFail(kind, String((e && e.message) || e)); }
+  }
+  setBorders(on) { on = on !== false; if (on === this.bordersOn) return; this.bordersOn = on; if (this.opened && this.baseSrc) this.compose(); }
+  setLines(sets) { this.lineSets = sets || []; }
   buildBodies() {
     const T = this.T;
     const mat = new T.MeshBasicMaterial({ map: this.tex });
     this.globeMesh = new T.Mesh(new T.SphereGeometry(R, 96, 64), mat);
     this.flatMesh = new T.Mesh(new T.PlaneGeometry(2, 1), mat);
     this.group.add(this.globeMesh); this.scene.add(this.flatMesh);
+
     const base = { transparent: true, depthWrite: false, depthTest: false };         // no depth test: a camera-facing sprite on a tilted sphere would be cut by the surface; the back hemisphere is culled in the shader instead
     const marker = shape => new T.ShaderMaterial({ ...base, vertexShader: MARKER_VS, fragmentShader: MARKER_FS, uniforms: { uPx: { value: 1 }, uGlobe: { value: 1 }, uCam: { value: new T.Vector3(0, 0, 3.5) }, uShape: { value: shape } } });
     this.matCircle = marker(0); this.matSquare = marker(1); this.matDiamond = marker(2);
@@ -186,11 +214,13 @@ class Globe3D {
   rebuildStatics() {
     const T = this.T;
     for (const ch of [...this.dyn.children]) { this.dyn.remove(ch); ch.geometry && ch.geometry.dispose(); }
-    const groups = { hot: [], hotChoke: [], choke: [], plantExact: [], plantRing: [] };
+    const groups = { hot: [], hotChoke: [], choke: [], plantExact: [], plantRing: [], quake: [], nat: [], alert: [], disr: [], power: [], asset: [] };
     for (const e of this.statics) {
       if (e.type === "hotspot") (e.kind === "chokepoint" ? groups.hotChoke : groups.hot).push(e);
       else if (e.type === "chokepoint") groups.choke.push(e);
       else if (e.type === "facility") (e.prec === "exact" ? groups.plantExact : groups.plantRing).push(e);
+      else if (e.type === "quake") groups.quake.push(e); else if (e.type === "natural") groups.nat.push(e); else if (e.type === "alert") groups.alert.push(e);
+      else if (e.type === "disruption") groups.disr.push(e); else if (e.type === "powerplant") groups.power.push(e); else if (e.type === "asset") groups.asset.push(e);
     }
     this.staticGroups = groups;
     const mk = (list, material, size, color, ring, alpha = 1) => {
@@ -204,6 +234,16 @@ class Globe3D {
     const hs = e => hotspotRadius(e.score) * 2.1, hc = e => hotspotColor(e.score, P.quiet, P.gold, P.hot);
     mk(groups.hot, this.matCircle, hs, hc, false, 0.78); mk(groups.hotChoke, this.matDiamond, hs, hc, false, 0.78);
     mk(groups.choke, this.matSquare, 9, css("--acc"), false); mk(groups.plantExact, this.matCircle, 9, css("--acc"), false); mk(groups.plantRing, this.matCircle, 10, css("--acc"), true);
+    mk(groups.quake, this.matCircle, e => 6 + Math.max(0, (e.mag || 4.5) - 4.5) * 5, LC.quake, true, 0.9); mk(groups.nat, this.matDiamond, 10, LC.nat, false, 0.9);
+    mk(groups.alert, this.matSquare, 9, LC.alert, false, 0.9); mk(groups.disr, this.matDiamond, 11, LC.disr, true, 0.9);
+    mk(groups.power, this.matCircle, e => Math.max(5, Math.min(11, (e.mw || 100) / 300 + 4)), e => LC.fuel[e.fuel] || "#8a8a8a", false, 0.85); mk(groups.asset, this.matDiamond, 8, LC.asset, false, 0.9);
+    for (const set of this.lineSets || []) {                       // shipping lanes and submarine cables: one merged line object per set (not one per line), so it stays cheap
+      const segs = [];
+      for (const line of set.lines) for (let i = 0; i + 1 < line.length; i++) { const [lo0, la0] = line[i], [lo1, la1] = line[i + 1]; if (Math.abs(lo1 - lo0) > 180) continue; segs.push([la0, lo0, 1.0012], [la1, lo1, 1.0012]); }
+      if (!segs.length) continue;
+      const g = new T.BufferGeometry(), ls = new T.LineSegments(g, new T.LineBasicMaterial({ color: new T.Color(set.color), transparent: true, opacity: set.alpha, depthWrite: false }));
+      ls.userData.segs = segs; ls.frustumCulled = false; this.dyn.add(ls);
+    }
     if (this.layers.lane && this.lanes) {
       for (const l of this.lanes.lanes || []) {
         const pts = [];
@@ -226,6 +266,10 @@ class Globe3D {
         const a = o.geometry.attributes.position;
         o.userData.list.forEach((e, i) => { this.place(e.lat, e.lon, R + 0.004, tmp); a.setXYZ(i, tmp[0], tmp[1], tmp[2] + (this.mode === "flat" ? 0.01 : 0)); });
         a.needsUpdate = true; o.visible = true;
+      } else if (o.userData.segs) {
+        const segs = o.userData.segs, arr = new Float32Array(segs.length * 3);
+        segs.forEach(([la, lo, r], i) => { this.place(la, lo, R * r, tmp); arr[i * 3] = tmp[0]; arr[i * 3 + 1] = tmp[1]; arr[i * 3 + 2] = tmp[2] + (this.mode === "flat" ? 0.004 : 0); });
+        o.geometry.setAttribute("position", new this.T.BufferAttribute(arr, 3)); o.geometry.computeBoundingSphere();
       } else if (o.userData.lane) {
         const pts = o.userData.lane, arr = new Float32Array(pts.length * 3);
         pts.forEach(([la, lo, r], i) => { this.place(la, lo, R * r, tmp); arr.set(tmp, i * 3); });
@@ -403,7 +447,7 @@ class Globe3D {
   collectStatics() {
     const tmp = [0, 0, 0];
     for (const e of this.statics) {
-      if (e.type !== "hotspot" && e.type !== "chokepoint" && e.type !== "facility") continue;
+      if (e.type !== "hotspot" && e.type !== "chokepoint" && e.type !== "facility" && !EXTRA_TYPES.has(e.type)) continue;
       this.place(e.lat, e.lon, R + 0.004, tmp); const s = this.project(tmp); if (!s) continue;
       const idx = this.listPts.length; this.listPts.push({ x: s[0], y: s[1], type: e.type, id: e.id, kind: e.kind, ent: e }); this.grid.add(s[0], s[1], idx);
     }
@@ -465,7 +509,7 @@ class Globe3D {
     if (!this.opened) return;
     this.ac && this.ac.abort();                                         // every listener of this visit goes with it
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { for (const m of [].concat(o.material)) m.dispose(); } });
-    this.tex.dispose(); this.matCircle.dispose(); this.matSquare.dispose(); this.matDiamond.dispose(); this.trailMat.dispose(); this.selTrailMat.dispose();
+    this.tex.dispose(); this.tex = null; this.baseSrc = null; this.compCanvas = null; this.base = "dark"; this.matCircle.dispose(); this.matSquare.dispose(); this.matDiamond.dispose(); this.trailMat.dispose(); this.selTrailMat.dispose();
     this.scene.clear(); this.live.clear(); this.trails.clear(); this.statics = [];
     this.opened = false;
   }
