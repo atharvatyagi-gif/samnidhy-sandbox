@@ -934,3 +934,4 @@ button, input, select { transition: color 150ms, background-color 150ms, border-
 #v-lab .controls { padding: 14px 0 2px; }
 .desk.calm .statstrip { margin-bottom: 28px; }
 @media (max-width: 1000px) { .page { padding: 22px 16px 70px; } #mov-table.ess :is(th, td):is(:nth-child(8), :nth-child(9), :nth-child(10), :nth-child(12)) { display: none; } }
+.gd-wrap .globe-legend { bottom: 34px; z-index: 5; }

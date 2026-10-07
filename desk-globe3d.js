@@ -4,7 +4,7 @@
    Colours are read from the CSS variables at runtime: there are no colour literals here. ALADIN is a statistical model built by students. It is often wrong. Educational
    analysis only, not investment advice. */
 import { makeEntity, applyFix, renderPos, isGhost, isGone, isStill, Trail, PickGrid, Governor, TELE } from "./desk-kin-live.js";
-import { hotspotColor, hotspotRadius } from "./desk-lanes.js";
+import { hotspotColor, hotspotRadius, MAP_COLORS } from "./desk-lanes.js";
 
 export const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js";
 const RAD = Math.PI / 180, R = 1;
@@ -203,7 +203,7 @@ class Globe3D {
     const P = { quiet: css("--ink-4"), gold: css("--gold"), hot: css("--down") };
     const hs = e => hotspotRadius(e.score) * 2.1, hc = e => hotspotColor(e.score, P.quiet, P.gold, P.hot);
     mk(groups.hot, this.matCircle, hs, hc, false, 0.78); mk(groups.hotChoke, this.matDiamond, hs, hc, false, 0.78);
-    mk(groups.choke, this.matSquare, 9, css("--ink"), false); mk(groups.plantExact, this.matCircle, 9, css("--acc"), false); mk(groups.plantRing, this.matCircle, 10, css("--acc"), true);
+    mk(groups.choke, this.matSquare, 9, css("--acc"), false); mk(groups.plantExact, this.matCircle, 9, css("--acc"), false); mk(groups.plantRing, this.matCircle, 10, css("--acc"), true);
     if (this.layers.lane && this.lanes) {
       for (const l of this.lanes.lanes || []) {
         const pts = [];
@@ -212,7 +212,7 @@ class Globe3D {
           for (let s = 0; s <= 12; s++) { const t = s / 12; pts.push([la0 + (la1 - la0) * t, lo0 + (lo1 - lo0) * t, 1 + 0.01 * Math.sin(Math.PI * t)]); }
         }
         const g = new T.BufferGeometry(); g.userData.lane = pts;
-        const line = new T.Line(g, new T.LineBasicMaterial({ color: new T.Color(l.kind === "air" ? css("--ink-3") : css("--gold")), transparent: true, opacity: 0.55 }));
+        const line = new T.Line(g, new T.LineBasicMaterial({ color: new T.Color(MAP_COLORS.lane), transparent: true, opacity: 0.55 }));
         line.userData.lane = pts; line.frustumCulled = false; this.dyn.add(line);
       }
     }
@@ -311,7 +311,7 @@ class Globe3D {
     if (list.length > cap) { const c = this.view; list.sort((a, b) => (Math.abs(a.lat0 - c.lat) + Math.abs(a.lon0 - c.lon)) - (Math.abs(b.lat0 - c.lat) + Math.abs(b.lon0 - c.lon))); list = list.slice(0, cap); }
     const by = { cargo: [], air: [], ship: [] };
     for (const E of list) by[E.layer === "ship" ? "ship" : E.layer === "cargo" ? "cargo" : "air"].push(E);
-    const colors = this.colors || (this.colors = { cargo: new T.Color(css("--gold")), air: new T.Color(css("--ink-3")), ship: new T.Color(css("--acc")) }), sizes = { cargo: 11, air: 6, ship: 7 };
+    const colors = this.colors || (this.colors = { cargo: new T.Color(MAP_COLORS.cargo), air: new T.Color(MAP_COLORS.air), ship: new T.Color(MAP_COLORS.ship) }), sizes = { cargo: 11, air: 6, ship: 7 };
     const doPick = tm - this.gridT > 100;
     if (doPick) { this.gridT = tm; this.grid.clear(); this.listPts.length = 0; }          // the picking grid is rebuilt about ten times a second
     for (const key of ["cargo", "air", "ship"]) {
@@ -385,7 +385,7 @@ class Globe3D {
       obj.geometry.setDrawRange(0, k * 2);
       for (const a of ["position", "aColor", "aT"]) obj.geometry.attributes[a].needsUpdate = true;
     };
-    const gold = new T.Color(css("--gold")), ink = new T.Color(css("--ink-3")), acc = new T.Color(css("--acc"));
+    const gold = new T.Color(MAP_COLORS.cargo), ink = new T.Color(MAP_COLORS.air), acc = new T.Color(MAP_COLORS.ship);
     const ids = [...this.trails.keys()].filter(id => { const E = this.live.get(id); return E && id !== this.sel && this.layerOn(E); });
     build(ids, this.trailMat, this.trailObj, id => { const E = this.live.get(id); return E.layer === "cargo" ? gold : E.layer === "ship" ? acc : ink; });
     build(this.sel ? [this.sel] : [], this.selTrailMat, this.selTrailObj, id => { const E = this.live.get(id); return E && E.layer === "cargo" ? gold : E && E.layer === "ship" ? acc : ink; });

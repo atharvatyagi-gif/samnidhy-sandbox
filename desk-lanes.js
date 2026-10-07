@@ -3,6 +3,9 @@
    Honesty rules these helpers encode: a callsign prefix says who OPERATES a flight, never what it carries or for whom; a lane match says a position lies inside a
    hand-drawn corridor, so the companies listed for it are a lane-level inference and never about that one flight or ship. */
 
+/* The colours of the standard Map (globe-map.js: orange plane dots, blue trade lanes), so the 3D globe, the flat canvas and the legend all match it */
+export const MAP_COLORS = { air: "#ffb347", cargo: "#ffd400", ship: "#4fc3f7", lane: "#4fc3f7" };
+
 /* bbox is [lonMin, latMin, lonMax, latMax] */
 export const inBox = (lat, lon, b) => lat >= b[1] && lat <= b[3] && lon >= b[0] && lon <= b[2];
 

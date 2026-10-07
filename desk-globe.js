@@ -11,7 +11,7 @@
 import * as G3 from "./desk-globe3d.js";
 import { extrapolate, flightKin, vesselKin, docFromFull, applyTelemetry, ageLabel, CAPS } from "./desk-kin.js";
 import { onTelemetry } from "./desk-ticks.js";
-import { hotspotColor, hotspotRadius, isStale, ageMin, ageText, countIn, filterItems, mergeLayers } from "./desk-lanes.js";
+import { MAP_COLORS, hotspotColor, hotspotRadius, isStale, ageMin, ageText, countIn, filterItems, mergeLayers } from "./desk-lanes.js";
 
 const D3 = { geo: "https://cdn.jsdelivr.net/npm/d3-geo@3.1.1/+esm", topo: "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm", qt: "https://cdn.jsdelivr.net/npm/d3-quadtree@3.0.1/+esm",
   world: "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json" };
@@ -41,7 +41,7 @@ export function mount() {
     <button class="btn-line sm" id="gd-follow" hidden aria-pressed="false">Follow</button>
     <div class="gd-layers" id="gd-layers" hidden></div><div class="gd-chips" id="gd-chips"></div>`;
   bar.addEventListener("click", e => { const m = e.target.closest("[data-m]"); if (m) setMode(m.dataset.m); if (e.target.closest("#gd-follow")) toggleFollow(); });
-  bar.addEventListener("change", e => { const k = e.target.dataset && e.target.dataset.layer; if (k) { layers[k] = e.target.checked; saveLayers(); ents = null; render(); } });
+  bar.addEventListener("change", e => { const k = e.target.dataset && e.target.dataset.layer; if (k) { layers[k] = e.target.checked; saveLayers(); ents = null; legend(); render(); } });
   const wrap = ctx.$("#gd-wrap");
   canvas = c2d = ctx.$("#gd-canvas"); tip = ctx.$("#gd-tip");
   if (wrap && canvas) {
@@ -174,7 +174,23 @@ function paintLayerBox() {
     return `<label class="nx-chk" ${off ? `title="${ctx.esc(T.reason || T.vessels_reason || "No vessel feed")}"` : ""}><input type="checkbox" data-layer="${k}" ${layers[k] ? "checked" : ""} ${off ? "disabled" : ""}> ${l}</label>`;
   }).join("");
 }
+/* the legend of the standard Map (same chips), for what the 3D globe and the flat canvas draw; only the layers that are switched on */
+function legend() {
+  const el = ctx.$("#gd-legend"); if (!el) return;
+  const dot = (c, shape) => `<i style="background:${c};${shape === "sq" ? "border-radius:2px;" : shape === "dia" ? "border-radius:1px;transform:rotate(45deg);" : ""}"></i>`;
+  const ring = c => `<i style="background:none;border:1.5px solid ${c};box-sizing:border-box"></i>`;
+  const rows = [];
+  if (layers.hot) rows.push([dot("var(--down)"), "News hotspot (red = high)"], [dot("var(--ink-4)", "dia"), "Chokepoint hotspot"]);
+  if (layers.choke) rows.push([dot("var(--acc)", "sq"), "Chokepoint"]);
+  if (layers.air) rows.push([dot(MAP_COLORS.air), "Live flight"]);
+  if (layers.cargo) rows.push([dot(MAP_COLORS.cargo), "Freighter flight"]);
+  if (layers.ship) rows.push([dot(MAP_COLORS.ship, "sq"), "Vessel"]);
+  if (layers.plant) rows.push([dot("var(--acc)"), "Plant (exact)"], [ring("var(--acc)"), "Plant (approximate)"]);
+  if (layers.lane) rows.push([`<i style="background:${MAP_COLORS.lane};height:2px;border-radius:0"></i>`, "Trade lane"]);
+  el.innerHTML = rows.map(([sw, label]) => `<span class="gl-item">${sw}${ctx.esc(label)}</span>`).join("");
+}
 function chips() {
+  legend();
   const el = ctx.$("#gd-chips"); if (!el) return;
   const T = data.transport;
   if (!T && !files().telemetry) { el.innerHTML = '<span class="gd-chip off">Flights and vessels: no snapshot published yet</span>'; return; }
@@ -262,7 +278,7 @@ function draw() {
   g2.beginPath(); pathGen(lib.land); g2.fillStyle = P.land; g2.fill();
   if (!interacting) { g2.strokeStyle = P.rule; g2.lineWidth = 0.6; g2.stroke(); }
   if (lib.india && !interacting) { g2.beginPath(); pathGen(lib.india); g2.strokeStyle = P.acc; g2.lineWidth = 1.2; g2.stroke(); }
-  if (layers.lane && data.lanes) for (const l of data.lanes.lanes) { g2.beginPath(); pathGen({ type: "LineString", coordinates: l.path }); g2.strokeStyle = l.kind === "air" ? P.ink3 : P.gold; g2.globalAlpha = 0.55; g2.lineWidth = 1; g2.setLineDash(l.kind === "air" ? [3, 4] : []); g2.stroke(); g2.setLineDash([]); g2.globalAlpha = 1; }
+  if (layers.lane && data.lanes) for (const l of data.lanes.lanes) { g2.beginPath(); pathGen({ type: "LineString", coordinates: l.path }); g2.strokeStyle = MAP_COLORS.lane; g2.globalAlpha = 0.55; g2.lineWidth = 1; g2.setLineDash(l.kind === "air" ? [3, 4] : []); g2.stroke(); g2.setLineDash([]); g2.globalAlpha = 1; }
 
   const all = entities(), hit = [], air = [], ships = [], cargo = [];
   const nowS = Date.now() / 1000;
@@ -281,14 +297,14 @@ function draw() {
   for (const [a, pick] of [[1, e => !e.ghost], [0.3, e => e.ghost]]) {            // live markers solid, ghosts (older than the cap: position not live) faint
     const A = air.filter(pick), S = ships.filter(pick), C = cargo.filter(pick);
     // other flights: one batched path of small dots
-    if (A.length) { g2.globalAlpha = a; g2.beginPath(); for (const e of A) { g2.moveTo(e.x + 1.7, e.y); g2.arc(e.x, e.y, 1.7, 0, 7); } g2.fillStyle = P.ink3; g2.fill(); }
+    if (A.length) { g2.globalAlpha = a; g2.beginPath(); for (const e of A) { g2.moveTo(e.x + 1.7, e.y); g2.arc(e.x, e.y, 1.7, 0, 7); } g2.fillStyle = MAP_COLORS.air; g2.fill(); }
     // vessels: one batched path of small squares
-    if (S.length) { g2.globalAlpha = a; g2.beginPath(); for (const e of S) g2.rect(e.x - 2.5, e.y - 2.5, 5, 5); g2.fillStyle = P.acc; g2.fill(); }
+    if (S.length) { g2.globalAlpha = a; g2.beginPath(); for (const e of S) g2.rect(e.x - 2.5, e.y - 2.5, 5, 5); g2.fillStyle = MAP_COLORS.ship; g2.fill(); }
     // cargo flights: little aircraft shapes pointing along their heading, one path
     if (C.length) {
       g2.globalAlpha = a; g2.beginPath();
       for (const e of C) { const h = (e.hdg || 0) * RAD, s = Math.sin(h), c = Math.cos(h), v = (px, py) => [e.x + px * c - py * s, e.y + px * s + py * c], A1 = v(0, -6), B = v(4, 5), C1 = v(0, 3), D = v(-4, 5); g2.moveTo(A1[0], A1[1]); g2.lineTo(B[0], B[1]); g2.lineTo(C1[0], C1[1]); g2.lineTo(D[0], D[1]); g2.closePath(); }
-      g2.fillStyle = P.gold; g2.fill();
+      g2.fillStyle = MAP_COLORS.cargo; g2.fill();
     }
   }
   g2.globalAlpha = 1;
@@ -299,8 +315,8 @@ function draw() {
     if (e.type === "facility") { g2.beginPath(); g2.arc(x, y, 4.5, 0, 7); if (e.prec === "exact") { g2.fillStyle = P.acc; g2.fill(); } else { g2.strokeStyle = P.acc; g2.lineWidth = 1.6; g2.stroke(); } r = 6; }
     else if (e.type === "chokepoint") {
       const b = e.bbox, A = at(geom({ lat: b[1], lon: b[0] })), C = at(geom({ lat: b[3], lon: b[2] }));
-      if (A && C) { g2.strokeStyle = P.ink; g2.lineWidth = 1; g2.setLineDash([2, 2]); g2.strokeRect(Math.min(A[0], C[0]), Math.min(A[1], C[1]), Math.abs(C[0] - A[0]), Math.abs(C[1] - A[1])); g2.setLineDash([]); }
-      g2.fillStyle = P.ink; g2.font = "10px sans-serif"; g2.textAlign = "left"; g2.fillText(e.count == null ? e.name : `${e.name} · ${e.count}`, x + 7, y - 6);
+      if (A && C) { g2.strokeStyle = P.acc; g2.lineWidth = 1; g2.setLineDash([2, 2]); g2.strokeRect(Math.min(A[0], C[0]), Math.min(A[1], C[1]), Math.abs(C[0] - A[0]), Math.abs(C[1] - A[1])); g2.setLineDash([]); }
+      g2.fillStyle = P.acc; g2.font = "10px sans-serif"; g2.textAlign = "left"; g2.fillText(e.count == null ? e.name : `${e.name} · ${e.count}`, x + 7, y - 6);
       g2.beginPath(); g2.rect(x - 3, y - 3, 6, 6); g2.fill(); r = 7;
     } else if (e.type === "hotspot") {
       r = hotspotRadius(e.score); g2.beginPath();
