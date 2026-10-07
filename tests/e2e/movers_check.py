@@ -43,6 +43,7 @@ def tab(pg, name, wait=900):
 
 def fresh(pw, **kw):
     b, pg, errs, reqs = page_for(pw, **kw)
+    pg.add_init_script("localStorage.setItem('mov-ess','0')")     # the calm desk hides secondary columns by default; these checks read them all
     pg._bad = []
     pg.on("response", lambda r: pg._bad.append((r.status, r.url)) if r.status >= 400 else None)
     pg.goto(BASE)

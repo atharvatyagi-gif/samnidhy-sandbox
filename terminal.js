@@ -224,7 +224,7 @@ setInterval(() => {
 const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json", lanes: "trade_lanes.json", telemetry: "telemetry.json", moves: "aladin_moves.json" };
 const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "telemetry", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
-function deskCtx() { return { renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
+function deskCtx() { return { serverNow: Ticks.serverNow, renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
 function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
@@ -1813,8 +1813,18 @@ boot();
   main[KEEP - 1].after(more);
   new MutationObserver(() => { if (tabs.querySelector(".t-more.on") && !tabs.classList.contains("open-more")) more.click(); })
     .observe(tabs, { attributes: true, subtree: true, attributeFilter: ["class"] });
-  const head = $(".brief-head");
-  if (head) { const b = document.createElement("button"); b.type = "button"; b.className = "more-data"; b.setAttribute("aria-expanded", "false"); b.textContent = "Data details";
-    b.addEventListener("click", () => { const o = head.classList.toggle("show-data"); b.setAttribute("aria-expanded", String(o)); });
-    head.appendChild(b); }
+  $$(".brief-head, .page-head").forEach(head => {
+    const view = head.closest(".view"); if (!view || head.querySelector(".more-data")) return;
+    const b = document.createElement("button"); b.type = "button"; b.className = "more-data"; b.setAttribute("aria-expanded", "false"); b.textContent = "Data details";
+    b.addEventListener("click", () => { const o = view.classList.toggle("show-data"); b.setAttribute("aria-expanded", String(o)); b.textContent = o ? "Hide data details" : "Data details"; });
+    head.appendChild(b);
+  });
+  const mt = $("#mov-table"), mc = mt && $("#v-movers .controls:nth-of-type(2)");
+  if (mt && mc) {
+    let ess = true; try { ess = localStorage.getItem("mov-ess") !== "0"; } catch (e) { /* ignore */ }
+    const cb = document.createElement("button"); cb.type = "button"; cb.className = "btn-line sm";
+    const cp = () => { mt.classList.toggle("ess", ess); cb.textContent = ess ? "All columns" : "Essential columns"; cb.setAttribute("aria-pressed", String(!ess)); };
+    cb.addEventListener("click", () => { ess = !ess; try { localStorage.setItem("mov-ess", ess ? "1" : "0"); } catch (e) { /* ignore */ } cp(); });
+    mc.appendChild(cb); cp();
+  }
 })();
