@@ -116,6 +116,23 @@ def load_delivery(sym, term=None):
     return pd.Series(out, dtype=float, index=pd.to_datetime(list(out))) if out else pd.Series(dtype=float)
 
 
+def load_delivery_panel(term=None):
+    """All backfilled delivery files as {symbol: Series(date -> delivery %)}, read once (the per-stock reader above rescans every file)."""
+    import gzip
+    folder = (Path(term) if term else TERM) / "aladin2" / "deliv"; frames = []
+    for f in sorted(folder.glob("2*.csv.gz")):
+        d = pd.read_csv(f, usecols=["SYMBOL", "SERIES", "DELIV_PER"]); d = d[d["SERIES"] == "EQ"]; d["d"] = pd.Timestamp(f.name[:10]); frames.append(d[["d", "SYMBOL", "DELIV_PER"]])
+    if not frames:
+        return {}
+    A = pd.concat(frames); return {sym: g.set_index("d")["DELIV_PER"].astype(float) for sym, g in A.groupby("SYMBOL")}
+
+
+def load_index(name="_5eNSEI", term=None):
+    """NIFTY 50 closes (archive + daily, like any stock), or None."""
+    px = load_prices(name, term)
+    return None if px is None else px["c"].rename("nifty")
+
+
 # ------------------------------------------------------------------ features (all causal)
 
 def _rsi(c, n):

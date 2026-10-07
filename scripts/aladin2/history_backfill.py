@@ -75,7 +75,10 @@ def delivery(start, end):
         time.sleep(PAUSE)
         if raw is None:
             none.add(k); continue
-        df = pd.read_csv(io.BytesIO(raw)); df.columns = [c.strip() for c in df.columns]
+        try:
+            df = pd.read_csv(io.BytesIO(raw), encoding="latin-1"); df.columns = [c.strip() for c in df.columns]; df["SYMBOL"]
+        except Exception as e:                                       # noqa: BLE001  an error page or an odd file: recorded, not guessed at
+            print(f"delivery {k}: unreadable ({type(e).__name__}), skipped"); none.add(k); continue
         for c in ("SYMBOL", "SERIES"):
             df[c] = df[c].astype(str).str.strip()
         df = df[df["SERIES"].isin(["EQ", "BE", "BZ"])]
@@ -97,7 +100,7 @@ def _fno_url(d):
 
 def reduce_fno(raw, d):
     """One row per underlying: {sym: [fut_oi, fut_oi_chg, call_oi, put_oi]}. Index and stock derivatives are both kept (the sym tells them apart in analysis)."""
-    z = zipfile.ZipFile(io.BytesIO(raw)); df = pd.read_csv(z.open(z.namelist()[0])); df.columns = [c.strip() for c in df.columns]
+    z = zipfile.ZipFile(io.BytesIO(raw)); df = pd.read_csv(z.open(z.namelist()[0]), encoding="latin-1"); df.columns = [c.strip() for c in df.columns]
     if d >= UDIFF_FROM:
         s, t, oi, ch, op = df["TckrSymb"].str.strip(), df["FinInstrmTp"].str.strip(), df["OpnIntrst"], df["ChngInOpnIntrst"], df["OptnTp"].astype(str).str.strip()
         fut, opt = t.isin(["STF", "IDF"]), t.isin(["STO", "IDO"])
