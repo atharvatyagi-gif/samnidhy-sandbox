@@ -26,7 +26,7 @@ from embed_data import ADVANCED_PATH, DATA, HTML_PATH, SCREENER, advanced_blocks
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site"
-STATIC = ["index.html", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "terminal-guide.js", "terminal-guide.css", "site-footer.js", "404.html", "manifest.webmanifest", "favicon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "og.png", "styleguide.html", "auth.html", "auth-check.js", "config.js",
+STATIC = ["index.html", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "terminal-guide.js", "terminal-guide.css", "glossary.js", "site-guide.js", "site-guide.css", "site-footer.js", "404.html", "manifest.webmanifest", "favicon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "og.png", "styleguide.html", "auth.html", "auth-check.js", "config.js",
           "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js",
           "chart-engine.js", "chart-indicators.js", "mode-dock.js", "globe-map.js",
           "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe3d.js"]
@@ -37,7 +37,7 @@ TERMINAL = ROOT / "data" / "terminal"
 # ORDER MATTERS: a file must come AFTER every file it imports (desk-map imports desk-aladin, which imports desk-ticks), because each file is stamped with
 # the hashes of the files before it. Out of order, an import keeps its plain address while the page loads the hashed one, and the browser runs the file
 # twice as two separate modules (one of them never initialised). tests/test_build_assets.py checks this.
-ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "terminal-guide.js", "terminal-guide.css", "site-footer.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-kin.js", "desk-kin-live.js", "desk-ticks.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-movers.js", "desk-sectors.js", "desk-globe3d.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
+ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "glossary.js", "terminal-guide.js", "terminal-guide.css", "site-guide.js", "site-guide.css", "site-footer.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-kin.js", "desk-kin-live.js", "desk-ticks.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-movers.js", "desk-sectors.js", "desk-globe3d.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
 
 
 def geo_summary(g: dict) -> dict:
@@ -92,7 +92,7 @@ def main() -> None:
         }).replace('src="mode-dock.js"', 'src="../mode-dock.js"')
            .replace('href="site.css"', 'href="../site.css"')
            .replace('src="fx.js"', 'src="../fx.js"').replace('src="transitions.js"', 'src="../transitions.js"')
-           .replace('src="session-scrubber.js"', 'src="../session-scrubber.js"').replace('src="site-footer.js"', 'src="../site-footer.js"').replace('src="site-nav.js"', 'src="../site-nav.js"')
+           .replace('src="session-scrubber.js"', 'src="../session-scrubber.js"').replace('src="site-footer.js"', 'src="../site-footer.js"').replace('src="site-nav.js"', 'src="../site-nav.js"').replace('src="glossary.js"', 'src="../glossary.js"').replace('src="site-guide.js"', 'src="../site-guide.js"').replace('href="site-guide.css"', 'href="../site-guide.css"')
            .replace('href="favicon.svg"', 'href="../favicon.svg"').replace('href="apple-touch-icon.png"', 'href="../apple-touch-icon.png"')
            .replace('href="manifest.webmanifest"', 'href="../manifest.webmanifest"')
            .replace('rel="canonical" href="https://atharvatyagi-gif.github.io/samnidhy-sandbox/sandbox.html"', f'rel="canonical" href="https://atharvatyagi-gif.github.io/samnidhy-sandbox/days/{f.stem}.html"')

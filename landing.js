@@ -65,14 +65,14 @@
   var mm = gsap.matchMedia();
   mm.add("(min-width: 721px)", function () {
     var tl = gsap.timeline({ scrollTrigger: { trigger: ".showcase", start: "top top", end: "+=140%", scrub: 0.8, pin: ".showcase-pin" } });
-    tl.fromTo("#device", { scale: 0.55, rotateX: 28, y: 120, opacity: 0.3, transformPerspective: 1200 },
+    tl.fromTo("#device", { scale: 0.55, rotateX: 28, y: 120, opacity: 1, transformPerspective: 1200 },
                          { scale: 1, rotateX: 0, y: 0, opacity: 1, ease: "power2.out", duration: 1 })
       .fromTo(".showcase-copy", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5 }, 0)
       .fromTo(".mini-funnel div", { xPercent: -12, opacity: 0 }, { xPercent: 0, opacity: 1, stagger: 0.08, duration: 0.4 }, 0.45)
       .fromTo(".mc-line", { strokeDasharray: 800, strokeDashoffset: 800 }, { strokeDashoffset: 0, duration: 0.6 }, 0.55);
   });
   mm.add("(max-width: 720px)", function () {
-    gsap.fromTo("#device", { scale: 0.85, opacity: 0.3 }, { scale: 1, opacity: 1, ease: "none",
+    gsap.fromTo("#device", { scale: 0.85, opacity: 1 }, { scale: 1, opacity: 1, ease: "none",
       scrollTrigger: { trigger: "#device", start: "top 95%", end: "top 40%", scrub: true } });
   });
 
