@@ -192,6 +192,16 @@ GENERIC_NAME = re.compile(r"^\s*(?:(?:a|an|one|the|our|its|this|that)\s+)?(?:(?:
                           r"(?:\w+\s+){0,2}?(customer|client|supplier|vendor|distributor|buyer|counterparty|licensee|licensor)\b", re.I)
 
 
+def names_the_counterparty(name, quote):
+    """True when the quote itself names the counterparty (a whole word of its cleaned name appears in the quote). A table row such as "Purchases 0.03 - 0.65 -" does not say WHO the
+    purchases were from, so an edge resting on it cannot be checked against its own quote and is not kept."""
+    toks = [t for t in re.findall(r"[a-z0-9&]+", clean_name(name or "")) if len(t) >= 2]
+    if not toks:
+        return False
+    words = set(re.findall(r"[a-z0-9&]+", (quote or "").lower()))
+    return any(t in words for t in toks)
+
+
 def supply_quote_ok(quote):
     """False for a sentence that is not a statement of an existing supply relationship (see NOT_SUPPLY / NOT_YET)."""
     if NOT_YET.search(quote or ""):
@@ -253,6 +263,9 @@ def validate_answer(raw, pages_by_no, meta, now, schema):
             continue
         if GROUP_WORDS.search((e.get("counterparty_name") or "") + " " + (e.get("counterparty_anon_label") or "")):
             dropped.append("counterparty is a group, not one company")
+            continue
+        if (e.get("counterparty_name") or "").strip() and not is_generic_name(e.get("counterparty_name")) and not names_the_counterparty(e["counterparty_name"], e["quote"]):
+            dropped.append("the quote does not name the counterparty")
             continue
         basis = e.get("w_basis") if w is not None else None
         if w is not None and basis not in ("revenue", "purchases"):
@@ -605,6 +618,9 @@ def clean_saved_edge(e):
         return None
     if e.get("wd") == "derived" and (e.get("w") or 0) < 0.0005:           # rounding noise (related_party_shares.MIN_SHARE)
         return None
+    cp_id = e["d"] if e["own"] == e["s"] else e["s"]
+    if e.get("cpn") and not cp_id.startswith("ANON_") and not is_generic_name(e["cpn"]) and not names_the_counterparty(e["cpn"], e.get("q", "")):
+        return None                                                          # the quote does not name the counterparty
     if e.get("cpn") and is_generic_name(e["cpn"]) and not e["s"].startswith("ANON_") and not e["d"].startswith("ANON_"):
         cp = e["d"] if e["own"] == e["s"] else e["s"]
         if cp.startswith("EXT_"):
