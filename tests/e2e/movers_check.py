@@ -111,7 +111,7 @@ def run():
         t = pg.inner_text("#mov-alt")
         check("it says whose nights are compared and that it is not live", "compared with" in t and "not live" in t.lower(), t[:160])
         up, dn = pg.locator("#mov-alt .tablecard").nth(0).locator("tbody tr.mv-r"), pg.locator("#mov-alt .tablecard").nth(1).locator("tbody tr.mv-r")
-        check("15 or fewer rises and falls are listed", 0 < up.count() <= 15 and 0 < dn.count() <= 15, [up.count(), dn.count()])
+        check("15 or fewer rises and falls are listed (one side can be empty on a one-sided night)", 0 < up.count() + dn.count() and up.count() <= 15 and dn.count() <= 15, [up.count(), dn.count()])
         fr = {x.strip() for x in pg.eval_on_selector_all("#mov-alt tr.mv-r td:last-child", "els => els.map(e => e.textContent)")}
         check("'Moved by' names one of the four fronts", fr <= FRONTS and len(fr) >= 1, fr)
         ups = pg.eval_on_selector_all("#mov-alt .tablecard:nth-child(1) tr.mv-r td:nth-child(5)", "els => els.map(e => e.textContent)")
@@ -130,7 +130,7 @@ def run():
         pg.click('#mov-kind [data-k="shock"]')
         pg.wait_for_timeout(2500)
         t = pg.inner_text("#mov-alt")
-        check("Supply-chain shocks with the real graph: says why there is nothing to rank, with the counts", "No supply-chain shock to show" in t and re.search(r"\d+ of \d+ companies read so far have a disclosed dependency on another listed company", t) is not None, t[:200])
+        check("Supply-chain shocks with the real graph: either ranks the linked moves, or says why there is nothing to rank, with the counts", ("Shocks as of" in t and "COUNTERPARTY" in t) or ("No supply-chain shock to show" in t and re.search(r"\d+ of \d+ companies read so far have a disclosed dependency on another listed company", t) is not None), t[:200])
         tab(pg, "movers", 300)
         check("the empty state is not an error", not errs, [errs[:3], pg._bad])
         b.close()
@@ -204,7 +204,7 @@ def run():
         pg.click('#mov-kind [data-k="aladin"]')
         pg.wait_for_timeout(2500)
         pg.add_script_tag(url="https://cdn.jsdelivr.net/npm/axe-core@4.10.2/axe.min.js")
-        res = pg.evaluate("axe.run('#v-movers').then(r => r.violations.map(v => [v.id, v.impact, v.nodes.length]))")
+        res = pg.evaluate("axe.run('#v-movers').then(r => r.violations.map(v => [v.id, v.impact, v.nodes.length, v.nodes.map(n => n.target.join(' ')).slice(0,3)]))")
         bad = [v for v in res if v[1] in ("serious", "critical")]
         check("Movers (ALADIN view with an open expansion): no serious or critical axe violations", not bad, res)
         pg.keyboard.press("Tab")

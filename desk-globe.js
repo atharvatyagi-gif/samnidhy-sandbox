@@ -1,5 +1,5 @@
 /* Globe tab, second view: a D3 orthographic globe (or a flat Natural Earth map) drawn on a canvas, with the NEXUS layers: geopolitical hotspots, chokepoints with
-   the vessel count inside each, cargo flights, other flights, vessels, plants named in filings, and trade lanes. "Map" is the existing Leaflet map and stays the default.
+   the vessel count inside each, cargo flights, other flights, vessels, plants named in filings, and trade lanes. The 3D globe is what the tab opens on (the last choice is remembered); "Map" is the existing Leaflet map.
    The D3 libraries (d3-geo, topojson-client, d3-quadtree, world-atlas, all pinned) load from jsDelivr only when someone switches to Globe or Flat.
    Data files (trade_lanes.json, telemetry.json, supply_graph.json, geo.json) load lazily the first time a non-Map view opens. Positions come from one workflow
    snapshot (or, on the PC running the local daemon, from its live telemetry messages). Each marker is moved along its reported course from its own fix time,
@@ -20,7 +20,7 @@ const LAYERS = [["hot", "Hotspots", true], ["choke", "Chokepoints", true], ["car
 const DEFAULTS = Object.fromEntries(LAYERS.map(([k, , d]) => [k, d]));
 const MAX_LIST = 300, RAD = Math.PI / 180;
 
-let ctx = null, mounted = false, mode = "map", lib = null, libFailed = null, loadingLib = null, loadingData = null;
+let manWaited = false, ctx = null, mounted = false, mode = "map", lib = null, libFailed = null, loadingLib = null, loadingData = null;
 let layers = { ...DEFAULTS }, listQ = "", interacting = false, settleT = 0;
 const data = { lanes: null, transport: null, graph: null };
 let c2d = null, gl = null, g3 = null, g3Failed = null, engine = "d3", follow = false;
@@ -58,11 +58,16 @@ export function mount() {
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden) schedule(); });
   chips();
+  let first = "globe";                                                  // the 3D globe is what the tab opens on; the choice made last time wins
+  try { first = localStorage.getItem("blab-map-mode") || first; } catch (err) { /* default */ }
+  if (!["map", "globe", "flat", "list"].includes(first)) first = "globe";
+  if (first !== "map") setMode(first);
 }
 
 function setMode(m) {
   if (!ctx || m === mode) return;
   mode = m;
+  try { localStorage.setItem("blab-map-mode", m); } catch (err) { /* private window: the choice is simply not remembered */ }
   ctx.$$("#gd-mode button").forEach(b => { const on = b.dataset.m === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
   if (m === "map" || m === "list") { if (g3) g3.close(); engine = "d3"; setCanvas("d3"); }
   const leaflet = ctx.$("#globe-map"), wrap = ctx.$("#gd-wrap"), list = ctx.$("#gd-list");
@@ -113,6 +118,9 @@ function toggleFollow() { if (!g3) return; follow = !follow; g3.setFollow(follow
 /* ---------- data (lazy) and libraries (lazy) ---------- */
 function ensureData() {
   if (loadingData) return loadingData;
+  if (!Object.keys(files()).length && !manWaited) {                       // the list of data files has not arrived yet: wait for it (up to 10 s) instead of caching "nothing to load"
+    return loadingData = new Promise(res => { let n = 0; const t = setInterval(() => { if (Object.keys(files()).length || ++n > 40) { clearInterval(t); manWaited = true; loadingData = null; res(ensureData()); } }, 250); });
+  }
   const one = (key, file, set) => files()[key] ? ctx.getJSON(file, key === "telemetry").then(set).catch(() => { }) : Promise.resolve();
   loadingData = Promise.all([
     one("lanes", "trade_lanes.json", j => { data.lanes = j; }),

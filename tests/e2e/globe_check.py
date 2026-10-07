@@ -64,6 +64,7 @@ def big_snapshot(route):
 
 
 def globe_tab(pg):
+    pg.evaluate("localStorage.setItem('blab-map-mode','map')")      # these checks are about the standard map; the 3D globe has its own suite
     pg.dispatch_event('#tabs [data-go="map"]', "click")
     pg.wait_for_selector("#gd-mode")
     pg.wait_for_timeout(800)
@@ -153,6 +154,7 @@ def run():
         pg.wait_for_timeout(300)
 
         pg.evaluate("document.querySelector('#nx-root').hidden = true")
+        mode(pg, "flat", 2500)                                      # the whole world is in view, whichever hotspot the click above turned the globe towards
         ch = click_item(pg, "chokepoint")
         check("a chokepoint is on the globe to click", ch is not None)
         if ch:

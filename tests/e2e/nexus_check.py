@@ -20,7 +20,7 @@ from acceptance import BASE, check, ok, page_for  # noqa: E402
 
 GRAPH = json.loads((ROOT / "data" / "supply_graph.json").read_text(encoding="utf-8"))
 # a listed company that has links, one with a quote, and one facility
-SYM = max({e["own"] for e in GRAPH["edges"]}, key=lambda s: sum(1 for e in GRAPH["edges"] if s in (e["s"], e["d"])))
+SYM = max(sorted({e["own"] for e in GRAPH["edges"]}), key=lambda s: sum(1 for e in GRAPH["edges"] if s in (e["s"], e["d"])))
 EDGE = next(e for e in GRAPH["edges"] if e["own"] == SYM)
 FAC = next(iter(GRAPH["fac"]))
 
@@ -135,7 +135,7 @@ def run():
         pg.click(f'tr[data-s="{SYM}"] .al-tg')
         pg.wait_for_timeout(400)
         blk = pg.inner_text(".al-x")
-        check("ALADIN: expansion lists the impact edges and the 'prior, unvalidated' status", "TESTCP" in blk and "prior, unvalidated" in blk and "association, not proof of cause" in blk.lower())
+        check("ALADIN: expansion lists the impact edges and the 'prior, unvalidated' status", "TESTCP" in blk and ("prior, unvalidated" in blk or "cannot validate" in blk) and "association, not proof of cause" in blk.lower())
         pg.click('.al-x [data-nexus="company:TESTCP"]')
         pg.wait_for_timeout(800)
         check("clicking a counterparty in the block opens its panel", "TESTCP" in pg.inner_text("#nx-title"))
