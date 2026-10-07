@@ -19,6 +19,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="terminal.css">
 <link rel="stylesheet" href="terminal-fx.css">
+<link rel="stylesheet" href="terminal-guide.css">
 <script>
   /* boot screen once per session; never with reduced motion */
   try { if (!matchMedia("(prefers-reduced-motion: reduce)").matches && !sessionStorage.getItem("fx-boot")) { sessionStorage.setItem("fx-boot", "1"); document.documentElement.classList.add("fx-boot"); } } catch (e) { /* storage blocked: no boot screen */ }
@@ -364,5 +365,6 @@
 <!--TERMINAL-BODY-END-->
 <script type="module" src="terminal.js"></script>
 <script src="terminal-fx.js"></script>
+<script src="terminal-guide.js"></script>
 </body>
 </html>

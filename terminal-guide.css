@@ -1,0 +1,37 @@
+/* terminal-guide.css: friendly-layer styles for the terminal. Colours come only from terminal.css tokens; flat, no shadows. */
+[data-gl] { text-decoration: underline dotted var(--ink-3); text-underline-offset: 3px; cursor: help; }
+.tg-tip { position: fixed; z-index: 4000; max-width: 280px; padding: 10px 12px; background: var(--card); border: 1px solid var(--rule-2); border-radius: var(--r-card); color: var(--ink-2); font: 12.5px/1.45 var(--sans); pointer-events: none; }
+.tg-tip b { display: block; color: var(--ink); font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.tg-tip[hidden] { display: none; }
+
+/* In plain English */
+.pe { border-bottom: 1px solid var(--rule); background: var(--sunken); padding: 8px 14px; }
+.pe[hidden] { display: none; }
+.pe-t { display: flex; align-items: center; justify-content: space-between; width: 100%; font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.pe-t:hover { color: var(--ink); } .pe-t i { font-style: normal; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.pe ul { margin: 8px 0 4px; padding-left: 18px; color: var(--ink-2); font-size: 13px; line-height: 1.5; max-height: 20vh; overflow: auto; }
+.pe li { margin: 2px 0; } .pe li b { color: var(--ink); }
+.pe-n { margin: 0; font-size: 11.5px; color: var(--ink-3); }
+.pe.shut { padding-bottom: 6px; }
+
+/* starter row on the Brief */
+.tg-start { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin: 0 0 20px; padding: 16px 20px; border: 1px solid var(--rule-2); border-radius: var(--r-card); background: var(--card); }
+.tg-start b { display: block; font-size: 16px; } .tg-start span { color: var(--ink-3); font-size: 13px; }
+.tg-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* glossary dialog */
+.tg-modal .m-box { max-height: 80vh; }
+.tg-modal .m-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--rule-2); }
+.tg-gl-body { padding: 14px 18px 18px; overflow: auto; }
+.tg-gl-body input { width: 100%; height: 36px; padding: 0 12px; margin-bottom: 12px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--paper); font: 13px var(--mono); }
+.tg-gl-body dl { margin: 0 0 14px; } .tg-gl-body dt { font: 600 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); } .tg-gl-body dd { margin: 4px 0 0; color: var(--ink-2); font-size: 13.5px; line-height: 1.5; }
+
+/* tour: four flat scrim panels around the highlighted area (no blur, no glow) */
+.tg-tour { position: fixed; inset: 0; z-index: 3500; }
+.tg-s { position: fixed; background: var(--scrim); }
+.tg-hole { position: fixed; border: 1px solid var(--ink); border-radius: var(--r); pointer-events: none; }
+.tg-pop { position: fixed; width: min(340px, calc(100vw - 24px)); padding: 16px 18px; background: var(--card); border: 1px solid var(--rule-2); border-radius: var(--r-card); }
+.tg-pop .tg-n { margin: 0 0 6px; font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.tg-pop h3 { margin: 0 0 6px; font-size: 17px; } .tg-pop .tg-x { margin: 0 0 14px; color: var(--ink-2); font-size: 13.5px; line-height: 1.5; }
+.tg-btns { display: flex; align-items: center; gap: 8px; } .tg-btns [hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) { .tg-pop { transition: left 200ms ease-out, top 200ms ease-out; } .tg-hole { transition: all 200ms ease-out; } }
