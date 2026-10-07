@@ -1,0 +1,101 @@
+{
+ "costs": "real",
+ "null": {
+  "stocks": 2000,
+  "pairs": 58000,
+  "promoted_ever": 0,
+  "share_pairs_promoted": 0.0,
+  "blocks": 64,
+  "blocks_with_any_promotion": 0,
+  "share_blocks_with_any_promotion": 0.0,
+  "fdr_q": 0.1,
+  "p_any_null_pair_eligible_in_a_block": 0.0,
+  "mean_null_pairs_eligible_per_block": 0.0,
+  "false_discovery_proportion_among_eligible": null
+ },
+ "planted": {},
+ "vanishing": {
+  "series_with_live_strategy_at_vanish": 0,
+  "never_demoted_by_end": 0,
+  "median_days_to_demotion": null,
+  "p90_days": null,
+  "detail": []
+ },
+ "folds": [
+  {
+   "fold": 0,
+   "start": "2019-09-02",
+   "pairs": 27900,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Candidate": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0,
+   "n_Suspended": 0
+  },
+  {
+   "fold": 1,
+   "start": "2019-11-28",
+   "pairs": 28540,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Candidate": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0,
+   "n_Suspended": 0
+  },
+  {
+   "fold": 2,
+   "start": "2020-02-25",
+   "pairs": 28791,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Candidate": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0,
+   "n_Suspended": 0
+  },
+  {
+   "fold": 62,
+   "start": "2034-08-22",
+   "pairs": 29040,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Candidate": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0,
+   "n_Suspended": 0
+  },
+  {
+   "fold": 63,
+   "start": "2034-11-17",
+   "pairs": 29034,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Candidate": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0,
+   "n_Suspended": 0
+  }
+ ]
+}

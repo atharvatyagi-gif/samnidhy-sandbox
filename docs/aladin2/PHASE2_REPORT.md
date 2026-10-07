@@ -39,8 +39,10 @@ Reading it plainly: the policy beats the naive baseline, but **it is weak and un
 3. Instability: real-time promotion was intermittent and the last two years are negative.
 4. Trend trades are long (40-140 days) with a 30-37% win rate: they pay off through a few large winners; the evidence rests on tails.
 
-## 4. Honesty experiments (brief 6.7)
-Rerunning with the corrected benchmark (the earlier numbers are retired). Pending in the background: planted edges, 2,000 noise series with real costs and with zero costs. They will be added in `data/aladin2/honesty_*.json` and to this report. For orientation, before the correction: noise 0 of 58,000 pairs promoted; planted reversion found 12 of 12, momentum 92% at its middle strength; a vanished edge took a median 628 days to be demoted (a real limitation, not met).
+## 4. Honesty experiments (brief 6.7), rerun with the corrected benchmark
+- **Noise, 2,000 series x 29 strategies = 58,000 pairs, 64 blocks:** pairs ever promoted **0** with real costs and **0** with zero costs; blocks with any promotion 0% (limit 10%). `honesty_null2000_realcost.json`, `honesty_null2000_zerocost.json`.
+- **Planted edges** (108 planted series, zero costs, 4,000-day evidence window): found with power reversion **100%** at all three strengths; momentum **92% / 75% / 25%** (strengths 120 / 240 / 480 bps-a-day drift; the largest makes the synthetic paths degenerate); regime-dependent **83% / 67%**. False-discovery proportion among promotions: 0. The planted strengths are enormous (a drifting component whose standard deviation is 1.2% to 4.8% a day, versus well under 1% of explained 20-day return in real markets), so **a realistic small edge is far below what stock-level evidence can detect**.
+- **Vanishing edge: NOT met.** Of 48 planted-then-vanishing series, 6 had a live strategy at the vanishing point; their first demotion came after a **median of 848 days (90th percentile 1,202)**. Lifecycle rules are tested and correct, but with per-trade standard deviation near 8% against an edge near 1% a loss of edge cannot be seen faster. I did not tune it to pass.
 
 ## 5. Product states and compute
 Validated 0%, Provisional 0%, Learning 100%: nothing has a live record. Per-stock run 117 s; pooled-first run about 3 minutes on 14 cores; universe build (1,445 stocks x 35 strategies) about 3 minutes.

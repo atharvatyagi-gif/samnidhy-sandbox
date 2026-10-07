@@ -36,7 +36,7 @@ def _one(args):
     kind, seed, strength, frac, n, cfg = args
     strategies = [s for s in R.all_strategies() if s.family not in ("relative", "flow")]
     d = S.make(kind, n=n, seed=seed, strength=strength, frac=frac)
-    px = L.clean_prices(d[["o", "h", "l", "c", "v"]]); F = L.price_features(px); cal = px.index
+    px = L.clean_prices(d[["o", "h", "l", "c", "v"]]); F = L.price_features(px); cal = pd.bdate_range("2012-01-02", periods=n)
     sd = E.build_stock(f"{kind}{seed}", "syn", px, F, strategies, cal, 5, cfg)
     return sd, kind, seed, strength
 

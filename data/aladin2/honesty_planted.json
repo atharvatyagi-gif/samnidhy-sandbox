@@ -1,0 +1,190 @@
+{
+ "costs": "zero",
+ "null": {
+  "stocks": 0,
+  "pairs": 0,
+  "promoted_ever": 0,
+  "share_pairs_promoted": 0.0,
+  "blocks": 64,
+  "blocks_with_any_promotion": 0,
+  "share_blocks_with_any_promotion": 0.0,
+  "fdr_q": 0.1,
+  "p_any_null_pair_eligible_in_a_block": 0.0,
+  "mean_null_pairs_eligible_per_block": 0.0,
+  "false_discovery_proportion_among_eligible": 0.0
+ },
+ "planted": {
+  "momentum:120": {
+   "series": 12,
+   "found": 11,
+   "power": 0.917
+  },
+  "momentum:240": {
+   "series": 12,
+   "found": 9,
+   "power": 0.75
+  },
+  "momentum:480": {
+   "series": 12,
+   "found": 3,
+   "power": 0.25
+  },
+  "reversion:40": {
+   "series": 12,
+   "found": 12,
+   "power": 1.0
+  },
+  "reversion:80": {
+   "series": 12,
+   "found": 12,
+   "power": 1.0
+  },
+  "reversion:160": {
+   "series": 12,
+   "found": 12,
+   "power": 1.0
+  },
+  "regime:240": {
+   "series": 12,
+   "found": 10,
+   "power": 0.833
+  },
+  "regime:480": {
+   "series": 12,
+   "found": 8,
+   "power": 0.667
+  },
+  "vanishing:240": {
+   "series": 48,
+   "found": 19,
+   "power": 0.396
+  }
+ },
+ "vanishing": {
+  "series_with_live_strategy_at_vanish": 6,
+  "never_demoted_by_end": 0,
+  "median_days_to_demotion": 848.5,
+  "p90_days": 1201.5,
+  "detail": [
+   {
+    "sym": "vanishing50098",
+    "strategies_live_at_vanish": 1,
+    "days_to_first_demotion": [
+     892
+    ]
+   },
+   {
+    "sym": "vanishing50099",
+    "strategies_live_at_vanish": 1,
+    "days_to_first_demotion": [
+     981
+    ]
+   },
+   {
+    "sym": "vanishing70000",
+    "strategies_live_at_vanish": 1,
+    "days_to_first_demotion": [
+     364
+    ]
+   },
+   {
+    "sym": "vanishing70006",
+    "strategies_live_at_vanish": 1,
+    "days_to_first_demotion": [
+     186
+    ]
+   },
+   {
+    "sym": "vanishing70007",
+    "strategies_live_at_vanish": 1,
+    "days_to_first_demotion": [
+     1422
+    ]
+   },
+   {
+    "sym": "vanishing70019",
+    "strategies_live_at_vanish": 1,
+    "days_to_first_demotion": [
+     805
+    ]
+   }
+  ]
+ },
+ "folds": [
+  {
+   "fold": 0,
+   "start": "2019-09-02",
+   "pairs": 1562,
+   "fdr_pass": 331,
+   "eligible": 301,
+   "paper_trades": 652,
+   "active_trades": 0,
+   "n_Candidate": 0,
+   "n_Probation": 301,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0,
+   "n_Suspended": 0
+  },
+  {
+   "fold": 1,
+   "start": "2019-11-28",
+   "pairs": 1604,
+   "fdr_pass": 342,
+   "eligible": 311,
+   "paper_trades": 646,
+   "active_trades": 0,
+   "n_Candidate": 0,
+   "n_Probation": 311,
+   "n_Active": 0,
+   "n_Demoted": 12,
+   "n_Retired": 0,
+   "n_Suspended": 0
+  },
+  {
+   "fold": 2,
+   "start": "2020-02-25",
+   "pairs": 1648,
+   "fdr_pass": 363,
+   "eligible": 319,
+   "paper_trades": 613,
+   "active_trades": 25,
+   "n_Candidate": 0,
+   "n_Probation": 313,
+   "n_Active": 6,
+   "n_Demoted": 17,
+   "n_Retired": 10,
+   "n_Suspended": 0
+  },
+  {
+   "fold": 62,
+   "start": "2034-08-22",
+   "pairs": 2495,
+   "fdr_pass": 381,
+   "eligible": 312,
+   "paper_trades": 555,
+   "active_trades": 315,
+   "n_Candidate": 0,
+   "n_Probation": 74,
+   "n_Active": 182,
+   "n_Demoted": 17,
+   "n_Retired": 546,
+   "n_Suspended": 0
+  },
+  {
+   "fold": 63,
+   "start": "2034-11-17",
+   "pairs": 2502,
+   "fdr_pass": 383,
+   "eligible": 324,
+   "paper_trades": 270,
+   "active_trades": 149,
+   "n_Candidate": 0,
+   "n_Probation": 83,
+   "n_Active": 188,
+   "n_Demoted": 5,
+   "n_Retired": 546,
+   "n_Suspended": 0
+  }
+ ]
+}
