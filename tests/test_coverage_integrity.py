@@ -36,7 +36,7 @@ def test_every_stock_record_has_a_probability_per_horizon_and_a_decile(doc):
     for sym, e in doc["stocks"].items():
         assert set(e["t"]["p"]) == {str(h) for h in doc["horizons"]}, sym
         assert all(0.02 <= p <= 0.98 for p in e["t"]["p"].values()) and -100 <= e["t"]["sc"] <= 100
-        assert all(1 <= d <= 10 for d in e["dec"].values()) and set(e["cov"]) == {"f", "t", "s"}
+        assert all(1 <= d <= 10 for d in e["dec"].values()) and {"f", "t", "s"} <= set(e["cov"]) <= {"f", "t", "s", "x"}
 
 
 def test_probabilities_exist_exactly_for_securities_with_250_bars_and_recent_trading(doc):
