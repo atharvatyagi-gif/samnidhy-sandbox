@@ -156,3 +156,13 @@ html { overflow-x: clip; }
 .device-screen .mini-funnel { grid-column: 1; } .device-screen .funnel-cap { grid-column: 1; margin: 0; }
 .device-screen .mini-chart { grid-column: 2; grid-row: 1 / span 2; align-self: stretch; }
 @media (max-width: 720px) { .device-screen .mini-chart { grid-column: 1; grid-row: auto; } }
+.try { max-width: 1100px; margin: 0 auto; padding: 8vh 22px; } .try[hidden] { display: none; }
+.try-title { margin: 0 0 14px; font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -0.035em; line-height: 1.05; }
+.try-lead { margin: 0 0 28px; max-width: 720px; color: var(--ink-2); line-height: 1.55; }
+.try-card { border: 1px solid var(--line); border-radius: 12px; padding: 28px; background: #121214; }
+.try-card label { display: block; margin-bottom: 14px; color: var(--ink-2); } .try-card label b { color: var(--ink); }
+.try-card input[type=range] { width: 100%; min-height: 44px; accent-color: #fafafa; }
+.try-bar { height: 8px; border-radius: 4px; background: #27272a; overflow: hidden; margin: 8px 0 14px; }
+.try-bar i { display: block; height: 100%; background: #fafafa; transform-origin: 0 50%; transform: scaleX(0); transition: transform 300ms cubic-bezier(.2,.8,.2,1); }
+.try-out { margin: 0 0 12px; font-size: clamp(1.1rem, 2.4vw, 1.6rem); letter-spacing: -0.02em; }
+.try-note { margin: 0; font-size: 0.85rem; color: var(--ink-3); line-height: 1.5; }

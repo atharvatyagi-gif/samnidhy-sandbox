@@ -17,3 +17,10 @@ html.fx-boot body > :not(.fx-boot-ov) { visibility: hidden; animation: fxBootFai
 @keyframes fxBoot { to { transform: scaleX(1); } }
 .fx-boot-ov kbd { font: 11px var(--mono); color: var(--ink-3); }
 @media (prefers-reduced-motion: reduce) { .view.on, .fx-skel { animation: none; } }
+
+/* side panel: Focus mode slides it away instead of snapping, and the Details / Prints views fade in */
+.term { transition: grid-template-columns 220ms cubic-bezier(.2, .8, .2, 1); }
+.rail { transition: opacity 180ms ease-out; }
+.term.focus .rail { display: flex; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 120ms ease-out, visibility 0s 120ms; }
+.rail-view:not([hidden]) { animation: fxViewIn 140ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .term, .rail, .term.focus .rail { transition: none; } .rail-view:not([hidden]) { animation: none; } }

@@ -219,6 +219,15 @@ def rank(candidates, count):
     return out
 
 
+def fscore_counts(rows) -> dict:
+    """How many stocks with complete annual-report data scored 0..9 (for the landing page's "Try the screen" slider). Keys are strings so the JSON is stable."""
+    counts = {str(k): 0 for k in range(10)}
+    for r in rows:
+        if "skip" not in r and r.get("fscore") is not None:
+            counts[str(int(r["fscore"]))] += 1
+    return counts
+
+
 def run():
     cfg = load_config()
     sc = cfg["screener"]
@@ -297,6 +306,7 @@ def run():
         "rules": {"min_fscore": sc["min_fscore"], "count": sc["count"],
                   "exclude_industries": sc["exclude_industries"]},
         "funnel": funnel,
+        "fscore_counts": fscore_counts(good),
         "skipped": {k: sorted(v) for k, v in skipped.items()},
         "picks": picks,
     }

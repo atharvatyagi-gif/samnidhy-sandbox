@@ -85,6 +85,7 @@
       if (cards[1]) { cards[1].dataset.count = kept; cards[1].textContent = nf(kept); }
       if (window.ScrollTrigger) window.ScrollTrigger.refresh();
     }
+    if (sc && sc.fscore_counts) trySlider(sc);
     var nifty = d && d.markets && d.markets.filter(function (m) { return m.ticker === "^NSEI"; })[0];
     if (nifty && nifty.spark && nifty.spark.length > 5) {
       var s = nifty.spark, ref = s.concat(nifty.sma200 ? [nifty.sma200] : []);
@@ -99,6 +100,27 @@
       if (mc && !$(".chart-cap", mc)) { var p = document.createElement("p"); p.className = "chart-cap"; p.textContent = "Nifty 50, last " + s.length + " sessions, with its 200-day average (dashed). " + (d.generated_ist || ""); mc.appendChild(p); }
     }
   }));
+
+
+  /* ---- "Try the screen": real F-Score counts from screener.json (hidden when the file does not carry them yet) ---- */
+  function trySlider(sc) {
+    var sec = $("#try"), range = $("#try-range"); if (!sec || !range) return;
+    var counts = sc.fscore_counts, total = 0, i;
+    for (i = 0; i < 10; i++) total += counts[String(i)] || 0;
+    if (!total) return;
+    var rule = sc.rules && sc.rules.min_fscore != null ? sc.rules.min_fscore : 6;
+    range.value = rule; sec.hidden = false;
+    var out = $("#try-out"), fill = $("#try-fill"), kEl = $("#try-k");
+    function paint() {
+      var k = +range.value, keep = 0, j;
+      for (j = k; j < 10; j++) keep += counts[String(j)] || 0;
+      kEl.textContent = k; fill.style.transform = "scaleX(" + (keep / total).toFixed(3) + ")";
+      range.setAttribute("aria-valuetext", "minimum F-Score " + k + ": " + keep + " of " + total + " stocks stay");
+      out.textContent = nf(keep) + " of " + nf(total) + " stocks stay in at an F-Score of " + k + " or more" + (k === rule ? " (the screen's own rule)." : ".");
+    }
+    range.addEventListener("input", paint); paint();
+    if (window.ScrollTrigger) window.ScrollTrigger.refresh();
+  }
 
   /* ---- 3. numbers: sessions saved in the archive (days.json) ---- */
   get("days.json").then(safe(function (days) {
