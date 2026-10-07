@@ -46,7 +46,7 @@ Everything trend-following, breakout, relative-strength and delivery-surge is fl
 
 ## 3. Honesty tests (brief 6.7)
 - **Noise, zero costs, 2,000 series x 29 strategies = 58,000 pairs, 64 blocks:** pairs ever promoted **0**; blocks with any promotion **0%** (limit q = 10%). Full run: `data/aladin2/honesty_null2000_zerocost.json`.
-- **Noise with real costs, 2,000 series:** running; costs only make promotion harder. Will be appended.
+- **Noise with real costs, 2,000 series:** pairs ever promoted **0 of 58,000**; blocks with any promotion 0% (`honesty_null2000_realcost.json`).
 - **Planted edges** (60 noise + 108 planted series, zero costs, evidence window 4,000 days; 6,000-day series; false-discovery proportion among promoted = 0 of all promotions in the noise-only runs, 0.7% in the mixed pilot): found with power
   - reversion at all three strengths tested: **12 of 12 each (100%)**;
   - momentum: 92% (strength 120), 58% (240), 25% (480);
