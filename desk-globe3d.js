@@ -369,7 +369,7 @@ class Globe3D {
         const c = colors[key], ghost = isGhost(E, now), age = now - E.born, fadeIn = Math.min(1, Math.max(0, age / 0.6));
         p.col[i * 3] = c.r; p.col[i * 3 + 1] = c.g; p.col[i * 3 + 2] = c.b;
         p.size[i] = sizes[key] * (E.id === this.sel ? 1.7 : 1);
-        p.alpha[i] = (ghost ? 0.35 : 1) * (reduced ? 1 : fadeIn); p.ring[i] = ghost ? 1 : 0;
+        p.alpha[i] = (ghost ? 0.7 : 1) * (reduced ? 1 : fadeIn); p.ring[i] = ghost ? 1 : 0;
         if (!reduced && !ghost && gov.trails && this.trailsOn()) this.pushTrail(E, la, lo, now);
         if (doPick) this.collect(E, tmp);
       });

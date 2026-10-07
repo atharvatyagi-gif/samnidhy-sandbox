@@ -41,6 +41,7 @@ def new_page(pw, size=(1440, 900), throttle=None, reduced=False, args=None, rout
     b = pw.chromium.launch(headless=not headed, args=([] if headed else GL_ARGS) if args is None else args)
     ctx = b.new_context(viewport={"width": size[0], "height": size[1]}, reduced_motion="reduce" if reduced else "no-preference")
     pg = ctx.new_page()
+    pg.add_init_script("localStorage.setItem('blab.globe.layers', JSON.stringify({ air: false }))")        # "Other flights" is on by default now; these measurements switch it on themselves, from the load they were written for
     errs, reqs = [], []
     pg.on("pageerror", lambda e: errs.append("pageerror: " + str(e)[:200]))
     pg.on("console", lambda m: errs.append(f"{m.type}: {m.text[:160]}") if m.type in ("error", "warning") and "ERR_NETWORK" not in m.text else None)
