@@ -28,8 +28,8 @@
         cap.textContent = prev == null ? "Start: " + count + " stocks in the index." : (prev - count) + " dropped at this step (" + count + " remain): " + step + ".";
       };
       var go = function () {
-        var target = i === rows.length - 1 ? $("#signals") : /F-Score/i.test(step) ? $(".rules .rule") : /Magic|rank/i.test(step) ? $$(".rules .rule")[1] : $(".rules");
-        if (target) target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+        var dest = i === rows.length - 1 ? $("#signals") : /F-Score/i.test(step) ? $(".rules .rule") : /Magic|rank/i.test(step) ? $$(".rules .rule")[1] : $(".rules");
+        if (dest) dest.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
       };
       row.addEventListener("pointerenter", say); row.addEventListener("focus", say); row.addEventListener("click", go);
       row.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });

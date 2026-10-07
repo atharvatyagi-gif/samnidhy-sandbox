@@ -63,6 +63,8 @@
     window.FX.init(document.body);
   }
 
-  function start() { try { build(); condense(); cards(); } catch (e) { if (window.console && console.warn) console.warn("session-scrubber:", e.message); } }
+  function tables() { document.querySelectorAll(".table-scroll, .heatmap-wrap").forEach(function (t) { if (!t.hasAttribute("tabindex")) { t.tabIndex = 0; t.setAttribute("role", "region"); t.setAttribute("aria-label", "Scrollable table"); } }); }
+
+  function start() { try { build(); condense(); cards(); tables(); } catch (e) { if (window.console && console.warn) console.warn("session-scrubber:", e.message); } }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();

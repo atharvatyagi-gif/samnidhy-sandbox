@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" data-fx-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#09090b">
+<title>Page not found · The B-Lab Cohort:</title>
+<script>
+  /* this page can be served from any depth, so resolve every link and file from the site root (project path on GitHub Pages) */
+  (function () { var h = /github\.io$/.test(location.hostname) ? "/" + location.pathname.split("/")[1] + "/" : "/"; document.write('<base href="' + h + '">'); })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; text-align: center; }
+  main { max-width: 640px; display: grid; gap: 20px; justify-items: center; }
+  .code { font: 600 clamp(72px, 18vw, 160px)/1 var(--fx-mono); letter-spacing: -0.04em; margin: 0; }
+  h1 { margin: 0; font-size: clamp(22px, 4vw, 34px); letter-spacing: -0.02em; }
+  p { margin: 0; color: var(--fx-ink-2); }
+  svg { width: min(420px, 90vw); height: 90px; }
+  .line { fill: none; stroke: var(--fx-ink-3); stroke-width: 2; }
+  .flat { fill: none; stroke: var(--fx-down); stroke-width: 2; stroke-dasharray: 4 6; }
+  nav { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  small { color: var(--fx-ink-3); }
+</style>
+</head>
+<body>
+<main>
+  <p class="code fx-num" data-fx="reveal">404</p>
+  <svg viewBox="0 0 420 90" aria-hidden="true"><path class="line" data-fx="draw" d="M0 60 L40 48 L80 56 L120 30 L160 40 L200 22 L240 34 L280 62 L320 70 L420 70"/><path class="flat" d="M320 70 L420 70"/></svg>
+  <h1 data-fx="split">This page is not on the tape.</h1>
+  <p data-fx="reveal">The address may be old, or mistyped. The main page and the archive are one click away.</p>
+  <nav data-fx="stagger">
+    <a class="fx-btn primary" href="index.html">Home</a>
+    <a class="fx-btn" href="sandbox.html">Main page</a>
+    <a class="fx-btn" href="advanced.html">Advanced</a>
+  </nav>
+  <small>Educational analysis only. Not investment advice.</small>
+</main>
+<script>
+  /* the base tag makes src="fx.js" resolve from the site root; fx.js is loaded after it */
+</script>
+<script src="fx.js"></script>
+</body>
+</html>

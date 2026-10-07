@@ -43,14 +43,15 @@
     hero.addEventListener("pointermove", function (e) { var r = cv.getBoundingClientRect(); px = e.clientX - r.left; py = e.clientY - r.top; }, { passive: true });
     hero.addEventListener("pointerleave", function () { px = py = -999; });
     var step = 26, bodyW = 8;
+    var range = series.map(function (s) { return [Math.min.apply(null, s), Math.max.apply(null, s)]; });      // computed once, not per candle per frame
     function draw(t) {
-      if (t - last < 33) return; last = t;                       // about 30 fps is plenty for a background
+      if (t - last < 42) return; last = t;                       // about 24 fps is plenty for a background
       off += 0.35;
       ctx.clearRect(0, 0, W, H);
       var n = Math.ceil(W / step) + 2, base = Math.floor(off / step);
       for (var i = 0; i < n; i++) {
         var idx = i + base, s = series[Math.floor(idx / 60) % series.length], k = idx % (s.length - 1);
-        var a = s[k], b = s[k + 1], lo = Math.min.apply(null, s), hi = Math.max.apply(null, s), span = hi - lo || 1;
+        var a = s[k], b = s[k + 1], rg = range[Math.floor(idx / 60) % series.length], lo = rg[0], hi = rg[1], span = hi - lo || 1;
         var y1 = H * (0.82 - 0.55 * (a - lo) / span), y2 = H * (0.82 - 0.55 * (b - lo) / span);
         var x = i * step - (off % step), up = b >= a, dx = x - px, dy = (y1 + y2) / 2 - py, near = Math.sqrt(dx * dx + dy * dy) < 130;
         ctx.globalAlpha = near ? 0.55 : 0.2; ctx.strokeStyle = ctx.fillStyle = up ? "#22c55e" : "#ef4444";
@@ -59,7 +60,8 @@
       }
       ctx.globalAlpha = 1;
     }
-    new IntersectionObserver(function (es) { if (es[0].isIntersecting) window.FX.tick(draw); else window.FX.untick(draw); }).observe(hero);
+    var start = function () { new IntersectionObserver(function (es) { if (es[0].isIntersecting) window.FX.tick(draw); else window.FX.untick(draw); }).observe(hero); };
+    if (window.requestIdleCallback) requestIdleCallback(function () { setTimeout(start, 600); }, { timeout: 2500 }); else setTimeout(start, 1500);   // after the page has settled
   }
 
   /* ---- 2. the real funnel + a real NIFTY 50 line in the showcase device ---- */

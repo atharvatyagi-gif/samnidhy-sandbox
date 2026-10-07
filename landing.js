@@ -56,7 +56,7 @@
   /* ---------- 3. statement: each line wipes in with a clipping mask tied to scroll ---------- */
   gsap.utils.toArray(".reveal-line").forEach(function (line) {
     gsap.fromTo(line,
-      { clipPath: "inset(0 100% 0 0)", opacity: 0.2, y: 30 },
+      { clipPath: "inset(0 100% 0 0)", opacity: 1, y: 30 },
       { clipPath: "inset(0 0% 0 0)", opacity: 1, y: 0, ease: "none",
         scrollTrigger: { trigger: line, start: "top 85%", end: "top 45%", scrub: 0.6 } });
   });

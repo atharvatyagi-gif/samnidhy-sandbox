@@ -10,6 +10,19 @@
 <meta property="og:description" content="Daily NSE top gainers and losers, explained through six interactive lessons. Educational analysis only. Not investment advice.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#09090b">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="canonical" href="https://atharvatyagi-gif.github.io/samnidhy-sandbox/sandbox.html">
+<meta property="og:site_name" content="The B-Lab Cohort:">
+<meta property="og:url" content="https://atharvatyagi-gif.github.io/samnidhy-sandbox/sandbox.html">
+<meta property="og:image" content="https://atharvatyagi-gif.github.io/samnidhy-sandbox/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Samnidhy Sandbox">
+<meta name="twitter:description" content="Daily NSE top gainers and losers, explained through six interactive lessons. Educational analysis only. Not investment advice.">
+<meta name="twitter:image" content="https://atharvatyagi-gif.github.io/samnidhy-sandbox/og.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js" onerror="window.__chartJsFailed = true;"></script>
 <script>
   // Opt in to scroll animations before first paint (skipped for users who prefer reduced motion,
@@ -19,7 +32,7 @@
   }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="site.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="site.css"></noscript>
 <style>
   :root {--surface-1: #121214; --surface-2: #121214; --page-plane: #09090b; --text-primary: #fafafa; --text-secondary: #a1a1aa; --text-muted: #8b8b94; --gridline: #27272a; --baseline: #27272a; --border: #27272a; --success: #22c55e; --critical: #ef4444; --warning: #a1a1aa; --accent: #22c55e; --accent-strong: #22c55e; --on-color: #09090b; --beige: #fafafa; --beige-2: #a1a1aa; --sand: #8b8b94; --g-flat: #18181b; --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500; --series-5: #d55181; --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace; color-scheme: dark;}
 
@@ -435,7 +448,7 @@
   /* --- Gainer / loser label chips (used everywhere a stock is named) --- */
   .grp-chip {display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em; padding: 2px 7px; border-radius: 999px; white-space: nowrap; vertical-align: middle;}
   .grp-chip.gainer {color: var(--accent); background: rgba(34,197,94,0.13); border: 1px solid rgba(34,197,94,0.4);}
-  .grp-chip.loser {color: var(--critical); background: rgba(230,103,103,0.13); border: 1px solid rgba(230,103,103,0.4);}
+  .grp-chip.loser {color: #f87171; background: rgba(230,103,103,0.13); border: 1px solid rgba(230,103,103,0.4);}
   .up {color: var(--accent);}
   .down {color: var(--critical);}
 
@@ -507,6 +520,7 @@
   .fx-scrub-step:hover {border-color: #3f3f46; color: var(--text-primary);}
   .fx-scrub-hint {flex: 0 0 auto; font-size: 0.72rem; color: var(--text-muted); white-space: nowrap;}
   @media (max-width: 720px) {.fx-scrub-hint {display: none;} .fx-scrub {padding: 8px 8px 0;}}
+  @media (min-width: 721px) and (max-width: 1120px) {.menu-bar {flex-wrap: wrap;} .section-nav {flex-wrap: wrap;}}
   header.site-header .menu-bar {transition: padding 200ms var(--fx-ease-out, ease);}
   body.fx-condensed header.site-header .menu-bar {padding-top: 4px; padding-bottom: 4px;}
 </style>
@@ -4865,7 +4879,7 @@
     slidersContainer.innerHTML = STOCK_ORDER.map((t, i) => `
       <div class="weight-slider">
         <span class="stock-tag"><span class="ticker-swatch" style="background:${STOCK_COLOR[t]}"></span>${STOCK_SHORT_NAME[t]}</span>
-        <input type="range" min="0" max="100" step="1" value="${weights[i]}" data-index="${i}" id="weight-slider-${i}">
+        <input type="range" min="0" max="100" step="1" value="${weights[i]}" data-index="${i}" id="weight-slider-${i}" aria-label="${STOCK_SHORT_NAME[t]} weight, percent">
         <span class="weight-value" id="weight-value-${i}">${weights[i]}%</span>
       </div>
     `).join('');
@@ -5946,6 +5960,7 @@
 })();
 </script>
 <script src="mode-dock.js"></script>
+<script src="site-footer.js"></script>
 <script src="fx.js"></script>
 <script src="transitions.js"></script>
 <script src="session-scrubber.js"></script>
