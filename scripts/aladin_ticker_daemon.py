@@ -5,7 +5,7 @@ ALADIN local tick daemon (Module A) - runs on YOUR PC during market hours and se
 
 What it does, and the limits it works inside (all measured against the real NSE site, not assumed):
 
-* Data source "nse-web": the free NSE website feed, polled every ~3 s (never faster than 2 s) through a
+* Data source "nse-web": the free NSE website feed, polled every ~10 s (never faster than 2 s; NSE itself refreshes these lists only every 1 to 3 minutes, measured 7 Oct 2026: gainers/losers and indices about every 2.5 min, most-active about every minute, the F&O spot prices about every 100 s, so faster polling only returns the same numbers) through a
   self-healing, rate-limited session (<= 3 requests/s). Each poll round makes 6 small calls, ~0.1-0.3 s each:
   /api/allIndices, /api/live-analysis-variations (gainers and losers), /api/live-analysis-most-active-
   securities (volume and value) and /api/live-analysis-oi-spurts-underlyings (the spot price of every stock with
@@ -723,7 +723,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="ALADIN local tick daemon (loopback only)")
     ap.add_argument("--source", default=os.environ.get("ALADIN_SOURCE", "auto"), choices=["auto", "nse-web", "angel"])
     ap.add_argument("--port", type=int, default=int(os.environ.get("ALADIN_WS_PORT", 0)) or None)
-    ap.add_argument("--interval", type=float, default=3.0, help="seconds between poll rounds (min 2)")
+    ap.add_argument("--interval", type=float, default=10.0, help="seconds between poll rounds (min 2; NSE refreshes its lists every 1-3 minutes, so 10 loses nothing)")
     ap.add_argument("--no-telemetry", action="store_true", help="do not run the flight and vessel telemetry loop (also off when ALADIN_TELEMETRY=0)")
     a = ap.parse_args(argv)
     import aladin_env

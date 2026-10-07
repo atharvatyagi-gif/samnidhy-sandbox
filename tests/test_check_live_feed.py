@@ -184,7 +184,8 @@ def test_free_feed_open_market_needs_fresh_data_and_moving_prices():
     sess = FakeSession(bump=1)
     now_ms = datetime(2026, 10, 6, 10, 0, 5, tzinfo=timezone.utc).timestamp()                                                  # 5 s after the fake time stamp (10:00:00 IST... see below)
     code2, res2 = cl.run_nse(0, session=sess, daemon=FakeDaemon, now=OPEN, clock=lambda: 1_790_000_000.0, sleep=lambda s: None, out=lines.append)
-    assert "PASS  movement" in "\n".join(lines) and "prices changed" in "\n".join(lines)
+    text2 = "\n".join(lines)
+    assert "PASS  movement" in text2 and "stocks changed price" in text2 and "changed at +" in text2 and "every 1-3 minutes" in text2
 
 
 def test_free_feed_a_blocked_session_and_a_failing_list_are_named():

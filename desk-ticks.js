@@ -2,7 +2,7 @@
    Opt-in only: nothing is contacted until the user types TICKS ON (remembered in localStorage). Stays quiet when
    the daemon isn't running: retries every 30 s with backoff, gives up after 3 failures until the tab is shown
    again. Never overrides the Angel One relay (LIVE.ok): ticks from this PC are only used when that is off.
-   The label is "LIVE · NSE WEB (THIS PC, ~3 s)", never "real-time": it is the free web feed, polled. */
+   The label is "LIVE · NSE WEB (THIS PC, 1-3 min)", never "real-time": it is the free web feed, and NSE itself refreshes its lists only every 1 to 3 minutes (measured 7 Oct 2026). */
 import { LOCAL_TICKS_URL } from "./config.js";
 
 let ctx = null, ws = null, timer = null, poll = null, fails = 0, connected = false, lastTickAt = 0, warned = new Set();
@@ -28,7 +28,7 @@ const teleListeners = new Set();
 export function onTelemetry(cb) { teleListeners.add(cb); return () => teleListeners.delete(cb); }
 export function emitTick(batch) { listeners.forEach(cb => { try { cb(batch); } catch (e) { /* one bad listener must not stop the rest */ } }); }
 export const enabled = () => store.get();
-/* which feed the daemon is using: "angel" (Angel One, real-time) or "nse-web" (the free web feed, polled about every 3 s); null until the daemon has said hello */
+/* which feed the daemon is using: "angel" (Angel One, real-time) or "nse-web" (the free web feed: NSE refreshes it every 1 to 3 minutes); null until the daemon has said hello */
 export const source = () => src;
 /* true while ticks from this PC are arriving (used by the masthead chip) */
 export const active = () => connected && !ctx.LIVE.ok && Date.now() - lastTickAt < 120000;

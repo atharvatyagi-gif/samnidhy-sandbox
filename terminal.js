@@ -274,7 +274,7 @@ function renderMast() {
   const open = S.qmeta.market === "open", b = breadthNow();
   $("#livechip").classList.toggle("on", open);
   $("#livechip").classList.toggle("rt", LIVE.ok);
-  $("#live-txt").textContent = RP.on ? `REPLAY · ${dayLbl(RP.day)}` : LIVE.ok ? "REAL-TIME · NSE" : Ticks.active() ? (Ticks.source() === "angel" ? "REAL-TIME · NSE (THIS PC)" : "LIVE · NSE WEB (THIS PC, ~3 s)") : open ? "LIVE · DELAYED" : "MARKET CLOSED";
+  $("#live-txt").textContent = RP.on ? `REPLAY · ${dayLbl(RP.day)}` : LIVE.ok ? "REAL-TIME · NSE" : Ticks.active() ? (Ticks.source() === "angel" ? "REAL-TIME · NSE (THIS PC)" : "LIVE · NSE WEB (THIS PC, 1-3 min)") : open ? "LIVE · DELAYED" : "MARKET CLOSED";
   $("#ms-stocks").textContent = S.uni.count.toLocaleString("en-IN");
   $("#ms-live").textContent = (S.qmeta.covered || 0).toLocaleString("en-IN");
   $("#ms-ad").textContent = `${b.a.toLocaleString("en-IN")} / ${b.d.toLocaleString("en-IN")}`;
