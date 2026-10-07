@@ -12,12 +12,13 @@ import * as G3 from "./desk-globe3d.js";
 import * as GL from "./desk-globe-layers.js";
 import { extrapolate, flightKin, vesselKin, docFromFull, applyTelemetry, ageLabel, CAPS } from "./desk-kin.js";
 import { onTelemetry } from "./desk-ticks.js";
+import { TELE } from "./desk-kin-live.js";
 import { MAP_COLORS, hotspotColor, hotspotRadius, isStale, ageMin, ageText, countIn, filterItems, mergeLayers } from "./desk-lanes.js";
 
 const D3 = { geo: "https://cdn.jsdelivr.net/npm/d3-geo@3.1.1/+esm", topo: "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm", qt: "https://cdn.jsdelivr.net/npm/d3-quadtree@3.0.1/+esm",
   world: "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json" };
 const LS = "blab.globe.layers";
-const LAYERS = [["hot", "Geopolitical news attention", true], ["choke", "Chokepoints", true], ["cargo", "Cargo flights", true], ["air", "Other flights", false], ["ship", "Vessels", true], ["plant", "Plants (filings)", true], ["lane", "Trade lanes", true], ...GL.EXTRA];
+const LAYERS = [["hot", "Geopolitical news attention", true], ["choke", "Chokepoints", true], ["cargo", "Cargo flights", true], ["air", "Other flights", true], ["ship", "Vessels", true], ["plant", "Plants (filings)", true], ["lane", "Trade lanes", true], ...GL.EXTRA];
 const DEFAULTS = Object.fromEntries(LAYERS.map(([k, , d]) => [k, d]));
 const MAX_LIST = 300, RAD = Math.PI / 180;
 
@@ -242,7 +243,11 @@ function onLive(m) {
 const liveNow = () => !!liveDoc && Date.now() / 1000 - liveDoc.lastMsgAt < 180;
 
 /* ---------- rendering ---------- */
+/* How long a position is kept. With the live feed from the local daemon (a new fix every ~30 s) a flight is dropped after 10 minutes. The public site only has a published snapshot, whose fixes are
+   minutes to an hour old by the time anyone looks, so there the same rule as the standard Map applies: positions are kept, drawn as faint "last known" rings, until the snapshot itself is 2 hours old. */
+const keepRule = () => { TELE.dropFlight = liveNow() ? 600 : 7200; TELE.dropVessel = liveNow() ? 1800 : 7200; };
 function render() {
+  keepRule();
   chips();
   if (mode === "list") return renderList();
   if (engine === "3d" && g3 && (mode === "globe" || mode === "flat")) { g3.setLines(GL.lineSets(layers, store)); g3.setBorders(layers.border); g3.sync(entities(), data.lanes, layers); return; }
@@ -315,7 +320,7 @@ function draw() {
     else if (e.layer === "ship") { ships.push(e); hit.push({ x: e.x, y: e.y, r: 4, e, i: hit.length }); }
     else if (e.layer === "cargo") { cargo.push(e); hit.push({ x: e.x, y: e.y, r: 6, e, i: hit.length }); }
   }
-  for (const [a, pick] of [[1, e => !e.ghost], [0.3, e => e.ghost]]) {            // live markers solid, ghosts (older than the cap: position not live) faint
+  for (const [a, pick] of [[1, e => !e.ghost], [0.6, e => e.ghost]]) {            // live markers solid, ghosts (older than the cap: position not live) faint
     const A = air.filter(pick), S = ships.filter(pick), C = cargo.filter(pick);
     // other flights: one batched path of small dots
     if (A.length) { g2.globalAlpha = a; g2.beginPath(); for (const e of A) { g2.moveTo(e.x + 1.7, e.y); g2.arc(e.x, e.y, 1.7, 0, 7); } g2.fillStyle = MAP_COLORS.air; g2.fill(); }
