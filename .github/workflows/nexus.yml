@@ -1,7 +1,7 @@
 # NEXUS supply-chain graph: reads company filings with a free language model (Groq, then Gemini), keeps only edges backed by a
 # verbatim quote, finds facility coordinates (OpenStreetMap Nominatim, 1 request a second), audits the result and saves
 # data/supply_graph.json. The next Live prices run publishes it (build_site.py), the nightly ALADIN run scores it.
-# Weekly: filings change a few times a year, and the free model quotas (Groq 200k tokens a day per model) are the limit.
+# Daily until the whole Nifty 500 has been read (the builder takes Nifty 500 first and stops cleanly when the day's free quota is used up, resuming next day); filings change only a few times a year, so after that a weekly run is enough.
 # The derived-share step reads the related-party notes of companies already in the graph (it resumes where it stopped and skips finished ones).
 # Every step may fail: the repository keeps the previous graph, and the file is only saved when check_graph.py says "ok".
 # Commits end in "[skip ci]" and touch nothing but data/supply_graph.json.
@@ -9,13 +9,13 @@ name: NEXUS graph
 
 on:
   schedule:
-    - cron: "30 3 * * 0"
+    - cron: "30 3 * * *"
   workflow_dispatch:
     inputs:
       limit:
         description: "How many companies to read this run (the builder resumes from its cache)"
         required: false
-        default: "40"
+        default: "120"
 
 permissions:
   contents: write
@@ -63,7 +63,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
           GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
-          LIMIT: ${{ github.event.inputs.limit || '40' }}
+          LIMIT: ${{ github.event.inputs.limit || '120' }}
         run: python scripts/revenue_graph_builder.py --limit "$LIMIT"
 
       - name: Derived revenue shares from the related-party notes (companies already read, 40 a week, marked derived)
