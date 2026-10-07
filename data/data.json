@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-06T18:58:46+00:00",
+  "generated_on": "2026-10-07T02:01:30+00:00",
   "session_date": "2026-10-06",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,13 +40,13 @@
         "turnover_crore": 1919.3
       },
       "latest_close": 2906.0,
-      "trailing_pe": 85.67217,
+      "trailing_pe": 76.073296,
       "market_cap": 1549573029888,
       "history": {
         "first_date": "2021-09-29",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.423977,
       "total_return": -0.440059,
@@ -75,7 +75,7 @@
         "first_date": "2025-09-17",
         "trading_days": 259,
         "years": 1.05,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.03822,
       "total_return": 0.040221,
@@ -104,7 +104,7 @@
         "first_date": "2022-06-03",
         "trading_days": 1070,
         "years": 4.34,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 1.356748,
       "total_return": 1.462781,
@@ -133,7 +133,7 @@
         "first_date": "2021-09-29",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.094621,
       "total_return": 0.099713,
@@ -162,7 +162,7 @@
         "first_date": "2021-09-29",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.159875,
       "total_return": 0.168739,
@@ -191,7 +191,7 @@
         "first_date": "2023-09-27",
         "trading_days": 743,
         "years": 3.03,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.352374,
       "total_return": -0.366658,
@@ -218,7 +218,7 @@
       "start": "2021-09-29",
       "end": "2026-10-06",
       "years": 5.02,
-      "session_price_from": "NSE"
+      "session_price_from": "Yahoo"
     },
     "latest_close": 22776.1,
     "session_pct_change": 0.9769,
@@ -642,7 +642,7 @@
         1311.32,
         1377.93,
         1393.28,
-        1385.76,
+        1385.75,
         1386.25,
         1374.54,
         1427.71,
@@ -720,7 +720,7 @@
         3118.21,
         3750.12,
         4014.51,
-        3876.06,
+        3876.05,
         3891.47,
         3942.29,
         4053.71,
