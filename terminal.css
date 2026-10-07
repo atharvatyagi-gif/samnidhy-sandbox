@@ -100,7 +100,7 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .fkeys button:hover { background: var(--acc-soft); color: var(--acc); }
 .fkeys kbd { font: 700 10px var(--mono); color: var(--acc); background: var(--sunken); padding: 1px 4px; border: 1px solid var(--rule-2); }
 .desk { padding-bottom: 30px; }
-.mast { overflow: hidden; } .cmdline { min-width: 170px; } .mstats { flex: none; } .acct { flex: none; }
+.mast { overflow: visible; position: relative; z-index: 80; } .cmdline { min-width: 170px; } .mstats { flex: none; } .acct { flex: none; }
 @media (max-width: 1700px) { .who #sys-user { display: none; } }
 @media (max-width: 1520px) { .mstats > .ms-opt { display: none; } }
 .acct { margin-left: auto; display: flex; align-items: center; gap: 10px; }
@@ -888,3 +888,24 @@ body.nx-open { overflow: hidden; }
 * { scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
 ::selection { background: var(--rule); color: var(--ink); }
 button, input, select { transition: color 150ms, background-color 150ms, border-color 150ms; }
+
+/* ---------------- calm mode: the default, uncluttered desk ---------------- */
+.mast, .tabs { position: relative; }
+.cmd-list { z-index: 90; }                                  /* suggestions always above the tape and headline crawl */
+.desk.calm .tape, .desk.calm .crawl, .desk.calm .regime, .desk.calm .fkeys { display: none; }
+.desk.calm .ms-opt, .desk.calm .ms-ad, .desk.calm .fresh, .desk.calm .asof-m, .desk.calm .brand .sub { display: none; }
+.desk.calm { padding-bottom: 0; }
+@media (min-width: 1001px) { .desk.calm, .desk.calm.on-terminal { grid-template-rows: 62px 46px minmax(0, 1fr) 26px; } }
+@media (max-width: 1000px) { .desk.calm { grid-template-rows: auto auto auto 26px; } }
+.desk.calm .brief-head .lede, .desk.calm .brief .skip { display: none; }
+.brief-head .asof { display: none; } .brief-head.show-data .asof { display: block; }
+.brief-head .more-data { margin-top: 10px; font: 500 11.5px var(--mono); color: var(--ink-3); border-bottom: 1px dotted var(--rule-2); }
+.brief-head .more-data:hover { color: var(--ink); }
+.tabs .t-more { display: none; } .tabs.open-more .t-more { display: inline-block; }
+.tabs .t-toggle { color: var(--ink-3); } .tabs .t-toggle[aria-expanded="true"] { color: var(--ink); }
+@media (max-width: 1000px) { .tabs .t-more { display: inline-block; } .tabs .t-toggle, .tabs #calm-btn { display: none; } }
+.tabs #calm-btn { font-size: 11.5px; } .tabs #calm-btn[aria-pressed="true"] { color: var(--ink); }
+.cards > *, .statstrip > div { transition: border-color 150ms, background-color 150ms; }
+.cards > *:hover { border-color: var(--acc-edge); background: var(--card-hover); cursor: pointer; }
+.cards [data-open]:hover, .cards [data-go]:hover { text-decoration: underline; text-underline-offset: 3px; }
+.tabs button { transition: color 150ms, border-color 150ms; }

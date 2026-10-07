@@ -1797,3 +1797,24 @@ document.addEventListener("keydown", e => {
 });
 
 boot();
+
+/* ---- calm desk: ticker toggle, "More" tabs, collapsible data details (presentation only) ---- */
+(function calmDesk() {
+  const desk = $(".desk"), tabs = $("#tabs"); if (!desk || !tabs) return;
+  let calm = true; try { calm = localStorage.getItem("desk-calm") !== "0"; } catch (e) { /* storage blocked: stay calm */ }
+  const btn = document.createElement("button"); btn.id = "calm-btn"; btn.type = "button"; btn.className = "tab-side";
+  const paint = () => { desk.classList.toggle("calm", calm); btn.setAttribute("aria-pressed", String(!calm)); btn.textContent = calm ? "Show ticker" : "Hide ticker"; };
+  btn.addEventListener("click", () => { calm = !calm; try { localStorage.setItem("desk-calm", calm ? "1" : "0"); } catch (e) { /* ignore */ } paint(); });
+  tabs.querySelector(".grow").after(btn); paint();
+  const main = [...tabs.querySelectorAll("button[data-go]:not(.tab-side)")], KEEP = 5;
+  main.slice(KEEP).forEach(b => b.classList.add("t-more"));
+  const more = document.createElement("button"); more.type = "button"; more.className = "t-toggle"; more.setAttribute("aria-expanded", "false"); more.textContent = "More ▾";
+  more.addEventListener("click", () => { const o = tabs.classList.toggle("open-more"); more.setAttribute("aria-expanded", String(o)); more.textContent = o ? "Less ▴" : "More ▾"; });
+  main[KEEP - 1].after(more);
+  new MutationObserver(() => { if (tabs.querySelector(".t-more.on") && !tabs.classList.contains("open-more")) more.click(); })
+    .observe(tabs, { attributes: true, subtree: true, attributeFilter: ["class"] });
+  const head = $(".brief-head");
+  if (head) { const b = document.createElement("button"); b.type = "button"; b.className = "more-data"; b.setAttribute("aria-expanded", "false"); b.textContent = "Data details";
+    b.addEventListener("click", () => { const o = head.classList.toggle("show-data"); b.setAttribute("aria-expanded", String(o)); });
+    head.appendChild(b); }
+})();
