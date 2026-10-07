@@ -59,8 +59,23 @@ def unit_factor(unit):
     return 1.0 if UNITS[-1][0].search(u) else None
 
 
+def as_number(v):
+    """The model's number as a float. Models sometimes write it as text ("15,21,486"); that is accepted ONLY because it is then checked against the quote. None when it is not a number."""
+    if isinstance(v, bool):
+        return None
+    if isinstance(v, (int, float)):
+        return float(v)
+    if isinstance(v, str):
+        try:
+            return float(v.replace(",", "").replace(" ", ""))
+        except ValueError:
+            return None
+    return None
+
+
 def _num_in(value, quote):
-    return isinstance(value, (int, float)) and any(abs(n - value) < 1e-6 or abs(n - round(value)) < 1e-6 for n in rb.numbers_in(quote))
+    v = as_number(value)
+    return v is not None and any(abs(n - v) < 1e-6 or abs(n - round(v)) < 1e-6 for n in rb.numbers_in(quote))
 
 
 def _checked(item, pages, norm_pages):
@@ -85,7 +100,8 @@ def _checked(item, pages, norm_pages):
     head = rb.norm(item.get("column_heading") or "")
     if not head or head.lower() not in page_text.lower():
         return None, "the column heading is not on that page"
-    return item["value"] * f, {"v": item["value"], "u": item["unit"].strip(), "h": head, "pg": pg, "q": q, "sc": item.get("scope")}
+    v = as_number(item["value"])
+    return v * f, {"v": v, "u": item["unit"].strip(), "h": head, "pg": pg, "q": q, "sc": item.get("scope")}
 
 
 def _year(heading):
@@ -185,7 +201,7 @@ def merge(graph, owner, edge_rows, rp_info):
     return g
 
 
-def run(symbols, limit, session, llm, fetcher, now=None, log=print, out=None):
+def run(symbols, limit, session, llm, fetcher, now=None, log=print, out=None, redo=False):
     now = now or rb.now_utc()
     out = out or rb.OUT
     src = rb.load_json(rb.SRC)
@@ -193,7 +209,7 @@ def run(symbols, limit, session, llm, fetcher, now=None, log=print, out=None):
     houses = (rb.load_json(ROOT / "data" / "config" / "business_houses.json", {}) or {}).get("houses", [])
     index = rb.NameIndex(stocks, rb.load_json(ROOT / "data" / "config" / "news_aliases.json", {}))
     graph = rb.load_json(out, {"cos": {}, "edges": []})
-    todo = [s for s in (symbols or sorted(graph.get("cos", {}))) if "rp" not in (graph.get("cos", {}).get(s) or {})][:limit]
+    todo = [s for s in (symbols or sorted(graph.get("cos", {}))) if redo or "rp" not in (graph.get("cos", {}).get(s) or {})][:limit]       # redo: derive again from the cached model answers (no model calls)
     cache = rb.CACHE / "llm"
     cache.mkdir(parents=True, exist_ok=True)
     report = []
@@ -235,6 +251,7 @@ def main(argv=None):
     ap.add_argument("--symbols", default="")
     ap.add_argument("--limit", type=int, default=200)
     ap.add_argument("--max-calls", type=int, default=400)
+    ap.add_argument("--redo", action="store_true", help="derive again for companies already done, from the cached model answers (no new model calls unless a chunk was never answered)")
     a = ap.parse_args(argv)
     try:
         from aladin_env import load_env
@@ -248,7 +265,7 @@ def main(argv=None):
     from aladin_ticker_daemon import NseSession
     syms = [s.strip().upper() for s in a.symbols.split(",") if s.strip()]
     try:
-        run(syms, a.limit, NseSession(), llm, rb.Fetcher())
+        run(syms, a.limit, NseSession(), llm, rb.Fetcher(), redo=a.redo)
     except rb.NoUniverse as e:
         print(e)
     print(f"model calls this run: {llm.calls}; tokens reported by the providers: {sum(llm.tokens.values()):,} {llm.tokens}")

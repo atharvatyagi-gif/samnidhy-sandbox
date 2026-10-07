@@ -130,3 +130,13 @@ def test_a_share_below_005_percent_is_noise_and_is_not_kept_even_if_saved_earlie
     tiny = {"own": "SUPPLIER", "s": "SUPPLIER", "d": "BIGCO", "rel": "supplies", "w": 0.0, "wb": "revenue", "wd": "derived", "q": "Bigco Motors Limited Sale of goods 0.50 980.00", "conf": 0.9}
     assert rb.clean_saved_edge(tiny) is None
     assert rb.clean_saved_edge({**tiny, "w": 0.0034}) is not None
+
+
+def test_a_number_written_as_text_is_accepted_only_when_the_quote_shows_it():
+    assert rps.as_number("15,21,486") == 1521486.0 and rps.as_number(12) == 12.0 and rps.as_number("n/a") is None and rps.as_number(None) is None and rps.as_number(True) is None
+    items, _ = run(rev={**REV, "value": "5,000.00"}, txs=[tx(value="1,250.50", quote="Bigco Motors Limited Sale of goods 1,250.50 980.00")])                     # text numbers: the same share as with real numbers
+    assert items and items[0]["w"] == pytest.approx(0.2501, abs=1e-4) and items[0]["calc"]["a"]["v"] == 1250.5
+    items, notes = run(rev={**REV, "value": "500000"})                                              # a text number that is NOT in the quote (the model moved the decimal point)
+    assert items == []                                                                              # no checked revenue figure, so nothing is derived
+    items, notes = run(txs=[tx(value="125050", quote="Bigco Motors Limited Sale of goods 1,250.50 980.00")])
+    assert items == [] and any("the number is not written in its quote" in n for n in notes)
