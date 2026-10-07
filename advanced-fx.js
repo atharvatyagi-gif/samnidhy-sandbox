@@ -53,7 +53,7 @@
       var cell = tr.children[2]; if (!cell) return;
       var key = tr.dataset.s, now = cell.textContent.replace(/[^0-9.]/g, ""), was = seen[key];
       seen[key] = now;
-      if (reduce || was == null || was === now || now === "") return;
+      if (reduce || !was || was === now || !now) return;
       var up = parseFloat(now) > parseFloat(was);
       cell.classList.add(up ? "fx-tick-up" : "fx-tick-down");
       cell.setAttribute("title", (up ? "Up from " : "Down from ") + was);
