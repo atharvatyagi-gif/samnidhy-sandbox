@@ -121,7 +121,7 @@ export function renderGeo() {
   const el = ctx && ctx.$("#geo-desk"); if (!el) return;
   const G = ctx.S.geo, { esc } = ctx;
   if (!available()) { el.innerHTML = '<div class="page-head" style="margin-top:28px"><h2 style="font-size:22px">News attention, <span class="acc">by region.</span></h2></div><p class="empty">The geopolitical news index has not been published yet.</p>'; return; }
-  const globeOpen = !!document.querySelector("#v-globe.on");
+  const globeOpen = !!document.querySelector("#v-map.on");
   if (!G && globeOpen && !loading && !failed) {                                       // the Globe is on screen: fetch geo.json (and ALADIN's file) now, no click needed
     Promise.all([preload(), alPreload()]).then(() => { drawMarkers(); renderGeo(); });
   }
@@ -167,5 +167,5 @@ export function regimeItem() {
 export function briefCard(bcard) {
   const top = topRegion(); if (!top) return "";
   const { esc } = ctx;
-  return bcard(top.score >= 65 ? "neg" : "neutral", "Geopolitics Â· news attention", `${esc(top.name)}: ${esc(top.level)} (${top.score})`, `${esc(top.head || "No headlines in the last 24 hours")}`, "Open globe", 'data-go="globe"');
+  return bcard(top.score >= 65 ? "neg" : "neutral", "Geopolitics Â· news attention", `${esc(top.name)}: ${esc(top.level)} (${top.score})`, `${esc(top.head || "No headlines in the last 24 hours")}`, "Open globe", 'data-go="map"');
 }

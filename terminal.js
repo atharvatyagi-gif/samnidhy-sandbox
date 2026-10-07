@@ -243,6 +243,7 @@ async function loadDeskData() {
 
 /* ================= navigation ================= */
 function go(v, quiet) {
+  if (v === "globe") v = "map";                                        // old #v=globe links and commands still work
   if (!document.getElementById("v-" + v)) v = "brief";
   view = v;
   $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-" + v));
@@ -250,7 +251,7 @@ function go(v, quiet) {
   $$("#tabs [data-go]").forEach(b => b.classList.toggle("on", b.dataset.go === v && !b.dataset.side));
   history.replaceState(null, "", `#v=${v}${sec ? "&s=" + encodeURIComponent(sec) : ""}${S.nx ? "&nx=" + encodeURIComponent(S.nx) : ""}`);
   if (v === "terminal") requestAnimationFrame(() => { if (!eng.chart) drawChart(); });
-  if (v === "globe") {
+  if (v === "map") {
     const gm = ensureGlobeMap(); if (gm && S.globe) gm.update(S.globe);
     requestAnimationFrame(() => { gm && gm.resize(); if (gm && sec) { lastFootprintSym = sec; renderCompanyFootprint(gm, sec); } });
     Globe.mount();
@@ -1408,7 +1409,7 @@ function renderGlobe() {
   // The Leaflet map sizes itself from its container when built; while the Globe tab is hidden that container is
   // 0x0 (display:none), which leaves the map broken (one tile, pins bunched in a corner) until resize() runs.
   // So it's only touched while the tab is actually visible - go() builds/updates/resizes it on switching in.
-  if (view === "globe") {
+  if (view === "map") {
     const gm = ensureGlobeMap(); if (gm && G) gm.update(G);
     if (gm && sec && sec !== lastFootprintSym) { lastFootprintSym = sec; renderCompanyFootprint(gm, sec); }
   }
@@ -1560,7 +1561,7 @@ const FUNC_CODES = {
   OUT: { label: "Outlook / ALADIN model", run: () => go("outlook") },
   CORR: { label: "Correlation matrix", run: () => notBuilt("CORR") },
   WATCH: { label: "Watchlist", run: () => { go("terminal"); setSide("watch"); } },
-  MAP: { label: "World map: flights, chokepoints, real news", run: () => go("globe") },
+  MAP: { label: "World map: flights, chokepoints, real news", run: () => go("map") },
   HOUSES: { label: "Business houses", run: () => go("houses") },
   TOOLS: { label: "Tools (ALADIN)", run: () => { Aladin.setAladinFilter(null); go("lab"); } },
   ALADIN: { label: "ALADIN probabilities (ALADIN SYMBOL or SYMBOL ALADIN to filter)", run: sym => { Aladin.setAladinFilter(sym || null); go("lab"); } },
@@ -1614,11 +1615,11 @@ function execCmd(p) {
     case "sweep": Aladin.setAladinSweepOnly(true); go("lab"); break;
     case "house": go("houses"); focusHouse(a.id); break;
     case "sector": heatSel = a.name; go("sectors"); renderSectors(); break;
-    case "geo": go("globe"); GeoDesk.preload().then(() => GeoDesk.selectRegion(a.id)).catch(() => {}); break;
-    case "map": go("globe"); break;
+    case "geo": go("map"); GeoDesk.preload().then(() => GeoDesk.selectRegion(a.id)).catch(() => {}); break;
+    case "map": go("map"); break;
     case "movers": go("movers"); Movers.setKind(a.mode === "ALADIN" ? "aladin" : a.mode === "SHOCK" ? "shock" : "price"); break;
     case "help": openHelp(a.filter || ""); break;
-    case "flight": case "vessel": go("globe"); Nexus.openNexus({ type: a.kind || p.action, id: a.id }); break;
+    case "flight": case "vessel": go("map"); Nexus.openNexus({ type: a.kind || p.action, id: a.id }); break;
     case "pick": cmdMessage(`Several ${a.kind}s match: type the full ${a.kind === "flight" ? "callsign" : "name"}.`, a.matches.map(m => m.label)); return false;
     default: return false;
   }

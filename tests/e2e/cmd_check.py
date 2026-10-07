@@ -96,7 +96,7 @@ def run():
         run_cmd(pg, f"SECTOR {SECTOR}", 1500)
         check("SECTOR <name>: Sectors tab with that sector selected", view_on(pg) == "v-sectors" and SECTOR.lower() in pg.inner_text("#sec-detail").lower(), SECTOR)
         run_cmd(pg, f"GEO {GEO}", 3500)
-        check("GEO <region>: Globe tab with that region selected", view_on(pg) == "v-globe" and pg.evaluate("document.querySelectorAll('#geo-table tr.geo-row.on').length") >= 0, GEO)
+        check("GEO <region>: Globe tab with that region selected", view_on(pg) == "v-map" and pg.evaluate("document.querySelectorAll('#geo-table tr.geo-row.on').length") >= 0, GEO)
         run_cmd(pg, "MOVERS", 800)
         check("MOVERS: Movers tab", view_on(pg) == "v-movers")
         run_cmd(pg, "MOVERS SHOCK", 800)
@@ -105,7 +105,7 @@ def run():
         check("MOVERS ALADIN opens the ALADIN probability view", pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "aladin")
         run_cmd(pg, "MOVERS", 800)
         run_cmd(pg, "MAP", 800)
-        check("MAP: Globe tab", view_on(pg) == "v-globe")
+        check("MAP: Globe tab", view_on(pg) == "v-map")
 
         # no flight snapshot published at all
         b2, pg2, errs2, _ = page_for(pw, routes={"**/desk_data.json*": lambda route: route.fulfill(response=route.fetch(), body=json.dumps({k: v for k, v in route.fetch().json().items() if k != "telemetry"}))})

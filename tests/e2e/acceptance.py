@@ -20,7 +20,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 BASE = "http://127.0.0.1:8765/expert-dev.html"
-TABS = ["brief", "terminal", "movers", "sectors", "houses", "world", "outlook", "news", "globe", "lab"]
+TABS = ["brief", "terminal", "movers", "sectors", "houses", "world", "map", "outlook", "news", "lab"]
 ok = []
 GL_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-webgl"]      # software WebGL, so the headless browser can run the 3D globe
 
@@ -52,7 +52,7 @@ def page_for(pw, size=(1440, 900), init=None, throttle=None, routes=None):
 def visit_all(pg):
     for t in TABS:
         pg.dispatch_event(f'#tabs [data-go="{t}"]', "click")
-        pg.wait_for_timeout(1500 if t in ("globe", "lab", "houses") else 600)
+        pg.wait_for_timeout(1500 if t in ("map", "lab", "houses") else 600)
 
 
 def run_console():
@@ -108,7 +108,7 @@ def run_perf():
         n0 = len(reqs)
         pg.dispatch_event('#tabs [data-go="houses"]', "click"); pg.wait_for_timeout(1500)
         check("perf: houses.json is requested when Houses opens", "houses.json" in [u.split("?")[0].split("/")[-1] for u, _ in reqs[n0:]])
-        pg.dispatch_event('#tabs [data-go="globe"]', "click"); pg.wait_for_timeout(3000)
+        pg.dispatch_event('#tabs [data-go="map"]', "click"); pg.wait_for_timeout(3000)
         urls2 = " ".join(u for u, _ in reqs[n0:])
         check("perf: the map libraries are requested when Globe opens", "leaflet" in urls2)
         b.close()

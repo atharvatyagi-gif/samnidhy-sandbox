@@ -58,7 +58,7 @@ def new_page(pw, size=(1440, 900), throttle=None, reduced=False, args=None, rout
 
 
 def open_globe(pg, mode="globe", wait=5000):
-    pg.dispatch_event('#tabs [data-go="globe"]', "click")
+    pg.dispatch_event('#tabs [data-go="map"]', "click")
     pg.wait_for_selector("#gd-mode")
     pg.wait_for_timeout(600)
     pg.click(f'#gd-mode [data-m="{mode}"]')

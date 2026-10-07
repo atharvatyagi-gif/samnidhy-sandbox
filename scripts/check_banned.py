@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 BANNED = re.compile(r"buy|sell|target|recommendation|guaranteed", re.I)
 DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice."
 NEW_JS = ["desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe3d.js"]
-NEW_HTML = [r'<section class="view" id="v-houses">.*?</section>', r'<section class="view" id="v-lab">.*?</section>', r'<div class="geo-desk" id="geo-desk"></div>', r'<section class="view" id="v-globe">.*?</section>']
+NEW_HTML = [r'<section class="view" id="v-houses">.*?</section>', r'<section class="view" id="v-lab">.*?</section>', r'<div class="geo-desk" id="geo-desk"></div>', r'<section class="view" id="v-map">.*?</section>']
 CONFIG_JSON = ["business_houses.json", "geo_exposure.json", "aladin_method.json", "news_aliases.json", "tone_words.json", "aladin_config.json", "trade_lanes.json", "cargo_carriers.json"]            # nexus_sources.json is instructions to a model, not served and not shown
 SERVED_JSON = ["aladin/latest.json", "aladin/sentiment.json", "aladin/geo.json", "aladin/moves.json", "aladin/shocks.json", "aladin/impact.json", "supply_graph.json",
                "config/business_houses.json", "config/aladin_method.json", "config/trade_lanes.json", "paper_trades/portfolio.json", "live_extra/aladin_telemetry.json"]
@@ -97,7 +97,7 @@ def check(root=ROOT):
     for name, where in (("desk-aladin.js", "the ALADIN view"), ("desk-nexus.js", "the NEXUS panel")):
         if DISCLAIMER not in (root / name).read_text(encoding="utf-8"):
             problems.append(f"the disclaimer is missing from {where} ({name})")
-    g = re.search(r'<section class="view" id="v-globe">.*?</section>', html, re.S)
+    g = re.search(r'<section class="view" id="v-map">.*?</section>', html, re.S)
     if not g or DISCLAIMER not in g.group(0):
         problems.append("the disclaimer is missing from the Globe tab (expert-terminal.html)")
     return problems

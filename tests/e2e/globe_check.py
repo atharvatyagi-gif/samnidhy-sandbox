@@ -64,7 +64,7 @@ def big_snapshot(route):
 
 
 def globe_tab(pg):
-    pg.dispatch_event('#tabs [data-go="globe"]', "click")
+    pg.dispatch_event('#tabs [data-go="map"]', "click")
     pg.wait_for_selector("#gd-mode")
     pg.wait_for_timeout(800)
 
@@ -201,7 +201,7 @@ def run():
         pg.fill("#cmd", "GEO hormuz")
         pg.press("#cmd", "Enter")
         pg.wait_for_timeout(1500)
-        check("GEO still works with the new Globe tab", pg.evaluate("document.querySelector('#v-globe').classList.contains('on')"))
+        check("GEO still works with the new Globe tab", pg.evaluate("document.querySelector('#v-map').classList.contains('on')"))
 
         # 5. list view
         mode(pg, "list", 1500)
