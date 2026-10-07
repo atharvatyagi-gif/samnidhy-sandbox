@@ -28,7 +28,7 @@ concurrency:
 jobs:
   graph:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
 
@@ -64,7 +64,8 @@ jobs:
           GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
           GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
           LIMIT: ${{ github.event.inputs.limit || '120' }}
-        run: python scripts/revenue_graph_builder.py --limit "$LIMIT"
+        timeout-minutes: 170
+        run: python scripts/revenue_graph_builder.py --limit "$LIMIT" --max-calls 420    # about 8 model calls and 20 s a call per company: ~50 companies a day, ~2.5 hours
 
       - name: Derived revenue shares from the related-party notes (companies already read, 40 a week, marked derived)
         continue-on-error: true
