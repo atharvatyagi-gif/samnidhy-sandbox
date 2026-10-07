@@ -76,20 +76,32 @@
       scrollTrigger: { trigger: "#device", start: "top 95%", end: "top 40%", scrub: true } });
   });
 
-  /* ---------- 5. pillars slide in from alternating sides ---------- */
-  gsap.utils.toArray(".pillar").forEach(function (p) {
-    var fromLeft = p.classList.contains("from-left");
-    gsap.fromTo(p, { x: fromLeft ? -140 : 140, opacity: 0 },
-      { x: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: p, start: "top 92%", end: "top 55%", scrub: 0.7 } });
+  /* ---------- 5. pillars: a horizontal pinned track on desktop, sideways slide-ins on small screens ---------- */
+  mm.add("(min-width: 901px)", function () {
+    var track = document.querySelector(".pillars-track"), bar = document.querySelector(".pillars-progress i");
+    if (!track) return;
+    root.classList.add("pillars-h");
+    var dist = function () { return Math.max(0, track.scrollWidth - innerWidth + 80); };
+    gsap.to(track, { x: function () { return -dist(); }, ease: "none",
+      scrollTrigger: { trigger: ".pillars", start: "top top", end: function () { return "+=" + dist(); }, scrub: 0.6, pin: true, invalidateOnRefresh: true,
+        onUpdate: function (st) { if (bar) bar.style.transform = "scaleX(" + st.progress.toFixed(3) + ")"; } } });
+    return function () { root.classList.remove("pillars-h"); };
+  });
+  mm.add("(max-width: 900px)", function () {
+    gsap.utils.toArray(".pillar").forEach(function (p) {
+      var fromLeft = p.classList.contains("from-left");
+      gsap.fromTo(p, { x: fromLeft ? -60 : 60, opacity: 0 },
+        { x: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: p, start: "top 92%", end: "top 60%", scrub: 0.7 } });
+    });
   });
 
   /* ---------- 6. numbers count up ---------- */
   gsap.utils.toArray(".num-card b").forEach(function (b) {
-    var end = +b.dataset.count, obj = { v: 0 };
+    var obj = { v: 0 };
     gsap.fromTo(b.parentNode, { y: 60, opacity: 0 }, { y: 0, opacity: 1, ease: "power2.out", duration: 0.9,
       scrollTrigger: { trigger: b.parentNode, start: "top 90%" } });
-    gsap.to(obj, { v: end, duration: 1.4, ease: "power2.out", scrollTrigger: { trigger: b, start: "top 90%" },
-      onUpdate: function () { b.textContent = Math.round(obj.v); } });
+    gsap.to(obj, { v: 1, duration: 1.4, ease: "power2.out", scrollTrigger: { trigger: b, start: "top 90%" },
+      onUpdate: function () { b.textContent = Math.round(obj.v * (+b.dataset.count)).toLocaleString("en-IN"); } });
   });
 
   /* ---------- 7. finale: pinned; the glow swells and the button rises to the centre ---------- */

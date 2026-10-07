@@ -124,3 +124,35 @@ body { font-family: var(--sans); }
 .curtain { background: #09090b; } .num-card { background: #121214; }
 .orb, .finale-glow { display: none; }
 html { overflow-x: clip; }
+
+/* ---- immersive pass (flat; real-data scenes) ---- */
+.hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-tape { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; background: var(--bg); }
+.mini-funnel div { cursor: default; transition: background-color 150ms; }
+.mini-funnel div:hover, .mini-funnel div:focus-visible { background: #18181b; }
+.funnel-cap, .chart-cap { margin: 12px 0 0; font-size: 0.82rem; line-height: 1.5; color: var(--ink-3); min-height: 2.6em; }
+.chart-cap { min-height: 0; }
+.cta-wrap { display: inline-block; }
+.pillars-progress { display: none; }
+.day { max-width: 1100px; margin: 0 auto; padding: 14vh 22px 8vh; }
+.day-title { margin: 0 0 40px; font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -0.035em; line-height: 1.05; }
+.day-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+.day-list li { display: grid; grid-template-columns: 170px 1fr 1.6fr; gap: 20px; align-items: baseline; padding: 26px 0; border-bottom: 1px solid var(--line); transition: background-color 150ms; }
+.day-list li:hover { background: #121214; }
+.day-list time { font: 500 0.85rem var(--mono, ui-monospace, Consolas, monospace); color: var(--ink-3); letter-spacing: 0.04em; }
+.day-list h3 { margin: 0; font-size: clamp(1.3rem, 2.4vw, 1.9rem); letter-spacing: -0.02em; }
+.day-list p { margin: 0; color: var(--ink-2); line-height: 1.55; }
+@media (max-width: 760px) { .day-list li { grid-template-columns: 1fr; gap: 6px; } }
+/* desktop horizontal pillars (only when GSAP is running; otherwise the stacked layout above stays) */
+@media (min-width: 901px) {
+  html.pillars-h .pillars { max-width: none; padding: 0; height: 100vh; overflow: hidden; display: block; position: relative; }
+  html.pillars-h .pillars-track { display: flex; align-items: center; gap: 28px; height: 100%; padding: 0 8vw; width: max-content; }
+  html.pillars-h .pillar { flex: 0 0 min(520px, 42vw); display: block; border: 1px solid var(--line); border-radius: 12px; padding: 36px; background: #121214; transition: border-color 150ms; }
+  html.pillars-h .pillar:hover { border-color: #3f3f46; }
+  html.pillars-h .pillar h3 { margin: 12px 0 14px; }
+  html.pillars-h .pillars-progress { display: block; position: absolute; left: 8vw; right: 8vw; bottom: 8vh; height: 2px; background: var(--line); }
+  html.pillars-h .pillars-progress i { display: block; height: 100%; background: #fafafa; transform: scaleX(0); transform-origin: 0 50%; }
+}
+.device-screen .mini-funnel { grid-column: 1; } .device-screen .funnel-cap { grid-column: 1; margin: 0; }
+.device-screen .mini-chart { grid-column: 2; grid-row: 1 / span 2; align-self: stretch; }
+@media (max-width: 720px) { .device-screen .mini-chart { grid-column: 1; grid-row: auto; } }

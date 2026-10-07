@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-fx-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,6 +7,7 @@
 <meta name="description" content="The B-Lab Cohort: a TAPMI student lab for markets. A daily NIFTY 500 screen, research-backed signals, and an expert terminal for TAPMI members. Educational analysis only.">
 <meta name="theme-color" content="#09090b">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
 <link rel="stylesheet" href="landing.css">
 <script>
   // Animations are opt-in: without JS (or with reduced motion) every section is simply visible.
@@ -78,13 +79,16 @@
       <div class="device" id="device">
         <div class="device-bar"><i></i><i></i><i></i><span>b-lab / advanced</span></div>
         <div class="device-screen">
-          <div class="mini-funnel">
-            <div style="--w:100%"><b>500</b><span>NIFTY 500</span></div>
-            <div style="--w:76%"><b>382</b><span>Not a bank or utility</span></div>
-            <div style="--w:70%"><b>351</b><span>Liquid</span></div>
-            <div style="--w:39%"><b>196</b><span>F-Score 6+</span></div>
-            <div style="--w:6%" class="last"><b>10</b><span>Magic Formula top 10</span></div>
+          <div class="mini-funnel" data-fallback="screener.json">
+            <div style="--w:100%"><b>500</b><span>NIFTY 500 stocks</span></div>
+            <div style="--w:77%"><b>383</b><span>Not a bank, NBFC, insurer or power utility</span></div>
+            <div style="--w:71%"><b>355</b><span>Price above Rs 50 and trades Rs 10 Cr+ a day</span></div>
+            <div style="--w:69%"><b>343</b><span>1 year+ of price history</span></div>
+            <div style="--w:58%"><b>292</b><span>Complete annual-report data</span></div>
+            <div style="--w:33%"><b>167</b><span>Piotroski F-Score 6 or more (out of 9)</span></div>
+            <div style="--w:4%" class="last"><b>10</b><span>Best 10 by Magic Formula rank</span></div>
           </div>
+          <p class="funnel-cap" aria-live="polite">Hover or focus a step to see what it removes.</p>
           <div class="mini-chart" aria-hidden="true">
             <svg viewBox="0 0 300 120" preserveAspectRatio="none">
               <path class="mc-area" d="M0,100 L30,92 L60,96 L90,78 L120,84 L150,62 L180,70 L210,48 L240,56 L270,34 L300,40 L300,120 L0,120 Z"/>
@@ -99,6 +103,7 @@
 
   <!-- ================= PILLARS (slide in from the sides) ================= -->
   <section class="pillars" id="pillars">
+    <div class="pillars-track">
     <div class="pillar from-left">
       <span class="p-num">01</span>
       <h3>Screen</h3>
@@ -119,6 +124,20 @@
       <h3>Terminal</h3>
       <p>For TAPMI members: a dense, keyboard-driven expert terminal with world indices, security descriptions, charts, news and the tape.</p>
     </div>
+    </div>
+    <div class="pillars-progress" aria-hidden="true"><i></i></div>
+  </section>
+
+  <!-- ================= A DAY IN THE LAB (real schedule, from the site's own workflows) ================= -->
+  <section class="day" id="day">
+    <p class="eyebrow">A day in the lab</p>
+    <h2 class="day-title">What refreshes, and when.</h2>
+    <ol class="day-list" data-fx="stagger">
+      <li><time>07:30 IST</time><h3>Morning update</h3><p>The day's data update runs first thing, so the page is ready before the market opens. A second pass follows at 09:00.</p></li>
+      <li><time>09:00 to 16:00</time><h3>Market hours</h3><p>The live-price job runs about every 5 minutes and re-ranks the ten on fresh prices. The price source delays quotes by about 15 minutes. News sentiment refreshes every 30 minutes.</p></li>
+      <li><time>19:00 IST</time><h3>After the close</h3><p>Once NSE publishes its official end-of-day files, the screen is re-run on closing prices and the session is saved to the archive.</p></li>
+      <li><time>Overnight</time><h3>World and news</h3><p>World markets, the globe layers and news sentiment keep refreshing hourly.</p></li>
+    </ol>
   </section>
 
   <!-- ================= NUMBERS ================= -->
@@ -126,7 +145,7 @@
     <div class="num-card"><b data-count="500">500</b><span>stocks screened daily</span></div>
     <div class="num-card"><b data-count="10">10</b><span>survive the screen</span></div>
     <div class="num-card"><b data-count="15">15</b><span>minutes between price refreshes</span></div>
-    <div class="num-card"><b data-count="0">0</b><span>invented numbers</span></div>
+    <div class="num-card"><b data-count="9" data-fallback>9</b><span>past sessions saved in the archive</span></div>
   </section>
 
   <!-- ================= FINAL CTA (pinned) ================= -->
@@ -135,7 +154,7 @@
       <div class="finale-glow" aria-hidden="true"></div>
       <p class="eyebrow">Ready?</p>
       <h2 class="finale-title">Step inside the lab.</h2>
-      <a class="cta" id="enter" href="sandbox.html"><span>Enter the Cohort</span><i aria-hidden="true">&rarr;</i></a>
+      <span class="cta-wrap" data-fx="magnetic" data-magnetic="10"><a class="cta" id="enter" href="sandbox.html"><span>Enter the Cohort</span><i aria-hidden="true">&rarr;</i></a></span>
       <p class="finale-note">Educational analysis only. Not investment advice.</p>
     </div>
   </section>
@@ -151,7 +170,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js"></script>
+<script src="fx.js"></script>
 <script src="landing.js"></script>
+<script src="landing-fx.js"></script>
 <script src="mode-dock.js"></script>
 </body>
 </html>
