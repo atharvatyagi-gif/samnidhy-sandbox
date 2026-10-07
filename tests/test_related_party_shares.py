@@ -140,3 +140,15 @@ def test_a_number_written_as_text_is_accepted_only_when_the_quote_shows_it():
     assert items == []                                                                              # no checked revenue figure, so nothing is derived
     items, notes = run(txs=[tx(value="125050", quote="Bigco Motors Limited Sale of goods 1,250.50 980.00")])
     assert items == [] and any("the number is not written in its quote" in n for n in notes)
+
+
+def test_a_derived_row_must_be_shown_to_be_a_sale_by_the_filings_own_words():
+    page = "Related party transactions (Rs. in crore) Sale of goods Bigco Motors Limited 120.00 90.00 Purchase of goods Otherco Steel Limited 50.00 40.00 Year ended March 31, 2026"
+    assert rps.sale_nature(page, "Bigco Motors Limited 120.00 90.00")                                           # a plain row under a sale heading
+    assert not rps.sale_nature(page, "Otherco Steel Limited 50.00 40.00")                                       # under a purchase heading
+    assert rps.sale_nature(page, "Bigco Motors Limited Sale of goods 120.00 90.00")                             # the row itself says so
+    assert not rps.sale_nature(page, "Bigco Motors Limited - - - - 120.00 - -")                                 # a matrix row: which column holds the 120 is not in the text
+    assert not rps.sale_nature("Name of party 1.00 2.00", "Name of party 1.00 2.00")                           # nothing says what the row is
+    pages = {10: PAGES[10], 40: PAGES[40].replace("Sale of goods", "Amount")}                                    # the same table with the word sale taken out
+    items, notes = run(txs=[tx(quote="Bigco Motors Limited Amount 1,250.50 980.00")], pages=pages)
+    assert items == [] and any("do not show that this row is a sale" in n for n in notes)

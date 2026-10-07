@@ -139,6 +139,11 @@ def derive(answers, pages, meta, now, owner, index):
             if not rb.names_the_counterparty(name, info["q"]):
                 notes.append(f"{name}: the quote does not name the counterparty")
                 continue
+            nature = sale_nature(norm_pages[info["pg"]], info["q"])
+            if not nature:
+                notes.append(f"{name}: the filing's words do not show that this row is a sale")
+                continue
+            info["n"] = nature
             if info["sc"] and rev[1]["sc"] and info["sc"] != rev[1]["sc"]:
                 notes.append(f"{name}: standalone and consolidated numbers are not comparable")
                 continue
@@ -158,6 +163,31 @@ def derive(answers, pages, meta, now, owner, index):
                         "pg": info["pg"], "q": info["q"], "conf": conf, "url": meta["url"], "doc": meta["kind"], "wd": "derived",
                         "calc": {"a": info, "t": {**rev[1], "label": "revenue from operations"}, "r": round(r, 4)}})
     return out, notes
+
+
+SALE_RX = re.compile(r"sale of (?:goods|products|services|materials|vehicles|finished goods|traded goods|power|electricity)|sales? (?:to|of)\b|revenue from|services rendered|supply of (?:goods|power|electricity)", re.I)
+OTHER_RX = re.compile(r"purchase|procure|loan|advance|interest|dividend|rent\b|remuneration|guarantee|investment|reimburse|royalt|commission|expense|services? received|deposit|capital|donation|salary", re.I)
+
+
+def sale_nature(page_text, quote):
+    """What kind of transaction a related-party table row is, judged ONLY from the filing's own words: the row itself says "Sale of goods ...", or it sits under a sale heading and is a
+    plain row (no column of dashes: in a matrix table whose columns are different kinds of transaction, which column a number is in cannot be told from the row's text).
+    -> the phrase that shows it, or None."""
+    m = SALE_RX.search(quote)
+    if m and not OTHER_RX.search(quote):
+        return m.group(0)
+    if len(re.findall(r"(?<!\w)[-\u2013\u2014](?!\w)", quote)) >= 2:
+        return None                                                          # a matrix row: the column of a number is not in the text
+    i = page_text.find(quote)
+    if i < 0:
+        return None
+    head = page_text[max(0, i - 2500):i]
+    last = None
+    for rx, kind in ((SALE_RX, "sale"), (OTHER_RX, "other")):
+        for m2 in rx.finditer(head):
+            if last is None or m2.end() > last[0]:
+                last = (m2.end(), kind, m2.group(0))
+    return last[2] if last and last[1] == "sale" else None
 
 
 def pages_for(pages):

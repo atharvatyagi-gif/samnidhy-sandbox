@@ -480,8 +480,13 @@ def test_deals_awards_and_things_not_yet_happened_are_not_supply_relationships()
     bad = ["The acquisition of Senn Chemicals AG in Switzerland, completed during the year, marked our entry into the peptide CDMO space",
            "we are expecting now new bids to come from NTPC and others, NHPC, NTPC for pumped hydro",
            "we are in discussions with Tata Steel and other procurers to supply to them",
-           "We got a Best Award from Siemens, the Top Supplier Recognition Award, and of course"]
-    good = ["In fact, we are going to expand our lines for both Tata Motors as well as Maruti.", "the biggest buyer is of course NTPC and we do work with them very closely",
+           "We got a Best Award from Siemens, the Top Supplier Recognition Award, and of course",
+           "As you would be aware, during the year, we invested Rs 600 crores in Goldi Solar.",                                   # an investment, not a purchase
+           "Freelander is our JLR brand, and it has been licensed to Chery for manufacturing their car.",                       # a licence
+           "you will see a huge amount of improvement in Odisha DISCOM",                                                         # no transaction in the sentence at all
+           "Neo Pharma Private Limited Other Related Party 7 9",                                                                  # a table row that does not say what the 7 and 9 are
+           "In fact, we are going to expand our lines for both Tata Motors as well as Maruti."]                                   # no word of a sale or a purchase
+    good = ["we supply parts to Tata Motors and Maruti.", "the biggest buyer is of course NTPC and we do work with them very closely",
             "Our largest customer, Tata Motors Limited, accounted for 24% of our revenue", "The Karcham project has a PPA with PTC India Limited on a long-term basis",
             "We acquired raw material from Acme and purchased components worth 5 crore"]            # "acquired" plus a purchase: a supply sentence
     assert not any(rb.supply_quote_ok(q) for q in bad) and all(rb.supply_quote_ok(q) for q in good)
@@ -520,9 +525,47 @@ def test_an_edge_whose_quote_does_not_name_the_counterparty_is_not_kept():
     e = edge(counterparty_name="Maharashtra Scooters Ltd.", w=None, w_basis=None, quote="Purchases 0.18 0.2", direction="supplier", period="FY2024-25")
     good, _, dropped = rb.validate_answer({"edges": [e], "facilities": []}, pages, META, NOW, SRC["schema"])
     assert good == [] and any("does not name the counterparty" in d for d in dropped)
-    ok_e = edge(counterparty_name="Maharashtra Scooters Ltd.", w=None, w_basis=None, quote="Maharashtra Scooters Limited is a related party", direction="supplier")
+    pages = {12: "We make purchases from Maharashtra Scooters Limited, a related party, every year."}
+    ok_e = edge(counterparty_name="Maharashtra Scooters Ltd.", w=None, w_basis=None, quote="We make purchases from Maharashtra Scooters Limited", direction="supplier")
     good, _, dropped = rb.validate_answer({"edges": [ok_e], "facilities": []}, pages, META, NOW, SRC["schema"])
     assert len(good) == 1 and not dropped
     saved = {"own": "BOSCHLTD", "s": "EXT_X", "d": "BOSCHLTD", "rel": "supplies", "w": None, "wb": None, "per": "FY2025-26", "tier": 1, "comp": None, "conf": 0.8, "kind": "disclosed",
              "url": "u", "pg": 1, "q": "Purchases 0.03 - 0.65 -", "vq": True, "doc": "annual", "cpn": "Bajaj Auto Technology Ltd."}
     assert rb.clean_saved_edge(saved) is None and rb.clean_saved_edge({**saved, "q": "Purchases from Bajaj Auto Technology Ltd. 0.03"}) is not None
+
+
+def test_who_a_counterparty_may_not_be_and_what_a_label_must_be():
+    for n in ("Indonesia", "India", "Saudi Arabia", "United States"[:0] or "USA", "London Bullion Market Association (LBMA)", "local enterprises", "third-party consumers", "government shipyards",
+              "Steel Melt Shops at TSJ, TSK", "Dealers", "tier 1 suppliers"):
+        assert rb.bad_counterparty(n), n
+    for n in ("Tata Motors Limited", "Pawan Hans", "Chemours", "Maharashtra DISCOM", "Liebherr Aerospace", "INOX Clean"):
+        assert not rb.bad_counterparty(n), n
+    assert rb.label_in_quote("Customer A", "Customer A contributed 31% of revenue") and not rb.label_in_quote("Customer A", "the respective C&I customers that will finally be contracted")
+    assert rb.label_in_quote("single customer based out of Japan", "overseas sales are made to a single customer based out of Japan")
+
+
+def test_a_share_needs_wording_that_matches_its_basis_and_a_period_cannot_be_in_the_future():
+    assert rb.basis_in_quote("revenue", "accounted for 24% of our revenue") and not rb.basis_in_quote("revenue", "around 80% of total transactions with Siemens AG")
+    assert rb.basis_in_quote("purchases", "89% of procurement is sourced locally") and not rb.basis_in_quote("purchases", "around 80% of total transactions with Siemens AG")
+    q = "We bought equipment from Siemens AG; these constitute around 80% of total transactions with Siemens AG in past years."
+    good, _, dropped = validate([edge(counterparty_name="Siemens AG", w=0.8, w_basis="purchases", quote=q, direction="supplier", period="past years")], pages={12: q})
+    assert good and good[0]["w"] is None and good[0]["wb"] is None                                  # kept as a link, but the 80% is not a purchases share
+    none_q = "Overall, these transactions constitute around 80% of total transactions with Siemens AG in past years."
+    assert validate([edge(counterparty_name="Siemens AG", w=0.8, w_basis="purchases", quote=none_q, direction="supplier", period="past years")], pages={12: none_q})[0] == []      # and with no word of a sale or purchase it is no link at all
+    qf = "Software services provided by JPL to RRL for the period FY 2027-28 to FY 2031-32 are supplied as agreed."
+    good, _, dropped = validate([edge(counterparty_name="JPL", w=None, w_basis=None, quote=qf, direction="supplier", period="FY 2027-28 to FY 2031-32")], pages={12: qf})
+    assert good == [] and any("future" in d for d in dropped)
+    ql = "Customer A has not been named; the largest customer takes 31% of revenue."
+    good, _, dropped = validate([edge(counterparty_name=None, counterparty_anon_label="Customer B", w=None, w_basis=None, quote=ql)], pages={12: ql})
+    assert good == [] and any("anonymous label" in d for d in dropped)
+
+
+def test_unnamed_counterparties_get_the_same_scrutiny_as_named_ones():
+    for label, q in (("Indonesia", "the Indonesia order and the advance that we received from Indonesia helped cash flow"), ("local enterprises", "89% of procurement is sourced from local enterprises"),
+                     ("Supplier", "representing 80% of our total tier 1 supplier expenditure, we purchase from them")):
+        e = edge(counterparty_name=None, counterparty_anon_label=label, w=None, w_basis=None, quote=q, direction="supplier")
+        good, _, dropped = validate([e], pages={12: q})
+        assert good == [] and dropped, label
+    ok_q = "The Company has one customer whose revenue represents 37% of the Company's total revenue"
+    good, _, _ = validate([edge(counterparty_name=None, counterparty_anon_label="one customer", w=0.37, w_basis="revenue", quote=ok_q)], pages={12: ok_q})
+    assert len(good) == 1 and good[0]["anon"] == "one customer" and good[0]["w"] == 0.37

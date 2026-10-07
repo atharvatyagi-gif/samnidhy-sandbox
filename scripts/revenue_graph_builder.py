@@ -185,8 +185,9 @@ GROUP_WORDS = re.compile(r"\b(suppliers|vendors|partners|clients|customers|produ
 #  * deals that are not supply: an acquisition, merger, stake or joint venture (kept only when the same sentence also says goods or services are sold or bought);
 #  * things that are not a transaction or have not happened: an award or recognition, "we are in discussions to supply", "expecting new bids", "plan to", "likely to" (dropped even when the sentence also says supply);
 #  * a descriptor instead of a company: "a major customer based in USA", "our largest supplier" (these are ANONYMOUS counterparties, never named ones).
-NOT_SUPPLY = re.compile(r"\b(acqui\w+|merger|amalgamat\w+|joint venture|investment in|invested in|stake in|subscri\w+)\b", re.I)
-SUPPLY_WORDS = re.compile(r"\b(suppl\w+|purchas\w+|procur\w+|vendors?|customers?|sold|sells?|sales?|revenue|orders?|PPAs?|power purchase)\b", re.I)
+NOT_SUPPLY = re.compile(r"\b(acqui\w+|merger|amalgamat\w+|joint venture|invest\w+|stake in|equity|shareholding|licen[cs]\w+|subscri\w+)\b", re.I)
+SUPPLY_WORDS = re.compile(r"\b(suppl\w+|purchas\w+|procur\w+|sourc\w+|vendors?|customers?|buyers?|sold|sells?|sales?|selling|revenue|orders?|PPAs?|power purchase|deliver\w*|quantity|import\w*|export\w*|"
+                          r"buying|bought|dealing)\b", re.I)
 NOT_YET = re.compile(r"\b(awards?|awarded|recogni\w+|in discussions?|in talks|expecting|expect to|plan(?:s|ning)? to|proposed|intend(?:s|ed)? to|looking to|aims? to|exploring|likely to|bids?|bidding)\b", re.I)
 GENERIC_NAME = re.compile(r"^\s*(?:(?:a|an|one|the|our|its|this|that)\s+)?(?:(?:major|largest|top|key|single|biggest|principal|leading|large|important|main|primary|significant|anchor)\s+)?"
                           r"(?:\w+\s+){0,2}?(customer|client|supplier|vendor|distributor|buyer|counterparty|licensee|licensor)\b", re.I)
@@ -202,15 +203,65 @@ def names_the_counterparty(name, quote):
     return any(t in words for t in toks)
 
 
+# Who a counterparty may NOT be: a country or region (an order "from Indonesia" is not a company), an association or certifier ("LBMA certified sources"), a category of
+# companies ("local enterprises", "third-party consumers", "government shipyards", "Steel Melt Shops at ..."), or a label the quote does not contain ("Customer A" when the quote
+# says "C&I customers").
+COUNTRIES = set("""afghanistan algeria angola argentina australia austria bangladesh belgium bhutan brazil bulgaria cambodia canada chile china colombia croatia cuba czechia denmark egypt ethiopia
+finland france germany ghana greece guyana hungary india indonesia iran iraq ireland israel italy japan jordan kazakhstan kenya korea kuwait laos lebanon libya malaysia mexico morocco myanmar nepal
+netherlands nigeria norway oman pakistan peru philippines poland portugal qatar romania russia saudi arabia singapore slovakia spain srilanka sudan sweden switzerland taiwan tanzania thailand turkey ukraine
+uae usa uk vietnam yemen zambia zimbabwe europe asia africa america americas emea apac gulf""".split())
+ORG_WORDS = re.compile(r"\b(association|council|institute|federation|chamber|forum|board|authority|ministry|government of)\b", re.I)
+CATEGORY_WORDS = re.compile(r"\b(consumers|enterprises|shipyards|shops|mills|retailers|dealers|distributors|households|farmers|passengers|users|individuals|investors|shareholders|employees|third[- ]party|tier[- ]?\d|"
+                            r"several|various|multiple|many|other)\b", re.I)
+
+
+TIER_RX = re.compile(r"\btier[- ]?\d\b", re.I)
+
+
+def bad_counterparty(name):
+    """Reason a counterparty name cannot be ONE company, or None."""
+    n = (name or "").strip()
+    low = re.sub(r"[^a-z ]", "", n.lower()).strip()
+    if low in COUNTRIES or (low.split() and all(w in COUNTRIES for w in low.split())):
+        return "a country or region"
+    if ORG_WORDS.search(n):
+        return "an association, body or authority"
+    if CATEGORY_WORDS.search(n):
+        return "a category of companies"
+    return None
+
+
+def label_in_quote(label, quote):
+    """An anonymous label ("Customer A", "a major customer based in USA") must be words the quote itself uses."""
+    m = re.search(r"\b((?i:customer|client|supplier|vendor|distributor|dealer))\s+([A-Z0-9])\b", label or "")
+    if m and not re.search(r"\b(?i:" + m.group(1) + r")\s+" + m.group(2) + r"\b", quote or ""):
+        return False                                                         # "Customer B" is not "Customer A": the letter or number must be the quote's own
+    toks = [t for t in re.findall(r"[a-z0-9&]+", (label or "").lower()) if len(t) >= 3 and t not in ("the", "and", "our", "its")]
+    words = set(re.findall(r"[a-z0-9&]+", (quote or "").lower()))
+    return bool(toks) and sum(t in words for t in toks) >= max(1, (len(toks) + 1) // 2)
+
+
 def supply_quote_ok(quote):
-    """False for a sentence that is not a statement of an existing supply relationship (see NOT_SUPPLY / NOT_YET)."""
-    if NOT_YET.search(quote or ""):
+    """False for a sentence that is not a statement of an existing supply relationship: not yet happened, an award, a deal that is not supply, or no word of any transaction at all."""
+    q = quote or ""
+    if NOT_YET.search(q):
         return False
-    return not (NOT_SUPPLY.search(quote or "") and not SUPPLY_WORDS.search(quote or ""))
+    if NOT_SUPPLY.search(q) and not SUPPLY_WORDS.search(q):
+        return False
+    return bool(SUPPLY_WORDS.search(q))
 
 
 def is_generic_name(name):
     return bool(name) and bool(GENERIC_NAME.match(name.strip())) and not re.search(r"\b(limited|ltd|inc|corp|llc|gmbh|ag|plc|pvt|private)\b", name, re.I)
+
+
+def basis_in_quote(basis, quote):
+    """A share is a share of REVENUE only if the quote talks about revenue, sales or turnover, and of PURCHASES only if it talks about purchases, procurement, sourcing or spend."""
+    if basis == "revenue":
+        return bool(re.search(r"\b(revenue|sales|turnover|income|business)\b", quote or "", re.I))
+    if basis == "purchases":
+        return bool(re.search(r"\b(purchas\w*|procur\w*|sourc\w*|expenditure|spend\w*|cost|supply|supplies)\b", quote or "", re.I))
+    return False
 
 
 def validate_answer(raw, pages_by_no, meta, now, schema):
@@ -264,11 +315,29 @@ def validate_answer(raw, pages_by_no, meta, now, schema):
         if GROUP_WORDS.search((e.get("counterparty_name") or "") + " " + (e.get("counterparty_anon_label") or "")):
             dropped.append("counterparty is a group, not one company")
             continue
-        if (e.get("counterparty_name") or "").strip() and not is_generic_name(e.get("counterparty_name")) and not names_the_counterparty(e["counterparty_name"], e["quote"]):
-            dropped.append("the quote does not name the counterparty")
+        nm = (e.get("counterparty_name") or "").strip()
+        if nm and not is_generic_name(nm):
+            why = bad_counterparty(nm)
+            if why:
+                dropped.append(f"counterparty is {why}, not one company")
+                continue
+            if not names_the_counterparty(nm, e["quote"]):
+                dropped.append("the quote does not name the counterparty")
+                continue
+        if anon and not label_in_quote(anon, e["quote"]):
+            dropped.append("the anonymous label is not in the quote")
+            continue
+        if anon and (bad_counterparty(anon) or TIER_RX.search(e["quote"])):
+            dropped.append("an unnamed counterparty that is a country, a category or a tier of suppliers, not one company")
+            continue
+        pe = period_end(e.get("period") or meta.get("period"))
+        if pe and pe > now + timedelta(days=400):
+            dropped.append("the period is in the future: not an existing relationship")
             continue
         basis = e.get("w_basis") if w is not None else None
         if w is not None and basis not in ("revenue", "purchases"):
+            w, basis = None, None
+        if w is not None and not basis_in_quote(basis, e["quote"]):         # "80% of total transactions with X" is neither a revenue nor a purchases share
             w, basis = None, None
         good_e.append({
             "name": (e.get("counterparty_name") or "").strip() or None, "anon": anon or None, "direction": e["direction"], "rel": e["rel"],
@@ -614,13 +683,24 @@ def resolve_anon(edges, min_conf=0.75):
 
 def clean_saved_edge(e):
     """The checks of validate_answer applied to an edge that is already in the graph: None = drop it; a descriptor saved as an external company becomes an anonymous customer."""
-    if not supply_quote_ok(e.get("q", "")):
-        return None
-    if e.get("wd") == "derived" and (e.get("w") or 0) < 0.0005:           # rounding noise (related_party_shares.MIN_SHARE)
+    derived = e.get("wd") == "derived"
+    if derived:                                                              # a derived share is judged by its own checks (related_party_shares.derive), not by the wording of a table row
+        if (e.get("w") or 0) < 0.0005:
+            return None                                                      # rounding noise (related_party_shares.MIN_SHARE)
+    elif not supply_quote_ok(e.get("q", "")):
         return None
     cp_id = e["d"] if e["own"] == e["s"] else e["s"]
-    if e.get("cpn") and not cp_id.startswith("ANON_") and not is_generic_name(e["cpn"]) and not names_the_counterparty(e["cpn"], e.get("q", "")):
-        return None                                                          # the quote does not name the counterparty
+    cpn = e.get("cpn")
+    if cpn and not cp_id.startswith("ANON_") and not is_generic_name(cpn):
+        if bad_counterparty(cpn) or not names_the_counterparty(cpn, e.get("q", "")):
+            return None                                                      # a country, a category, an association, or a name the quote does not contain
+    if cpn and cp_id.startswith("ANON_") and not derived and (not label_in_quote(cpn, e.get("q", "")) or bad_counterparty(cpn) or TIER_RX.search(e.get("q", ""))):
+        return None
+    pe = period_end(e.get("per"))
+    if pe and pe > now_utc() + timedelta(days=400):
+        return None
+    if e.get("w") is not None and not derived and not basis_in_quote(e.get("wb"), e.get("q", "")):
+        e = {**e, "w": None, "wb": None, "conf": round(max(0.0, e.get("conf", 0) - 0.2), 2)}
     if e.get("cpn") and is_generic_name(e["cpn"]) and not e["s"].startswith("ANON_") and not e["d"].startswith("ANON_"):
         cp = e["d"] if e["own"] == e["s"] else e["s"]
         if cp.startswith("EXT_"):
