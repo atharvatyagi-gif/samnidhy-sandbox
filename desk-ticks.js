@@ -4,9 +4,13 @@
    again. Never overrides the Angel One relay (LIVE.ok): ticks from this PC are only used when that is off.
    The label is "LIVE · NSE WEB (THIS PC, 1-3 min)", never "real-time": it is the free web feed, and NSE itself refreshes its lists only every 1 to 3 minutes (measured 7 Oct 2026). */
 import { LOCAL_TICKS_URL } from "./config.js";
+import { ClockSync } from "./desk-kin-live.js";
 
 let ctx = null, ws = null, timer = null, poll = null, fails = 0, connected = false, lastTickAt = 0, warned = new Set();
 const listeners = new Set();
+const clock = new ClockSync();
+/* the daemon's clock (from hello.t) when it is connected, else this PC's: fix ages are measured on it, so a wrong PC clock does not age every marker */
+export const serverNow = () => clock.now();
 const IDX = { "NIFTY 50": "^NSEI", "NIFTY BANK": "^NSEBANK" };
 const KEY = "aladin.ticks";
 const LOCAL = typeof location !== "undefined" && ["127.0.0.1", "localhost"].includes(location.hostname);       // (guarded so the module can be imported by the node tests)
@@ -76,7 +80,7 @@ function onMsg(m) {
   if (m.type === "telemetry") { teleListeners.forEach(cb => { try { cb(m); } catch (e) { /* one bad listener must not stop the rest */ } }); return; }   // independent of the price feed
   if (ctx.LIVE.ok) return;                                    // the relay feed wins
   if (m.type === "hello") {
-    connected = !!m.ok; fails = 0; lastTickAt = Date.now(); clearInterval(poll); poll = null; src = m.src || null;
+    clock.sync(m.t); connected = !!m.ok; fails = 0; lastTickAt = Date.now(); clearInterval(poll); poll = null; src = m.src || null;
     if (m.ok) { ctx.toast(`Local tick feed connected (${src === "angel" ? "Angel One, real-time, this PC" : "NSE web, this PC"})`); sendFocus(); }
     ctx.renderMast && ctx.renderMast();
   } else if (m.type === "snap" || m.type === "ticks") {

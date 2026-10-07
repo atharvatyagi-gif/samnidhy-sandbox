@@ -840,6 +840,7 @@ body.nx-open { overflow: hidden; }
 .nx-quote { margin: 6px 0; padding: 8px 12px; border-left: 2px solid var(--acc-edge); background: var(--sunken); font-size: 12.5px; line-height: 1.5; }
 .nx-skel i { display: block; height: 14px; margin: 12px 0; background: var(--sunken); }
 .nx-alt { margin-top: 10px; }
+@media (min-width: 701px) { .nx-docked .nx-back { pointer-events: none; background: transparent; } }
 @media (max-width: 700px) { .nx-drawer { top: auto; height: 88vh; width: 100vw; border-left: 0; border-top: 1px solid var(--rule-2); } }
 
 /* ---------- CMD ---------- */

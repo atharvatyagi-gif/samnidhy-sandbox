@@ -55,6 +55,11 @@ def load_cfg():
     c = load_json(CFG, {}) or {}
     base.update((c.get("nexus") or {}).get("transport") or {})
     base.update(c.get("telemetry") or {})
+    try:
+        if os.environ.get("TELEMETRY_INTERVAL_S"):
+            base["interval_s"] = max(5.0, float(os.environ["TELEMETRY_INTERVAL_S"]))
+    except ValueError:
+        pass
     return base
 
 

@@ -8,6 +8,7 @@
    Speed: the entity list is built once per data or layer change, not per frame; the globe projects points with its own orthographic formula (one sine and cosine per
    point); same-style points are drawn as one batched path; the canvas is only resized when its size really changed.
    ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. */
+import * as G3 from "./desk-globe3d.js";
 import { extrapolate, flightKin, vesselKin, docFromFull, applyTelemetry, ageLabel, CAPS } from "./desk-kin.js";
 import { onTelemetry } from "./desk-ticks.js";
 import { hotspotColor, hotspotRadius, isStale, ageMin, ageText, countIn, filterItems, mergeLayers } from "./desk-lanes.js";
@@ -22,6 +23,7 @@ const MAX_LIST = 300, RAD = Math.PI / 180;
 let ctx = null, mounted = false, mode = "map", lib = null, libFailed = null, loadingLib = null, loadingData = null;
 let layers = { ...DEFAULTS }, listQ = "", interacting = false, settleT = 0;
 const data = { lanes: null, transport: null, graph: null };
+let c2d = null, gl = null, g3 = null, g3Failed = null, engine = "d3", follow = false;
 let canvas = null, g2 = null, tip = null, W = 0, H = 0, dpr = 1, proj = null, pathGen = null, ro = null;
 let rot = [-78, -18], zoom = 1, pan = [0, 0], items = [], qtree = null, qDirty = true, raf = 0, press = null, moved = 0, ents = null, colors = null, colorsKey = null;
 
@@ -36,11 +38,12 @@ export function mount() {
   const bar = ctx.$("#gd-bar"); if (!bar) return;
   mounted = true;
   bar.innerHTML = `<div class="seg" id="gd-mode" role="group" aria-label="Map style"><button data-m="map" aria-pressed="true" class="on">Map</button><button data-m="globe" aria-pressed="false">Globe</button><button data-m="flat" aria-pressed="false">Flat</button><button data-m="list" aria-pressed="false">List</button></div>
+    <button class="btn-line sm" id="gd-follow" hidden aria-pressed="false">Follow</button>
     <div class="gd-layers" id="gd-layers" hidden></div><div class="gd-chips" id="gd-chips"></div>`;
-  bar.addEventListener("click", e => { const m = e.target.closest("[data-m]"); if (m) setMode(m.dataset.m); });
+  bar.addEventListener("click", e => { const m = e.target.closest("[data-m]"); if (m) setMode(m.dataset.m); if (e.target.closest("#gd-follow")) toggleFollow(); });
   bar.addEventListener("change", e => { const k = e.target.dataset && e.target.dataset.layer; if (k) { layers[k] = e.target.checked; saveLayers(); ents = null; render(); } });
   const wrap = ctx.$("#gd-wrap");
-  canvas = ctx.$("#gd-canvas"); tip = ctx.$("#gd-tip");
+  canvas = c2d = ctx.$("#gd-canvas"); tip = ctx.$("#gd-tip");
   if (wrap && canvas) {
     Object.defineProperty(canvas, "_items", { get: () => items.map(i => ({ x: i.x, y: i.y, type: i.e.type, id: i.e.id, kind: i.e.kind })) });     // read only by the browser tests, built on demand
     canvas.addEventListener("pointerdown", e => { press = { x: e.clientX, y: e.clientY }; moved = 0; try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointers cannot be captured */ } });
@@ -48,7 +51,9 @@ export function mount() {
     canvas.addEventListener("pointerup", onUp);
     canvas.addEventListener("pointerleave", () => { if (tip) tip.hidden = true; });
     canvas.addEventListener("wheel", e => { e.preventDefault(); zoom = Math.max(0.8, Math.min(6, zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12))); moving(); }, { passive: false });
-    ro = new ResizeObserver(() => { if (mode === "globe" || mode === "flat") schedule(); });
+    gl = ctx.$("#gd-gl");
+    if (gl) Object.defineProperty(gl, "_items", { get: () => (g3 ? g3.listPts.map(i => ({ x: i.x, y: i.y, type: i.type, id: i.id, kind: i.kind })) : []) });
+    ro = new ResizeObserver(() => { if (engine === "3d" && g3) g3.resize(); else if (mode === "globe" || mode === "flat") schedule(); });
     ro.observe(wrap);
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden) schedule(); });
@@ -59,6 +64,7 @@ function setMode(m) {
   if (!ctx || m === mode) return;
   mode = m;
   ctx.$$("#gd-mode button").forEach(b => { const on = b.dataset.m === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
+  if (m === "map" || m === "list") { if (g3) g3.close(); engine = "d3"; setCanvas("d3"); }
   const leaflet = ctx.$("#globe-map"), wrap = ctx.$("#gd-wrap"), list = ctx.$("#gd-list");
   if (leaflet) leaflet.hidden = m !== "map";
   if (wrap) wrap.hidden = !(m === "globe" || m === "flat");
@@ -67,8 +73,42 @@ function setMode(m) {
   if (m === "map") { ctx.resizeGlobe && ctx.resizeGlobe(); chips(); return; }
   paintLayerBox();
   ensureData().then(() => { ents = null; chips(); paintLayerBox(); render(); });
-  if (m === "globe" || m === "flat") ensureLib().then(() => render());
+  if (m === "globe" || m === "flat") ensureLib().then(() => start3d(m)).then(() => render());
 }
+
+/* ---------- the WebGL engine (desk-globe3d.js, three.js imported only now) with the D3 canvas as the fallback ---------- */
+/* the canvas that is on screen carries the id gd-canvas (the browser tests and the page look for that one) */
+function setCanvas(which) {
+  const two = c2d, three = gl;                                  // both elements were captured at mount: looking them up by id would find the wrong one after a swap
+  if (!two || !three) return;
+  two.id = which === "3d" ? "gd-canvas-2d" : "gd-canvas"; three.id = which === "3d" ? "gd-canvas" : "gd-gl";
+  two.hidden = which === "3d"; three.hidden = which !== "3d";
+  if (which !== "3d") canvas = two;
+}
+async function start3d(m) {
+  if (!lib) return fall3d(libFailed || "the map library did not load");
+  if (g3Failed || !G3.webglOk()) return fall3d(g3Failed || "WebGL is not available in this browser");
+  try {
+    if (!g3) {
+      g3 = await G3.create({ canvas: gl, wrap: ctx.$("#gd-wrap"), ctx, lib, hooks: {
+        pick: e => ctx.openNexus({ type: e.type, id: e.id }),
+        hover: (e, x, y) => { if (!tip) return; if (!e) { tip.hidden = true; return; } tip.innerHTML = `<b>${ctx.esc(e.name)}</b><br><span class="mut">${ctx.esc(e.type)} · ${ctx.esc(detailOf(e))}</span>`; tip.hidden = false; tip.style.left = Math.min(x + 12, (g3.W || 600) - 230) + "px"; tip.style.top = Math.max(4, y + 12) + "px"; },
+        select: id => { const b = ctx.$("#gd-follow"); if (b) { b.hidden = !id; if (!id) { follow = false; b.setAttribute("aria-pressed", "false"); b.classList.remove("on"); } } },
+        follow: on => { follow = on; const b = ctx.$("#gd-follow"); if (b) { b.setAttribute("aria-pressed", String(on)); b.classList.toggle("on", on); } },
+        governor: () => chips(),
+        lost: () => { g3Failed = "the graphics context was lost"; fall3d(g3Failed); },
+      } });
+    }
+    engine = "3d"; setCanvas("3d"); gl.__g3 = g3;                       // (the browser tests read g3.stats())
+    g3.open(m);
+    chips();
+  } catch (e) { fall3d(String((e && e.message) || e).slice(0, 80)); }
+}
+function fall3d(reason) {
+  g3Failed = reason; engine = "d3"; if (g3) { try { g3.close(); } catch (e) { /* already gone */ } }
+  setCanvas("d3"); chips(); schedule();
+}
+function toggleFollow() { if (!g3) return; follow = !follow; g3.setFollow(follow); const b = ctx.$("#gd-follow"); if (b) { b.setAttribute("aria-pressed", String(follow)); b.classList.toggle("on", follow); } }
 
 /* ---------- data (lazy) and libraries (lazy) ---------- */
 function ensureData() {
@@ -140,6 +180,14 @@ function chips() {
   const live = T.live ? "LIVE · THIS PC · " : "";
   el.innerHTML = `<span class="gd-chip${fOld ? " stale" : ""}" title="${ctx.esc(fs.attribution || "")}">${live}Flights · ${ctx.esc(fs.name || "OpenSky")} · ${cad} · newest fix ${ctx.esc(ageLabel(fAge))} old · ${nf} aircraft (${nc} on freighter callsigns)${fOld ? " · positions not live" : ""}</span>
     <span class="gd-chip${T.vessels ? (vOld ? " stale" : "") : " off"}" title="${ctx.esc((vs && vs.attribution) || "")}">${T.vessels ? `${live}Vessels · ${ctx.esc((vs && vs.name) || "AIS")} · newest fix ${ctx.esc(ageLabel(vAge))} old · ${T.vessels.length} ships${vOld ? " · positions not live" : ""}` : "Vessels · layer off: " + ctx.esc(T.reason || T.vessels_reason || "no feed")}</span>`;
+  el.insertAdjacentHTML("beforeend", extraChips());
+}
+/* the engine in use: a notice when WebGL is not available, and the governor's "Reduced detail" */
+function extraChips() {
+  const { esc } = ctx, out = [];
+  if ((mode === "globe" || mode === "flat") && g3Failed) out.push(`<span class="gd-chip stale" title="${esc(g3Failed)}">Flat 2D map: the 3D globe could not start (${esc(g3Failed)})</span>`);
+  if (engine === "3d" && g3 && g3.gov.reduced) out.push(`<span class="gd-chip stale" title="The frame rate dropped, so ${g3.gov.name === "no_trails" ? "trails are off" : g3.gov.name === "cap_2000" ? "trails are off and at most 2,000 markers are drawn" : "trails are off, at most 2,000 markers are drawn and the sharpness is lowered"}; it steps back up after 10 s of smooth frames">Reduced detail</span>`);
+  return out.join("");
 }
 
 /* messages from the local daemon (only arrive on the PC running it): a full snapshot, then deltas. The public snapshot is ignored while they flow. */
@@ -157,6 +205,7 @@ const liveNow = () => !!liveDoc && Date.now() / 1000 - liveDoc.lastMsgAt < 180;
 function render() {
   chips();
   if (mode === "list") return renderList();
+  if (engine === "3d" && g3 && (mode === "globe" || mode === "flat")) { g3.sync(entities(), data.lanes, layers); return; }
   if (mode === "globe" || mode === "flat") schedule();
 }
 /* called while the viewer is dragging or zooming */

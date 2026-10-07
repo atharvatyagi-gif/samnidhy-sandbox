@@ -655,7 +655,7 @@ async def serve(hub, source, port, *, host="127.0.0.1", dump_path=None, stop=Non
     from websockets.asyncio.server import serve as ws_serve, broadcast
     stop = stop or asyncio.Event()
     clients = set()
-    hello = lambda: {"type": "hello", "ok": True, "src": hub.src_name, "port": port, "market": hub.market(), "stale": hub.stale()}
+    hello = lambda: {"type": "hello", "ok": True, "src": hub.src_name, "port": port, "market": hub.market(), "stale": hub.stale(), "t": round(time.time(), 3)}
 
     async def handler(ws):
         clients.add(ws)

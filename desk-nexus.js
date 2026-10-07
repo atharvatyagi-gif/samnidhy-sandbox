@@ -118,6 +118,9 @@ export async function openNexus(a) {
   document.body.classList.add("nx-open");
   paintHead();
   root.querySelector("#nx-body").innerHTML = '<div class="nx-skel" aria-busy="true"><i></i><i></i><i></i></div>';
+  const globeOpen = (() => { const v = document.getElementById("v-globe"); return !!v && !v.hidden && v.offsetParent !== null; })();
+  root.classList.toggle("nx-docked", globeOpen);                                   // on the Globe, a desktop-width drawer sits beside it and leaves it usable
+  root.querySelector(".nx-drawer").setAttribute("aria-modal", globeOpen && window.innerWidth > 700 ? "false" : "true");
   root.querySelector(".nx-drawer").focus();
   await load();
   await loadExtra();

@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 BASE = "http://127.0.0.1:8765/expert-dev.html"
 TABS = ["brief", "terminal", "movers", "sectors", "houses", "world", "outlook", "news", "globe", "lab"]
 ok = []
+GL_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-webgl"]      # software WebGL, so the headless browser can run the 3D globe
 
 
 def check(name, cond, extra=""):
@@ -30,7 +31,7 @@ def check(name, cond, extra=""):
 
 
 def page_for(pw, size=(1440, 900), init=None, throttle=None, routes=None):
-    b = pw.chromium.launch()
+    b = pw.chromium.launch(args=GL_ARGS)
     ctx = b.new_context(viewport={"width": size[0], "height": size[1]})
     pg = ctx.new_page()
     errs, reqs = [], []

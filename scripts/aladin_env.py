@@ -24,6 +24,21 @@ SETTINGS = {
     "HF_TOKEN": ("avoids Hugging Face download rate limits for FinBERT", "anonymous download (slower, may be limited)"),
     "ALADIN_GIT_PUSH": ("set to 1 to let the loops commit and push their outputs", "nothing is ever pushed (the default)"),
     "ALADIN_WS_PORT": ("port of the local tick feed", "8787"),
+    "ANGEL_API_KEY": ("Angel One live ticks (needs a demat account)", "the free NSE web feed (about 300 stocks, refreshed by NSE every 1-3 minutes)"),
+    "ANGEL_CLIENT_CODE": ("Angel One live ticks", "same as above"),
+    "ANGEL_MPIN": ("Angel One live ticks", "same as above"),
+    "ANGEL_TOTP_SECRET": ("Angel One live ticks", "same as above"),
+    "ALADIN_SOURCE": ("auto, angel or nse-web: which live source the local daemon uses", "auto: Angel One when its four settings exist, else the free NSE feed"),
+    "LLM_PROVIDER": ("groq, gemini or auto: which free model reads the filings", "auto"),
+    "GROQ_API_KEY_1": ("a second Groq key: its own daily allowance for the graph builder", "only the first key's quota"),
+    "GEMINI_API_KEY_1": ("a second Gemini key: its own daily allowance", "only the first key's quota"),
+    "GEOCODE_CONTACT": ("an email in the geocoder's User-Agent (OpenStreetMap asks for one)", "a generic description"),
+    "OPENSKY_CLIENT_ID": ("OpenSky OAuth2 login for a bigger flight quota (4,000 credits a day)", "anonymous access (400 credits a day)"),
+    "OPENSKY_CLIENT_SECRET": ("pairs with OPENSKY_CLIENT_ID", "anonymous access"),
+    "AISSTREAM_API_KEY": ("free AISstream key for ship positions", "the vessel layer stays off and says why"),
+    "AISHUB_USERNAME": ("AISHub membership (members who share an AIS feed only; one request a minute)", "not used"),
+    "VESSELAPI_KEY": ("VesselAPI plan (paid; that source is switched off until its terms are verified)", "not used"),
+    "TELEMETRY_INTERVAL_S": ("the refresh rate asked of the flight and vessel telemetry (default 30); the credit budgeter may make it slower", "30 asked, whatever the quota allows is achieved"),
 }
 
 

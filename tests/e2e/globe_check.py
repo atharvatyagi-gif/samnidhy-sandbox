@@ -79,7 +79,12 @@ def items(pg):
 
 
 def drawn(pg):
-    """True when the canvas has real pixels (not blank)."""
+    """True when the canvas has real pixels (not blank). The 2D fallback is read directly; the WebGL canvas is judged from a screenshot of it (it has several colours)."""
+    if pg.evaluate("document.querySelector('#gd-canvas').dataset.engine") == "webgl":
+        import io
+        from PIL import Image
+        im = Image.open(io.BytesIO(pg.locator("#gd-canvas").screenshot())).convert("RGB").resize((120, 80))
+        return len(set(im.getdata())) > 12
     return pg.evaluate("""() => { const c = document.querySelector('#gd-canvas'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
         let n = 0; for (let i = 3; i < d.length; i += 400) if (d[i] > 0) n++; return n > 200; }""")
 
@@ -237,17 +242,20 @@ def run():
         MEASURE = """() => new Promise(res => { const c = document.querySelector('#gd-canvas'), t = []; let k = 0;
             const step = () => { const t0 = performance.now(); c.dispatchEvent(new WheelEvent('wheel', { deltaY: k % 2 ? 100 : -100, cancelable: true }));
               requestAnimationFrame(() => { t.push(performance.now() - t0); if (++k < 60) setTimeout(step, 0); else res(t.slice(6).reduce((a, b) => a + b, 0) / (t.length - 6)); }); }; step(); })"""
-        ms = pg.evaluate(MEASURE)
-        for layer in ("hot", "choke", "cargo", "air", "ship", "plant", "lane"):
-            pg.uncheck(f'[data-layer="{layer}"]')
-        pg.wait_for_timeout(500)
-        ms_base = pg.evaluate(MEASURE)                                           # the same globe with every layer off: the cost of the base map alone
-        fps, cost = 1000 / ms, ms - ms_base
-        real = cost / 4                                                           # the browser was slowed 4x: this is what the items cost at the machine's own speed
-        # A machine's speed varies (this one has measured 17 ms and 43 ms for the SAME empty globe on different days), so the test asks for 30 frames a second at 4x
-        # slower CPU when the machine allows it, and otherwise that all 3,875 items cost under 8 ms of real drawing time a frame (half of a 60 fps frame).
-        check(f"Globe holds >= 30 frames/s with {n} drawn items (2,500 flights + 1,500 vessels) at 4x slower CPU, or the items cost under 8 ms a frame at normal speed", fps >= 30 or real <= 8,
-              f"{fps:.0f} fps = {ms:.1f} ms a frame with everything on; {ms_base:.1f} ms with every layer off; the items cost {cost:.1f} ms throttled = {real:.1f} ms at normal speed, measured inside the page")
+        if pg.evaluate("document.querySelector('#gd-canvas').dataset.engine") == "webgl":
+            check(f"WebGL globe draws the heavy snapshot ({n} pickable items); its frame rate, governor and memory are measured in tests/e2e/globe3d_check.py", n >= 1000, n)
+        else:
+            ms = pg.evaluate(MEASURE)
+            for layer in ("hot", "choke", "cargo", "air", "ship", "plant", "lane"):
+                pg.uncheck(f'[data-layer="{layer}"]')
+            pg.wait_for_timeout(500)
+            ms_base = pg.evaluate(MEASURE)                                           # the same globe with every layer off: the cost of the base map alone
+            fps, cost = 1000 / ms, ms - ms_base
+            real = cost / 4                                                           # the browser was slowed 4x: this is what the items cost at the machine's own speed
+            # A machine's speed varies (this one has measured 17 ms and 43 ms for the SAME empty globe on different days), so the test asks for 30 frames a second at 4x
+            # slower CPU when the machine allows it, and otherwise that all 3,875 items cost under 8 ms of real drawing time a frame (half of a 60 fps frame).
+            check(f"Globe holds >= 30 frames/s with {n} drawn items (2,500 flights + 1,500 vessels) at 4x slower CPU, or the items cost under 8 ms a frame at normal speed", fps >= 30 or real <= 8,
+                  f"{fps:.0f} fps = {ms:.1f} ms a frame with everything on; {ms_base:.1f} ms with every layer off; the items cost {cost:.1f} ms throttled = {real:.1f} ms at normal speed, measured inside the page")
         check("heavy snapshot: 0 console errors", not errs, errs[:3])
         b.close()
 
