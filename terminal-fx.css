@@ -1,0 +1,19 @@
+/* terminal-fx.css: motion for the expert terminal. Colours come only from the terminal's own tokens (terminal.css :root); the look is unchanged. */
+.view.on { animation: fxViewIn 160ms ease-out; }
+@keyframes fxViewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.fx-skel { background: var(--card-hover); border-radius: var(--r); animation: fxPulse 1.4s ease-in-out infinite; }
+@keyframes fxPulse { 50% { opacity: .55; } }
+.tbl tbody tr, .wl-row, .tabs button { transition: background-color 150ms, color 150ms, border-color 150ms; }
+
+/* boot sequence: shown once per browser session, skippable (Esc / any key / click), never under reduced motion */
+html.fx-boot body > :not(.fx-boot-ov) { visibility: hidden; animation: fxBootFailsafe 0s 3.2s forwards; }   /* if the script never loads, the page appears anyway */
+@keyframes fxBootFailsafe { to { visibility: visible; } }
+.fx-boot-ov { position: fixed; inset: 0; z-index: 3000; display: grid; place-content: center; justify-items: center; gap: 18px; background: var(--paper); color: var(--ink); visibility: visible; transition: opacity 260ms ease-out; }
+.fx-boot-ov.out { opacity: 0; pointer-events: none; }
+.fx-boot-ov b { font: 700 28px var(--mono); letter-spacing: 0.04em; }
+.fx-boot-ov span { font: 12px var(--mono); color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
+.fx-boot-bar { width: min(280px, 70vw); height: 2px; background: var(--rule-2); overflow: hidden; }
+.fx-boot-bar i { display: block; height: 100%; background: var(--ink); transform: scaleX(0); transform-origin: 0 50%; animation: fxBoot 900ms cubic-bezier(.65, 0, .35, 1) forwards; }
+@keyframes fxBoot { to { transform: scaleX(1); } }
+.fx-boot-ov kbd { font: 11px var(--mono); color: var(--ink-3); }
+@media (prefers-reduced-motion: reduce) { .view.on, .fx-skel { animation: none; } }

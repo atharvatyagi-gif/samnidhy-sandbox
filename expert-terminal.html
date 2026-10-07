@@ -15,6 +15,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="terminal.css">
+<link rel="stylesheet" href="terminal-fx.css">
+<script>
+  /* boot screen once per session; never with reduced motion */
+  try { if (!matchMedia("(prefers-reduced-motion: reduce)").matches && !sessionStorage.getItem("fx-boot")) { sessionStorage.setItem("fx-boot", "1"); document.documentElement.classList.add("fx-boot"); } } catch (e) { /* storage blocked: no boot screen */ }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
@@ -65,9 +70,9 @@
     <button data-go="sectors">Sectors</button>
     <button data-go="houses">Houses</button>
     <button data-go="world">World</button>
+    <button data-go="map">Map</button>
     <button data-go="outlook">Outlook</button>
     <button data-go="news">News</button>
-    <button data-go="globe">Globe</button>
     <button data-go="lab">Tools</button>
     <span class="grow"></span>
     <button class="tab-side" data-go="terminal" data-side="watch">Watchlist <b id="wl-count">0</b></button>
@@ -270,7 +275,7 @@
       </div>
     </section>
 
-    <section class="view" id="v-globe">
+    <section class="view" id="v-map">
       <div class="page">
         <div class="page-head"><p class="kick">— Live flights (OpenSky) · real news (Google News) · 7 shipping &amp; oil chokepoints · last 7 days only</p><h2>Where the world's <span class="acc">oil and trade move.</span></h2><p class="asof" data-asof="globe"></p></div>
         <p class="lede">Live aircraft positions and real news from the last 7 days around the 7 straits and canals that carry most of the world's oil and seaborne trade. There is no free source of live cargo-ship positions, so ships aren't drawn here — each chokepoint's card below has real news about it instead. Click a point on the map, or a card, for details.</p>
@@ -355,5 +360,6 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <!--TERMINAL-BODY-END-->
 <script type="module" src="terminal.js"></script>
+<script src="terminal-fx.js"></script>
 </body>
 </html>
