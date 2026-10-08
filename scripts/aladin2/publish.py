@@ -47,7 +47,7 @@ def _strategy_cards(state):
     return sorted(out, key=lambda c: (order.get(c["state"], 9), c["id"]))
 
 
-def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None, mode=None, weekly_path=None):
+def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None, mode=None, weekly_path=None, paper_dir=None):
     out = Path(out); cfg = C.load_cfg()
     if mode:
         cfg["signal_labels"] = mode
@@ -118,6 +118,9 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None, mod
     cf = state_dir / "learning_curve.jsonl"; curve = [json.loads(x) for x in cf.read_text().splitlines() if x.strip()] if cf.exists() else []
     score["learning_curve"] = curve; score["barrier_check_20d"] = {k: v for k, v in (p3.get("barrier_check_20d") or {}).items() if k in ("touch_up_1sigma", "touch_down_1sigma", "paths_80pct_band_coverage_20d")}
     index = {"as_of": fc["d"], "created": fc["created"], "mode": cfg["signal_labels"], "labels": labels, "counts": states, "horizons": Hs, "cols": ["sym", "state", "signal", "lo80_5d", "hi80_5d", "lo80_20d", "hi80_20d", "sector"], "rows": rows, "disclaimer": cfg["disclaimer"]}
+    for name, src in (("paper_live.json", Path(paper_dir or DATA / "paper") / "live.json"), ("paper_backtest.json", Path(paper_dir or DATA / "paper") / "backtest.json")):          # the paper account: the live front test and the historical simulation
+        if src.exists():
+            (out / name).write_bytes(src.read_bytes()); sizes[name] = src.stat().st_size
     index["weekly"] = {"as_of": wk["book"]["as_of"], "counts": wk["book"]["counts"]} if wk and wk.get("built") else None
     if wk and wk.get("built"):
         wk["labels"] = labels; wk["mode"] = cfg["signal_labels"]; sizes["weekly.json"] = _w(out / "weekly.json", wk); score["weekly_live_record"] = wk["live_record"]
@@ -135,7 +138,7 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None, mod
         sizes["method.json"] = _w(out / "method.json", json.loads(mf.read_text(encoding="utf-8")))
     jf = journal_dir / "journal.json"
     sizes["journal.json"] = _w(out / "journal.json", json.loads(jf.read_text()) if jf.exists() else {"events": []})
-    total = sum(sizes.values()); biggest = max((v for k, v in sizes.items() if k not in ("index.json", "scoreboard.json", "journal.json", "market_map.json", "weekly.json", "method.json", "regime.json")), default=0)
+    total = sum(sizes.values()); biggest = max((v for k, v in sizes.items() if k not in ("index.json", "scoreboard.json", "journal.json", "market_map.json", "weekly.json", "paper_live.json", "paper_backtest.json", "method.json", "regime.json")), default=0)
     return {"built": True, "as_of": fc["d"], "stocks": len(rows), "total_bytes": total, "index_bytes": sizes["index.json"], "biggest_stock_shard_bytes": biggest, "states": states}
 
 

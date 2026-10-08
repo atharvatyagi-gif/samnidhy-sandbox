@@ -32,3 +32,10 @@ test("dependencies list who a company supplies and who supplies it, biggest shar
   const none = dependenciesOf(G, "NOPE"); assert.equal(none.rows.length, 0); assert.equal(none.read, false); assert.equal(none.done, 212); assert.equal(none.total, 3525); assert.equal(dependenciesOf({ edges: [] }, "AAA").rows.length, 0); assert.equal(dependenciesOf(null, "AAA"), null);
   assert.equal(dependenciesOf(G, "EMPTY").read, true);
 });
+
+import { downsample, compound, lineChart } from "../../desk-signals.js";
+test("paper account helpers: weekly returns compound from the budget, long series are thinned but keep both ends, charts say what they show", () => {
+  const c = compound([["2026-01-02", 0.1], ["2026-01-09", -0.1]], 100); assert.ok(Math.abs(c[0][1] - 110) < 1e-9 && Math.abs(c[1][1] - 99) < 1e-9); assert.deepEqual(compound(null, 100), []);
+  const a = Array.from({ length: 1000 }, (_, i) => i), d = downsample(a, 100); assert.equal(d.length, 100); assert.equal(d[0], 0); assert.equal(d[99], 999); assert.equal(downsample([1, 2], 100).length, 2);
+  const svg = lineChart([{ name: "Paper account", pts: [["2020-01-01", 100], ["2021-01-01", 120]], cls: "a" }], { base: 100, label: "value", fmt: v => "Rs " + v.toFixed(0) }); assert.match(svg, /aria-label="value"/); assert.match(svg, /Paper account/); assert.match(svg, /Rs 120/); assert.equal(lineChart([{ name: "x", pts: [["2020-01-01", 1]] }]), "");
+});

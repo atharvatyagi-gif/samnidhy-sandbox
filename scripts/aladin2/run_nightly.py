@@ -10,7 +10,7 @@ Steps (each may fail without stopping the rest; failures are in the report):
   3 learn     rebuild every strategy's trades, rerun the pooled walk-forward to today (the SAME code as the research replay), write strategy states, journal every transition with its evidence
   4 drift     PSI / KS / volatility-regime checks for Probation and Active strategies; alarms go to the journal and into the next lifecycle step
   5 discover  grammar-bounded search for new rules, capped by the discovery budget; survivors enter the strategy registry as Candidates
-  6 forecast  today's forecasts for the top 500 into the ledger, signals and product states, kill switches
+  6 forecast  today's forecasts for the liquid universe (forecast.universe_top) into the ledger, signals and product states, kill switches
   7 publish   journal.json, run_report.json, job summary table
 Weekly (Sunday) the learn step also refits the quantile models from scratch (they are refit nightly in this version; the weekly flag is recorded in the report).
 """
@@ -40,7 +40,7 @@ from . import run_phase2 as P
 from .strategies import registry as R
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-STEPS = ["ingest", "resolve", "learn", "drift", "discover", "forecast", "weekly", "bot", "publish"]
+STEPS = ["ingest", "resolve", "learn", "drift", "discover", "forecast", "weekly", "paper", "bot", "publish"]
 
 
 class Run:
@@ -190,6 +190,11 @@ class Run:
             return r.get("why", "not built")
         b = r["book"]; self.counts["weekly"] = b["counts"]; return f"as of {b['as_of']}: bull {b['counts']['bull']}, bear {b['counts']['bear']}, hold {b['counts']['hold']}; ledger {r['ledger_status']}; {r['outcome_lines_written']} outcome lines"
 
+    def s_paper(self):
+        from . import paper as PP
+        d = PP.run_live(str(self.ledger), str(self.base / "paper" / "live.json")); st = d["stats"]
+        return f"live paper account: {len(d['books_used'])} book(s); " + (f"equity {st['end_equity']:,.0f} ({st['return_pct']}%), {st['trades']} closed trades, {len(d['open'])} open" if st.get("started") else "no live trade yet (the first Friday book enters at the next open)")
+
     def s_bot(self):
         from . import bot as BT
         code = os.environ.get("ALADIN_BOT_CODE", "")
@@ -203,7 +208,7 @@ class Run:
     # ------------------------------------------------------------------ driver
     def run_day(self, day, steps):
         done = self.done_steps(day) if self.a.resume else set(); self.rows = []; self.errors = []
-        fns = {"ingest": self.s_ingest, "resolve": self.s_resolve, "learn": self.s_learn, "drift": self.s_drift, "discover": self.s_discover, "forecast": self.s_forecast, "weekly": self.s_weekly, "bot": self.s_bot, "publish": self.s_publish}
+        fns = {"ingest": self.s_ingest, "resolve": self.s_resolve, "learn": self.s_learn, "drift": self.s_drift, "discover": self.s_discover, "forecast": self.s_forecast, "weekly": self.s_weekly, "paper": self.s_paper, "bot": self.s_bot, "publish": self.s_publish}
         for s in [x for x in STEPS if x in steps]:
             self.step(s, fns[s], day, done)
         rep = {"day": day, "weekday": pd.Timestamp(day).day_name(), "full_refit_day": pd.Timestamp(day).weekday() == 6, "budget_min": self.a.budget_min, "total_s": round(time.time() - self.t0), "steps": [{"step": n, "seconds": s, "note": m} for n, s, m in self.rows],
