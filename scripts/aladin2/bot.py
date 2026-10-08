@@ -111,6 +111,7 @@ def build_payload(weekly=None, study=None, phase3=None, ledger_lines=None, journ
             px = (prices or {}).get(r["sym"]) or {}
             traces.append({"sym": r["sym"], "name": r["name"], "sector": r["sector"], "signal": key, "close": r["close"], "rank_pct": r["rank_pct"], "p5": r["p5"], "chance": r.get("chance"), "cost_bps": r["round_trip_cost_bps"], "entry_zone": r.get("entry_zone"), "invalidation": r.get("invalidation"), "exit": r["exit"],
                            "what_to_do": r["what_to_do"], "fno": r["fno"], "evidence": r["evidence"], "size": r.get("size_for_capital"), "record": r.get("record"), "series": px, "range5": ((r["evidence"] or {}).get("range_5d_80pct"))})
+    scan = sorted(([sy, round(v[0], 4), v[1], v[2]] for sy, v in (book.get("ranks") or {}).items()), key=lambda r: -r[1])     # every ranked stock: symbol, rank percentile, chance of closing higher, chance of beating the market
     act = []
     for f in fcs[-3:]:
         act.append({"when": f["created"], "what": f"Wrote the forecast batch for the {f['d']} close: {len(f['syms'])} stocks x {len(f['H'])} horizons ({len(f['syms']) * len(f['H']):,} ranges), model {f['v']}"})
@@ -121,7 +122,7 @@ def build_payload(weekly=None, study=None, phase3=None, ledger_lines=None, journ
     for e in ((journal or {}).get("events") or [])[:8]:
         act.append({"when": e["date"], "what": e["text"], "historical": e.get("historical")})
     return {"v": 1, "as_of": book.get("as_of"), "built_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "mode": (weekly or {}).get("mode"), "labels": (weekly or {}).get("labels"), "disclaimer": (weekly or {}).get("disclaimer"),
-            "kpis": k, "stages": stages, "charts": cs, "traces": traces, "activity": act, "status": {"engine_suspended": (summary or {}).get("engine_suspended"), "states": (summary or {}).get("product_state_counts"), "kill_reasons": (summary or {}).get("kill_reasons"), "rule": book.get("rules")},
+            "kpis": k, "stages": stages, "charts": cs, "scan": scan, "traces": traces, "activity": act, "status": {"engine_suspended": (summary or {}).get("engine_suspended"), "states": (summary or {}).get("product_state_counts"), "kill_reasons": (summary or {}).get("kill_reasons"), "rule": book.get("rules")},
             "decision_steps": ["Rank the stock's 5-day score among all liquid stocks", "Compare the rank with the fixed cut-offs (best 1%, worst 5%)", "Look up the measured chance for that rank", "Subtract the stock's round-trip cost", "Set the exit level and the 5-day time limit", "Size the position for your capital and stand aside if the edge is inside the cost"]}
 
 
@@ -137,7 +138,7 @@ def build_from_files(code, out=None):
     for r in weekly["book"]["bull"] + weekly["book"]["bear"]:
         px = L.load_prices(r["sym"])
         if px is not None:
-            px = px.tail(120); prices[r["sym"]] = {"d": [str(x.date()) for x in px.index], "c": [round(float(x), 2) for x in px["c"]]}
+            px = px.tail(120); prices[r["sym"]] = {"d": [str(x.date()) for x in px.index], **{k: [round(float(x), 2) for x in px[k]] for k in ("o", "h", "l", "c")}}
     term = Path(L.TERM) / "aladin2"; cnt = {"price_files": len(list((Path(L.TERM) / "daily").glob("*.json"))), "deliv_files": len(list((term / "deliv").glob("2*.csv.gz"))), "fno_files": len(list((term / "fno").glob("2*.json"))),
                                             "last_bar": str(L.load_index().index[-1].date())}
     payload = build_payload(weekly, study, _j(DATA / "phase3_report.json"), led, _j(DATA / "journal.json"), _j(DATA / "state" / "latest_summary.json"), _j(DATA / "state" / "run_report.json"), _j(DATA / "state" / "strategies.json"), prices, _j(ROOT / "data" / "aladin" / "latest.json"), cnt)
