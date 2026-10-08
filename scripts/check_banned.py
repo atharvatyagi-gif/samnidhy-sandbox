@@ -20,7 +20,7 @@ BANNED = re.compile(r"buy|sell|target|recommendation|guaranteed", re.I)
 DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice."
 NEW_JS = ["desk-globe-layers.js", "terminal-guide.js", "site-guide.js", "glossary.js", "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe3d.js", "desk-aladin2.js", "desk-a2views.js"]
 NEW_HTML = [r'<section class="view" id="v-houses">.*?</section>', r'<section class="view" id="v-lab">.*?</section>', r'<div class="geo-desk" id="geo-desk"></div>', r'<section class="view" id="v-map">.*?</section>']
-CONFIG_JSON = ["business_houses.json", "geo_exposure.json", "aladin_method.json", "news_aliases.json", "tone_words.json", "aladin_config.json", "trade_lanes.json", "cargo_carriers.json", "aladin2.json"]            # nexus_sources.json is instructions to a model, not served and not shown
+CONFIG_JSON = ["aladin2_method.json", "business_houses.json", "geo_exposure.json", "aladin_method.json", "news_aliases.json", "tone_words.json", "aladin_config.json", "trade_lanes.json", "cargo_carriers.json", "aladin2.json"]            # nexus_sources.json is instructions to a model, not served and not shown
 SERVED_JSON = ["aladin/latest.json", "aladin/sentiment.json", "aladin/geo.json", "aladin/moves.json", "aladin/shocks.json", "aladin/impact.json", "supply_graph.json",
                "config/business_houses.json", "config/aladin_method.json", "config/trade_lanes.json", "paper_trades/portfolio.json", "live_extra/aladin_telemetry.json"]
 SYMBOL = re.compile(r"^[A-Z0-9&.\-]{1,24}$")                           # a key that is a stock symbol is data, not wording
@@ -84,6 +84,8 @@ def check(root=ROOT):
     readme = (root / "README.md").read_text(encoding="utf-8")
     if "<!-- ALADIN-METHOD:START" in readme and (h := hits(readme[readme.index("<!-- ALADIN-METHOD:START"):readme.index("<!-- ALADIN-METHOD:END -->")])):
         problems.append(f"README methodology block: {h}")
+    if "<!-- ALADIN2-METHOD:START" in readme and (h := hits(readme[readme.index("<!-- ALADIN2-METHOD:START"):readme.index("<!-- ALADIN2-METHOD:END -->")])):
+        problems.append(f"README ALADIN 2.0 methodology block: {h}")
     for rel in SERVED_JSON:
         p = root / "data" / rel
         if not p.exists():

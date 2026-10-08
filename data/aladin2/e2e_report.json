@@ -1,0 +1,191 @@
+{
+ "base": "http://127.0.0.1:8767",
+ "viewports": {
+  "desk": {
+   "desk_ready_ms": 1218,
+   "aladin2_requests_before_opening_a_stock_or_the_tab": [
+    "stock/TCS.json",
+    "scoreboard.json",
+    "regime.json"
+   ],
+   "pages": {
+    "score": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 5,
+     "svg_charts_with_aria_label": 5,
+     "svg_titles": 65,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "map": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "rot": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 1,
+     "svg_charts_with_aria_label": 1,
+     "svg_titles": 18,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "board": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "journal": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "curve": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 1,
+     "svg_charts_with_aria_label": 1,
+     "svg_titles": 24,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "method": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    }
+   },
+   "brief": {
+    "disclaimer": true,
+    "as_of": true,
+    "svg_titles": 7,
+    "svg_with_label": 3,
+    "inputs_labelled": true,
+    "table_fallback": true
+   },
+   "keyboard_open_from_map": {
+    "focused_tile": "HDFCBANK",
+    "terminal_symbol": "HDFCBANK"
+   },
+   "js_errors": [],
+   "unexpected_404s": []
+  },
+  "phone": {
+   "desk_ready_ms": 986,
+   "aladin2_requests_before_opening_a_stock_or_the_tab": [
+    "stock/TCS.json",
+    "scoreboard.json",
+    "regime.json"
+   ],
+   "pages": {
+    "score": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 5,
+     "svg_charts_with_aria_label": 5,
+     "svg_titles": 65,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "map": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "rot": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 1,
+     "svg_charts_with_aria_label": 1,
+     "svg_titles": 18,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "board": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "journal": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "curve": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 1,
+     "svg_charts_with_aria_label": 1,
+     "svg_titles": 24,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
+    "method": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    }
+   },
+   "brief": {
+    "disclaimer": true,
+    "as_of": true,
+    "svg_titles": 7,
+    "svg_with_label": 3,
+    "inputs_labelled": true,
+    "table_fallback": true
+   },
+   "keyboard_open_from_map": {
+    "focused_tile": "HDFCBANK",
+    "terminal_symbol": "HDFCBANK"
+   },
+   "js_errors": [],
+   "unexpected_404s": []
+  }
+ },
+ "throttled_stock_shard": {
+  "profile": "150 ms round trip, 1.6 Mbit/s",
+  "ms_median": 200,
+  "ms_max": 215,
+  "bytes": [
+   5988,
+   5988,
+   5953,
+   5859,
+   5960
+  ]
+ }
+}

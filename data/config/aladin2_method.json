@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
+  "sections": [
+    {
+      "h": "What ALADIN 2.0 is, and what it is not",
+      "p": [
+        "ALADIN 2.0 gives every one of the 500 most-traded NSE stocks a forecast range (where the price is likely to be in 1, 5, 10, 20 and 60 trading days), tracks how often those ranges turn out right, and keeps testing whether any trading rule has a real, repeatable edge after costs. It learns from its own results: it keeps the rules that keep working, retires the ones that stop, and tests new ones.",
+        "It cannot promise returns or keep your money safe. Markets are close to efficient, real edges are small and fade, and the honest answer for most stocks on most days is NO EDGE: stand aside. Standing aside is a result, not a failure. No number here is advice, and nothing here places an order."
+      ]
+    },
+    {
+      "h": "What the data is, and the rules that keep it honest",
+      "p": [
+        "Prices are NSE daily bars, adjusted for splits and bonus issues but not for dividends, joined from the desk's five-year files and older archive files (many stocks go back to the 1990s). Every feature at day t uses only information public by the close of day t, and a trade may only happen at the open of day t+1. Data that arrives after the close (delivery percentage, open interest, foreign exchange, global indices) is lagged by a further trading day before use; quarterly results are usable only from their filing date, or 60 days after the period end when the filing date is unknown.",
+        "A single-day move beyond 35% that reverses the next day is treated as a bad print and dropped. A move beyond 35% that stays is treated as an unadjusted corporate action: it is flagged, no new trade is opened for 250 days after it, and any trade that would hold across it is discarded. Days when a stock is locked at a price limit, has no volume, or has too little traded value for a Rs 1 lakh order (more than 5% of the day's value) are never filled.",
+        "Survivorship: the universe is stocks that are listed today. Stocks that fell hard and were delisted are missing, which flatters results from entering after steep falls by an amount that cannot be measured from free data. Historical index membership is not available free either, so each day's universe is the 500 stocks with the highest traded value known the day before, not today's index list."
+      ]
+    },
+    {
+      "h": "How a strategy is judged",
+      "p": [
+        "The library has 34 rules in five families (trend, short-term reversal, volatility, relative strength, delivery flow) plus a naive momentum rule as a baseline. Every trade is costed with the full Indian cost stack (brokerage, securities transaction tax, exchange fee, regulator fee, GST on fees, stamp duty, and slippage that rises as liquidity falls: round trips cost about 34, 50 and 100 basis points for the most liquid, middle and least liquid stocks). Cash-equity delivery cannot be shorted, so a bearish reading means exit or stay out, never a short.",
+        "A rule is judged on trades measured against what the equal-weight universe earned over the same days (a stock's own drift was tried and rejected: measured over the same block it rewards entering after drops, measured before it rewards trend rules). Evidence is gathered per rule across the whole universe, with calendar months resampled in blocks as long as twice the holding time so overlapping trades are not counted as independent. Rules must pass a false-discovery test across everything tested together, have a positive lower bound, have neighbouring settings agree, be positive in most years, and still be positive in the last 500 days.",
+        "The whole selection process is itself tested on data it has not seen, block by block from 2012, and the result is what ALADIN's rule-selection would actually have done, not what the best rule did. Looking at each stock on its own never passed this test: one stock has too few trades to prove anything against thousands of comparisons. So evidence is pooled across stocks and a stock's own record can only veto a rule, not create one."
+      ]
+    },
+    {
+      "h": "How it learns, and what it may not do",
+      "p": [
+        "A rule moves Candidate, Probation, Active, Demoted, Retired. It enters Probation when it passes on past data, becomes Active only after at least 60 days of paper trading going forward with a significant result, is demoted when a CUSUM alarm, a drift alarm or a loss of evidence says so, and is retired if it has not recovered within 40 days. A retired rule returns only with fresh evidence. At most four rules are Active for a stock. Every change is written to the learning journal with its numbers.",
+        "New rules come from a fixed grammar (up to three simple conditions on prices, volume and volatility, one holding rule, an optional calm-market filter). A rule is data; ALADIN never writes or runs code. The bar for a new rule rises with the number of rules ever tested, it must survive losing 100 basis points a trade (a survivorship stress), and it must be positive on data the search never saw. Most fail; the first 96 tested did. A survivor still starts as a Candidate and must earn its place by live paper trading."
+      ]
+    },
+    {
+      "h": "Forecast ranges, and the probability of closing higher",
+      "p": [
+        "Volatility is forecast with a model on daily high-low-open-close ranges over 1, 5, 22 and 66 days plus market volatility. Quantile regression on a handful of price and volume features gives the shape; a split-conformal correction learned on the previous two years makes each range hold what it promises. Out of sample (2012 to 2026, about 360,000 forecasts per horizon) the 50, 80 and 95% ranges held 48 to 49%, 78 to 80% and 94 to 95% of the time. In single stress years at longer horizons they do not: 2020 held 70% for the 80% range at 20 days and 58% at 60 days, which is why the live system widens ranges when its own record drifts.",
+        "The probability of closing higher carries no directional skill (area under the curve 0.48 to 0.50), so for 1 and 5 days it is shown as a calibrated number (calibration error 0.03 and 0.04, limit 0.05) and for 10 days and longer it is shown only as how often stocks like this closed higher historically. Simulated paths give the chance of touching a level before a date; they run 2 to 3 points high against what happened."
+      ]
+    },
+    {
+      "h": "Signals, plans and position size",
+      "p": [
+        "A stock shows a bullish signal only if it is Validated (at least 60 live days, 60 out-of-sample trades, calibration error at most 0.05, expected net return at least 5 basis points, false-discovery clean), one of its rules is Active, the edge exceeds its round-trip cost, and no known event falls in the holding window. Otherwise it reads NO EDGE. For a Validated stock the plan shows an entry zone, an invalidation level, profit levels with their chance of being touched, the chance of being stopped out and the loss if it is. Size = the money you can lose divided by the distance to the invalidation level, capped by maximum position size, by 5% of daily volume, and by a fraction of the Kelly size computed from the shrunk edge. A stop does not always fill at its level; gaps and circuit limits can go past it. Sizing reduces the risk of loss; it does not remove it.",
+        "Switches stop ALADIN by itself: a stock, a sector or the whole engine becomes Suspended when its live calibration error passes 0.05, its live range coverage is more than 4 points from nominal, or a live-return alarm fires. Signals then disappear and a banner says why."
+      ]
+    },
+    {
+      "h": "The record",
+      "p": [
+        "Every forecast is written to an append-only ledger when it is made and scored when its date arrives; nothing is edited afterwards, and git history is the audit trail. Only forecasts made before the day they are about count as live. Live results start with the 5-day forecasts of 6 October 2026. Everything labelled historical simulation is out-of-sample testing on past data and is not live."
+      ]
+    },
+    {
+      "h": "What it has found so far (as of 8 October 2026)",
+      "p": [
+        "No stock has enough evidence for a trade plan: 500 of 500 read Learning and NO EDGE. Tested one stock at a time, no rule passed in any of 56 test blocks. Pooled across stocks, five trend-following rules passed repeatedly (about 3 to 5 basis points a day above the market while invested) but they faded in 2025 and were retired. Short-term reversal looked strong until the benchmark was corrected: that result was an artefact and was withdrawn. A rule that fades is noticed slowly: about 850 days at the median in simulation, because one trade is noisy next to a 1% edge."
+      ]
+    }
+  ],
+  "not_measured": [
+    ["Results, ex-dividend and RBI dates", "no calendar is wired in, so event warnings cannot appear"],
+    ["Fundamental, event, text and graph rules and machine-learning rules", "not built; they need point-in-time fundamentals and their own test protocol"],
+    ["Delisted stocks and historical index membership", "not available from free data; the survivorship caveat above stays"],
+    ["Market capitalisation", "not available from free data; the market map uses traded value"],
+    ["Paper-portfolio equity, drawdown and monthly returns, best and worst calls, correlation clusters, opportunity scatter", "they need a Validated stock and a paper position; there are none"],
+    ["Strength buckets (Low, Medium, High)", "need at least 100 live outcomes per bucket; every signal would read Low"],
+    ["The median forecast in the ledger", "not stored yet; the centre line shows the middle of the 50% range"],
+    ["F&O ban list and BSE announcements", "not reachable from free sources (HTTP 404 and 403)"],
+    ["Trails in the sector rotation chart", "need daily sector history"],
+    ["Step times of the nightly job on GitHub", "not measured until the workflow has run there; local timings only"],
+    ["Exchange holidays in future dates on the chart", "unknown; dates skip weekends only"]
+  ]
+}

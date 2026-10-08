@@ -26,7 +26,10 @@ def _fillable(px, i, cfg, ref=None):
     if i >= len(o) or not (v[i] > 0) or not (o[i] > 0):
         return False
     b = cfg["backtest"]
-    if "locked" in px.columns and px["locked"].values[i]:
+    if "locked_eff" in px.columns:
+        if px["locked_eff"].values[i]:
+            return False
+    elif "locked" in px.columns and px["locked"].values[i]:
         pc = px["pc"].values[i] if "pc" in px.columns else np.nan
         if np.isnan(pc) or abs(o[i] / pc - 1) >= b["circuit_proxy_min_move"]:
             return False
@@ -35,6 +38,12 @@ def _fillable(px, i, cfg, ref=None):
 
 def run(px, signal, rule, kind="delivery", decile=5, cfg=None, futures_ok=False, allow_short=None):
     cfg = cfg or C.load_cfg()
+    if "locked" in px.columns and "pc" in px.columns:               # a circuit-limit lock lasts: a one-price day is locked if it moved >= circuit_proxy_min_move from the previous close OR the previous day was locked
+        thr = cfg["backtest"]["circuit_proxy_min_move"]; lk = np.zeros(len(px), bool); lkv, pcv, ov = px["locked"].values, px["pc"].values, px["o"].values
+        for i in range(len(px)):
+            if lkv[i]:
+                lk[i] = (i > 0 and lk[i - 1]) or (not np.isnan(pcv[i]) and abs(ov[i] / pcv[i] - 1) >= thr) or np.isnan(pcv[i])
+        px = px.assign(locked_eff=lk)
     o, h, l, c = (px[k].values for k in ("o", "h", "l", "c")); n = len(px); idx = px.index
     sig = signal.reindex(idx).fillna(0).values
     shorts = (kind == "futures") if allow_short is None else allow_short

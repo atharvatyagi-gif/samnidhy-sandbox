@@ -80,6 +80,12 @@ class Run:
     def s_ingest(self):
         px = L.load_prices("RELIANCE"); last = px.index[-1].date() if px is not None else None; self.today = last
         msg = [f"latest price bar {last}"]
+        try:                                                              # which inputs are live today (never fatal; offline in replay)
+            from . import sources_status as SS
+            for r in SS.table(offline=bool(self.a.replay_from or self.a.no_backfill)):
+                print(f"  source {r[0]:<16} {r[1][:40]:<42} {r[2]:<20} {r[3]}")
+        except Exception as e:                                           # noqa: BLE001
+            msg.append(f"source table unavailable: {e!r}")
         if not self.a.replay_from and not self.a.no_backfill:
             from . import history_backfill as HB
             from datetime import date, timedelta
