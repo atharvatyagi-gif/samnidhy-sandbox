@@ -1,0 +1,643 @@
+{
+ "universe": {
+  "stocks": 425,
+  "adv_filter_cr": 2.0,
+  "list": "NIFTY 500 members today (survivor-only)"
+ },
+ "protocol": {
+  "folds": 56,
+  "first_test": "2012-07-01",
+  "test_d": 63,
+  "purge_d": 20,
+  "embargo_d": 5,
+  "fdr_q": 0.1,
+  "select_lookback_d": 2000,
+  "selectable_strategies": 34,
+  "distinct_hashes": 34,
+  "costs": "costs.py real model, liquidity decile 0-9"
+ },
+ "policy_A_probation_and_active_paper_traded": {
+  "label": "ALADIN policy (Probation+Active)",
+  "n_trades": 0
+ },
+ "policy_B_active_only": {
+  "label": "ALADIN policy (Active only)",
+  "n_trades": 0
+ },
+ "baseline_naive_momentum_all_stocks": {
+  "label": "naive 12-1 momentum, every stock",
+  "excess_vs_stock_drift": {
+   "n_trades": 74799,
+   "n_months": 172,
+   "mean_bps": -22.32,
+   "ci95_bps": [
+    -29.09,
+    -15.19
+   ]
+  },
+  "net_per_trade": {
+   "n_trades": 74799,
+   "n_months": 172,
+   "mean_bps": 69.59,
+   "ci95_bps": [
+    32.22,
+    107.16
+   ]
+  },
+  "win_rate": 0.5046,
+  "avg_bars": 10.1,
+  "net_per_day_in_market_bps": 6.88,
+  "stocks": 425,
+  "psr_net_per_trade": 1.0
+ },
+ "baseline_naive_momentum_same_stock_blocks": {
+  "label": "naive 12-1 momentum, same stock-blocks as policy A",
+  "n_trades": 0
+ },
+ "baseline_no_selection_pool_all_stocks": {
+  "label": "all selectable strategies, every stock, no selection",
+  "excess_vs_stock_drift": {
+   "n_trades": 802139,
+   "n_months": 172,
+   "mean_bps": 4.22,
+   "ci95_bps": [
+    -7.69,
+    18.21
+   ]
+  },
+  "net_per_trade": {
+   "n_trades": 802139,
+   "n_months": 172,
+   "mean_bps": 157.33,
+   "ci95_bps": [
+    102.79,
+    215.51
+   ]
+  },
+  "win_rate": 0.4433,
+  "avg_bars": 15.4,
+  "net_per_day_in_market_bps": 10.2,
+  "stocks": 425,
+  "psr_net_per_trade": 1.0
+ },
+ "baseline_no_selection_pool_same_stock_blocks": {
+  "label": "all selectable strategies, same stock-blocks as policy A",
+  "n_trades": 0
+ },
+ "buy_and_hold": "excess vs stock drift is zero by definition; absolute equal-weight 10-day figures are in phase0_report.json",
+ "outlook_model": "its per-row out-of-sample predictions were not persisted; only its published yearly metrics exist (AUC 0.534): not re-scorable as a trading policy",
+ "evidence_at_end": {
+  "stocks_with_any_probation_or_active": 0,
+  "share_of_universe": 0.0,
+  "active_strategies": 0,
+  "probation_strategies": 0,
+  "by_family": {},
+  "ever_eligible_pairs": 0,
+  "pairs_tested_per_block_max": 6532
+ },
+ "by_year_policy_A": {},
+ "fold_summary": [
+  {
+   "fold": 0,
+   "start": "2012-07-02",
+   "pairs": 2951,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  },
+  {
+   "fold": 6,
+   "start": "2014-01-17",
+   "pairs": 3790,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  },
+  {
+   "fold": 12,
+   "start": "2015-08-11",
+   "pairs": 4742,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  },
+  {
+   "fold": 18,
+   "start": "2017-02-28",
+   "pairs": 4182,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  },
+  {
+   "fold": 24,
+   "start": "2018-09-06",
+   "pairs": 4375,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  },
+  {
+   "fold": 30,
+   "start": "2020-03-30",
+   "pairs": 4690,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  },
+  {
+   "fold": 36,
+   "start": "2021-10-07",
+   "pairs": 5109,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  },
+  {
+   "fold": 42,
+   "start": "2023-04-19",
+   "pairs": 5502,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  },
+  {
+   "fold": 48,
+   "start": "2024-10-30",
+   "pairs": 5910,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  },
+  {
+   "fold": 54,
+   "start": "2026-05-14",
+   "pairs": 6425,
+   "fdr_pass": 0,
+   "eligible": 0,
+   "paper_trades": 0,
+   "active_trades": 0,
+   "n_Probation": 0,
+   "n_Active": 0,
+   "n_Demoted": 0,
+   "n_Retired": 0
+  }
+ ],
+ "transitions": {},
+ "pooled_by_strategy_oos": [
+  {
+   "strategy": "donchian_100",
+   "family": "trend",
+   "trades": 4924,
+   "excess_bps": 689.0,
+   "ci95_bps": [
+    417.91,
+    997.59
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "donchian_55",
+   "family": "trend",
+   "trades": 7648,
+   "excess_bps": 314.22,
+   "ci95_bps": [
+    194.38,
+    458.0
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "ma_cross_10_50",
+   "family": "trend",
+   "trades": 16289,
+   "excess_bps": 160.33,
+   "ci95_bps": [
+    94.51,
+    232.99
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "ma_cross_20_100",
+   "family": "trend",
+   "trades": 8564,
+   "excess_bps": 480.52,
+   "ci95_bps": [
+    296.64,
+    684.61
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "ma_cross_50_200",
+   "family": "trend",
+   "trades": 5040,
+   "excess_bps": 911.1,
+   "ci95_bps": [
+    672.1,
+    1183.78
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "tsmom_250_skip21",
+   "family": "trend",
+   "trades": 16393,
+   "excess_bps": 203.19,
+   "ci95_bps": [
+    128.33,
+    284.9
+   ],
+   "p": 0.00024993751562109475,
+   "bh_pass": true
+  },
+  {
+   "strategy": "tsmom_120_skip21",
+   "family": "trend",
+   "trades": 24834,
+   "excess_bps": 127.31,
+   "ci95_bps": [
+    68.24,
+    195.77
+   ],
+   "p": 0.0007498125468632841,
+   "bh_pass": true
+  },
+  {
+   "strategy": "rel_strength_60_0",
+   "family": "relative",
+   "trades": 35240,
+   "excess_bps": 43.05,
+   "ci95_bps": [
+    15.61,
+    74.26
+   ],
+   "p": 0.005248687828042989,
+   "bh_pass": true
+  },
+  {
+   "strategy": "rel_strength_60_5",
+   "family": "relative",
+   "trades": 32424,
+   "excess_bps": 31.56,
+   "ci95_bps": [
+    6.54,
+    60.29
+   ],
+   "p": 0.012996750812296926,
+   "bh_pass": true
+  },
+  {
+   "strategy": "reversal5_vol_2.0",
+   "family": "reversion",
+   "trades": 4956,
+   "excess_bps": 41.15,
+   "ci95_bps": [
+    -0.82,
+    91.0
+   ],
+   "p": 0.045238690327418146,
+   "bh_pass": false
+  },
+  {
+   "strategy": "rel_strength_60_10",
+   "family": "relative",
+   "trades": 28066,
+   "excess_bps": 19.15,
+   "ci95_bps": [
+    -1.68,
+    42.36
+   ],
+   "p": 0.05573606598350413,
+   "bh_pass": false
+  },
+  {
+   "strategy": "tsmom_60_skip21",
+   "family": "trend",
+   "trades": 41827,
+   "excess_bps": 14.21,
+   "ci95_bps": [
+    -4.11,
+    34.95
+   ],
+   "p": 0.09397650587353162,
+   "bh_pass": false
+  },
+  {
+   "strategy": "hi52_within_10",
+   "family": "trend",
+   "trades": 25204,
+   "excess_bps": 3.08,
+   "ci95_bps": [
+    -17.59,
+    24.27
+   ],
+   "p": 0.3896525868532867,
+   "bh_pass": false
+  },
+  {
+   "strategy": "reversal5_vol_1.5",
+   "family": "reversion",
+   "trades": 9012,
+   "excess_bps": 3.32,
+   "ci95_bps": [
+    -26.26,
+    36.69
+   ],
+   "p": 0.39540114971257184,
+   "bh_pass": false
+  },
+  {
+   "strategy": "reversal5_vol_1.0",
+   "family": "reversion",
+   "trades": 14356,
+   "excess_bps": -7.08,
+   "ci95_bps": [
+    -29.99,
+    18.9
+   ],
+   "p": 0.7035741064733817,
+   "bh_pass": false
+  },
+  {
+   "strategy": "donchian_20",
+   "family": "trend",
+   "trades": 18041,
+   "excess_bps": -19.66,
+   "ci95_bps": [
+    -51.72,
+    14.33
+   ],
+   "p": 0.8720319920019995,
+   "bh_pass": false
+  },
+  {
+   "strategy": "delivery_surge_40",
+   "family": "flow",
+   "trades": 788,
+   "excess_bps": -49.3,
+   "ci95_bps": [
+    -101.45,
+    3.56
+   ],
+   "p": 0.9650087478130467,
+   "bh_pass": false
+  },
+  {
+   "strategy": "bb_z_below_2.5",
+   "family": "reversion",
+   "trades": 9703,
+   "excess_bps": -29.08,
+   "ci95_bps": [
+    -57.04,
+    3.9
+   ],
+   "p": 0.9767558110472382,
+   "bh_pass": false
+  },
+  {
+   "strategy": "gapfill_3pct",
+   "family": "reversion",
+   "trades": 10450,
+   "excess_bps": -46.77,
+   "ci95_bps": [
+    -86.68,
+    -7.28
+   ],
+   "p": 0.989502624343914,
+   "bh_pass": false
+  },
+  {
+   "strategy": "rsi2_below_5",
+   "family": "reversion",
+   "trades": 42736,
+   "excess_bps": -13.98,
+   "ci95_bps": [
+    -23.93,
+    -3.16
+   ],
+   "p": 0.9967508122969257,
+   "bh_pass": false
+  },
+  {
+   "strategy": "bb_z_below_2.0",
+   "family": "reversion",
+   "trades": 21891,
+   "excess_bps": -25.02,
+   "ci95_bps": [
+    -41.53,
+    -4.7
+   ],
+   "p": 0.9995001249687578,
+   "bh_pass": false
+  },
+  {
+   "strategy": "atr_channel_1.5",
+   "family": "volatility",
+   "trades": 21976,
+   "excess_bps": -202.88,
+   "ci95_bps": [
+    -233.97,
+    -172.57
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "atr_channel_2.0",
+   "family": "volatility",
+   "trades": 17744,
+   "excess_bps": -210.52,
+   "ci95_bps": [
+    -242.53,
+    -179.08
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "atr_channel_3.0",
+   "family": "volatility",
+   "trades": 9272,
+   "excess_bps": -222.71,
+   "ci95_bps": [
+    -264.67,
+    -178.52
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "bb_squeeze_break_10",
+   "family": "volatility",
+   "trades": 9074,
+   "excess_bps": -50.08,
+   "ci95_bps": [
+    -67.57,
+    -30.76
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "bb_squeeze_break_20",
+   "family": "volatility",
+   "trades": 13713,
+   "excess_bps": -52.65,
+   "ci95_bps": [
+    -67.67,
+    -36.12
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "bb_z_below_1.5",
+   "family": "reversion",
+   "trades": 35409,
+   "excess_bps": -27.05,
+   "ci95_bps": [
+    -40.8,
+    -9.92
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "delivery_surge_20",
+   "family": "flow",
+   "trades": 7876,
+   "excess_bps": -43.03,
+   "ci95_bps": [
+    -60.49,
+    -25.23
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "gapfill_1pct",
+   "family": "reversion",
+   "trades": 53614,
+   "excess_bps": -36.26,
+   "ci95_bps": [
+    -46.37,
+    -25.93
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "gapfill_2pct",
+   "family": "reversion",
+   "trades": 20798,
+   "excess_bps": -41.39,
+   "ci95_bps": [
+    -65.16,
+    -17.08
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "hi52_within_5",
+   "family": "trend",
+   "trades": 29866,
+   "excess_bps": -26.29,
+   "ci95_bps": [
+    -38.53,
+    -14.01
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "nr7_break",
+   "family": "volatility",
+   "trades": 45216,
+   "excess_bps": -47.87,
+   "ci95_bps": [
+    -53.11,
+    -42.71
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "rsi2_below_10",
+   "family": "reversion",
+   "trades": 69581,
+   "excess_bps": -19.63,
+   "ci95_bps": [
+    -26.83,
+    -11.93
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  },
+  {
+   "strategy": "rsi2_below_15",
+   "family": "reversion",
+   "trades": 89614,
+   "excess_bps": -21.63,
+   "ci95_bps": [
+    -27.26,
+    -15.25
+   ],
+   "p": 1.0,
+   "bh_pass": false
+  }
+ ],
+ "runtime_s": 140
+}

@@ -1,0 +1,578 @@
+{
+ "as_of": "2026-10-06",
+ "capital_inr": 1000000,
+ "label": "ILLUSTRATION ONLY: no stock is Validated; the edge used for sizing (+1% per trade, sd 8%) is hypothetical",
+ "horizon_d": 20,
+ "plans": [
+  {
+   "sym": "BAJFINANCE",
+   "close": 959.55,
+   "atr14": 23.45,
+   "entry_zone": [
+    953.69,
+    965.41
+   ],
+   "invalidation_level": 924.37,
+   "stop_distance_pct": 3.67,
+   "range_20d_80pct": [
+    895.8,
+    1040.41
+   ],
+   "range_20d_50pct": [
+    927.76,
+    1000.63
+   ],
+   "levels": [
+    {
+     "level": 974.73,
+     "p_touch": 0.651,
+     "typical_day": 4.0,
+     "day_iqr": [
+      2.0,
+      9.0
+     ]
+    },
+    {
+     "level": 1000.63,
+     "p_touch": 0.374,
+     "typical_day": 9.0,
+     "day_iqr": [
+      5.0,
+      14.0
+     ]
+    },
+    {
+     "level": 1040.41,
+     "p_touch": 0.143,
+     "typical_day": 13.0,
+     "day_iqr": [
+      9.0,
+      17.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.414,
+   "expected_R": 0.041,
+   "loss_if_invalidated_inr": 3659.0,
+   "loss_if_invalidated_pct_of_capital": 0.366,
+   "hypothetical_size": {
+    "qty": 104,
+    "binding_limit": "max position size",
+    "position_value_inr": 99793.0
+   }
+  },
+  {
+   "sym": "HDFCBANK",
+   "close": 712.5,
+   "atr14": 14.07,
+   "entry_zone": [
+    708.98,
+    716.02
+   ],
+   "invalidation_level": 691.4,
+   "stop_distance_pct": 2.96,
+   "range_20d_80pct": [
+    659.8,
+    764.17
+   ],
+   "range_20d_50pct": [
+    683.95,
+    738.16
+   ],
+   "levels": [
+    {
+     "level": 723.43,
+     "p_touch": 0.658,
+     "typical_day": 4.0,
+     "day_iqr": [
+      2.0,
+      8.0
+     ]
+    },
+    {
+     "level": 738.16,
+     "p_touch": 0.42,
+     "typical_day": 8.0,
+     "day_iqr": [
+      4.0,
+      13.0
+     ]
+    },
+    {
+     "level": 764.17,
+     "p_touch": 0.181,
+     "typical_day": 10.0,
+     "day_iqr": [
+      7.0,
+      15.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.516,
+   "expected_R": 0.026,
+   "loss_if_invalidated_inr": 2954.0,
+   "loss_if_invalidated_pct_of_capital": 0.295,
+   "hypothetical_size": {
+    "qty": 140,
+    "binding_limit": "max position size",
+    "position_value_inr": 99750.0
+   }
+  },
+  {
+   "sym": "INFY",
+   "close": 1007.0,
+   "atr14": 25.63,
+   "entry_zone": [
+    1000.59,
+    1013.41
+   ],
+   "invalidation_level": 968.55,
+   "stop_distance_pct": 3.82,
+   "range_20d_80pct": [
+    918.27,
+    1100.5
+   ],
+   "range_20d_50pct": [
+    957.17,
+    1053.93
+   ],
+   "levels": [
+    {
+     "level": 1026.3,
+     "p_touch": 0.632,
+     "typical_day": 4.0,
+     "day_iqr": [
+      2.0,
+      8.0
+     ]
+    },
+    {
+     "level": 1053.93,
+     "p_touch": 0.392,
+     "typical_day": 8.0,
+     "day_iqr": [
+      5.0,
+      13.0
+     ]
+    },
+    {
+     "level": 1100.5,
+     "p_touch": 0.172,
+     "typical_day": 12.0,
+     "day_iqr": [
+      8.0,
+      16.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.475,
+   "expected_R": 0.033,
+   "loss_if_invalidated_inr": 3807.0,
+   "loss_if_invalidated_pct_of_capital": 0.381,
+   "hypothetical_size": {
+    "qty": 99,
+    "binding_limit": "max position size",
+    "position_value_inr": 99693.0
+   }
+  },
+  {
+   "sym": "ITC",
+   "close": 265.25,
+   "atr14": 5.07,
+   "entry_zone": [
+    263.98,
+    266.52
+   ],
+   "invalidation_level": 255.12,
+   "stop_distance_pct": 3.82,
+   "range_20d_80pct": [
+    246.25,
+    284.7
+   ],
+   "range_20d_50pct": [
+    254.35,
+    274.33
+   ],
+   "levels": [
+    {
+     "level": 269.39,
+     "p_touch": 0.637,
+     "typical_day": 5.0,
+     "day_iqr": [
+      2.0,
+      9.0
+     ]
+    },
+    {
+     "level": 274.33,
+     "p_touch": 0.418,
+     "typical_day": 8.0,
+     "day_iqr": [
+      4.0,
+      13.0
+     ]
+    },
+    {
+     "level": 284.7,
+     "p_touch": 0.181,
+     "typical_day": 13.0,
+     "day_iqr": [
+      8.0,
+      16.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.394,
+   "expected_R": 0.057,
+   "loss_if_invalidated_inr": 3820.0,
+   "loss_if_invalidated_pct_of_capital": 0.382,
+   "hypothetical_size": {
+    "qty": 377,
+    "binding_limit": "max position size",
+    "position_value_inr": 99999.0
+   }
+  },
+  {
+   "sym": "LT",
+   "close": 3754.4,
+   "atr14": 59.0,
+   "entry_zone": [
+    3739.65,
+    3769.15
+   ],
+   "invalidation_level": 3655.9,
+   "stop_distance_pct": 2.62,
+   "range_20d_80pct": [
+    3557.02,
+    3982.68
+   ],
+   "range_20d_50pct": [
+    3659.77,
+    3870.96
+   ],
+   "levels": [
+    {
+     "level": 3798.22,
+     "p_touch": 0.661,
+     "typical_day": 4.0,
+     "day_iqr": [
+      2.0,
+      9.0
+     ]
+    },
+    {
+     "level": 3870.96,
+     "p_touch": 0.378,
+     "typical_day": 8.0,
+     "day_iqr": [
+      5.0,
+      13.0
+     ]
+    },
+    {
+     "level": 3982.68,
+     "p_touch": 0.154,
+     "typical_day": 13.0,
+     "day_iqr": [
+      8.75,
+      16.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.448,
+   "expected_R": 0.035,
+   "loss_if_invalidated_inr": 2561.0,
+   "loss_if_invalidated_pct_of_capital": 0.256,
+   "hypothetical_size": {
+    "qty": 26,
+    "binding_limit": "max position size",
+    "position_value_inr": 97614.0
+   }
+  },
+  {
+   "sym": "MARUTI",
+   "close": 11567.0,
+   "atr14": 230.98,
+   "entry_zone": [
+    11509.25,
+    11624.75
+   ],
+   "invalidation_level": 11220.53,
+   "stop_distance_pct": 3.0,
+   "range_20d_80pct": [
+    10751.56,
+    12480.77
+   ],
+   "range_20d_50pct": [
+    11149.14,
+    12036.47
+   ],
+   "levels": [
+    {
+     "level": 11756.41,
+     "p_touch": 0.658,
+     "typical_day": 4.0,
+     "day_iqr": [
+      2.0,
+      9.0
+     ]
+    },
+    {
+     "level": 12036.47,
+     "p_touch": 0.396,
+     "typical_day": 8.0,
+     "day_iqr": [
+      5.0,
+      13.0
+     ]
+    },
+    {
+     "level": 12480.77,
+     "p_touch": 0.175,
+     "typical_day": 12.0,
+     "day_iqr": [
+      8.0,
+      16.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.483,
+   "expected_R": 0.117,
+   "loss_if_invalidated_inr": 2772.0,
+   "loss_if_invalidated_pct_of_capital": 0.277,
+   "hypothetical_size": {
+    "qty": 8,
+    "binding_limit": "max position size",
+    "position_value_inr": 92536.0
+   }
+  },
+  {
+   "sym": "RELIANCE",
+   "close": 1215.2,
+   "atr14": 20.09,
+   "entry_zone": [
+    1210.18,
+    1220.22
+   ],
+   "invalidation_level": 1175.01,
+   "stop_distance_pct": 3.31,
+   "range_20d_80pct": [
+    1144.54,
+    1294.84
+   ],
+   "range_20d_50pct": [
+    1179.62,
+    1253.42
+   ],
+   "levels": [
+    {
+     "level": 1231.39,
+     "p_touch": 0.641,
+     "typical_day": 5.0,
+     "day_iqr": [
+      2.0,
+      9.0
+     ]
+    },
+    {
+     "level": 1253.42,
+     "p_touch": 0.401,
+     "typical_day": 8.0,
+     "day_iqr": [
+      5.0,
+      14.0
+     ]
+    },
+    {
+     "level": 1294.84,
+     "p_touch": 0.152,
+     "typical_day": 12.0,
+     "day_iqr": [
+      7.0,
+      16.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.386,
+   "expected_R": 0.03,
+   "loss_if_invalidated_inr": 3295.0,
+   "loss_if_invalidated_pct_of_capital": 0.33,
+   "hypothetical_size": {
+    "qty": 82,
+    "binding_limit": "max position size",
+    "position_value_inr": 99646.0
+   }
+  },
+  {
+   "sym": "SUNPHARMA",
+   "close": 1789.0,
+   "atr14": 28.72,
+   "entry_zone": [
+    1781.82,
+    1796.18
+   ],
+   "invalidation_level": 1745.91,
+   "stop_distance_pct": 2.41,
+   "range_20d_80pct": [
+    1690.9,
+    1914.85
+   ],
+   "range_20d_50pct": [
+    1740.81,
+    1854.39
+   ],
+   "levels": [
+    {
+     "level": 1812.18,
+     "p_touch": 0.628,
+     "typical_day": 4.0,
+     "day_iqr": [
+      2.0,
+      9.0
+     ]
+    },
+    {
+     "level": 1854.39,
+     "p_touch": 0.354,
+     "typical_day": 9.0,
+     "day_iqr": [
+      5.0,
+      13.25
+     ]
+    },
+    {
+     "level": 1914.85,
+     "p_touch": 0.139,
+     "typical_day": 12.0,
+     "day_iqr": [
+      9.0,
+      16.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.522,
+   "expected_R": 0.002,
+   "loss_if_invalidated_inr": 2370.0,
+   "loss_if_invalidated_pct_of_capital": 0.237,
+   "hypothetical_size": {
+    "qty": 55,
+    "binding_limit": "max position size",
+    "position_value_inr": 98395.0
+   }
+  },
+  {
+   "sym": "TATASTEEL",
+   "close": 177.7,
+   "atr14": 4.33,
+   "entry_zone": [
+    176.62,
+    178.78
+   ],
+   "invalidation_level": 171.21,
+   "stop_distance_pct": 3.65,
+   "range_20d_80pct": [
+    162.67,
+    195.08
+   ],
+   "range_20d_50pct": [
+    170.38,
+    185.84
+   ],
+   "levels": [
+    {
+     "level": 181.09,
+     "p_touch": 0.637,
+     "typical_day": 4.0,
+     "day_iqr": [
+      2.0,
+      9.0
+     ]
+    },
+    {
+     "level": 185.84,
+     "p_touch": 0.399,
+     "typical_day": 8.0,
+     "day_iqr": [
+      5.0,
+      13.0
+     ]
+    },
+    {
+     "level": 195.08,
+     "p_touch": 0.155,
+     "typical_day": 12.0,
+     "day_iqr": [
+      8.0,
+      17.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.488,
+   "expected_R": 0.061,
+   "loss_if_invalidated_inr": 3647.0,
+   "loss_if_invalidated_pct_of_capital": 0.365,
+   "hypothetical_size": {
+    "qty": 562,
+    "binding_limit": "max position size",
+    "position_value_inr": 99867.0
+   }
+  },
+  {
+   "sym": "TCS",
+   "close": 2087.6,
+   "atr14": 53.25,
+   "entry_zone": [
+    2074.29,
+    2100.91
+   ],
+   "invalidation_level": 2007.72,
+   "stop_distance_pct": 3.83,
+   "range_20d_80pct": [
+    1894.28,
+    2295.34
+   ],
+   "range_20d_50pct": [
+    1979.24,
+    2192.29
+   ],
+   "levels": [
+    {
+     "level": 2130.35,
+     "p_touch": 0.655,
+     "typical_day": 5.0,
+     "day_iqr": [
+      2.0,
+      9.0
+     ]
+    },
+    {
+     "level": 2192.29,
+     "p_touch": 0.413,
+     "typical_day": 8.0,
+     "day_iqr": [
+      5.0,
+      13.0
+     ]
+    },
+    {
+     "level": 2295.34,
+     "p_touch": 0.172,
+     "typical_day": 12.0,
+     "day_iqr": [
+      7.75,
+      16.0
+     ]
+    }
+   ],
+   "p_stopped_out_within_20d": 0.483,
+   "expected_R": 0.11,
+   "loss_if_invalidated_inr": 3754.0,
+   "loss_if_invalidated_pct_of_capital": 0.375,
+   "hypothetical_size": {
+    "qty": 47,
+    "binding_limit": "max position size",
+    "position_value_inr": 98117.0
+   }
+  }
+ ]
+}

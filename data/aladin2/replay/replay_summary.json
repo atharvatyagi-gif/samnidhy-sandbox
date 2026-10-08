@@ -1,0 +1,27 @@
+[
+ {
+  "day": "2025-08-05",
+  "total_s": 43,
+  "steps": [
+   {
+    "step": "discover",
+    "seconds": 42.6,
+    "note": "4 generations, 96 new rules, 0 passed, 96 tested in total"
+   },
+   {
+    "step": "publish",
+    "seconds": 0.0,
+    "note": "journal.json with 50 events"
+   }
+  ],
+  "counts": {
+   "discovery": {
+    "generations": 4,
+    "new_rules": 96,
+    "passed": 0,
+    "total_tested": 96
+   }
+  },
+  "errors": 0
+ }
+]

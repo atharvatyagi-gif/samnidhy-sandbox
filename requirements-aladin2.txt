@@ -1,0 +1,4 @@
+# ALADIN 2.0 nightly learning job (scripts/aladin2). Install with:  pip install -r requirements.txt -r requirements-aladin2.txt
+# The same pins as requirements.txt where they overlap. No torch, no transformers, no paid data.
+scipy>=1.14
+pytest==9.1.1

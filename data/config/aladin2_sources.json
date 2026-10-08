@@ -1,0 +1,176 @@
+{
+ "_doc": "ALADIN 2.0 source registry. marginal_value is filled by the Phase 2 ablation; until then it says 'not measured'. Reachability was tested from the owner's PC on 2026-10-07; GitHub-runner reachability is untested until the first workflow run.",
+ "sources": [
+  {
+   "id": "prices_daily",
+   "source": "t/d daily bars (data/terminal/daily + archive)",
+   "cadence": "daily after close",
+   "lag": "0 days",
+   "terms": "NSE end-of-day files + Yahoo split-adjusted, not dividend-adjusted; public data, educational use",
+   "status": "verified (local files, 2,969 stocks)",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "india_vix",
+   "source": "Yahoo ^INDIAVIX daily",
+   "cadence": "daily",
+   "lag": "0 days (same close)",
+   "terms": "Yahoo public chart API, no key; terms disallow redistribution of raw series (derived features only are published)",
+   "status": "reachable 2026-10-07, 4,556 days from 2008",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "usdinr",
+   "source": "Yahoo INR=X",
+   "cadence": "daily",
+   "lag": "1 day",
+   "terms": "as above",
+   "status": "reachable, 5,926 days from 2003",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "brent",
+   "source": "Yahoo BZ=F",
+   "cadence": "daily",
+   "lag": "1 day",
+   "terms": "as above",
+   "status": "reachable, 4,777 days from 2007",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "sp500",
+   "source": "Yahoo ^GSPC",
+   "cadence": "daily",
+   "lag": "1 day",
+   "terms": "as above",
+   "status": "reachable, 6,731 days from 2000",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "nikkei",
+   "source": "Yahoo ^N225",
+   "cadence": "daily",
+   "lag": "1 day",
+   "terms": "as above",
+   "status": "reachable, 6,553 days from 2000",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "us10y",
+   "source": "FRED DGS10 (needs FRED_API_KEY in .env)",
+   "cadence": "daily",
+   "lag": "1 day",
+   "terms": "FRED free API, key required",
+   "status": "reachable with the owner's key, 16,175 days from 1962",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "delivery_pct",
+   "source": "NSE sec_bhavdata_full_DDMMYYYY.csv",
+   "cadence": "daily evening",
+   "lag": "1 day",
+   "terms": "NSE public archives; polite rate; may block cloud IPs",
+   "status": "reachable; history exists from 2020 only; backfill running",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "fno_oi",
+   "source": "NSE F&O bhavcopy (old format to 2024-07-05, UDiFF after)",
+   "cadence": "daily evening",
+   "lag": "1 day",
+   "terms": "NSE public archives",
+   "status": "reachable; backfill queued after delivery",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "fno_ban",
+   "source": "NSE fo_secban_DDMMYYYY.csv",
+   "cadence": "daily",
+   "lag": "0 days",
+   "terms": "NSE",
+   "status": "NOT reachable: HTTP 404 on the tested pattern; not used until found",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "bulk_block_deals",
+   "source": "NSE bulk.csv / block.csv (today only)",
+   "cadence": "daily",
+   "lag": "1 day",
+   "terms": "NSE",
+   "status": "reachable but only the latest day; history must be accumulated by the nightly job from now on",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "fii_dii",
+   "source": "data/institutional (existing institutional.json)",
+   "cadence": "daily",
+   "lag": "1 day",
+   "terms": "existing repo file",
+   "status": "existing",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "fundamentals",
+   "source": "fund.json, screener.json, aladin_fund statements",
+   "cadence": "quarterly",
+   "lag": "filing date, else period end + 60 calendar days",
+   "terms": "Yahoo / NSE filings",
+   "status": "existing; point-in-time dates NOT stored for past quarters (lag rule applies)",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "news_sentiment",
+   "source": "news.json FinBERT, aladin sentiment",
+   "cadence": "daily",
+   "lag": "1 day",
+   "terms": "existing",
+   "status": "existing; only since the sentiment workflow began",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "nexus_graph",
+   "source": "supply_graph.json, impact.json",
+   "cadence": "weekly",
+   "lag": "1 day",
+   "terms": "existing",
+   "status": "existing, sparse (3 listed-to-listed edges): expected to add nothing measurable",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "wiki_pageviews",
+   "source": "Wikimedia pageviews API",
+   "cadence": "daily",
+   "lag": "1 day",
+   "terms": "free, no key",
+   "status": "reachable; optional, to be ablated",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "rbi_policy_dates",
+   "source": "rbi.org.in policy page",
+   "cadence": "~6 a year",
+   "lag": "0 days",
+   "terms": "public HTML",
+   "status": "reachable; dates will be a small hand-checked config, not scraped nightly",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "bse_announcements",
+   "source": "api.bseindia.com",
+   "cadence": "-",
+   "lag": "-",
+   "terms": "-",
+   "status": "NOT reachable (HTTP 403); NSE filings used instead",
+   "marginal_value": "not measured (ablation in phase 2)"
+  },
+  {
+   "id": "historical_index_constituents",
+   "source": "none free",
+   "cadence": "-",
+   "lag": "-",
+   "terms": "-",
+   "status": "NOT available: survivorship caveat stays",
+   "marginal_value": "not measured (ablation in phase 2)"
+  }
+ ]
+}
