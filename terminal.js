@@ -18,6 +18,7 @@ import * as Aladin from "./desk-aladin.js";
 import * as A2 from "./desk-aladin2.js";
 import * as A2V from "./desk-a2views.js";
 import * as A2B from "./desk-a2bot.js";
+import { withOfficialClose } from "./intraday-close.js";
 import * as Ticks from "./desk-ticks.js";
 import * as Nexus from "./desk-nexus.js";
 import * as Cmd from "./desk-cmd.js";
@@ -495,7 +496,7 @@ function candlesFor(sym, id) {
     if (!src.bars) { ivWhy = src.why; return []; }
     const out = src.s === IVSEC[id] ? src.bars.map(b => ({ ...b, day: b.day || new Date(b.time * 1000).toISOString().slice(0, 10), lbl: b.lbl || new Date(b.time * 1000).toISOString().slice(0, 16).replace("T", " ") })) : aggBars(src.bars, IVSEC[id]);
     if (RP.on) out.forEach(b => { if (!b.lbl.endsWith("(replay)")) b.lbl += " (replay)"; });
-    return out;
+    return RP.on || LIVE.ok ? out : withOfficialClose(out, S.map.get(sym), S.qmeta, IVSEC[id]);       // the delayed feed ends about 15:10: complete the last candle from NSE's official close
   }
   const d = dailyCandles(sym);
   return id === "D" ? d : aggDays(d, id);
