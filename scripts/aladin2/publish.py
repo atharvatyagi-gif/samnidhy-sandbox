@@ -102,6 +102,9 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None):
             pr = MT.stress_probability(nf).tail(750); sizes["regime.json"] = _w(out / "regime.json", {"d": [str(x.date()) for x in pr.index], "p": [round(float(v), 2) for v in pr.values], "note": "filtered probability of the high-volatility regime, NIFTY 50"})
     except Exception:                                       # noqa: BLE001  the ribbon is optional
         pass
+    mf = ROOT / "data" / "config" / "aladin2_method.json"
+    if mf.exists():
+        sizes["method.json"] = _w(out / "method.json", json.loads(mf.read_text(encoding="utf-8")))
     jf = journal_dir / "journal.json"
     sizes["journal.json"] = _w(out / "journal.json", json.loads(jf.read_text()) if jf.exists() else {"events": []})
     total = sum(sizes.values()); biggest = max((v for k, v in sizes.items() if k not in ("index.json", "scoreboard.json", "journal.json", "market_map.json")), default=0)
