@@ -84,7 +84,8 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None, mod
             px = L.load_prices(sym, term); px = px.tail(SERIES_N) if px is not None else None
         except Exception:                                                  # noqa: BLE001
             px = None
-        shard = {"sym": sym, "name": u.get("n") or sym, "sector": sector, "as_of": fc["d"], "created": fc["created"], "close": close, "state": stt, "state_why": ["no strategy has passed the evaluation protocol for this stock yet"] if stt == "Learning" else ["Probation only"],
+        wr = ((wk or {}).get("book") or {}).get("ranks", {}).get(sym)
+        shard = {"sym": sym, "name": u.get("n") or sym, "weekly_p": ({"rank": wr[0], "closes_higher": wr[1], "beats_market": wr[2]} if wr else None), "sector": sector, "as_of": fc["d"], "created": fc["created"], "close": close, "state": stt, "state_why": ["no strategy has passed the evaluation protocol for this stock yet"] if stt == "Learning" else ["Probation only"],
                  "signal": ws["signal"] if ws else "none", "signal_why": (ws["state_why"] if ws else f"state is {stt}"), "weekly": ws, "horizons": Hs, "sigma": fc["sigma"][i],
                  "bands": [{"H": h, "lo50": b[k][0], "hi50": b[k][1], "lo80": b[k][2], "hi80": b[k][3], "lo95": b[k][4], "hi95": b[k][5], "p_up": fc["p_up"][i][k], "base_rate": base.get(h)} for k, h in enumerate(Hs)],
                  "strategies": cards, "plan": None, "plan_why": "A trade plan is shown only for Validated stocks. None is Validated yet: the live record is too short.",
