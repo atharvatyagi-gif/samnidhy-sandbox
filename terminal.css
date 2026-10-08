@@ -967,7 +967,7 @@ button, input, select { transition: color 150ms, background-color 150ms, border-
 .a2v-map { position: relative; width: 100%; background: var(--sunken); border: 1px solid var(--rule); border-radius: var(--r); overflow: hidden; }
 .a2v-sec { position: absolute; box-sizing: border-box; border: 1px solid var(--rule-2); pointer-events: none; } .a2v-sec span { position: absolute; left: 3px; top: 0; font: 600 9px var(--mono); letter-spacing: 0.06em; color: var(--ink-3); text-transform: uppercase; white-space: nowrap; }
 .a2v-tile { position: absolute; box-sizing: border-box; border: 1px solid var(--paper); background: var(--card-hover); color: var(--ink-2); font: 600 9px var(--mono); overflow: hidden; padding: 2px 3px; cursor: pointer; text-decoration: none; line-height: 1.1; }
-.a2v-tile.rng { background: color-mix(in srgb, var(--acc) calc(var(--f, 0.1) * 100%), var(--card)); color: var(--ink); } .a2v-tile:hover, .a2v-tile:focus-visible { outline: 1px solid var(--hl); z-index: 2; }
+.a2v-tile.rng { color: var(--ink); } .a2v-tile:hover, .a2v-tile:focus-visible { outline: 1px solid var(--hl); z-index: 2; }
 .a2v-bar-c { margin-bottom: 8px; } .a2v-note { border: 1px solid var(--rule); border-left: 3px solid var(--acc-edge); border-radius: var(--r); padding: 8px 10px; margin-bottom: 10px; font-size: 12.5px; line-height: 1.45; color: var(--ink); }
 .a2v-ctl { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; } .a2v-ctl input, .a2v-ctl select { background: var(--paper); color: var(--ink); border: 1px solid var(--rule-2); border-radius: var(--r); padding: 4px 8px; font: 11px var(--mono); }
 .a2v-board tbody tr { cursor: pointer; } .a2v-board tbody tr:hover, .a2v-board tbody tr:focus-visible { background: var(--card-hover); }
