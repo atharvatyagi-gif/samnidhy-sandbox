@@ -24,6 +24,7 @@ TERM = Path(os.environ["ALADIN2_TERM"]) if os.environ.get("ALADIN2_TERM") else (
 # trading days between a value's date and the first decision row allowed to use it (conservative: evening publications are lagged a full day)
 SOURCE_LAG_D = {"price": 0, "india_vix": 0, "delivery": 1, "fno_oi": 1, "fii_dii": 1, "usdinr": 1, "brent": 1, "sp500": 1, "nikkei": 1, "us10y": 1, "news": 1, "wiki": 1}
 FUNDAMENTAL_LAG_CAL_D = 60
+ASOF = os.environ.get("ALADIN2_ASOF") or None      # replay mode: every loader returns only data up to this date (set by run_nightly.py --replay; never set in production)
 SUSPECT_MOVE = 0.35
 
 
@@ -49,6 +50,8 @@ def load_prices(sym, term=None):
     df = pd.DataFrame([rows[x][:6] for x in k], columns=["d", "o", "h", "l", "c", "v"])
     df["d"] = pd.to_datetime(df["d"])
     df = df.set_index("d").astype(float)
+    if ASOF:
+        df = df[df.index <= pd.Timestamp(ASOF)]
     return df[(df["c"] > 0) & (df["o"] > 0)]
 
 

@@ -13,13 +13,16 @@ def _naive_mom(ctx, p):
 BASELINES = [Strategy("naive_momentum_12_1", "baseline", "naive", 0, {}, {"type": "fixed", "n": 10}, 252, ("c",), _naive_mom, baseline=True)]
 
 
-def all_strategies(include_baselines=True):
+def all_strategies(include_baselines=True, include_discovered=False, state_dir=None):
     S = trend.build() + reversion.build() + volatility.build() + relative.build() + flow.build()
+    if include_discovered:                                       # rules promoted by the discovery search (specs on disk, rebuilt by the fixed interpreter in discover.py)
+        from .. import discover
+        S = S + discover.load_discovered(state_dir)
     return S + (BASELINES if include_baselines else [])
 
 
-def by_id():
-    return {s.id: s for s in all_strategies()}
+def by_id(include_discovered=True):
+    return {s.id: s for s in all_strategies(include_discovered=include_discovered)}
 
 
 def neighbours(s, S):

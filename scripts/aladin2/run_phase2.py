@@ -37,7 +37,7 @@ def _build(args):
         return None
     px = L.clean_prices(px[px.index >= pd.Timestamp(cfg["eval"]["data_start"]) - pd.Timedelta(days=420)]); F = L.price_features(px)
     nifty = L.load_index(); d = _deliv(sym)
-    return E.build_stock(sym, sector, px, F, R.all_strategies(), cal, decile, cfg, nifty, d, min_entry=pd.Timestamp(cfg["eval"]["data_start"]))
+    return E.build_stock(sym, sector, px, F, R.all_strategies(include_discovered=True), cal, decile, cfg, nifty, d, min_entry=pd.Timestamp(cfg["eval"]["data_start"]))
 
 
 def universe(cfg):

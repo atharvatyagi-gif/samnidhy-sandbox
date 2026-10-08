@@ -59,9 +59,12 @@ def _panel(args):
     return D.astype({c: "float32" for c in D.columns if D[c].dtype == "float64"}), e.values[::7].astype("float32")
 
 
-def build_panel(workers):
+def build_panel(workers, limit=None):
     cfg = C.load_cfg(); nifty = L.load_index(); cal = nifty.index[nifty.index >= pd.Timestamp(cfg["eval"]["data_start"]) - pd.Timedelta(days=400)]
-    syms = [r[0] for r in P.universe_pit(cfg)]
+    rows_ = P.universe_pit(cfg)
+    if limit:
+        u = {x['s']: (x.get('avgv20') or 0) * (x.get('c') or 0) for x in json.load(open(L.TERM / 'universe.json'))['stocks']}; rows_ = sorted(rows_, key=lambda r: -u.get(r[0], 0))[:limit]
+    syms = [r[0] for r in rows_]
     with ProcessPoolExecutor(workers) as ex:
         out = [o for o in ex.map(_panel, [(s, cal.values) for s in syms], chunksize=4) if o is not None]
     D = pd.concat([o[0] for o in out], ignore_index=True); resid = np.concatenate([o[1] for o in out])

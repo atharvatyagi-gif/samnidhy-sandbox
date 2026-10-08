@@ -35,8 +35,8 @@ def timer():
     return lap, rows
 
 
-def strategy_states():
-    f = STATE / "strategies.json"
+def strategy_states(state=None):
+    f = Path(state or STATE) / "strategies.json"
     if not f.exists():
         return {}, None
     d = json.loads(f.read_text()); return {k: v["state"] for k, v in d["strategies"].items()}, d.get("as_of")
@@ -61,9 +61,17 @@ def resolve_matured(calendar, folder=None):
 
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--workers", type=int, default=8); ap.add_argument("--dry", action="store_true"); ap.add_argument("--ledger", default=None); a = ap.parse_args()
+    ap = argparse.ArgumentParser(); ap.add_argument("--workers", type=int, default=8); ap.add_argument("--dry", action="store_true"); ap.add_argument("--ledger", default=None); ap.add_argument("--limit", type=int, default=None); a = ap.parse_args()
+    run(a.workers, a.dry, a.ledger, a.limit)
+
+
+def run(workers=8, dry=False, ledger_dir=None, limit=None, state_dir=None):
+    class a:                                                  # arguments object kept so the body below reads as before
+        pass
+    a.workers, a.dry, a.ledger, a.limit = workers, dry, ledger_dir, limit
+    state = Path(state_dir) if state_dir else STATE
     cfg = C.load_cfg(); lap, rows = timer(); t0 = time.time()
-    D, resid, _ = R3.build_panel(a.workers); lap("panel (prices, features, 1,100+ stocks)", len(D))
+    D, resid, _ = R3.build_panel(a.workers, a.limit); lap("panel (prices, features, 1,100+ stocks)", len(D))
     as_of = D["date"].max(); cal = L.load_index().index
     live = D[(D["date"] == as_of)].dropna(subset=R3.BASE_COLS).copy(); live = live[live["close"] > 0]
     lap("select today's rows (top 500 by trailing traded value)", len(live))
@@ -83,7 +91,7 @@ def main():
     status = "dry run" if a.dry else ("already in the ledger, not rewritten" if LG.has("fc", rec["d"], a.ledger) else LG.append(rec, a.ledger)); lap(f"ledger forecast batch ({status})", len(syms))
     n_out = 0 if a.dry else resolve_matured(cal, a.ledger); lap("resolve matured forecasts", n_out)
     # ---- strategy states, signals, kill switches
-    states, st_asof = strategy_states(); active = [s for s, v in states.items() if v == "Active"]; prob = [s for s, v in states.items() if v == "Probation"]
+    states, st_asof = strategy_states(state); active = [s for s, v in states.items() if v == "Active"]; prob = [s for s, v in states.items() if v == "Probation"]
     stats = LG.stats(a.ledger, ece_fn=lambda p, y: FC.ece(p, y)[0]) if not a.dry else {"outcomes": {}}
     ov = {"ece": None, "n": 0, "coverage": None, "n_cov": 0}
     if stats["outcomes"]:
@@ -99,11 +107,12 @@ def main():
                "bullish_signals": 0, "live_stats": stats, "engine_suspended": eng_s, "kill_reasons": eng_why, "ledger_status": status, "disclaimer": cfg["disclaimer"],
                "timings_s": rows, "total_s": round(time.time() - t0)}
     if not a.dry:
-        STATE.mkdir(parents=True, exist_ok=True); (STATE / "latest_summary.json").write_text(json.dumps(summary, indent=1, default=str))
+        state.mkdir(parents=True, exist_ok=True); (state / "latest_summary.json").write_text(json.dumps(summary, indent=1, default=str))
     print("\nJOB SUMMARY\n" + "-" * 66)
     for n, s, k in rows:
         print(f"{n:<58}{s:>7.1f}s  {'' if k is None else k}")
     print("-" * 66 + f"\nas of {as_of.date()}; {len(syms)} stocks; states {summ}; active strategies {active or 'none'}; ledger {status}; total {summary['total_s']}s")
+    return summary
 
 
 if __name__ == "__main__":

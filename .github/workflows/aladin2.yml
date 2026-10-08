@@ -1,0 +1,123 @@
+# ALADIN 2.0 nightly learning job: ingest, resolve forecasts, relearn strategy states, drift checks, grammar-bounded discovery, forecasts into the ledger, publish.
+# Starts when "Daily update" has finished successfully, or by hand. Runs scripts/aladin2/run_nightly.py with a 110 minute budget (the job itself may use 150).
+# Every step may fail without stopping the rest; the job summary table and run_report.json say which did. Results are committed with [skip ci] through scripts/gitops.py.
+# Weekly (Sunday) the quantile models are refit from scratch; they are in fact refit every night in this version (about 45 seconds), the flag is recorded in the report.
+# NOT run until this branch is merged to main (workflows only run from the default branch). Step times on GitHub runners have NOT been measured yet; the first runs will show them.
+name: ALADIN2 nightly
+
+on:
+  workflow_run:
+    workflows: ["Daily update"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      symbols:
+        description: "Optional: limit the forecast step to the N most-traded stocks (blank = all 500)"
+        type: string
+        default: ""
+      phase:
+        description: "Steps to run (comma list of ingest,resolve,learn,drift,discover,forecast,publish)"
+        type: string
+        default: "ingest,resolve,learn,drift,discover,forecast,publish"
+      full_refit:
+        description: "Record this run as a full refit"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: aladin2
+  cancel-in-progress: false
+
+jobs:
+  aladin2:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      ALADIN_GIT_PUSH: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt -r requirements-aladin2.txt
+
+      - name: Restore the terminal's NSE data cache and ALADIN2's own cache
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: |
+            data/terminal
+            data/aladin2_cache
+          key: aladin2-cache-${{ github.run_id }}
+          restore-keys: |
+            aladin2-cache-
+            terminal-
+
+      - name: Older price history (history branch)
+        continue-on-error: true
+        run: |
+          mkdir -p data/terminal/archive
+          git fetch -q --depth=1 origin history && git archive FETCH_HEAD | tar -x -C data/terminal/archive
+
+      - name: NSE universe (only if the cache has none)
+        continue-on-error: true
+        run: '[ -f data/terminal/universe.json ] || python scripts/nse_eod.py'
+
+      - name: Nightly learning job (budget 110 minutes)
+        timeout-minutes: 125
+        continue-on-error: true
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: |
+          LIM=""
+          if [ -n "${{ inputs.symbols }}" ]; then LIM="--limit ${{ inputs.symbols }}"; fi
+          STEPS="${{ inputs.phase }}"; if [ -z "$STEPS" ]; then STEPS="ingest,resolve,learn,drift,discover,forecast,publish"; fi
+          python -m scripts.aladin2.run_nightly --budget-min 110 --workers 2 --steps "$STEPS" $LIM | tee run_summary.txt
+          { echo '## ALADIN2 nightly'; echo '```'; cat run_summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Size and hygiene checks
+        run: python scripts/aladin2/check_aladin2.py
+
+      - name: Upload the run report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aladin2-run-report
+          path: data/aladin2/state/run_report.json
+          if-no-files-found: ignore
+
+      - name: Save caches for the next run
+        if: always()
+        uses: actions/cache/save@v4
+        continue-on-error: true
+        with:
+          path: |
+            data/terminal
+            data/aladin2_cache
+          key: aladin2-cache-${{ github.run_id }}
+
+      - name: Save the results in the repository (state shards only if changed; never raw histories or model binaries)
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python - <<'EOF'
+          import sys
+          sys.path.insert(0, "scripts")
+          from gitops import commit_and_push
+          ok = commit_and_push(["data/aladin2/ledger", "data/aladin2/state", "data/aladin2/journal.jsonl", "data/aladin2/journal.json"],
+                               "ALADIN2 nightly: ledger, states, journal [skip ci]", min_interval_s=0, state_file="data/aladin2_cache/gitops_state.json")
+          print("committed and pushed" if ok else "nothing new to save (or push not allowed)")
+          EOF

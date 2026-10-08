@@ -95,9 +95,11 @@ def vetoes(U, sid, pooled_mean, win_start, train_end, cfg):
     return {sym for sym, v in zip(syms, sh) if v <= 0}
 
 
-def walk_forward(U, strategies, cal, cfg, seed=0, log=print, max_folds=None, tilt=True):
+def walk_forward(U, strategies, cal, cfg, seed=0, log=print, max_folds=None, tilt=True, until=None, extra_alarms=None):
     ev = cfg["eval"]; rng = np.random.default_rng(seed); months = np.asarray(cal.year * 12 + cal.month)
     selectable = [s for s in strategies if not s.baseline]; FL = E.folds(cal, cfg)[: max_folds or None]
+    if until is not None:
+        FL = [(a, b) for a, b in FL if cal[a] <= pd.Timestamp(until)]                 # replay: only the blocks that had started by this date
     recs = {}; rows = []; fold_rows = []; events = []; live = {}                           # live: sid -> list of (entry_pos, excess) of paper-traded trades
     lc_cfg = json.loads(json.dumps(cfg)); lc_cfg["lifecycle"]["min_live_trades"] = _cfgget(cfg, "pooled_min_live")
     for k, (a, b) in enumerate(FL):
@@ -106,7 +108,7 @@ def walk_forward(U, strategies, cal, cfg, seed=0, log=print, max_folds=None, til
         for sid in set(recs) | set(elig):
             rec = recs.setdefault(sid, LC.Record(POOL, sid, since=str(D.date())))
             lv = [(e_, x_) for e_, x_ in live.get(sid, []) if e_ < train_end]                  # trades that are fully known by the boundary
-            alarm, ltest = None, None
+            alarm, ltest = (extra_alarms or {}).get(sid), None
             if lv and rec.state in ("Probation", "Active", "Demoted"):
                 x_ = np.array([v for _, v in lv]); e_ = np.array([e for e, _ in lv])
                 if len(x_) >= _cfgget(cfg, "pooled_min_live"):
