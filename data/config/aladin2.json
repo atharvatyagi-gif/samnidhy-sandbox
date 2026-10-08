@@ -14,7 +14,8 @@
     "compute": "nightly budget in minutes; discovery budget in minutes",
     "backtest": "assumed_order_inr is the reference order size used for the participation check; circuit_proxy_min_move is the smallest |close/prev close - 1| of a one-price day that counts as a circuit-limit lock (no fill)",
     "signals": "entry_atr_mult = half-width of the entry zone in ATRs; stop_atr_min/max/default = allowed range of the volatility stop; swing_low_days = structure-stop lookback; event_window_d = days before a known event that force NO EDGE; plan_horizon_d = horizon of the trade plan simulation; touch_min_prob = a profit level is listed when its touch probability is at least this",
-    "kill": "engine/sector/stock is Suspended when live ECE > ece_max (n >= min_n), live interval coverage is off by more than coverage_tol (n >= min_coverage_n), or a CUSUM alarm is active; sector_share = share of a sector's stocks suspended that suspends the sector"
+    "kill": "engine/sector/stock is Suspended when live ECE > ece_max (n >= min_n), live interval coverage is off by more than coverage_tol (n >= min_coverage_n), or a CUSUM alarm is active; sector_share = share of a sector's stocks suspended that suspends the sector",
+    "forward_clock_start": "first as-of date of the live ledger; journal events dated before it are replays of history (simulation), not live learning, and are tagged as such"
   },
   "horizons_d": [
     1,
@@ -173,5 +174,6 @@
     "coverage_tol": 0.04,
     "min_coverage_n": 300,
     "sector_share": 0.5
-  }
+  },
+  "forward_clock_start": "2026-10-06"
 }

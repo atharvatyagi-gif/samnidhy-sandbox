@@ -957,3 +957,20 @@ button, input, select { transition: color 150ms, background-color 150ms, border-
 .a2-risk { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 6px 0; } .a2-risk label { font: 11px var(--mono); color: var(--ink-2); display: flex; gap: 6px; align-items: center; }
 .a2-risk input { width: 92px; background: var(--paper); color: var(--ink); border: 1px solid var(--rule-2); border-radius: var(--r); padding: 3px 6px; font: 11px var(--mono); }
 @media (max-width: 520px) { .a2-tbl { font-size: 10px; } .a2-risk input { width: 78px; } }
+.a2v-tabs { flex-wrap: wrap; margin-bottom: 12px; } .a2v-body { min-height: 120px; } .a2v-dis { margin-top: 18px; }
+.a2v-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.a2v-card { border: 1px solid var(--rule); border-radius: var(--r-card); background: var(--card); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; } .a2v-card span { font: 600 10px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); } .a2v-card b { font-size: 15px; color: var(--ink); } .a2v-card small { color: var(--ink-3); font-size: 11.5px; line-height: 1.4; }
+.a2v-svg { width: 100%; max-width: 560px; height: auto; display: block; } .a2-ax.end { text-anchor: end; }
+.a2v-ln { fill: none; stroke-width: 1.5; } .a2v-s0 { stroke: var(--acc); fill: var(--acc); } .a2v-s1 { stroke: var(--ink-2); fill: var(--ink-2); } .a2v-ln.a2v-s0, .a2v-ln.a2v-s1 { fill: none; }
+.a2v-pt { stroke: none; } .a2v-ref { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 4 3; } .a2v-bar { fill: var(--acc); fill-opacity: 0.7; }
+.a2v-rels { display: flex; flex-wrap: wrap; gap: 14px; } .a2v-rel { flex: 1 1 200px; max-width: 260px; } .a2v-yr { max-width: 560px; margin-bottom: 8px; } .a2v-yr b { font: 600 11px var(--mono); color: var(--ink-2); }
+.a2v-map { position: relative; width: 100%; background: var(--sunken); border: 1px solid var(--rule); border-radius: var(--r); overflow: hidden; }
+.a2v-sec { position: absolute; box-sizing: border-box; border: 1px solid var(--rule-2); pointer-events: none; } .a2v-sec span { position: absolute; left: 3px; top: 0; font: 600 9px var(--mono); letter-spacing: 0.06em; color: var(--ink-3); text-transform: uppercase; white-space: nowrap; }
+.a2v-tile { position: absolute; box-sizing: border-box; border: 1px solid var(--paper); background: var(--card-hover); color: var(--ink-2); font: 600 9px var(--mono); overflow: hidden; padding: 2px 3px; cursor: pointer; text-decoration: none; line-height: 1.1; }
+.a2v-tile.rng { color: var(--ink); } .a2v-tile:hover, .a2v-tile:focus-visible { outline: 1px solid var(--hl); z-index: 2; }
+.a2v-bar-c { margin-bottom: 8px; } .a2v-note { border: 1px solid var(--rule); border-left: 3px solid var(--acc-edge); border-radius: var(--r); padding: 8px 10px; margin-bottom: 10px; font-size: 12.5px; line-height: 1.45; color: var(--ink); }
+.a2v-ctl { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; } .a2v-ctl input, .a2v-ctl select { background: var(--paper); color: var(--ink); border: 1px solid var(--rule-2); border-radius: var(--r); padding: 4px 8px; font: 11px var(--mono); }
+.a2v-board tbody tr { cursor: pointer; } .a2v-board tbody tr:hover, .a2v-board tbody tr:focus-visible { background: var(--card-hover); }
+.a2v-q-Leading { fill: var(--up); } .a2v-q-Lagging { fill: var(--down); } .a2v-q-Weakening { fill: var(--ink-3); } .a2v-q-Improving { fill: var(--acc-edge); } .a2v-dot circle { fill-opacity: 0.85; }
+.a2v-kinds { flex-wrap: wrap; margin-bottom: 8px; } .a2v-tl { list-style: none; margin: 0; padding: 0; } .a2v-tl li { border-left: 2px solid var(--rule-2); padding: 4px 0 8px 10px; margin-left: 4px; font-size: 12.5px; line-height: 1.45; } .a2v-d { font: 600 10.5px var(--mono); color: var(--ink-3); margin-right: 8px; }
+.a2v-tl details { margin-top: 3px; } .a2v-tl summary { cursor: pointer; font: 10.5px var(--mono); color: var(--ink-3); } .a2v-tl code { display: block; font: 10.5px var(--mono); color: var(--ink-2); white-space: pre-wrap; word-break: break-word; }

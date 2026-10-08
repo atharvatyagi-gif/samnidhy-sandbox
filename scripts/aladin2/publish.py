@@ -84,12 +84,14 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None):
         states[r[1]] = states.get(r[1], 0) + 1
     live = (summ.get("live_stats") or {}).get("outcomes", {}); hist = {}
     for h, v in (p3.get("horizons") or {}).items():
-        hist[h] = {"coverage": v["coverage"], "rows": v["rows"], "ece_p_up": v["p_up"]["ece_after_isotonic"], "auc_p_up": v["p_up"]["auc"], "reliability": v["p_up"]["reliability"]}
+        hist[h] = {"coverage": v["coverage"], "coverage_80_by_year": v.get("coverage_80_by_year"), "width80_sigma": v.get("mean_width_in_sigma", {}).get("80"), "rows": v["rows"], "ece_p_up": v["p_up"]["ece_after_isotonic"], "auc_p_up": v["p_up"]["auc"], "reliability": v["p_up"]["reliability"]}
     score = {"as_of": fc["d"], "forecast_batches": (summ.get("live_stats") or {}).get("forecast_batches", 1), "live": live, "live_note": "Live forecasts only: made before the day they are about. Statistics appear once forecasts have resolved.",
              "state_shares": {k: round(v / max(len(rows), 1), 3) for k, v in states.items()}, "engine_suspended": summ.get("engine_suspended", False), "kill_reasons": summ.get("kill_reasons", []),
              "historical_simulation": {"label": "HISTORICAL SIMULATION (out of sample, 2012-2026, survivors to today only): not live results", "horizons": hist,
                                        "policy": "the pooled trend-following rules passed the evaluation in many past years, faded in 2025 and are all Retired today"},
              "strategies": cards, "labels": labels, "disclaimer": cfg["disclaimer"]}
+    cf = state_dir / "learning_curve.jsonl"; curve = [json.loads(x) for x in cf.read_text().splitlines() if x.strip()] if cf.exists() else []
+    score["learning_curve"] = curve; score["barrier_check_20d"] = {k: v for k, v in (p3.get("barrier_check_20d") or {}).items() if k in ("touch_up_1sigma", "touch_down_1sigma", "paths_80pct_band_coverage_20d")}
     index = {"as_of": fc["d"], "created": fc["created"], "mode": cfg["signal_labels"], "labels": labels, "counts": states, "horizons": Hs, "cols": ["sym", "state", "signal", "lo80_5d", "hi80_5d", "lo80_20d", "hi80_20d", "sector"], "rows": rows, "disclaimer": cfg["disclaimer"]}
     sizes["index.json"] = _w(out / "index.json", index); sizes["scoreboard.json"] = _w(out / "scoreboard.json", score)
     sizes["market_map.json"] = _w(out / "market_map.json", {"as_of": fc["d"], "cols": ["sym", "sector", "traded_value_cr", "range80_20d_pct", "state"], "area": "20-day average traded value, Rs crore (market capitalisation is not available from free data)", "rows": mm, "disclaimer": cfg["disclaimer"]})
