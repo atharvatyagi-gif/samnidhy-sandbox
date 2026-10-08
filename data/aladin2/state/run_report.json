@@ -3,12 +3,37 @@
  "weekday": "Thursday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 204,
+ "total_s": 16,
  "steps": [
   {
+   "step": "ingest",
+   "seconds": 15.9,
+   "note": "latest price bar 2021-10-12; delivery / F&O / macro refreshed"
+  },
+  {
+   "step": "resolve",
+   "seconds": 0.0,
+   "note": "0 outcome lines"
+  },
+  {
    "step": "learn",
-   "seconds": 203.8,
-   "note": "1445 stocks, 35 strategies; 49 lifecycle events (49 new in the journal); states {'Retired': 5}"
+   "seconds": 0.1,
+   "note": "FAILED: ValueError('need at least one array to concatenate')"
+  },
+  {
+   "step": "drift",
+   "seconds": 0.0,
+   "note": "no Probation/Active strategy to check"
+  },
+  {
+   "step": "discover",
+   "seconds": 0.1,
+   "note": "FAILED: ValueError('need at least one array to concatenate')"
+  },
+  {
+   "step": "forecast",
+   "seconds": 0.1,
+   "note": "FAILED: ValueError('No objects to concatenate')"
   },
   {
    "step": "publish",
@@ -16,13 +41,25 @@
    "note": "journal.json with 49 events"
   }
  ],
- "errors": [],
- "counts": {
-  "lifecycle_events": 49,
-  "journal_new": 49,
-  "strategy_states": {
-   "Retired": 5
+ "errors": [
+  {
+   "step": "learn",
+   "error": "ValueError('need at least one array to concatenate')",
+   "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/run_nightly.py\", line 72, in step\n    note = fn(); self.rows.append((name, round(time.time() - t, 1), note or \"ok\")); done.add(name); self.mark(day, done)\n           ^^^^\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/run_nightly.py\", line 119, in s_learn\n    self.build_U(); alarms = {}\n    ^^^^^^^^^^^^^^\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/run_nightly.py\", line 105, in build_U\n    self.U, _, _ = RB.load_universe(self.a.workers, None, \"pit\", 500)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/robustness.py\", line 45, in load_universe\n    E.attach_benchmark(U, cal, top=top if kind == \"pit\" else None)\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/evaluate.py\", line 133, in attach_benchmark\n    M = np.vstack([sd.dr for sd in U.values()]); M = np.where(np.isfinite(M), M, np.nan)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/numpy/_core/shape_base.py\", line 292, in vstack\n    return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: need at least one array to concatenate\n"
+  },
+  {
+   "step": "discover",
+   "error": "ValueError('need at least one array to concatenate')",
+   "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/run_nightly.py\", line 72, in step\n    note = fn(); self.rows.append((name, round(time.time() - t, 1), note or \"ok\")); done.add(name); self.mark(day, done)\n           ^^^^\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/run_nightly.py\", line 168, in s_discover\n    E.attach_benchmark(Us, cal)\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/evaluate.py\", line 133, in attach_benchmark\n    M = np.vstack([sd.dr for sd in U.values()]); M = np.where(np.isfinite(M), M, np.nan)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/numpy/_core/shape_base.py\", line 292, in vstack\n    return _nx.concatenate(arrs, 0, dtype=dtype, casting=casting)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: need at least one array to concatenate\n"
+  },
+  {
+   "step": "forecast",
+   "error": "ValueError('No objects to concatenate')",
+   "trace": ".py\", line 183, in s_forecast\n    s = LV.run(self.a.workers, False, str(self.ledger), self.a.limit, self.state); self.counts[\"forecast\"] = {k: s[k] for k in (\"as_of\", \"stocks_forecast\", \"product_state_counts\", \"ledger_status\")}\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/live.py\", line 74, in run\n    D, resid, _ = R3.build_panel(a.workers, a.limit); lap(\"panel (prices, features, 1,100+ stocks)\", len(D))\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/run_phase3.py\", line 70, in build_panel\n    D = pd.concat([o[0] for o in out], ignore_index=True); resid = np.concatenate([o[1] for o in out])\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/pandas/core/reshape/concat.py\", line 382, in concat\n    op = _Concatenator(\n         ^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/pandas/core/reshape/concat.py\", line 445, in __init__\n    objs, keys = self._clean_keys_and_objs(objs, keys)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/pandas/core/reshape/concat.py\", line 507, in _clean_keys_and_objs\n    raise ValueError(\"No objects to concatenate\")\nValueError: No objects to concatenate\n"
   }
+ ],
+ "counts": {
+  "outcomes_written": 0
  },
  "within_budget": true
 }
