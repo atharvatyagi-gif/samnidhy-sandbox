@@ -108,6 +108,12 @@ def run(workers=8, dry=False, ledger_dir=None, limit=None, state_dir=None):
                "timings_s": rows, "total_s": round(time.time() - t0)}
     if not a.dry:
         state.mkdir(parents=True, exist_ok=True); (state / "latest_summary.json").write_text(json.dumps(summary, indent=1, default=str))
+    if not a.dry:                                              # one line a night for the learning curve (date, share Validated, strategies on trial, live ECE / coverage / n)
+        cf = state / "learning_curve.jsonl"; seen = {json.loads(x)["d"] for x in cf.read_text().splitlines() if x.strip()} if cf.exists() else set()
+        if str(as_of.date()) not in seen:
+            cov80 = ov["coverage"]["80"] if ov.get("coverage") else None
+            with open(cf, "a", encoding="utf-8", newline="\n") as h:
+                h.write(json.dumps({"d": str(as_of.date()), "stocks": len(syms), "validated_share": round(summ.get("Validated", 0) / max(len(syms), 1), 4), "on_trial": len(prob) + len(active), "live_ece": ov.get("ece"), "live_cov80": cov80, "live_n": ov.get("n_cov", 0)}) + "\n")
     print("\nJOB SUMMARY\n" + "-" * 66)
     for n, s, k in rows:
         print(f"{n:<58}{s:>7.1f}s  {'' if k is None else k}")

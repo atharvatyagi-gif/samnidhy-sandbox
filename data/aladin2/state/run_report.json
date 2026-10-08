@@ -1,0 +1,28 @@
+{
+ "day": "2026-10-08",
+ "weekday": "Thursday",
+ "full_refit_day": false,
+ "budget_min": 110,
+ "total_s": 204,
+ "steps": [
+  {
+   "step": "learn",
+   "seconds": 203.8,
+   "note": "1445 stocks, 35 strategies; 49 lifecycle events (49 new in the journal); states {'Retired': 5}"
+  },
+  {
+   "step": "publish",
+   "seconds": 0.0,
+   "note": "journal.json with 49 events"
+  }
+ ],
+ "errors": [],
+ "counts": {
+  "lifecycle_events": 49,
+  "journal_new": 49,
+  "strategy_states": {
+   "Retired": 5
+  }
+ },
+ "within_budget": true
+}

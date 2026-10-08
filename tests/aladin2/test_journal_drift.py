@@ -36,3 +36,9 @@ def test_strategy_drift_raises_an_alarm_only_for_features_it_uses():
     al = DR.strategy_drift(("rsi2",), ref, cur); assert al and al["reason"] == "feature drift" and "rsi2" in al["features"]
     assert DR.strategy_drift(("bb_z",), ref, cur) is None
     r = rng.normal(0, 0.01, 2000); assert DR.strategy_drift(("bb_z",), ref, cur, ref_ret=r, cur_ret=rng.normal(0, 0.03, 100))["reason"] == "volatility regime break"
+
+
+def test_events_before_the_forward_clock_are_tagged_as_historical_simulation():
+    old = J.from_lifecycle(ev("Active", "Demoted", cusum=5.3, h=5.0))                                  # dated 2025-08-04
+    new = J.from_lifecycle({**ev("Active", "Demoted", cusum=5.3, h=5.0), "date": "2026-11-02 00:00:00"})
+    assert old["historical"] is True and new["historical"] is False

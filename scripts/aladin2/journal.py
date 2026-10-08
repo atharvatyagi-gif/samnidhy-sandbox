@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT = ROOT / "data" / "aladin2"
+FORWARD_START = json.loads((ROOT / "data" / "config" / "aladin2.json").read_text(encoding="utf-8")).get("forward_clock_start", "2026-10-06")
 NICE = {"ma_cross": "Moving-average crossover", "donchian": "Donchian breakout", "tsmom": "Time-series momentum", "hi52": "Near 52-week high", "rsi2": "RSI(2) oversold", "bb_z": "Bollinger oversold",
         "reversal5": "5-day reversal", "gapfill": "Gap fill", "bb_squeeze": "Bollinger squeeze breakout", "atr_channel": "ATR channel break", "nr7": "Narrow-range breakout",
         "rel_strength": "Relative strength", "delivery_surge": "Delivery surge"}
@@ -63,7 +64,7 @@ def from_lifecycle(e):
     kind = {("Candidate", "Probation"): "promoted_to_probation", ("Retired", "Probation"): "reentered", ("Active", "Probation"): "capped"}.get((e["from"], e["to"]))
     kind = kind or {"Active": "promoted_to_active", "Demoted": "demoted", "Retired": "retired"}.get(e["to"], "state_change")
     ev = {"date": str(e["date"])[:10], "kind": kind, "strategy": e["strategy"], "scope": "universe" if e.get("sym") in (None, "*POOL*") else e["sym"], "text": text_for(e), "evidence": e.get("evidence") or {}}
-    ev["key"] = key(ev); return ev
+    ev["historical"] = ev["date"] < FORWARD_START; ev["key"] = key(ev); return ev
 
 
 def read(folder=None):
@@ -77,6 +78,7 @@ def append(events, folder=None):
     with open(folder / "journal.jsonl", "a", encoding="utf-8", newline="\n") as h:
         for ev in events:
             ev = ev if "key" in ev else {**ev, "key": key(ev)}
+            ev.setdefault("historical", ev["date"][:10] < FORWARD_START)
             if ev["key"] in have:
                 continue
             h.write(json.dumps(ev, separators=(",", ":"), default=str) + "\n"); have.add(ev["key"]); n += 1
