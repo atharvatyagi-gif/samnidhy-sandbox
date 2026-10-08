@@ -40,7 +40,7 @@ def main():
             br = pg.locator("#a2-brief"); txt = br.inner_text()
             v["brief"] = {"disclaimer": DIS in txt, "as_of": "as of" in txt.lower(), "svg_titles": br.locator("svg title").count(), "svg_with_label": br.locator("svg[role=img][aria-label]").count(), "inputs_labelled": br.locator("label input").count() == br.locator("input").count(),
                           "table_fallback": br.locator("details summary").count() >= 1}
-            pg.evaluate("document.querySelector('[data-go=a2]').click()"); pg.wait_for_timeout(1200)
+            pg.evaluate("document.querySelector('[data-go=signals]').click()"); pg.wait_for_selector("#signals [data-go=a2]", timeout=20000); pg.evaluate("document.querySelector('#signals [data-go=a2]').click()"); pg.wait_for_timeout(1200)
             for t in TABS:
                 pg.evaluate(f"document.querySelector('[data-tab={t}]').click()"); pg.wait_for_timeout(1500)
                 root = pg.locator("#a2v"); text = root.inner_text(); svgs = root.locator("svg[role=img]")

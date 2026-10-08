@@ -59,8 +59,8 @@ def _panel(args):
     return D.astype({c: "float32" for c in D.columns if D[c].dtype == "float64"}), e.values[::7].astype("float32")
 
 
-def build_panel(workers, limit=None):
-    cfg = C.load_cfg(); nifty = L.load_index(); cal = nifty.index[nifty.index >= pd.Timestamp(cfg["eval"]["data_start"]) - pd.Timedelta(days=400)]
+def build_panel(workers, limit=None, top=None):
+    cfg = C.load_cfg(); top = int(top or cfg.get("forecast", {}).get("universe_top", 500)); nifty = L.load_index(); cal = nifty.index[nifty.index >= pd.Timestamp(cfg["eval"]["data_start"]) - pd.Timedelta(days=400)]
     rows_ = P.universe_pit(cfg)
     if limit:
         u = {x['s']: (x.get('avgv20') or 0) * (x.get('c') or 0) for x in json.load(open(L.TERM / 'universe.json'))['stocks']}; rows_ = sorted(rows_, key=lambda r: -u.get(r[0], 0))[:limit]
@@ -68,7 +68,7 @@ def build_panel(workers, limit=None):
     with ProcessPoolExecutor(workers) as ex:
         out = [o for o in ex.map(_panel, [(s, cal.values) for s in syms], chunksize=4) if o is not None]
     D = pd.concat([o[0] for o in out], ignore_index=True); resid = np.concatenate([o[1] for o in out])
-    D["rank"] = D.groupby("date")["adv_prev"].rank(ascending=False, method="first"); D = D[D["rank"] <= 500].drop(columns=["rank"])
+    D["rank"] = D.groupby("date")["adv_prev"].rank(ascending=False, method="first"); D = D[D["rank"] <= top].drop(columns=["rank"])
     return D.reset_index(drop=True), resid, cfg
 
 
@@ -182,8 +182,8 @@ def barrier_check(D, R_by_h, resid, n_rows=4000, n_paths=800, seed=0):
 
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--workers", type=int, default=14); ap.add_argument("--out", default="data/aladin2/phase3_report.json"); ap.add_argument("--first_year", type=int, default=2012); ap.add_argument("--last_year", type=int, default=2026)
-    a = ap.parse_args(); t0 = time.time(); D, resid, cfg = build_panel(a.workers)
+    ap = argparse.ArgumentParser(); ap.add_argument("--workers", type=int, default=14); ap.add_argument("--top", type=int, default=None, help="point-in-time liquidity rank cut-off (default: config forecast.universe_top, 500)"); ap.add_argument("--out", default="data/aladin2/phase3_report.json"); ap.add_argument("--first_year", type=int, default=2012); ap.add_argument("--last_year", type=int, default=2026)
+    a = ap.parse_args(); t0 = time.time(); D, resid, cfg = build_panel(a.workers, None, a.top)
     print(f"panel {len(D):,} rows, {D['sym'].nunique()} stocks, {D['date'].min().date()}..{D['date'].max().date()} ({time.time() - t0:.0f}s)", flush=True)
     R_by_h = {H: [] for H in FC.H_LIST}; corr_log = []
     for year in range(a.first_year, a.last_year + 1):
@@ -192,7 +192,7 @@ def main():
             if r is not None:
                 R_by_h[H].append(r); corr_log.append({"year": year, "H": H, **{f"corr_{k}": v for k, v in r["corr"].items()}, "n_train": r["n_train"], "n_cal": r["n_cal"], "n_test": r["n_test"]})
         print(f"  {year} done ({time.time() - t0:.0f}s)", flush=True)
-    rep = {"universe": "point-in-time top 500 by trailing traded value (survivors to today only)", "rows": f"every {STRIDE}th trading day", "test_years": [a.first_year, a.last_year], "coverage_tol": cfg["forecast"]["coverage_tol"], "ece_max": cfg["calibration"]["ece_max"]}
+    rep = {"universe": f"point-in-time top {a.top or cfg.get('forecast', {}).get('universe_top', 500)} by trailing traded value (survivors to today only)", "rows": f"every {STRIDE}th trading day", "test_years": [a.first_year, a.last_year], "coverage_tol": cfg["forecast"]["coverage_tol"], "ece_max": cfg["calibration"]["ece_max"]}
     rep["horizons"] = summarise(R_by_h, D); rep["barrier_check_20d"] = barrier_check(D, R_by_h, resid); rep["corrections"] = corr_log[::5]; rep["runtime_s"] = round(time.time() - t0)
     json.dump(rep, open(a.out, "w"), indent=1, default=str); print(json.dumps({"coverage": {h: v["coverage"] for h, v in rep["horizons"].items()}, "ece": {h: v["p_up"]["ece_after_isotonic"] for h, v in rep["horizons"].items()}}, indent=1))
 

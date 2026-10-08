@@ -18,6 +18,7 @@ import * as Aladin from "./desk-aladin.js";
 import * as A2 from "./desk-aladin2.js";
 import * as A2V from "./desk-a2views.js";
 import * as A2B from "./desk-a2bot.js";
+import * as SG from "./desk-signals.js";
 import { withOfficialClose } from "./intraday-close.js";
 import * as Ticks from "./desk-ticks.js";
 import * as Nexus from "./desk-nexus.js";
@@ -229,7 +230,7 @@ const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json
 const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "telemetry", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
 function deskCtx() { return { serverNow: Ticks.serverNow, renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
-function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2V.init(c); A2B.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); if (view === "terminal" && sec && (sym === sec || sym === "*") && !isIntra(iv)) drawChart(true); }); }
+function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2V.init(c); A2B.init(c); SG.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); if (view === "terminal" && sec && (sym === sec || sym === "*") && !isIntra(iv)) drawChart(true); }); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
@@ -262,6 +263,7 @@ function go(v, quiet) {
   }
   if (v === "houses") Houses.renderHouses();
   if (v === "lab") Aladin.renderAladin();
+  if (v === "signals") SG.mount();
   if (v === "a2") A2V.mount();
   if (v === "a2bot") A2B.mount();
   if (!quiet) $("#v-" + v).scrollTop = 0;
@@ -1791,6 +1793,7 @@ document.addEventListener("keydown", e => {
     if (!$("#search").hidden) { closeSearch(); return; }
     if (!$("#onboard").hidden) { $("#ob-skip").click(); return; }
     if (document.querySelector(".eng-modal")) return;
+    if (document.querySelector(".sg-sheet")) return;                  // the ALADIN signals sheet closes itself on Escape
     if (eng.cancel()) return;
     if (!$("#ct-menu").hidden) { $("#ct-menu").hidden = true; return; }
     if (!$("#iv-menu").hidden) { $("#iv-menu").hidden = true; return; }

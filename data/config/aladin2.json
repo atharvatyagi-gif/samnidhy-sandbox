@@ -110,7 +110,8 @@
     ],
     "paths": 2000,
     "conformal_window_d": 500,
-    "coverage_tol": 0.04
+    "coverage_tol": 0.04,
+    "universe_top": 1500
   },
   "risk": {
     "risk_per_trade_pct": 1.0,
@@ -147,6 +148,9 @@
       "range": "forecast range",
       "level": "price level likelihood",
       "plan_level": "profit level",
+      "goal": "range edge",
+      "stop": "exit level",
+      "signal": "signal",
       "bear_note": "exit if you hold it, do not add it; a short is possible only through futures",
       "weekly": "weekly signal"
     },
@@ -157,6 +161,9 @@
       "range": "price range",
       "level": "price target probability",
       "plan_level": "price target",
+      "goal": "Target price",
+      "stop": "Stop loss",
+      "signal": "Signal",
       "bear_note": "exit if you hold it, do not buy it; a short is possible only through futures",
       "weekly": "weekly signal"
     }

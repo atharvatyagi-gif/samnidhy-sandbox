@@ -74,6 +74,9 @@ function load(sym) {
   const p = ctx.getJSON(`aladin2/stock/${encodeURIComponent(sym)}.json`, false).then(d => { cache.set(sym, d); }).catch(() => { failed.add(sym); }).finally(() => { pending.delete(sym); if (onReady) onReady(sym); });
   pending.set(sym, p);
 }
+/* For callers that embed the brief somewhere other than the Details rail (the ALADIN signals sheet): loaded(sym) says whether the shard is in; ready(sym) resolves when it has arrived. */
+export const loaded = sym => cache.has(sym) || failed.has(sym);
+export function ready(sym) { load(sym); loadBoard(); return Promise.all([pending.get(sym), boardP].filter(Boolean)); }
 function loadBoard() {
   if (board || boardP || !ctx) return;
   boardP = ctx.getJSON("aladin2/scoreboard.json", false).then(d => { board = d; }).catch(() => { board = { missing: true }; }).finally(() => { boardP = null; if (onReady) onReady(null); });
@@ -87,7 +90,7 @@ const STATE_NOTE = { Learning: "ALADIN has not yet found enough evidence for thi
 export function html(sym) {
   load(sym); loadBoard();
   const head = `<div class="sec-t">ALADIN 2.0 brief</div>`;
-  if (failed.has(sym)) return head + `<p class="note">ALADIN has no forecast for ${esc(sym)} today (only the 500 most-traded stocks are covered). Not measured.</p>`;
+  if (failed.has(sym)) return head + `<p class="note">ALADIN has no forecast for ${esc(sym)} today (only the roughly 1,400 most-traded stocks are covered). Not measured.</p>`;
   const d = cache.get(sym);
   if (!d) return head + `<p class="note">Loading the brief…</p>`;
   const lab = (board && board.labels) || { none: "NO EDGE", bull: "BULLISH SIGNAL", bear: "BEARISH SIGNAL", range: "forecast range", level: "price level likelihood", plan_level: "profit level" };
@@ -96,7 +99,7 @@ export function html(sym) {
   const verdict = `<div class="a2-verdict"><span class="tag ${d.state === "Validated" ? "acc" : d.state === "Suspended" ? "warn" : ""}" title="${esc(STATE_NOTE[d.state] || "")}">${esc(d.state.toUpperCase())}</span>
     <b class="a2-sig ${cls}">${esc(lab[key] || lab.none)}${key === "none" ? ": stand aside" : ""}</b><span class="mut">as of ${esc(d.as_of)} close</span></div>
     <p class="a2-sentence">${esc(sentence(d, lab))}</p>`;
-  const chart = has ? fanSvg(d, g) : `<p class="note">No forecast range is published for ${esc(d.sym)} (ranges cover the 500 most-traded stocks).</p>`;
+  const chart = has ? fanSvg(d, g) : `<p class="note">No forecast range is published for ${esc(d.sym)} (ranges cover the roughly 1,400 most-traded stocks).</p>`;
   const table = !has ? "" : `<details class="a2-det"><summary>Range table (${esc(lab.range)})</summary><table class="a2-tbl"><thead><tr><th>Days</th><th>50% range</th><th>80% range</th><th>95% range</th><th>Closes higher*</th></tr></thead><tbody>${d.bands.map(b =>
     `<tr><td>${b.H}</td><td>${inr(b.lo50)}–${inr(b.hi50)}</td><td>${inr(b.lo80)}–${inr(b.hi80)}</td><td>${inr(b.lo95)}–${inr(b.hi95)}</td><td>${b.p_up != null ? Math.round(b.p_up * 100) + "%" : b.base_rate != null ? "about " + Math.round(b.base_rate * 100) + "% (history; no directional information)" : "--"}</td></tr>`).join("")}</tbody></table>
     <p class="note">*For 1 and 5 days a calibrated number; for longer horizons only how often stocks like this closed higher historically. Ranges are tested out of sample: the 80% range held the price about 80% of the time.</p></details>`;
