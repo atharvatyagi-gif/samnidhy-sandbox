@@ -61,3 +61,14 @@ def test_ledger_book_resolution_and_the_live_rule(tmp_path):
 def test_the_study_behind_the_rule_is_on_disk_with_the_numbers_the_page_quotes():
     st = W.study(); assert st and st["weeks"] > 600 and st["record"]["sell"]["years_below_market"] == "14/14" and st["record"]["sell"]["gross_excess_bps"] < -50 and st["record"]["sell"]["gross_excess_ci95_bps"][1] < 0
     assert st["record"]["buy"]["net_ci95_bps"][0] > 0 and "four thresholds" in st["thresholds_looked_at"]["note"] and st["scores"]["s_aladin"]["top_decile"]["net_excess_bps"] < 0       # the best 10% does NOT pay; only the best 1%
+
+
+def test_goal_and_stop_for_every_signal_the_goal_is_the_50_percent_range_edge_and_never_invented():
+    stocks, al = world(400)
+    fc = {"S000": {"bands5": [98.0, 103.0, 96.0, 105.0, 94.0, 108.0], "bands20": [0] * 6}, "S001": {"bands5": [97.0, 102.0, 95.0, 104.0, 93.0, 107.0], "bands20": [0] * 6}}
+    book = W.build("2026-10-09", al, stocks, CFG, forecasts=fc)
+    b = book["bull"][0]; assert b["goal"] == 103.0 and "upper edge" in b["goal_basis"] and b["stop"] < b["close"] and b["stop"] == b["invalidation"] and b["reward_risk"] > 0
+    assert abs(b["reward_risk"] - (103.0 - b["close"]) / (b["close"] - b["stop"])) < 0.01 and b["evidence"]["range_5d_50pct"] == [98.0, 103.0]
+    nb = book["bull"][3]; assert nb["goal"] is None and nb["reward_risk"] is None and "not measured" in nb["goal_basis"] and nb["stop"] < nb["close"]                       # no forecast range for this stock: not measured, the stop still exists
+    s = W.build("2026-10-09", al, stocks, CFG, forecasts={"S399": {"bands5": [90.0, 96.0, 88.0, 98.0, 85.0, 101.0], "bands20": [0] * 6}})["bear"][-1]
+    assert s["signal"] == "bear" and s["goal"] == 90.0 and "lower edge" in s["goal_basis"] and s["stop"] > s["close"]                                                              # a weak view is wrong when the price closes ABOVE the stop

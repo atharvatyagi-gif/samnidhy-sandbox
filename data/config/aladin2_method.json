@@ -5,7 +5,7 @@
     {
       "h": "What ALADIN 2.0 is, and what it is not",
       "p": [
-        "ALADIN 2.0 gives every one of the 500 most-traded NSE stocks a forecast range (where the price is likely to be in 1, 5, 10, 20 and 60 trading days), tracks how often those ranges turn out right, and keeps testing whether any trading rule has a real, repeatable edge after costs. It learns from its own results: it keeps the rules that keep working, retires the ones that stop, and tests new ones.",
+        "ALADIN 2.0 gives every one of the roughly 1,400 most-traded NSE stocks a forecast range (where the price is likely to be in 1, 5, 10, 20 and 60 trading days), tracks how often those ranges turn out right, and keeps testing whether any trading rule has a real, repeatable edge after costs. It learns from its own results: it keeps the rules that keep working, retires the ones that stop, and tests new ones.",
         "It cannot promise returns or keep your money safe. Markets are close to efficient, real edges are small and fade, and the honest answer for most stocks on most days is NO EDGE: stand aside. Standing aside is a result, not a failure. No number here is advice, and nothing here places an order."
       ]
     },

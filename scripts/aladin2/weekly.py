@@ -116,6 +116,13 @@ def build(as_of, aladin, universe_stocks, cfg, predict=None, sentiment=None, fno
                "evidence": {"aladin1_technical_p5": r.p5, "aladin1_combined_p5": r.comb5, "aladin1_confidence": r.conf, "aladin1_agreement": r.agree, "outlook_p_beat_nifty_20d": (pred.get(sym) or {}).get("p") if isinstance(pred.get(sym), dict) else None,
                             "sentiment_level": (sent.get(sym) or {}).get("lvl"), "supply_chain_impact": ((aladin["stocks"].get(sym) or {}).get("x") or {}).get("i"), "range_5d_80pct": f.get("bands5", [None] * 6)[2:4] if f else None,
                             "strategies_active": 0}}
+        b5 = f.get("bands5") if f else None; have = bool(b5) and b5[0] is not None; stop0 = SG.choose_stop(close, atr, None, None, cfg)           # goal and stop: the three numbers the page shows first
+        row["goal"] = round(float(b5[1] if key == "bull" else b5[0]), 2) if have else None
+        row["goal_basis"] = (("upper" if key == "bull" else "lower") + " edge of the 5-day 50% price range") if have else "not measured: no 5-day forecast range for this stock yet"
+        row["stop"] = round(float(stop0 if key == "bull" else 2 * close - stop0), 2)
+        row["stop_basis"] = "a close below this level, 2 x ATR under the price, ends the idea" if key == "bull" else "a close above this level, 2 x ATR over the price, means the weak view was wrong"
+        row["reward_risk"] = round(abs(row["goal"] - close) / abs(close - row["stop"]), 2) if have and close != row["stop"] else None
+        row["evidence"]["range_5d_50pct"] = [round(float(x), 2) for x in b5[0:2]] if have else None
         if key == "bull":
             stop = SG.choose_stop(close, atr, None, None, cfg); zone = SG.entry_zone(close, atr, cfg); sz = SG.position_size(capital, close, stop, (meta["adv_cr"] * 1e7 / max(close, 1)), (rec or {}).get("net_bps", 0) / 1e4, W["weekly_sd"], cfg)
             row.update({"entry_zone": [round(zone[0], 2), round(zone[1], 2)], "invalidation": round(stop, 2), "expected_net_bps": (rec or {}).get("net_bps"), "record": rec, "size_for_capital": {"capital": capital, "qty": sz["qty"], "binding": sz["binding"], "capital_at_risk": round(sz["capital_at_risk"], 0)},

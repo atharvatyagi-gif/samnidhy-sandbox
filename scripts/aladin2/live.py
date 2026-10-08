@@ -74,7 +74,7 @@ def run(workers=8, dry=False, ledger_dir=None, limit=None, state_dir=None):
     D, resid, _ = R3.build_panel(a.workers, a.limit); lap("panel (prices, features, 1,100+ stocks)", len(D))
     as_of = D["date"].max(); cal = L.load_index().index
     live = D[(D["date"] == as_of)].dropna(subset=R3.BASE_COLS).copy(); live = live[live["close"] > 0]
-    lap("select today's rows (top 500 by trailing traded value)", len(live))
+    lap("select today's rows (the configured liquid universe, forecast.universe_top)", len(live))
     H_LIST = FC.H_LIST; sig_all, bands_all, p_all = {}, {}, {}
     for H in H_LIST:
         b = R3.fit_bundle(D, as_of + pd.Timedelta(days=1), H, cfg)
