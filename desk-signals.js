@@ -10,7 +10,8 @@ import * as A2 from "./desk-aladin2.js";
 import { shareText } from "./desk-deps.js";
 
 let ctx = null, root = null, W = null, graph = null, loading = null, failed = false;
-const st = { q: "", filter: "all", sel: null, tab: "summary" };
+const st = { q: "", filter: "all", sel: null, tab: "summary", page: "signals", pmode: "live" };
+let paper = null, paperLoading = false;
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.";
 const REL = { supplies: "supplies", equipment_for: "supplies equipment to", raw_material_from: "sources raw material from", logistics_for: "provides logistics to", related_party: "is a related party of", customer_of: "is a customer of" };
 const TABS = [["summary", "Summary"], ["how", "How it was made"], ["range", "Range and chance"], ["deps", "Revenue dependencies"]];
@@ -52,6 +53,21 @@ export function dependenciesOf(g, sym) {
   }).sort((a, b) => (b.share ?? -1) - (a.share ?? -1) || (b.conf ?? 0) - (a.conf ?? 0));
   return { rows, read: !!done, done: g.coverage ? g.coverage.companies_done : null, total: g.coverage ? g.coverage.companies_total : null };
 }
+/* ---------- paper account helpers (tests/js/signals.test.mjs) ---------- */
+export function downsample(a, n = 360) { if (!a || a.length <= n) return a || []; const out = []; for (let i = 0; i < n; i++) out.push(a[Math.round(i * (a.length - 1) / (n - 1))]); return out; }
+/* weekly returns [[date, r]] compounded from `start`: [[date, value]] */
+export function compound(weekly, start) { let v = start; return (weekly || []).map(([d, r]) => [d, (v *= 1 + r)]); }
+const tms = d => Date.parse(d + "T00:00:00Z");
+/* A line chart as inline SVG. series: [{name, pts:[[date, value]], cls}], base: a horizontal reference value (the budget). Times are on a true date axis. */
+export function lineChart(series, { w = 640, h = 220, base = null, label = "chart", fmt = v => String(Math.round(v)) } = {}) {
+  const all = series.flatMap(s => s.pts); if (all.length < 2) return "";
+  const xs = all.map(p => tms(p[0])), ys = all.map(p => p[1]).concat(base != null ? [base] : []), x0 = Math.min(...xs), x1 = Math.max(...xs), lo = Math.min(...ys), hi = Math.max(...ys), pad = (hi - lo) * 0.06 || 1;
+  const L = 56, R = 8, T = 8, B = 20, X = d => L + (w - L - R) * (tms(d) - x0) / ((x1 - x0) || 1), Y = v => T + (h - T - B) * (1 - (v - (lo - pad)) / ((hi + pad) - (lo - pad)));
+  const ticks = [lo, (lo + hi) / 2, hi].map(v => `<line x1="${L}" x2="${w - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" class="a2-grid"/><text x="${L - 4}" y="${(Y(v) + 3).toFixed(1)}" class="a2-ax end">${esc(fmt(v))}</text>`).join("");
+  const yrs = []; for (let y = new Date(x0).getUTCFullYear() + 1; y <= new Date(x1).getUTCFullYear(); y++) { if (new Date(x1).getUTCFullYear() - new Date(x0).getUTCFullYear() > 6 && y % 2) continue; yrs.push(`<text x="${X(y + "-01-01").toFixed(1)}" y="${h - 5}" class="a2-ax mid">${y}</text>`); }
+  const lines = series.map(s => `<polyline class="sg-ln ${s.cls || ""}" points="${downsample(s.pts).map(p => X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join(" ")}"><title>${esc(s.name)}: ${esc(fmt(s.pts[s.pts.length - 1][1]))} at the end</title></polyline>`).join("");
+  return `<svg viewBox="0 0 ${w} ${h}" class="a2v-svg sg-svg" role="img" aria-label="${esc(label)}">${ticks}${base != null ? `<line x1="${L}" x2="${w - R}" y1="${Y(base).toFixed(1)}" y2="${Y(base).toFixed(1)}" class="a2v-ref"/>` : ""}${yrs.join("")}${lines}</svg><div class="a2b-leg">${series.map(s => `<span class="a2b-k sg-k ${s.cls || ""}">${esc(s.name)}</span>`).join("")}</div>`;
+}
 export const fmtLevel = (v, p) => v == null ? null : { price: inr(v, 2), rel: pct(p, 1) };
 
 /* ---------- loading ---------- */
@@ -75,12 +91,12 @@ function shell() {
   const chip = (k, t, n) => `<button type="button" class="sg-chip ${st.filter === k ? "on" : ""}" data-f="${k}" aria-pressed="${st.filter === k}">${esc(t)}${n != null ? ` <i>${n}</i>` : ""}</button>`;
   return `<div class="sg">
     <div class="sg-head"><div><h2>ALADIN signals</h2><p>${b ? `Weekly view as of the ${esc(b.as_of)} close · hold for ${b.horizon_trading_days} trading days` : "Loading…"}</p></div>
-      <div class="sg-links"><button type="button" class="btn-line sm" data-go="a2bot">Bot console</button><button type="button" class="btn-line sm" data-go="a2">Research pages</button></div></div>
-    ${b ? `<div class="sg-stats"><div class="sg-stat"><span>${esc(L.bull)} signals</span><b class="up">${c.bull}</b></div><div class="sg-stat"><span>${esc(L.bear)} signals</span><b class="down">${c.bear}</b></div><div class="sg-stat"><span>${esc(L.none)}</span><b>${c.hold.toLocaleString("en-IN")}</b></div>
+      <div class="sg-links"><div class="sg-chips" role="group" aria-label="Page"><button type="button" class="sg-chip ${st.page === "signals" ? "on" : ""}" data-page="signals" aria-pressed="${st.page === "signals"}">Signals</button><button type="button" class="sg-chip ${st.page === "paper" ? "on" : ""}" data-page="paper" aria-pressed="${st.page === "paper"}">Paper account</button></div><button type="button" class="btn-line sm" data-go="a2bot">Bot console</button><button type="button" class="btn-line sm" data-go="a2">Research pages</button></div></div>
+    <div id="sg-p1" ${st.page === "signals" ? "" : "hidden"}>${b ? `<div class="sg-stats"><div class="sg-stat"><span>${esc(L.bull)} signals</span><b class="up">${c.bull}</b></div><div class="sg-stat"><span>${esc(L.bear)} signals</span><b class="down">${c.bear}</b></div><div class="sg-stat"><span>${esc(L.none)}</span><b>${c.hold.toLocaleString("en-IN")}</b></div>
       <div class="sg-stat wide"><span>Chance the best-ranked closes higher</span><b>${esc(pct0(bestChance()))}</b><small>measured 2013 to 2026, checked on years the model had not seen</small></div></div>` : ""}
     <div class="sg-bar"><div class="sg-search"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg><input id="sg-q" type="search" inputmode="search" autocomplete="off" spellcheck="false" placeholder="Search any stock: symbol or company name" value="${esc(st.q)}" aria-label="Search any stock"></div>
       <div class="sg-chips" role="group" aria-label="Filter">${chip("all", "All", null)}${chip("bull", L.bull, c ? c.bull : null)}${chip("bear", L.bear, c ? c.bear : null)}</div></div>
-    <div id="sg-list"></div>
+    <div id="sg-list"></div></div><div id="sg-p2" ${st.page === "paper" ? "" : "hidden"}></div>
     <p class="note a2v-dis">${DISCLAIMER}</p>
     <div id="sg-sheet-host"></div></div>`;
 }
@@ -95,6 +111,53 @@ function listHtml() {
       <td class="r">${r.sig === "bull" || r.sig === "bear" ? levelCell(r.goal, r.goalPct, r.book && r.book.goal_basis) : '<span class="sg-nm">--</span>'}</td><td class="r">${r.sig === "bull" || r.sig === "bear" ? levelCell(r.stop, r.stopPct, "x") : '<span class="sg-nm">--</span>'}</td><td class="sg-go" aria-hidden="true">›</td></tr>`).join("");
   return `<div class="sg-tablewrap"><table class="sg-table"><thead><tr><th>Stock</th><th>${esc(L.signal || "Signal")}</th><th class="r">${esc(L.goal || "Range edge")}</th><th class="r">${esc(L.stop || "Exit level")}</th><th></th></tr></thead><tbody>${body}</tbody></table></div>
     <p class="note">${more ? `Showing ${rows.length} of ${total}. Search to find any other stock. ` : ""}${st.q ? "" : `Prices are the ${esc(W.book.as_of)} close. The ${esc(L.goal || "range edge").toLowerCase()} is the edge of the model's 5-day 50% price range; the ${esc(L.stop || "exit level").toLowerCase()} is 2 average daily moves from the price. Click a stock for the reasons.`}</p>`;
+}
+
+/* ----- the paper account page ----- */
+async function loadPaper() {
+  if (paper || paperLoading) return; paperLoading = true;
+  const get = f => ctx.getJSON("aladin2/" + f, false).catch(() => null);
+  const [live, hist] = await Promise.all([get("paper_live.json"), get("paper_backtest.json")]); paper = { live, hist }; paperLoading = false;
+  if (root && st.page === "paper") paintPaper();
+}
+const rupee = v => v == null ? "--" : (v < 0 ? "-" : "") + "₹" + inr(Math.abs(v), 0);
+const sgn = (v, d = 1, suf = "%") => v == null ? "--" : (v >= 0 ? "+" : "") + v.toFixed(d) + suf;
+const cls = v => v == null ? "" : v >= 0 ? "up" : "down";
+const kpi = (label, val, sub, c = "") => `<div class="sg-stat"><span>${esc(label)}</span><b class="${c}">${val}</b><small>${sub || ""}</small></div>`;
+function tradesTable(list) {
+  if (!list || !list.length) return '<p class="note">No closed trades yet.</p>';
+  const nm = { stop: "stop", time: "5-day limit", goal: "goal", "no data": "no data" };
+  return `<div class="sg-tablewrap sg-short"><table class="sg-table"><thead><tr><th>Stock</th><th>In</th><th>Out</th><th class="r">Price in → out</th><th class="r">Net P/L</th><th>Why out</th></tr></thead><tbody>${list.slice(-40).reverse().map(t => `<tr><td class="sg-st"><b>${esc(t.sym)}</b><small>${t.qty} shares</small></td><td>${esc(t.entry_date)}</td><td>${esc(t.exit_date)}</td><td class="r"><b>${inr(t.entry)} → ${inr(t.exit)}</b></td><td class="r"><b class="${cls(t.net)}">${rupee(t.net)}</b><small class="${cls(t.ret_pct)}">${sgn(t.ret_pct, 2)}</small></td><td>${esc(nm[t.reason] || t.reason)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function paperHtml() {
+  if (!paper) return '<p class="note">Loading the paper account…</p>';
+  const doc = st.pmode === "live" ? paper.live : paper.hist, seg = `<div class="sg-chips" role="group" aria-label="Paper account view"><button type="button" class="sg-chip ${st.pmode === "live" ? "on" : ""}" data-pm="live" aria-pressed="${st.pmode === "live"}">Live front test</button><button type="button" class="sg-chip ${st.pmode === "hist" ? "on" : ""}" data-pm="hist" aria-pressed="${st.pmode === "hist"}">History 2013 to 2026</button></div>`;
+  if (!doc) return `<div class="sg-bar">${seg}</div><p class="note">This part of the paper account is not published yet.</p>`;
+  const S = doc.stats || {}, R = doc.rules || {}, hist = st.pmode === "hist";
+  const rulesCard = `<div class="sg-card"><h4>The bot's written rules</h4><dl class="sg-dl"><div><dt>Budget</dt><dd>${rupee(R.budget_inr)}, simulated</dd></div><div><dt>Which signals</dt><dd>${esc(R.books || "")}</dd></div><div><dt>Entry</dt><dd>${esc(R.entry || "")}</dd></div><div><dt>Exit</dt><dd>${esc(R.exit_order || "")}</dd></div><div><dt>Size</dt><dd>${R.risk_per_trade_pct}% of the account at risk to the stop, at most ${R.max_position_pct}% in one stock, at most ${(R.adv_participation_max * 100).toFixed(0)}% of its daily volume, at most ${R.max_open} stocks at once</dd></div><div><dt>Costs</dt><dd>${esc(R.costs || "")}</dd></div></dl>
+    ${(doc.rule_history || []).length ? `<h4 style="margin-top:12px">Rule history (kept in the open)</h4><ul class="sg-hist">${doc.rule_history.map(x => `<li><b>v${x.v}</b> · ${esc(x.exits)} · ${esc(x.why_dropped || x.why || "")}${x.backtest_return_pct != null ? ` (history result ${sgn(x.backtest_return_pct)})` : ""}</li>`).join("")}</ul>` : ""}</div>`;
+  if (!S.started) return `<div class="sg-bar">${seg}</div><div class="sg-banner">${esc(doc.label || "")}</div><div class="sg-empty"><b>No live trade yet.</b><span>${esc(doc.note || "")} Budget ${rupee(R.budget_inr)}.</span></div>${rulesCard}`;
+  const bench = hist && doc.benchmark ? compound(doc.benchmark.weekly, S.start_equity) : null, ex = (S.avg_invested_pct || 0) / 100, matched = bench && ex > 0 && ex < 1 ? compound(doc.benchmark.weekly.map(([d, r]) => [d, r * ex]), S.start_equity) : null;
+  const chart = lineChart([{ name: "Paper account (after all costs)", pts: doc.equity.map(r => [r[0], r[1]]), cls: "a" }].concat(matched ? [{ name: `Market with the same ${(ex * 100).toFixed(0)}% in stocks, rest cash (the fair comparison)`, pts: matched, cls: "c" }] : []).concat(bench ? [{ name: "Market, all money in the liquid stocks every week, before costs", pts: bench, cls: "b" }] : []), { base: S.start_equity, label: "Paper account value over time", fmt: v => rupee(v) });
+  const yrs = S.by_year_pct ? Object.entries(S.by_year_pct) : [], mx = Math.max(1, ...yrs.map(([, v]) => Math.abs(v)));
+  const ab = hist && doc.ablation ? `<div class="sg-card"><h4>Exit rules compared (same signals, same history)</h4><table class="sg-mini"><thead><tr><td></td><td>Return</td><td>Per year</td><td>Worst fall</td><td>Profit factor</td></tr></thead><tbody>${Object.entries(doc.ablation).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${sgn(v.return_pct, 0)}</td><td>${sgn(v.cagr_pct, 1)}</td><td>${sgn(v.max_drawdown_pct, 0)}</td><td>${v.profit_factor ?? "--"}</td></tr>`).join("")}</tbody></table><p class="note">The first design (with an order to leave at the price goal) lost money, so it was dropped before any live trade. The price goal stays on the page as information.</p></div>` : "";
+  const open = !hist && doc.open && doc.open.length ? `<div class="sg-card"><h4>Open positions</h4><div class="sg-tablewrap sg-short"><table class="sg-table"><thead><tr><th>Stock</th><th>In</th><th class="r">Price in → now</th><th class="r">P/L so far</th><th class="r">Stop</th><th>Days left</th></tr></thead><tbody>${doc.open.map(o => `<tr><td class="sg-st"><b>${esc(o.sym)}</b><small>${o.qty} shares</small></td><td>${esc(o.entry_date)}</td><td class="r"><b>${inr(o.entry)} → ${inr(o.last)}</b></td><td class="r"><b class="${cls(o.pnl)}">${rupee(o.pnl)}</b></td><td class="r">${inr(o.stop)}</td><td>${o.days_left}</td></tr>`).join("")}</tbody></table></div></div>` : "";
+  return `<div class="sg-bar">${seg}</div><div class="sg-banner">${esc(doc.label || "")}</div>
+    <div class="sg-stats sg-kp">${kpi("Budget", rupee(S.start_equity), `from ${esc(S.from)}`)}${kpi("Account value", rupee(S.end_equity), `to ${esc(S.to)}`)}${kpi("Profit or loss", rupee(S.pnl), sgn(S.return_pct) + (S.cagr_pct != null ? ` · ${sgn(S.cagr_pct)} a year` : ""), cls(S.pnl))}${kpi("Worst fall from a peak", sgn(S.max_drawdown_pct), "the deepest drop of the account value", "down")}</div>
+    <div class="sg-stats sg-kp">${kpi("Trades", String(S.trades), `${(S.win_rate * 100).toFixed(0)}% ended in profit`)}${kpi("Average win · loss", `${sgn(S.avg_win_pct, 2)} · ${sgn(S.avg_loss_pct, 2)}`, `profit factor ${S.profit_factor ?? "--"}`)}${kpi("Costs paid", rupee(S.costs_paid), "brokerage, taxes, charges, spread")}${kpi("Money at work", S.avg_invested_pct != null ? S.avg_invested_pct.toFixed(0) + "%" : "--", `average share of the account in stocks; exits: ${Object.entries(S.exits || {}).filter(([, n]) => n).map(([k, n]) => k + " " + n).join(", ")}`)}</div>
+    <div class="sg-card"><h4>Account value over time</h4>${chart}${hist && matched ? `<p class="note">The bot trades only the best-ranked 1%, so on average just ${(ex * 100).toFixed(0)}% of the account is in stocks and the rest sits in cash that earns nothing here. The fair comparison is the market held at the same share (middle line). The top dashed line has all its money in stocks every week, so it also carries about twice the worst fall.</p>` : ""}</div>
+    ${open}<div class="sg-card"><h4>Return by year</h4><ul class="sg-bars">${yrs.map(([y, v]) => `<li><span>${esc(y)}</span><div><i class="${v >= 0 ? "up" : "down"}" style="width:${(Math.abs(v) / mx * 100).toFixed(0)}%"></i></div><em>${sgn(v, 1)}</em></li>`).join("")}</ul></div>
+    ${ab}<div class="sg-card"><h4>${hist ? "Most recent trades" : "Closed trades"}</h4>${tradesTable(hist ? doc.recent_trades : doc.trades)}</div>${rulesCard}
+    <p class="note">${hist ? "History: ALADIN 1's out-of-sample scores replayed week by week on real prices, stocks listed today (flatters the positive signals), the price goal in the history is a volatility stand-in, cash earns nothing, no tax on gains. It shows how the rules behave; it is not a forecast and not live trading." : "Live: simulated trades on real prices from the forward clock. The first weeks prove nothing: judge it after months."} Simulated money, no broker, no real trade. Educational analysis only, not investment advice.</p>`;
+}
+function paintPaper() {
+  const el = root && root.querySelector("#sg-p2"); if (!el) return; el.innerHTML = paperHtml();
+  el.querySelectorAll("[data-pm]").forEach(b => b.onclick = () => { st.pmode = b.dataset.pm; paintPaper(); });
+}
+function showPage(p) {
+  st.page = p; root.querySelectorAll("[data-page]").forEach(b => { const on = b.dataset.page === p; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
+  const a = root.querySelector("#sg-p1"), b = root.querySelector("#sg-p2"); if (a) a.hidden = p !== "signals"; if (b) b.hidden = p !== "paper";
+  if (p === "paper") { paintPaper(); loadPaper(); }
 }
 
 /* ----- the sheet (detail) ----- */
@@ -194,6 +257,7 @@ function paintList() {
   el.querySelectorAll("tbody tr").forEach(tr => { tr.onclick = () => open(tr.dataset.sym); tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(tr.dataset.sym); } }; });
 }
 function bind() {
+  root.querySelectorAll("[data-page]").forEach(b => b.onclick = () => showPage(b.dataset.page));
   const q = root.querySelector("#sg-q"); if (q) q.oninput = () => { st.q = q.value; paintList(); };
   if (q) q.onkeydown = e => { if (e.key === "Enter") { const tr = root.querySelector("#sg-list tbody tr"); if (tr) open(tr.dataset.sym); } };
   root.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { st.filter = b.dataset.f; root.querySelectorAll("[data-f]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); }); paintList(); });
@@ -203,6 +267,6 @@ export async function mount() {
   if (!document.__sgKey) { document.__sgKey = true; document.addEventListener("keydown", e => { if (e.key === "Escape" && st.sel && root && root.isConnected) close(); }); }
   if (!W) { root.innerHTML = '<p class="note">Loading…</p>'; await load(); }
   const q0 = root.querySelector("#sg-q"), had = q0 && q0.value;
-  root.innerHTML = shell(); bind(); paintList(); if (had) root.querySelector("#sg-q").value = had; paintSheet();
+  root.innerHTML = shell(); bind(); paintList(); if (st.page === "paper") showPage("paper"); if (had) root.querySelector("#sg-q").value = had; paintSheet();
 }
 export const _test = { reset: () => { W = null; graph = null; failed = false; loading = null; st.q = ""; st.filter = "all"; st.sel = null; st.tab = "summary"; }, set: (w, g) => { W = w; graph = g; } };

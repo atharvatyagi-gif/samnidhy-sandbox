@@ -143,6 +143,7 @@ def build(as_of, aladin, universe_stocks, cfg, predict=None, sentiment=None, fno
 
 def ledger_record(book, created):
     return {"t": "wk", "d": book["as_of"], "H": H, "created": str(created), "buy": [[r["sym"], r["close"], r["rank_pct"]] for r in book["bull"]], "sell": [[r["sym"], r["close"], r["rank_pct"]] for r in book["bear"]], "universe": book["universe"],
+            "levels": {r["sym"]: [r.get("stop"), r.get("goal"), r.get("atr"), r.get("adv_shares")] for r in book["bull"] + book["bear"]},       # stop, goal, ATR and average daily shares at signal time, so the paper account trades the SAME levels the page showed
             "weekday_validated": bool(book["bull"] and book["bull"][0]["weekday_validated"] or book["bear"] and book["bear"][0]["weekday_validated"])}
 
 
