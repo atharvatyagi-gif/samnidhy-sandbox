@@ -29,7 +29,7 @@ SITE = ROOT / "site"
 STATIC = ["index.html", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "terminal-guide.js", "terminal-guide.css", "glossary.js", "site-guide.js", "site-guide.css", "site-footer.js", "404.html", "manifest.webmanifest", "favicon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "og.png", "styleguide.html", "auth.html", "auth-check.js", "config.js",
           "expert-terminal.html", "terminal.css", "terminal.js", "reload-home.js",
           "chart-engine.js", "chart-indicators.js", "mode-dock.js", "globe-map.js",
-          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe-layers.js", "desk-globe3d.js"]
+          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-aladin2.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe-layers.js", "desk-globe3d.js"]
 TERMINAL = ROOT / "data" / "terminal"
 # Scripts/styles that pages load. Browsers keep these for a while (GitHub Pages: 10 min, some longer), so an
 # update could mix a new page with an old script. Every reference gets ?v=<hash of the file>, which changes
@@ -37,7 +37,7 @@ TERMINAL = ROOT / "data" / "terminal"
 # ORDER MATTERS: a file must come AFTER every file it imports (desk-map imports desk-aladin, which imports desk-ticks), because each file is stamped with
 # the hashes of the files before it. Out of order, an import keeps its plain address while the page loads the hashed one, and the browser runs the file
 # twice as two separate modules (one of them never initialised). tests/test_build_assets.py checks this.
-ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "glossary.js", "terminal-guide.js", "terminal-guide.css", "site-guide.js", "site-guide.css", "site-footer.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-kin.js", "desk-kin-live.js", "desk-ticks.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-movers.js", "desk-sectors.js", "desk-globe-layers.js", "desk-globe3d.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
+ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "glossary.js", "terminal-guide.js", "terminal-guide.css", "site-guide.js", "site-guide.css", "site-footer.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-kin.js", "desk-kin-live.js", "desk-ticks.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-aladin2.js", "desk-movers.js", "desk-sectors.js", "desk-globe-layers.js", "desk-globe3d.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
 
 
 def geo_summary(g: dict) -> dict:
@@ -154,6 +154,13 @@ def main() -> None:
         except (OSError, ValueError, KeyError):
             pass
     (SITE / "desk_data.json").write_text(json.dumps(present), encoding="utf-8")
+    try:                                                      # ALADIN 2.0 shards (aladin2/index.json, stock/<SYM>.json, scoreboard, journal, market map); never allowed to break the site build
+        sys.path.insert(0, str(ROOT))
+        from scripts.aladin2 import publish as a2_publish
+        r = a2_publish.build(SITE / "aladin2", term=TERMINAL)
+        print("ALADIN2 shards:", {k: r.get(k) for k in ("built", "stocks", "total_bytes", "biggest_stock_shard_bytes")} if r.get("built") else r)
+    except Exception as e:                                    # noqa: BLE001
+        print("ALADIN2 shards skipped:", repr(e))
     if (SCREENER / "latest.json").exists():   # the terminal reads the screen as a separate file
         (SITE / "screener.json").write_text(json.dumps(analyst_fields.screener_doc(json.loads((SCREENER / "latest.json").read_text(encoding="utf-8"))), ensure_ascii=False), encoding="utf-8")
 

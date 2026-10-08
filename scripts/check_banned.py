@@ -18,9 +18,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BANNED = re.compile(r"buy|sell|target|recommendation|guaranteed", re.I)
 DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice."
-NEW_JS = ["desk-globe-layers.js", "terminal-guide.js", "site-guide.js", "glossary.js", "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe3d.js"]
+NEW_JS = ["desk-globe-layers.js", "terminal-guide.js", "site-guide.js", "glossary.js", "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe3d.js", "desk-aladin2.js"]
 NEW_HTML = [r'<section class="view" id="v-houses">.*?</section>', r'<section class="view" id="v-lab">.*?</section>', r'<div class="geo-desk" id="geo-desk"></div>', r'<section class="view" id="v-map">.*?</section>']
-CONFIG_JSON = ["business_houses.json", "geo_exposure.json", "aladin_method.json", "news_aliases.json", "tone_words.json", "aladin_config.json", "trade_lanes.json", "cargo_carriers.json"]            # nexus_sources.json is instructions to a model, not served and not shown
+CONFIG_JSON = ["business_houses.json", "geo_exposure.json", "aladin_method.json", "news_aliases.json", "tone_words.json", "aladin_config.json", "trade_lanes.json", "cargo_carriers.json", "aladin2.json"]            # nexus_sources.json is instructions to a model, not served and not shown
 SERVED_JSON = ["aladin/latest.json", "aladin/sentiment.json", "aladin/geo.json", "aladin/moves.json", "aladin/shocks.json", "aladin/impact.json", "supply_graph.json",
                "config/business_houses.json", "config/aladin_method.json", "config/trade_lanes.json", "paper_trades/portfolio.json", "live_extra/aladin_telemetry.json"]
 SYMBOL = re.compile(r"^[A-Z0-9&.\-]{1,24}$")                           # a key that is a stock symbol is data, not wording
@@ -76,7 +76,10 @@ def check(root=ROOT):
             problems.append(f"HTML {pat[:40]}: {h}")
     for name in CONFIG_JSON:
         p = root / "data" / "config" / name
-        if p.exists() and (h := hits(" ".join(strings_of(json.loads(p.read_text(encoding="utf-8")))))):
+        doc = json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+        if name == "aladin2.json" and doc:                           # decision 3 of the ALADIN 2.0 brief: the `directional` wording dictionary (and the documentation text about it) is the ONE place buy/sell/target may live
+            doc = {k: v for k, v in doc.items() if k != "_doc"}; doc["labels"] = {k: v for k, v in doc.get("labels", {}).items() if k != "directional"}
+        if p.exists() and (h := hits(" ".join(strings_of(doc)))):
             problems.append(f"data/config/{name} strings: {h}")
     readme = (root / "README.md").read_text(encoding="utf-8")
     if "<!-- ALADIN-METHOD:START" in readme and (h := hits(readme[readme.index("<!-- ALADIN-METHOD:START"):readme.index("<!-- ALADIN-METHOD:END -->")])):
@@ -94,7 +97,7 @@ def check(root=ROOT):
             if h := hits(" ".join(strings_of(own))):
                 problems.append(f"data/{rel} strings: {h}")
     # the mandatory disclaimer, word for word
-    for name, where in (("desk-aladin.js", "the ALADIN view"), ("desk-nexus.js", "the NEXUS panel")):
+    for name, where in (("desk-aladin.js", "the ALADIN view"), ("desk-nexus.js", "the NEXUS panel"), ("desk-aladin2.js", "the ALADIN brief")):
         if DISCLAIMER not in (root / name).read_text(encoding="utf-8"):
             problems.append(f"the disclaimer is missing from {where} ({name})")
     g = re.search(r'<section class="view" id="v-map">.*?</section>', html, re.S)

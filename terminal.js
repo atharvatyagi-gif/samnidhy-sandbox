@@ -15,6 +15,7 @@ import { GlobeMap, freshGlobe } from "./globe-map.js";
 import * as Houses from "./desk-houses.js";
 import * as GeoDesk from "./desk-map.js";
 import * as Aladin from "./desk-aladin.js";
+import * as A2 from "./desk-aladin2.js";
 import * as Ticks from "./desk-ticks.js";
 import * as Nexus from "./desk-nexus.js";
 import * as Cmd from "./desk-cmd.js";
@@ -225,7 +226,7 @@ const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json
 const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "telemetry", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
 function deskCtx() { return { serverNow: Ticks.serverNow, renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
-function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); }
+function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); }); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
@@ -1044,7 +1045,8 @@ function renderDetails() {
   const s = S.map.get(sec), x = q(sec); if (!s || !x || side !== "details") return;
   const f = S.fund ? (S.fund[sec] || null) : undefined, pick = (S.screen.picks || []).find(p => p.symbol === sec);
   const stat = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`, perf = perfFrom(sec);
-  let html = `<div class="sec-t">Ranges</div>${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}${outlookHtml(sec)}${Aladin.renderAladinMini(sec)}${analysisHtml(sec)}
+  const a2old = $("#a2-brief");
+  let html = `${A2.wrap(sec)}<div class="sec-t">Ranges</div>${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}${outlookHtml(sec)}${Aladin.renderAladinMini(sec)}${analysisHtml(sec)}
     <div class="sec-t">Key stats</div><div class="stats">${stat("Open", inr(x.o))}${stat("Prev close", inr(x.pc))}${stat("Volume", big(x.v))}${stat("Avg vol 20D", big(s.avgv20))}
       ${stat("Value", x.v != null ? cr(x.v * x.p / 1e7) : "--")}${stat("Delivery", s.deliv == null ? "--" : s.deliv.toFixed(1) + "%")}
       ${f ? stat("Market cap", f.mcap ? cr(f.mcap / 1e7) : "--") + stat("P/E", f.pe ? f.pe.toFixed(1) : "--") + stat("EPS", f.eps != null ? "₹" + inr(f.eps) : "--") + stat("Div yield", f.dy != null ? f.dy.toFixed(2) + "%" : "--")
@@ -1064,6 +1066,7 @@ function renderDetails() {
   else html += `<div class="stats">${stat("ISIN", esc(s.isin || "--"))}${stat("Listed", esc(s.listed || "--"))}${stat("Series", esc(s.series))}${stat("Board", esc(s.board))}</div>
       <p class="note">${s.etf ? `${esc(sec)} is an exchange-traded fund, not a company.` : `Company fundamentals are loaded for NIFTY 500 companies; ${esc(sec)} is outside it.`} Only NSE's official trading data is shown. Nothing is estimated.</p>`;
   $("#details").innerHTML = html;
+  { const nw = $("#a2-brief"); if (nw) { if (a2old && a2old.dataset.sig === nw.dataset.sig && a2old.dataset.sym === nw.dataset.sym) nw.replaceWith(a2old); else A2.bind(nw, sec); } }
   const more = $("#more"); if (more) more.onclick = () => { descOpen = !descOpen; renderDetails(); };
   $$("#details [data-rec]").forEach(bt => bt.onclick = () => { const r = eng.suggested[+bt.dataset.rec]; if (!r) return; r.add.forEach(([id, p]) => eng.addIndicator(id, p)); go("terminal"); });
 }
