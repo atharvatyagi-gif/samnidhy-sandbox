@@ -9,10 +9,12 @@
     "lifecycle": "probation_days of live paper-forward evidence; promote_psr probabilistic-Sharpe threshold; CUSUM retire threshold and minimum days; cap on active strategies per stock; min_live_trades = paper trades needed before promotion; cusum_k = CUSUM slack in standard deviations",
     "calibration": "method, minimum resolved forecasts, max expected calibration error, rolling window in days",
     "forecast": "quantile levels, simulated paths, conformal window, tolerance on realised interval coverage",
-    "risk": "risk_per_trade_pct of capital; kelly_fraction_cap; max_position_pct; max_sector_pct; max_open_signals; adv_participation_max of average daily volume",
+    "risk": "risk_per_trade_pct of capital; kelly_fraction_cap; max_position_pct; max_sector_pct; max_open_signals; adv_participation_max of average daily volume; drawdown_brake_pct = paper-portfolio drawdown above which new sizes are halved; corr_threshold/corr_size_mult = reduce size for signals highly correlated with one already chosen",
     "states": "product-state thresholds for Validated",
     "compute": "nightly budget in minutes; discovery budget in minutes",
-    "backtest": "assumed_order_inr is the reference order size used for the participation check; circuit_proxy_min_move is the smallest |close/prev close - 1| of a one-price day that counts as a circuit-limit lock (no fill)"
+    "backtest": "assumed_order_inr is the reference order size used for the participation check; circuit_proxy_min_move is the smallest |close/prev close - 1| of a one-price day that counts as a circuit-limit lock (no fill)",
+    "signals": "entry_atr_mult = half-width of the entry zone in ATRs; stop_atr_min/max/default = allowed range of the volatility stop; swing_low_days = structure-stop lookback; event_window_d = days before a known event that force NO EDGE; plan_horizon_d = horizon of the trade plan simulation; touch_min_prob = a profit level is listed when its touch probability is at least this",
+    "kill": "engine/sector/stock is Suspended when live ECE > ece_max (n >= min_n), live interval coverage is off by more than coverage_tol (n >= min_coverage_n), or a CUSUM alarm is active; sector_share = share of a sector's stocks suspended that suspends the sector"
   },
   "horizons_d": [
     1,
@@ -114,7 +116,10 @@
     "max_position_pct": 10,
     "max_sector_pct": 30,
     "max_open_signals": 20,
-    "adv_participation_max": 0.05
+    "adv_participation_max": 0.05,
+    "drawdown_brake_pct": 10.0,
+    "corr_threshold": 0.7,
+    "corr_size_mult": 0.5
   },
   "states": {
     "validated": {
@@ -150,5 +155,23 @@
       "plan_level": "price target"
     }
   },
-  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results."
+  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
+  "signals": {
+    "entry_atr_mult": 0.25,
+    "stop_atr_min": 1.5,
+    "stop_atr_max": 2.5,
+    "stop_atr_default": 2.0,
+    "swing_low_days": 10,
+    "event_window_d": 5,
+    "plan_horizon_d": 20,
+    "touch_min_prob": 0.5,
+    "min_live_coverage_n": 300
+  },
+  "kill": {
+    "ece_max": 0.05,
+    "min_n": 300,
+    "coverage_tol": 0.04,
+    "min_coverage_n": 300,
+    "sector_share": 0.5
+  }
 }

@@ -51,8 +51,9 @@ def _panel(args):
         D[f"y{H}"] = FC.forward_logvar(gk, H); D[f"r{H}"] = FC.forward_return(px["c"], H, bad)
     c = px["c"]; fwd = pd.concat([np.log(c.shift(-k) / c) for k in range(1, 21)], axis=1)
     D["max20"] = fwd.max(axis=1, skipna=False); D["min20"] = fwd.min(axis=1, skipna=False)
-    D["post_break"] = px["post_break"]; D["sym"] = sym
-    D = D[(D["pos"] >= 0) & (D["pos"] % STRIDE == 0) & (D.index >= pd.Timestamp(FIRST_ROW)) & ~D["post_break"]].reset_index().rename(columns={"d": "date", "index": "date"})
+    D["post_break"] = px["post_break"]; D["sym"] = sym; D["close"] = px["c"]; D["atr14"] = F["atr14"]
+    last = D.index == D.index.max()                                           # the latest bar is always kept: it is what a live forecast is made from
+    D = D[(D["pos"] >= 0) & ((D["pos"] % STRIDE == 0) | last) & (D.index >= pd.Timestamp(FIRST_ROW)) & ~D["post_break"]].reset_index().rename(columns={"d": "date", "index": "date"})
     # standardised residual pool (EWMA 0.94) for the path simulator: a subsample of this stock's history
     lr = np.log(px["c"] / px["c"].shift()).where(~px["suspect_action"]); ew = (lr ** 2).ewm(alpha=0.06, adjust=False).mean().shift(1); e = (lr / np.sqrt(ew.clip(lower=1e-8))).replace([np.inf, -np.inf], np.nan).dropna().clip(-8, 8)
     return D.astype({c: "float32" for c in D.columns if D[c].dtype == "float64"}), e.values[::7].astype("float32")
@@ -68,35 +69,52 @@ def build_panel(workers):
     return D.reset_index(drop=True), resid, cfg
 
 
-def run_fold(D, year, H, cfg, seed=0):
-    ys = pd.Timestamp(f"{year}-01-01"); ye = pd.Timestamp(f"{year + 1}-01-01"); cal_end = ys - pd.Timedelta(days=PURGE_CAL_D); cal_start = cal_end - pd.Timedelta(days=CAL_WINDOW_D)
-    tr = D[D["date"] < cal_start - pd.Timedelta(days=PURGE_CAL_D)]; ca = D[(D["date"] > cal_start) & (D["date"] <= cal_end)]; te = D[(D["date"] >= ys) & (D["date"] < ye)]
-    need = [f"y{H}", f"r{H}"] + FEATS_ALL
-    tr, ca, te = (x.dropna(subset=["lrv1", "lrv5", "lrv22", "lrv66", "mkt_lrv22"] + [f"r{H}"]) for x in (tr, ca, te))
-    if len(tr) < 5000 or len(ca) < 1000 or len(te) < 100:
+FEAT_COLS = ["r5z", "r20z", "r60z", "hi52", "d_sma50", "d_sma200", "rsi14", "vz20", "bb_z", "mkt_lrv22", "vix"]
+BASE_COLS = ["lrv1", "lrv5", "lrv22", "lrv66", "mkt_lrv22"]
+
+
+def _prep(har, d, H):
+    sig = har.sigma(d) * np.sqrt(H)
+    X = d[FEAT_COLS[:-1] + ["vix"]].copy(); X.insert(0, "lv_ratio", har.log_var(d) - d["lrv66"].values)
+    return sig, X.astype(float)
+
+
+def fit_bundle(D, ys, H, cfg, seed=0):
+    """Everything a forecast for rows dated >= ys needs, learned only from rows dated before ys: HAR volatility, 7 quantile models, conformal corrections, isotonic calibrator.
+    Training rows end 100 days before the calibration window, which ends 100 days before ys."""
+    ys = pd.Timestamp(ys); cal_end = ys - pd.Timedelta(days=PURGE_CAL_D); cal_start = cal_end - pd.Timedelta(days=CAL_WINDOW_D)
+    tr = D[D["date"] < cal_start - pd.Timedelta(days=PURGE_CAL_D)]; ca = D[(D["date"] > cal_start) & (D["date"] <= cal_end)]
+    tr, ca = (x.dropna(subset=BASE_COLS + [f"r{H}"]) for x in (tr, ca))
+    if len(tr) < 5000 or len(ca) < 1000:
         return None
-    har = FC.HAR().fit(tr.dropna(subset=[f"y{H}"]), tr.dropna(subset=[f"y{H}"])[f"y{H}"].values)
-    out = {}
-    def prep(d):
-        sig = har.sigma(d) * np.sqrt(H); z = (d[f"r{H}"].values / sig).clip(-8, 8)
-        X = d[["r5z", "r20z", "r60z", "hi52", "d_sma50", "d_sma200", "rsi14", "vz20", "bb_z", "mkt_lrv22", "vix"]].copy(); X.insert(0, "lv_ratio", har.log_var(d) - d["lrv66"].values)
-        return sig, z, X.astype(float)
-    (s_tr, z_tr, X_tr), (s_ca, z_ca, X_ca), (s_te, z_te, X_te) = prep(tr), prep(ca), prep(te)
+    trh = tr.dropna(subset=[f"y{H}"]); har = FC.HAR().fit(trh, trh[f"y{H}"].values)
+    s_tr, X_tr = _prep(har, tr, H); z_tr = (tr[f"r{H}"].values / s_tr).clip(-8, 8); s_ca, X_ca = _prep(har, ca, H); z_ca = (ca[f"r{H}"].values / s_ca).clip(-8, 8)
     if len(tr) > 250_000:
         i = np.random.default_rng(seed).choice(len(tr), 250_000, replace=False); X_fit, z_fit = X_tr.iloc[i], z_tr[i]
     else:
         X_fit, z_fit = X_tr, z_tr
-    models = FC.fit_quantiles(X_fit, z_fit, seed=seed)
-    Qca, Qte = FC.predict_quantiles(models, X_ca), FC.predict_quantiles(models, X_te)
+    models = FC.fit_quantiles(X_fit, z_fit, seed=seed); Qca = FC.predict_quantiles(models, X_ca)
     corr = {b: FC.conformal_adjust(Qca[:, list(BANDS_IDX[b])], z_ca, FC.NOMINAL[b]) for b in FC.BANDS}
-    Aca, Ate = FC.adjusted_quantiles(Qca, corr), FC.adjusted_quantiles(Qte, corr)
-    p_ca, p_te = FC.p_up_from_quantiles(Aca), FC.p_up_from_quantiles(Ate); y_ca = (ca[f"r{H}"].values > 0).astype(int)
-    iso = IsotonicRegression(out_of_bounds="clip", y_min=0.02, y_max=0.98).fit(p_ca, y_ca); p_cal = iso.predict(p_te)
-    base = np.quantile(z_tr, FC.Q_LEVELS)
-    res = {"year": year, "H": H, "n_train": len(tr), "n_cal": len(ca), "n_test": len(te), "corr": {k: round(v, 4) for k, v in corr.items()}, "z": z_te, "Q": Qte, "A": Ate, "p_raw": p_te, "p_cal": p_cal, "base_q": base,
-           "y": (te[f"r{H}"].values > 0).astype(int), "sigma": s_te, "idx": te.index.values}
+    p_ca = FC.p_up_from_quantiles(FC.adjusted_quantiles(Qca, corr)); iso = IsotonicRegression(out_of_bounds="clip", y_min=0.02, y_max=0.98).fit(p_ca, (ca[f"r{H}"].values > 0).astype(int))
+    return {"har": har, "models": models, "corr": corr, "iso": iso, "H": H, "n_train": len(tr), "n_cal": len(ca), "base_q": np.quantile(z_tr, FC.Q_LEVELS)}
+
+
+def predict_bundle(b, d):
+    """-> sigma_H (log-return std), raw quantiles Q, adjusted quantiles A (z units), calibrated P(up) for the rows of d."""
+    sig, X = _prep(b["har"], d, b["H"]); Q = FC.predict_quantiles(b["models"], X); A = FC.adjusted_quantiles(Q, b["corr"]); p = FC.p_up_from_quantiles(A)
+    return sig, Q, A, p, b["iso"].predict(p)
+
+
+def run_fold(D, year, H, cfg, seed=0):
+    ys = pd.Timestamp(f"{year}-01-01"); ye = pd.Timestamp(f"{year + 1}-01-01"); te = D[(D["date"] >= ys) & (D["date"] < ye)].dropna(subset=BASE_COLS + [f"r{H}"])
+    b = fit_bundle(D, ys, H, cfg, seed)
+    if b is None or len(te) < 100:
+        return None
+    s_te, Qte, Ate, p_te, p_cal = predict_bundle(b, te)
+    res = {"year": year, "H": H, "n_train": b["n_train"], "n_cal": b["n_cal"], "n_test": len(te), "corr": {k: round(v, 4) for k, v in b["corr"].items()}, "z": (te[f"r{H}"].values / s_te).clip(-8, 8), "Q": Qte, "A": Ate,
+           "p_raw": p_te, "p_cal": p_cal, "base_q": b["base_q"], "y": (te[f"r{H}"].values > 0).astype(int), "sigma": s_te, "idx": te.index.values}
     if H in (1, 60):
-        res["sigma_daily"] = har.sigma(te)
+        res["sigma_daily"] = b["har"].sigma(te)
     return res
 
 

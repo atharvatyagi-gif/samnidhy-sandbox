@@ -173,6 +173,10 @@ def main():
     for r, k in zip(P_, rej):
         r["bh_pass"] = bool(k)
     out["pooled_by_strategy_oos"] = sorted(P_, key=lambda r: r["p"])
+    from pathlib import Path
+    st = Path("data/aladin2/state"); st.mkdir(parents=True, exist_ok=True)
+    json.dump({"as_of": str(cal[-1].date()), "universe": a.universe, "strategies": {sid: {"state": r.state, "since": r.since, "retired_on": r.retired_on, "last_events": r.history[-3:]} for sid, r in res["records"].items()}},
+              open(st / "strategies.json", "w"), indent=1, default=str)
     json.dump(out, open(a.out, "w"), indent=1, default=str)
     with gzip.open(a.events, "wt") as f:
         for e in res["events"]:
