@@ -5,11 +5,11 @@
 import { esc, inr, pct } from "./desk-aladin2.js";
 
 let ctx = null, root = null;
-const D = { index: null, score: null, map: null, journal: null, method: null }, loading = new Set();
-const st = { tab: "score", colour: "state", q: "", sector: "", sort: "w20", limit: 50, kind: "" };
+const D = { index: null, score: null, map: null, journal: null, method: null, weekly: null }, loading = new Set();
+const st = { tab: "weekly", colour: "state", q: "", sector: "", sort: "w20", limit: 50, kind: "" };
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.";
-const TABS = [["score", "Scoreboard"], ["map", "Market map"], ["rot", "Sector rotation"], ["board", "Forecast board"], ["journal", "Learning journal"], ["curve", "Learning curve"], ["method", "Method"]];
-const FILES = { index: "aladin2/index.json", score: "aladin2/scoreboard.json", map: "aladin2/market_map.json", journal: "aladin2/journal.json", method: "aladin2/method.json" };
+const TABS = [["weekly", "Weekly signals"], ["score", "Scoreboard"], ["map", "Market map"], ["rot", "Sector rotation"], ["board", "Forecast board"], ["journal", "Learning journal"], ["curve", "Learning curve"], ["method", "Method"]];
+const FILES = { index: "aladin2/index.json", score: "aladin2/scoreboard.json", map: "aladin2/market_map.json", journal: "aladin2/journal.json", method: "aladin2/method.json", weekly: "aladin2/weekly.json" };
 
 export function init(c) { ctx = c; }
 
@@ -166,9 +166,27 @@ function pageMethod() {
 
 const asof = t => `<p class="a2v-asof">As of ${esc(t || "unknown")}</p>`;
 
+function pageWeekly() {
+  if (!need("weekly")) return bad("weekly") ? `<p class="note">The weekly signals are not published yet. Not measured.</p>` : `<p class="note">Loading…</p>`;
+  const W = D.weekly; if (!W.built) return `<p class="note">${esc(W.why || "No weekly book yet.")}</p>`;
+  const B = W.book, L = W.labels, S = B.study, live = W.live_record || {}, rb = (S && D.weekly.book.bull[0] && D.weekly.book.bull[0].record) || null, rs = B.bear[0] && B.bear[0].record;
+  const row = r => `<tr tabindex="0" data-sym="${esc(r.sym)}"><td><b>${esc(r.sym)}</b></td><td>${esc(r.name)}</td><td>${inr(r.close)}</td><td>${(r.rank_pct * 100).toFixed(1)}</td><td>${r.signal === "bull" ? `${inr(r.entry_zone[0])}–${inr(r.entry_zone[1])}` : "--"}</td><td>${r.signal === "bull" ? inr(r.invalidation) : "--"}</td><td>${r.round_trip_cost_bps.toFixed(0)}</td><td>${r.fno ? "yes" : "no"}</td></tr>`;
+  const hdr = `<thead><tr><th>Symbol</th><th>Company</th><th>Close</th><th>Rank (100 = best)</th><th>Entry zone</th><th>Exit early below</th><th>Cost bps</th><th>Futures</th></tr></thead>`;
+  const rec = (k, r) => !r ? "" : k === "bull" ? `<div class="a2v-card"><span>${esc(L.bull)} record, 2013–2026</span><b>${r.net_bps.toFixed(0)} bps a week after costs</b><small>${r.n.toLocaleString("en-IN")} signals · closed higher ${(r.share_closing_up * 100).toFixed(0)}% · beat the market by ${r.gross_excess_bps.toFixed(0)} bps before costs · 95% range ${r.net_ci95_bps[0].toFixed(0)} to ${r.net_ci95_bps[1].toFixed(0)} · positive in ${esc(r.years_positive_net)} years</small></div>`
+    : `<div class="a2v-card"><span>${esc(L.bear)} record, 2013–2026</span><b>${r.gross_excess_bps.toFixed(0)} bps a week vs the market</b><small>${r.n.toLocaleString("en-IN")} signals · closed higher only ${(r.share_closing_up * 100).toFixed(0)}% · 95% range ${r.gross_excess_ci95_bps[1].toFixed(0)} to ${r.gross_excess_ci95_bps[0].toFixed(0)} · below the market in ${esc(r.years_below_market)} years</small></div>`;
+  const lv = (k, n) => live[k] && live[k].n ? `${live[k].n} resolved, ${(live[k].share_up * 100).toFixed(0)}% closed higher, ${live[k].mean_excess_bps.toFixed(0)} bps vs market` : "none resolved yet";
+  return asof(`${B.as_of} close${B.bull[0] && !B.bull[0].weekday_validated ? " (a midweek run: the 13-year test used Friday signals)" : ""}`) + `<div class="a2v-note"><b>How to use this.</b> Each signal is for the <b>next 5 trading days</b>: enter at the next open, leave at the open of the 5th trading day after, or earlier if the price closes below the exit level. ${esc(L.bear)} means <b>exit if you hold it, do not add it</b>: cash shares cannot be shorted; a short is possible only through futures, where marked. Past weekly results below are out of sample and net of costs; they are <b>not</b> a promise.</div>
+    <div class="a2v-cards">${rec("bull", rb)}${rec("bear", rs)}<div class="a2v-card"><span>Live record</span><b>${esc(L.bull)}: ${lv("bull")}</b><small>${esc(L.bear)}: ${lv("bear")}. A signal counts as live only if it was published before its entry open; the first live week starts with the next nightly run. State: Provisional until 60 live days.</small></div></div>
+    <div class="sec-t">${esc(L.bull)} · best ${B.rules.bull.replace(/^best /, "")} <span class="tag">${B.counts.bull}</span></div>${B.bull.length ? `<table class="a2-tbl a2v-board">${hdr}<tbody>${B.bull.map(row).join("")}</tbody></table>` : `<p class="note">No ${esc(L.bull)} this week.</p>`}
+    <p class="note">The ${esc(L.bull)} side is the weak one: the best 10% of stocks do not beat their trading costs on average (about -7 bps a week); only the very best 1% do, and that result had four thresholds looked at, so treat it as the weaker claim. Size it small. The Weekly signal box in each stock's brief shows its sizing for your capital.</p>
+    <div class="sec-t">${esc(L.bear)} · ${B.rules.bear} <span class="tag">${B.counts.bear}</span></div>${B.bear.length ? `<table class="a2-tbl a2v-board">${hdr}<tbody>${B.bear.map(row).join("")}</tbody></table>` : `<p class="note">No ${esc(L.bear)} this week.</p>`}
+    <p class="note">${B.counts.hold.toLocaleString("en-IN")} other stocks read ${esc(L.none)}. Ranked: ${B.universe.toLocaleString("en-IN")} stocks with at least ₹2 crore a day traded. Survivorship flatters the ${esc(L.bull)} history and understates the ${esc(L.bear)} history.</p>
+    <details class="a2-det"><summary>Where the rule comes from, and what did not help</summary><p class="note">${S ? `A study of ${S.rows.toLocaleString("en-IN")} stock-weeks (${S.weeks} Fridays, ${S.stocks.toLocaleString("en-IN")} stocks, ${esc(S.from)} to ${esc(S.to)}); the average round trip cost ${S.avg_round_trip_cost_bps} bps against a market that rose ${S.universe_mean_weekly_return_bps} bps a week. ` : ""}Of everything ALADIN measures, only ALADIN 1's 5-day score ranked next week's winners and losers. 5-day reversal and 3-month momentum did not pay after costs, and neither did a blend or a learned stack of all three. Fundamental, sentiment and supply-chain views have no weekly history and cannot be tested; the ALADIN 2 strategy library has no Active rule. They are shown with each signal as context.</p></details>`;
+}
+
 function render() {
   if (!root) return;
-  const body = { score: pageScore, map: pageMap, rot: pageRot, board: pageBoard, journal: pageJournal, curve: pageCurve, method: pageMethod }[st.tab]();
+  const body = { score: pageScore, map: pageMap, rot: pageRot, board: pageBoard, journal: pageJournal, curve: pageCurve, method: pageMethod, weekly: pageWeekly }[st.tab]();
   root.innerHTML = `<div class="seg a2v-tabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${st.tab === k}" class="${st.tab === k ? "on" : ""}">${l}</button>`).join("")}</div><div class="a2v-body">${body}</div><p class="note a2v-dis">${DISCLAIMER}</p>`;
   bind();
 }

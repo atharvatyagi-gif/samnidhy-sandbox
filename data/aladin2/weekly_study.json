@@ -1,0 +1,354 @@
+{
+ "rows": 310816,
+ "weeks": 655,
+ "stocks": 1500,
+ "from": "2013-01-04",
+ "to": "2026-09-22",
+ "universe_mean_weekly_return_bps": 33.3,
+ "avg_round_trip_cost_bps": 39.0,
+ "scores": {
+  "s_aladin": {
+   "top_decile": {
+    "trades": 31440,
+    "gross_excess_bps": 29.7,
+    "net_excess_bps": -6.8,
+    "net_excess_ci95_bps": [
+     -18.1,
+     4.5
+    ],
+    "gross_excess_ci95_bps": [
+     18.3,
+     41.0
+    ],
+    "share_beating_market": 0.4969,
+    "share_closing_up": 0.5343,
+    "net_return_bps": 26.5
+   },
+   "bottom_decile": {
+    "trades": 30785,
+    "gross_excess_bps": -50.5,
+    "net_excess_bps": -93.7,
+    "net_excess_ci95_bps": [
+     -105.0,
+     -81.6
+    ],
+    "gross_excess_ci95_bps": [
+     -61.8,
+     -38.4
+    ],
+    "share_beating_market": 0.3826,
+    "share_closing_up": 0.4304,
+    "net_return_bps": -60.4
+   },
+   "top_quintile": {
+    "trades": 62555,
+    "gross_excess_bps": 26.0,
+    "net_excess_bps": -10.6,
+    "net_excess_ci95_bps": [
+     -19.4,
+     -1.5
+    ],
+    "gross_excess_ci95_bps": [
+     17.1,
+     35.1
+    ],
+    "share_beating_market": 0.4893,
+    "share_closing_up": 0.5288,
+    "net_return_bps": 22.7
+   },
+   "spread_top_minus_bottom_gross_bps": 80.3
+  },
+  "s_rev": {
+   "top_decile": {
+    "trades": 30785,
+    "gross_excess_bps": 3.9,
+    "net_excess_bps": -35.1,
+    "net_excess_ci95_bps": [
+     -43.7,
+     -26.4
+    ],
+    "gross_excess_ci95_bps": [
+     -4.7,
+     12.5
+    ],
+    "share_beating_market": 0.4638,
+    "share_closing_up": 0.5052,
+    "net_return_bps": -1.8
+   },
+   "bottom_decile": {
+    "trades": 31440,
+    "gross_excess_bps": -11.8,
+    "net_excess_bps": -50.8,
+    "net_excess_ci95_bps": [
+     -60.2,
+     -41.6
+    ],
+    "gross_excess_ci95_bps": [
+     -21.2,
+     -2.6
+    ],
+    "share_beating_market": 0.4421,
+    "share_closing_up": 0.4768,
+    "net_return_bps": -17.5
+   },
+   "top_quintile": {
+    "trades": 61900,
+    "gross_excess_bps": 6.5,
+    "net_excess_bps": -32.5,
+    "net_excess_ci95_bps": [
+     -38.5,
+     -26.0
+    ],
+    "gross_excess_ci95_bps": [
+     0.6,
+     12.9
+    ],
+    "share_beating_market": 0.4611,
+    "share_closing_up": 0.5024,
+    "net_return_bps": 0.7
+   },
+   "spread_top_minus_bottom_gross_bps": 15.7
+  },
+  "s_mom": {
+   "top_decile": {
+    "trades": 31440,
+    "gross_excess_bps": 14.6,
+    "net_excess_bps": -24.2,
+    "net_excess_ci95_bps": [
+     -35.0,
+     -13.9
+    ],
+    "gross_excess_ci95_bps": [
+     3.8,
+     24.9
+    ],
+    "share_beating_market": 0.4646,
+    "share_closing_up": 0.5013,
+    "net_return_bps": 9.1
+   },
+   "bottom_decile": {
+    "trades": 30785,
+    "gross_excess_bps": -3.2,
+    "net_excess_bps": -42.2,
+    "net_excess_ci95_bps": [
+     -53.3,
+     -31.1
+    ],
+    "gross_excess_ci95_bps": [
+     -14.5,
+     7.6
+    ],
+    "share_beating_market": 0.4482,
+    "share_closing_up": 0.4899,
+    "net_return_bps": -8.9
+   },
+   "top_quintile": {
+    "trades": 62555,
+    "gross_excess_bps": 11.7,
+    "net_excess_bps": -27.1,
+    "net_excess_ci95_bps": [
+     -34.5,
+     -19.9
+    ],
+    "gross_excess_ci95_bps": [
+     4.3,
+     18.9
+    ],
+    "share_beating_market": 0.4638,
+    "share_closing_up": 0.5001,
+    "net_return_bps": 6.1
+   },
+   "spread_top_minus_bottom_gross_bps": 17.8
+  },
+  "s_blend": {
+   "top_decile": {
+    "trades": 2328,
+    "gross_excess_bps": 51.0,
+    "net_excess_bps": 13.6,
+    "net_excess_ci95_bps": [
+     -12.0,
+     40.7
+    ],
+    "gross_excess_ci95_bps": [
+     25.7,
+     78.3
+    ],
+    "share_beating_market": 0.5112,
+    "share_closing_up": 0.5528,
+    "net_return_bps": 56.4
+   },
+   "bottom_decile": {
+    "trades": 961,
+    "gross_excess_bps": -57.0,
+    "net_excess_bps": -99.4,
+    "net_excess_ci95_bps": [
+     -140.6,
+     -59.1
+    ],
+    "gross_excess_ci95_bps": [
+     -98.4,
+     -16.3
+    ],
+    "share_beating_market": 0.3809,
+    "share_closing_up": 0.4204,
+    "net_return_bps": -52.2
+   },
+   "top_quintile": {
+    "trades": 13719,
+    "gross_excess_bps": 36.1,
+    "net_excess_bps": -1.5,
+    "net_excess_ci95_bps": [
+     -13.9,
+     10.8
+    ],
+    "gross_excess_ci95_bps": [
+     23.7,
+     48.4
+    ],
+    "share_beating_market": 0.4978,
+    "share_closing_up": 0.5347,
+    "net_return_bps": 33.3
+   },
+   "spread_top_minus_bottom_gross_bps": 108.0
+  },
+  "s_stack": {
+   "top_decile": {
+    "trades": 28459,
+    "gross_excess_bps": 33.1,
+    "net_excess_bps": -4.5,
+    "net_excess_ci95_bps": [
+     -15.2,
+     6.6
+    ],
+    "gross_excess_ci95_bps": [
+     22.3,
+     44.3
+    ],
+    "share_beating_market": 0.4931,
+    "share_closing_up": 0.5311,
+    "net_return_bps": 30.3
+   },
+   "bottom_decile": {
+    "trades": 27942,
+    "gross_excess_bps": -39.6,
+    "net_excess_bps": -81.4,
+    "net_excess_ci95_bps": [
+     -91.5,
+     -71.9
+    ],
+    "gross_excess_ci95_bps": [
+     -49.6,
+     -30.1
+    ],
+    "share_beating_market": 0.3939,
+    "share_closing_up": 0.4406,
+    "net_return_bps": -46.7
+   },
+   "top_quintile": {
+    "trades": 56659,
+    "gross_excess_bps": 26.6,
+    "net_excess_bps": -10.9,
+    "net_excess_ci95_bps": [
+     -19.7,
+     -1.8
+    ],
+    "gross_excess_ci95_bps": [
+     17.7,
+     35.6
+    ],
+    "share_beating_market": 0.4864,
+    "share_closing_up": 0.5257,
+    "net_return_bps": 23.9
+   },
+   "spread_top_minus_bottom_gross_bps": 72.7
+  }
+ },
+ "record": {
+  "buy": {
+   "n": 3430,
+   "gross_excess_bps": 63.6,
+   "gross_excess_ci95_bps": [
+    42.9,
+    83.7
+   ],
+   "share_closing_up": 0.5548,
+   "avg_round_trip_cost_bps": 36.5,
+   "net_bps": 27.0,
+   "net_ci95_bps": [
+    6.3,
+    47.1
+   ],
+   "years_positive_net": "9/14"
+  },
+  "sell": {
+   "n": 15225,
+   "gross_excess_bps": -71.9,
+   "gross_excess_ci95_bps": [
+    -86.5,
+    -55.9
+   ],
+   "share_closing_up": 0.4159,
+   "avg_round_trip_cost_bps": 44.2,
+   "years_below_market": "14/14"
+  }
+ },
+ "thresholds_looked_at": {
+  "buy_top_pct": {
+   "0.9": {
+    "net_bps": -6.8,
+    "gross_bps": 29.7,
+    "n": 31440
+   },
+   "0.95": {
+    "net_bps": 1.5,
+    "gross_bps": 37.9,
+    "n": 15880
+   },
+   "0.98": {
+    "net_bps": 15.4,
+    "gross_bps": 51.8,
+    "n": 6546
+   },
+   "0.99": {
+    "net_bps": 27.0,
+    "gross_bps": 63.6,
+    "n": 3430
+   }
+  },
+  "sell_bottom_pct": {
+   "0.1": {
+    "gross_bps": -50.5,
+    "n": 30785
+   },
+   "0.05": {
+    "gross_bps": -71.9,
+    "n": 15225
+   },
+   "0.02": {
+    "gross_bps": -97.4,
+    "n": 5891
+   },
+   "0.01": {
+    "gross_bps": -88.2,
+    "n": 2775
+   }
+  },
+  "note": "four thresholds were looked at on each side; the BUY side's 1% and the SELL side's 5% were chosen. With four looks, the BUY interval (+6 to +47) is the weaker claim."
+ },
+ "aladin_top_decile_net_excess_by_year_bps": {
+  "2013": 30.3,
+  "2014": 24.3,
+  "2015": 39.0,
+  "2016": -0.7,
+  "2017": -35.6,
+  "2018": 47.5,
+  "2019": 16.5,
+  "2020": 7.5,
+  "2021": -6.3,
+  "2022": -31.9,
+  "2023": -43.0,
+  "2024": 0.6,
+  "2025": -12.9,
+  "2026": -23.1
+ }
+}

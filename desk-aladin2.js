@@ -92,18 +92,19 @@ export function html(sym) {
   if (!d) return head + `<p class="note">Loading the brief…</p>`;
   const lab = (board && board.labels) || { none: "NO EDGE", bull: "BULLISH SIGNAL", bear: "BEARISH SIGNAL", range: "forecast range", level: "price level likelihood", plan_level: "profit level" };
   const key = d.signal || "none", cls = key === "bull" ? "up" : key === "bear" ? "down" : "";
-  const g = fanGeometry(d), s = settings(); regime();
+  const has = d.bands && d.bands.length, g = has ? fanGeometry(d) : null, s = settings(); regime();
   const verdict = `<div class="a2-verdict"><span class="tag ${d.state === "Validated" ? "acc" : d.state === "Suspended" ? "warn" : ""}" title="${esc(STATE_NOTE[d.state] || "")}">${esc(d.state.toUpperCase())}</span>
     <b class="a2-sig ${cls}">${esc(lab[key] || lab.none)}${key === "none" ? ": stand aside" : ""}</b><span class="mut">as of ${esc(d.as_of)} close</span></div>
     <p class="a2-sentence">${esc(sentence(d, lab))}</p>`;
-  const chart = fanSvg(d, g);
-  const table = `<details class="a2-det"><summary>Range table (${esc(lab.range)})</summary><table class="a2-tbl"><thead><tr><th>Days</th><th>50% range</th><th>80% range</th><th>95% range</th><th>Closes higher*</th></tr></thead><tbody>${d.bands.map(b =>
+  const chart = has ? fanSvg(d, g) : `<p class="note">No forecast range is published for ${esc(d.sym)} (ranges cover the 500 most-traded stocks).</p>`;
+  const table = !has ? "" : `<details class="a2-det"><summary>Range table (${esc(lab.range)})</summary><table class="a2-tbl"><thead><tr><th>Days</th><th>50% range</th><th>80% range</th><th>95% range</th><th>Closes higher*</th></tr></thead><tbody>${d.bands.map(b =>
     `<tr><td>${b.H}</td><td>${inr(b.lo50)}–${inr(b.hi50)}</td><td>${inr(b.lo80)}–${inr(b.hi80)}</td><td>${inr(b.lo95)}–${inr(b.hi95)}</td><td>${b.p_up != null ? Math.round(b.p_up * 100) + "%" : b.base_rate != null ? "about " + Math.round(b.base_rate * 100) + "% (history; no directional information)" : "--"}</td></tr>`).join("")}</tbody></table>
     <p class="note">*For 1 and 5 days a calibrated number; for longer horizons only how often stocks like this closed higher historically. Ranges are tested out of sample: the 80% range held the price about 80% of the time.</p></details>`;
-  return head + verdict + chart + table + attribution(d) + strategyPanel(d) + riskPanel(d, s) + reliability() + what(d, lab) + `<p class="note">${DISCLAIMER}</p>`;
+  return head + verdict + weeklyBlock(d, lab) + chart + table + (has ? attribution(d) : "") + strategyPanel(d) + riskPanel(d, s) + reliability() + what(d, lab) + `<p class="note">${DISCLAIMER}</p>`;
 }
 
 export function sentence(d, lab) {
+  if (!d.bands || !d.bands.length) return d.weekly ? d.weekly.what_to_do : "No forecast range for this stock.";
   const b = d.bands.find(x => x.H === 20) || d.bands[d.bands.length - 1], p = (v) => (v / d.close - 1) * 100;
   const base = `In ${b.H} trading days ${d.sym} is likely to be between ₹${inr(b.lo80)} and ₹${inr(b.hi80)} (${pct(p(b.lo80))} to ${pct(p(b.hi80))}) about 80% of the time.`;
   return d.signal === "none" ? `${base} ALADIN sees no reliable edge in the direction: ${d.signal_why}.` : base;
@@ -131,6 +132,24 @@ export function attribution(d) {
     return `<div class="a2-wf"><span>${b.H}-day</span><svg viewBox="0 0 ${W} 22" role="img" aria-label="${b.H}-day: base rate ${a.toFixed(1)} percent, model adjustment ${(z - a).toFixed(1)} points, final ${z.toFixed(1)} percent"><line x1="${X(50)}" x2="${X(50)}" y1="0" y2="22" class="a2-grid"/><circle cx="${X(a)}" cy="11" r="3" class="a2-dot"/><rect x="${x0.toFixed(1)}" y="7" width="${Math.max(1, x1 - x0).toFixed(1)}" height="8" class="${up ? "a2-wfu" : "a2-wfd"}"/><title>base rate ${a.toFixed(1)}%, model adjustment ${(z - a).toFixed(1)} points, final ${z.toFixed(1)}%</title></svg>
       <b>${a.toFixed(0)}% → ${z.toFixed(0)}% <small>(${(z - a >= 0 ? "+" : "") + (z - a).toFixed(1)} pts)</small></b></div>`; }).join("");
   return head + bars + `<p class="note">Dot = how often stocks like this closed higher historically (the base rate); the bar = the model's own small adjustment. There are no strategy, flow, sentiment, supply-chain or regime steps because no strategy is Active for this stock: ALADIN has not found a reason to lean. Out of sample the adjustment added no skill, so treat it as noise.</p>`;
+}
+
+/* The weekly signal for this stock (or the statement that there is none): what to do, how it did in the past, what else points the same way. Every number is from the published file. */
+export function weeklyBlock(d, lab) {
+  const w = d.weekly, head = `<div class="sec-t">Weekly signal <span class="tag">5 trading days</span></div>`;
+  if (!w) return head + `<p class="note">${esc(lab.none || "HOLD")}: this stock is not in the best 1% or worst 5% of the week's ranking, so there is no weekly signal. Most stocks are not.</p>`;
+  const r = w.record, ev = w.evidence || {}, up = w.signal === "bull";
+  const hist = !r ? "" : up ? `Over 2013–2026 the best 1% each week closed higher ${(r.share_closing_up * 100).toFixed(0)}% of the time and beat the market by ${r.gross_excess_bps.toFixed(0)} bps a week before costs, ${r.net_bps.toFixed(0)} bps after costs (95% range ${r.net_ci95_bps[0].toFixed(0)} to ${r.net_ci95_bps[1].toFixed(0)}); positive after costs in ${esc(r.years_positive_net)} years.`
+    : `Over 2013–2026 the worst 5% each week closed higher only ${(r.share_closing_up * 100).toFixed(0)}% of the time and fell short of the market by ${Math.abs(r.gross_excess_bps).toFixed(0)} bps a week (95% range ${r.gross_excess_ci95_bps[1].toFixed(0)} to ${r.gross_excess_ci95_bps[0].toFixed(0)}), below the market in ${esc(r.years_below_market)} years.`;
+  const chk = [["ALADIN 1 five-day technical probability", ev.aladin1_technical_p5 != null ? (ev.aladin1_technical_p5 * 100).toFixed(1) + "%" : "not measured", "the signal itself (validated)"],
+    ["ALADIN 1 combined (with fundamental and sentiment)", ev.aladin1_combined_p5 != null ? (ev.aladin1_combined_p5 * 100).toFixed(1) + "% · " + esc(ev.aladin1_confidence || "") + " · views agreeing " + esc(ev.aladin1_agreement || "--") : "not measured", "context: no weekly history to test"],
+    ["Outlook, beating the NIFTY over 20 days", ev.outlook_p_beat_nifty_20d != null ? (ev.outlook_p_beat_nifty_20d * 100).toFixed(0) + "%" : "not measured", "context: other horizon"],
+    ["Sentiment", ev.sentiment_level || "not measured", "context: no weekly history to test"], ["Supply-chain impact (NEXUS)", ev.supply_chain_impact != null ? String(ev.supply_chain_impact) : "not measured", "context: graph too thin to validate"],
+    ["Forecast range, 5 days, 80%", ev.range_5d_80pct && ev.range_5d_80pct[0] != null ? inr(ev.range_5d_80pct[0]) + "–" + inr(ev.range_5d_80pct[1]) : "not measured", "sets the risk, not the direction"], ["Strategies Active", "0", "none has passed yet"]]
+    .map(([a, b, c]) => `<tr><td>${a}</td><td>${b}</td><td class="mut">${c}</td></tr>`).join("");
+  return head + `<p class="a2-sentence"><b>${esc(up ? lab.bull : lab.bear)}</b> for the next 5 trading days. ${esc(w.what_to_do)}</p><p class="note">${hist} After a round-trip cost of about ${w.round_trip_cost_bps.toFixed(0)} bps. State: ${esc(w.state)}: ${esc(w.state_why)}.</p>
+    <details class="a2-det"><summary>What else points the same way? (tested: none of it improved the weekly result)</summary><table class="a2-tbl"><tbody>${chk}</tbody></table>
+    <p class="note">At the weekly horizon the 5-day score was the only input with skill; adding 5-day reversal, 3-month momentum, or a blend or stack of all three did not beat costs. Fundamental, sentiment and supply-chain views have no weekly history, so they cannot be tested.</p></details>`;
 }
 
 function strategyPanel(d) {

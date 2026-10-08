@@ -17,7 +17,7 @@ from playwright.sync_api import sync_playwright
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8767").rstrip("/")
 OUT = Path(__file__).resolve().parents[2] / "data" / "aladin2" / "e2e_report.json"
 DIS = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results."
-TABS = ["score", "map", "rot", "board", "journal", "curve", "method"]
+TABS = ["weekly", "score", "map", "rot", "board", "journal", "curve", "method"]
 KNOWN_404 = ("live.json", "news.json", "nse_live.json", "INDIAMART.json")          # optional files a local preview may lack; not part of ALADIN 2.0
 
 
