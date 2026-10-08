@@ -51,3 +51,30 @@ test("the wrapper's signature changes only when the content changes (the rail ke
   _test.reset(); _test.put("TST", shard()); const a = wrap("TST"), b = wrap("TST"); assert.equal(a, b);
   const d = shard(); d.close = 101; _test.put("TST", d); assert.notEqual(wrap("TST"), a);
 });
+
+import { addBusinessDays, fanLines, attribution } from "../../desk-aladin2.js";
+
+test("business-day arithmetic skips weekends", () => {
+  assert.equal(addBusinessDays("2026-10-06", 1), "2026-10-07"); assert.equal(addBusinessDays("2026-10-09", 1), "2026-10-12");           // Friday -> Monday
+  assert.equal(addBusinessDays("2026-10-06", 5), "2026-10-13"); assert.equal(addBusinessDays("2026-10-06", 20), "2026-11-03");
+});
+
+test("fan lines for the main chart start at the as-of close, widen with the horizon, nest, and follow the layer toggles", () => {
+  _test.reset(); assert.equal(fanLines("TST"), null);
+  _test.put("TST", shard()); const f = fanLines("TST"), by = Object.fromEntries(f.lines.map(l => [l.id, l.points]));
+  assert.deepEqual(Object.keys(by).sort(), ["hi50", "hi80", "hi95", "lo50", "lo80", "lo95", "med"]);
+  for (const k of Object.keys(by)) { assert.deepEqual(by[k][0], ["2026-10-06", 100]); assert.equal(by[k].length, 4); }
+  assert.ok(by.hi95[3][1] > by.hi80[3][1] && by.hi80[3][1] > by.hi50[3][1] && by.lo95[3][1] < by.lo80[3][1] && by.lo80[3][1] < by.lo50[3][1]);
+  assert.deepEqual(by.hi50.map(p => p[0]), ["2026-10-06", "2026-10-07", "2026-10-13", "2026-11-03"]);                         // horizons 1, 5, 20 trading days
+  const times = by.hi95.map(p => p[0]); assert.deepEqual([...times].sort(), times);                                           // strictly ascending, as the chart library requires
+});
+
+test("attribution shows only the model's own small step for a stock with no strategy behind it", () => {
+  _test.reset(); _test.put("TST", shard()); const a = attribution(shard());
+  assert.match(a, /1-day/); assert.match(a, /5-day/); assert.ok(!/20-day/.test(a)); assert.match(a, /no strategy is Active/); assert.match(a, /52% → 50%/);
+});
+
+test("a Validated stock's plan shows quantity, money at risk, the loss ladder and the gap row, from the same sizing rules", () => {
+  _test.reset(); const d = shard(); d.state = "Validated"; d.signal = "bull"; d.plan = { entry: 100, stop: 95, zone: [99.5, 100.5], atr: 2, adv_shares: 1e9, mu: 0.01, sd: 0.05, p_stop: 0.4, horizon: 20 }; _test.put("TST", d);
+  const h = html("TST"); assert.match(h, /BULLISH SIGNAL/); assert.match(h, /Quantity<\/span><b>1000/); assert.match(h, /Money at risk<\/span><b>₹5,000/); assert.match(h, /98\.00 \(-1 ATR\)/); assert.match(h, /₹10,000/); assert.match(h, /does not always fill at its level/);
+});

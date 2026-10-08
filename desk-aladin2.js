@@ -7,11 +7,34 @@
 
 let ctx = null, onReady = null;
 const cache = new Map(), pending = new Map();
-let board = null, boardP = null, failed = new Set();
+let board = null, boardP = null, failed = new Set(), regimeD = null, regimeP = null;
+const ui = { layers: { 95: true, 80: true, 50: true } };
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.";
 const LS = "aladin2.risk";
 
 export function init(c, ready) { ctx = c; onReady = ready; }
+
+/* Weekdays after a date (exchange holidays are not known here, so dates are approximate by up to a day or two over long horizons). */
+export function addBusinessDays(dateStr, n) {
+  const d = new Date(dateStr + "T00:00:00Z"); let k = 0;
+  while (k < n) { d.setUTCDate(d.getUTCDate() + 1); const w = d.getUTCDay(); if (w !== 0 && w !== 6) k++; }
+  return d.toISOString().slice(0, 10);
+}
+/* The lines the main chart draws to the right of the last bar for the open stock: [{id, tone, points:[[time, price]]}], honouring the layer toggles. null until the shard has loaded. */
+export function fanLines(sym) {
+  const d = cache.get(sym); if (!d || !d.bands || !d.bands.length) return null;
+  const mk = (id, tone, f) => ({ id, tone, points: [[d.as_of, d.close], ...d.bands.map(b => [addBusinessDays(d.as_of, b.H), f(b)])] }), out = [];
+  if (ui.layers[95]) out.push(mk("lo95", "edge", b => b.lo95), mk("hi95", "edge", b => b.hi95));
+  if (ui.layers[80]) out.push(mk("lo80", "edge", b => b.lo80), mk("hi80", "edge", b => b.hi80));
+  if (ui.layers[50]) out.push(mk("lo50", "acc", b => b.lo50), mk("hi50", "acc", b => b.hi50), mk("med", "acc", b => (b.lo50 + b.hi50) / 2));
+  return { sym, lines: out };
+}
+/* Market-stress ribbon data {d: [...], p: [...]} once aladin2/regime.json has loaded (it is one small file for the whole market), else null. */
+export function regime() {
+  if (regimeD) return regimeD.missing ? null : regimeD;
+  if (!regimeP && ctx) { regimeP = ctx.getJSON("aladin2/regime.json", false).then(d => { regimeD = d; }).catch(() => { regimeD = { missing: true }; }).finally(() => { if (onReady) onReady("*"); }); }
+  return null;
+}
 
 /* ---------- pure helpers (tested in tests/js/aladin2.test.mjs) ---------- */
 export const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -69,7 +92,7 @@ export function html(sym) {
   if (!d) return head + `<p class="note">Loading the brief…</p>`;
   const lab = (board && board.labels) || { none: "NO EDGE", bull: "BULLISH SIGNAL", bear: "BEARISH SIGNAL", range: "forecast range", level: "price level likelihood", plan_level: "profit level" };
   const key = d.signal || "none", cls = key === "bull" ? "up" : key === "bear" ? "down" : "";
-  const g = fanGeometry(d), s = settings();
+  const g = fanGeometry(d), s = settings(); regime();
   const verdict = `<div class="a2-verdict"><span class="tag ${d.state === "Validated" ? "acc" : d.state === "Suspended" ? "warn" : ""}" title="${esc(STATE_NOTE[d.state] || "")}">${esc(d.state.toUpperCase())}</span>
     <b class="a2-sig ${cls}">${esc(lab[key] || lab.none)}${key === "none" ? ": stand aside" : ""}</b><span class="mut">as of ${esc(d.as_of)} close</span></div>
     <p class="a2-sentence">${esc(sentence(d, lab))}</p>`;
@@ -77,7 +100,7 @@ export function html(sym) {
   const table = `<details class="a2-det"><summary>Range table (${esc(lab.range)})</summary><table class="a2-tbl"><thead><tr><th>Days</th><th>50% range</th><th>80% range</th><th>95% range</th><th>Closes higher*</th></tr></thead><tbody>${d.bands.map(b =>
     `<tr><td>${b.H}</td><td>${inr(b.lo50)}–${inr(b.hi50)}</td><td>${inr(b.lo80)}–${inr(b.hi80)}</td><td>${inr(b.lo95)}–${inr(b.hi95)}</td><td>${b.p_up != null ? Math.round(b.p_up * 100) + "%" : b.base_rate != null ? "about " + Math.round(b.base_rate * 100) + "% (history; no directional information)" : "--"}</td></tr>`).join("")}</tbody></table>
     <p class="note">*For 1 and 5 days a calibrated number; for longer horizons only how often stocks like this closed higher historically. Ranges are tested out of sample: the 80% range held the price about 80% of the time.</p></details>`;
-  return head + verdict + chart + table + strategyPanel(d) + riskPanel(d, s) + reliability() + what(d, lab) + `<p class="note">${DISCLAIMER}</p>`;
+  return head + verdict + chart + table + attribution(d) + strategyPanel(d) + riskPanel(d, s) + reliability() + what(d, lab) + `<p class="note">${DISCLAIMER}</p>`;
 }
 
 export function sentence(d, lab) {
@@ -92,10 +115,22 @@ function fanSvg(d, g) {
   const marks = d.bands.map(b => `<g><line x1="${g.xh(b.H).toFixed(1)}" x2="${g.xh(b.H).toFixed(1)}" y1="${g.y(b.hi95).toFixed(1)}" y2="${g.y(b.lo95).toFixed(1)}" class="a2-mk"/><text x="${g.xh(b.H).toFixed(1)}" y="${g.h - 4}" class="a2-ax mid">${b.H}d</text>
     <title>${b.H} days: 50% ${inr(b.lo50)}–${inr(b.hi50)}; 80% ${inr(b.lo80)}–${inr(b.hi80)}; 95% ${inr(b.lo95)}–${inr(b.hi95)}</title></g>`).join("");
   return `<div class="a2-fan" data-a2-fan><svg viewBox="0 0 ${g.w} ${g.h}" role="img" aria-label="${esc(lab)} for ${esc(d.sym)}: last ${d.series.c.length} closes then 50, 80 and 95 percent ranges out to ${d.horizons[d.horizons.length - 1]} days">
-    ${axis}<polyline points="${pts(g.hist)}" class="a2-hist"/><polygon points="${pts(g.band95)}" class="a2-b95" data-layer="95"/><polygon points="${pts(g.band80)}" class="a2-b80" data-layer="80"/><polygon points="${pts(g.band50)}" class="a2-b50" data-layer="50"/>
+    ${axis}<polyline points="${pts(g.hist)}" class="a2-hist"/><polygon points="${pts(g.band95)}" class="a2-b95" data-layer="95" ${ui.layers[95] ? "" : 'style="display:none"'}/><polygon points="${pts(g.band80)}" class="a2-b80" data-layer="80" ${ui.layers[80] ? "" : 'style="display:none"'}/><polygon points="${pts(g.band50)}" class="a2-b50" data-layer="50" ${ui.layers[50] ? "" : 'style="display:none"'}/>
     <polyline points="${pts(g.med)}" class="a2-med"/><circle cx="${g.x0.toFixed(1)}" cy="${g.y(g.last).toFixed(1)}" r="2.5" class="a2-dot"/>${marks}</svg>
-    <div class="a2-legend"><label><input type="checkbox" data-a2-layer="95" checked> 95%</label><label><input type="checkbox" data-a2-layer="80" checked> 80%</label><label><input type="checkbox" data-a2-layer="50" checked> 50%</label>
-    <span class="mut">line = centre of the 50% range · as of ${esc(d.as_of)}</span></div></div>`;
+    <div class="a2-legend">${[95, 80, 50].map(k => `<label><input type="checkbox" data-a2-layer="${k}" ${ui.layers[k] ? "checked" : ""}> ${k}%</label>`).join("")}
+    <span class="mut">line = centre of the 50% range · as of ${esc(d.as_of)} · also drawn on the chart at 1D</span></div></div>`;
+}
+
+/* Attribution waterfall: how the probability of closing higher moved from the plain base rate to the number shown. With no strategy behind a stock the ONLY step is the model's own small
+   adjustment, and the chart says so. Shown for the horizons that carry a calibrated probability (1 and 5 days). */
+export function attribution(d) {
+  const rows = d.bands.filter(b => b.p_up != null && b.base_rate != null);
+  const head = `<div class="sec-t">Where the probability came from</div>`;
+  if (!rows.length) return head + `<p class="note">No probability is shown for this stock.</p>`;
+  const bars = rows.map(b => { const a = b.base_rate * 100, z = b.p_up * 100, up = z >= a, W = 220, X = v => 70 + (W - 70) * (v - 40) / 20, x0 = X(Math.min(a, z)), x1 = X(Math.max(a, z));
+    return `<div class="a2-wf"><span>${b.H}-day</span><svg viewBox="0 0 ${W} 22" role="img" aria-label="${b.H}-day: base rate ${a.toFixed(1)} percent, model adjustment ${(z - a).toFixed(1)} points, final ${z.toFixed(1)} percent"><line x1="${X(50)}" x2="${X(50)}" y1="0" y2="22" class="a2-grid"/><circle cx="${X(a)}" cy="11" r="3" class="a2-dot"/><rect x="${x0.toFixed(1)}" y="7" width="${Math.max(1, x1 - x0).toFixed(1)}" height="8" class="${up ? "a2-wfu" : "a2-wfd"}"/><title>base rate ${a.toFixed(1)}%, model adjustment ${(z - a).toFixed(1)} points, final ${z.toFixed(1)}%</title></svg>
+      <b>${a.toFixed(0)}% → ${z.toFixed(0)}% <small>(${(z - a >= 0 ? "+" : "") + (z - a).toFixed(1)} pts)</small></b></div>`; }).join("");
+  return head + bars + `<p class="note">Dot = how often stocks like this closed higher historically (the base rate); the bar = the model's own small adjustment. There are no strategy, flow, sentiment, supply-chain or regime steps because no strategy is Active for this stock: ALADIN has not found a reason to lean. Out of sample the adjustment added no skill, so treat it as noise.</p>`;
 }
 
 function strategyPanel(d) {
@@ -108,9 +143,11 @@ function riskPanel(d, s) {
   const head = `<div class="sec-t">Risk and position size</div>`;
   if (!d.plan) return head + `<p class="note">${esc(d.plan_why)}</p><div class="a2-risk"><label>Capital ₹ <input type="number" min="0" step="10000" value="${s.capital}" data-a2-cap></label><label>Risk per trade % <input type="number" min="0.1" max="5" step="0.1" value="${s.riskPct}" data-a2-risk></label></div>
     <p class="note">Your capital and risk limit are saved in this browser only. When a stock reaches Validated, ALADIN shows an entry zone, an invalidation level, the quantity for your numbers, the money at risk, the chance of being stopped out and a loss ladder. A stop does not always fill at its level: overnight gaps and circuit limits can go past it. Sizing reduces the risk of loss; it does not remove it.</p>`;
-  const p = d.plan, r = riskCalc({ capital: s.capital, riskPct: s.riskPct, entry: p.entry, stop: p.stop, advShares: p.adv_shares, mu: p.mu, sd: p.sd });
+  const p = d.plan, r = riskCalc({ capital: s.capital, riskPct: s.riskPct, entry: p.entry, stop: p.stop, advShares: p.adv_shares, mu: p.mu, sd: p.sd }), lad = lossLadder(p.entry, p.atr, r.qty);
   return head + `<div class="stats"><div><span>Entry zone</span><b>${inr(p.zone[0])}–${inr(p.zone[1])}</b></div><div><span>Invalidation</span><b>${inr(p.stop)}</b></div><div><span>Quantity</span><b>${r.qty}</b></div><div><span>Money at risk</span><b>₹${inr(r.capitalAtRisk, 0)}</b></div></div>
-    <p class="note">Limited by: ${esc(r.binding)}. Chance of being stopped out within ${p.horizon} days: ${Math.round(p.p_stop * 100)}%.</p>`;
+    <p class="note">Limited by: ${esc(r.binding)}. Chance of being stopped out within ${p.horizon} days: ${Math.round(p.p_stop * 100)}%. Worst case if every stop is hit: ₹${inr(r.capitalAtRisk, 0)} (${(r.capitalAtRisk / s.capital * 100).toFixed(2)}% of your capital).</p>
+    <table class="a2-tbl"><thead><tr><th>If the price falls to</th><th>You lose</th></tr></thead><tbody>${lad.map(l => `<tr><td>${inr(l.price)} (${l.k} ATR)</td><td>₹${inr(l.loss, 0)}</td></tr>`).join("")}<tr><td>A gap past the stop (twice the distance)</td><td>₹${inr(r.qty * 2 * (p.entry - p.stop), 0)}</td></tr></tbody></table>
+    <p class="note">A stop does not always fill at its level: overnight gaps and circuit limits can go past it. Sizing reduces the risk of loss; it does not remove it.</p>`;
 }
 
 function reliability() {
@@ -138,7 +175,7 @@ export function wrap(sym) {
 /* ---------- events ---------- */
 export function bind(root, sym) {
   if (!root) return;
-  root.querySelectorAll("[data-a2-layer]").forEach(cb => cb.onchange = () => root.querySelectorAll(`[data-layer="${cb.dataset.a2Layer}"]`).forEach(el => { el.style.display = cb.checked ? "" : "none"; }));
+  root.querySelectorAll("[data-a2-layer]").forEach(cb => cb.onchange = () => { ui.layers[cb.dataset.a2Layer] = cb.checked; root.querySelectorAll(`[data-layer="${cb.dataset.a2Layer}"]`).forEach(el => { el.style.display = cb.checked ? "" : "none"; }); if (onReady) onReady(sym); });
   const cap = root.querySelector("[data-a2-cap]"), rk = root.querySelector("[data-a2-risk]");
   const upd = () => { const s = settings(); s.capital = Math.max(0, +cap.value || 0); s.riskPct = Math.min(5, Math.max(0.1, +rk.value || 1)); saveSettings(s); if (onReady) onReady(sym); };
   if (cap) cap.onchange = upd; if (rk) rk.onchange = upd;

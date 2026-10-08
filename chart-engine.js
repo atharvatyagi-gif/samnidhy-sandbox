@@ -51,14 +51,15 @@ export class ChartEngine {
     this.inds.forEach(i => { i.params = { ...defaults(i.id), ...i.params }; i.colors = i.colors || {}; if (i.vis == null) i.vis = true; });
     this.type = LS.get("blab-ct2", "candle"); this.magnet = LS.get("blab-magnet", false); this.scale = "auto";
     this.tool = "cursor"; this.stay = false; this.hidden = false; this.sel = null; this.placing = null; this.drag = null; this.undoStack = [];
-    this.compare = []; this.bars = []; this.T = []; this.sym = ""; this.iv = "D";
+    this.compare = []; this.bars = []; this.T = []; this.sym = ""; this.iv = "D"; this.fan = null; this.regime = null;
     this.wireMouse(); this.wireLegend();
     new ResizeObserver(() => this.placeLegends()).observe(host);
     this.cdT = setInterval(() => this.tickCountdown(), 1000);
   }
 
   /* ================= data + build ================= */
-  load({ sym, name, iv, bars, intraday, keepRange, compare }) {
+  load({ sym, name, iv, bars, intraday, keepRange, compare, fan, regime }) {
+    this.fan = fan || null; this.regime = regime || null;               // ALADIN 2.0 overlays (desk-aladin2.js): forecast ranges to the right of the last bar, a market-stress ribbon in its own pane
     const same = sym === this.sym && iv === this.iv;
     this.sym = sym; this.name = name; this.iv = iv; this.bars = bars; this.intraday = intraday; if (compare) this.compare = compare;
     this.T = bars.map(b => typeof b.time === "number" ? b.time : Date.UTC(+b.time.slice(0, 4), +b.time.slice(5, 7) - 1, +b.time.slice(8, 10)) / 1000);
@@ -142,6 +143,19 @@ export class ChartEngine {
       s.setData(b.map(x => m.has(x.time) ? { time: x.time, value: m.get(x.time) } : { time: x.time }));
       return { ...c, series: s, map: m };
     });
+    // ALADIN 2.0 forecast ranges: dashed outer ranges, solid 50% range, dotted centre; times are future business days, so they extend the time axis only to the right
+    this.fanSeries = [];
+    if (this.fan && !this.intraday && this.fan.lines.length) {
+      for (const ln of this.fan.lines) {
+        const s = chart.addSeries(L.LineSeries, { color: ln.tone === "edge" ? THEME.text : THEME.acc, lineWidth: ln.id === "med" ? 1 : 1, lineStyle: ln.id === "med" ? 1 : ln.id.endsWith("50") ? 0 : 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, title: "" });
+        s.setData(ln.points.map(([t, v]) => ({ time: t, value: v }))); this.fanSeries.push(s);
+      }
+    }
+    // ALADIN 2.0 market-stress ribbon: filtered probability of the high-volatility regime (index returns), its own thin pane under the indicators
+    if (this.regime && !this.intraday) {
+      const have = new Map(this.regime.d.map((d, i) => [d, this.regime.p[i]])), pts = b.filter(x => have.has(x.time)).map(x => ({ time: x.time, value: have.get(x.time), color: have.get(x.time) >= 0.5 ? THEME.down : THEME.border }));
+      if (pts.length) { const r = chart.addSeries(L.HistogramSeries, { priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, title: "", priceFormat: { type: "price", precision: 2, minMove: 0.01 }, autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 1 } }) }, pane); r.setData(pts); this.regimePane = pane; pane++; }
+    }
     // drawings on the price pane
     this.layer = new Layer((ctx, size) => this.paintDrawings(ctx, size), "top");
     this.main.attachPrimitive(this.layer);

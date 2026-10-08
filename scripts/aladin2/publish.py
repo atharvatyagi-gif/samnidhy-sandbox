@@ -95,6 +95,13 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None):
     index = {"as_of": fc["d"], "created": fc["created"], "mode": cfg["signal_labels"], "labels": labels, "counts": states, "horizons": Hs, "cols": ["sym", "state", "signal", "lo80_5d", "hi80_5d", "lo80_20d", "hi80_20d", "sector"], "rows": rows, "disclaimer": cfg["disclaimer"]}
     sizes["index.json"] = _w(out / "index.json", index); sizes["scoreboard.json"] = _w(out / "scoreboard.json", score)
     sizes["market_map.json"] = _w(out / "market_map.json", {"as_of": fc["d"], "cols": ["sym", "sector", "traded_value_cr", "range80_20d_pct", "state"], "area": "20-day average traded value, Rs crore (market capitalisation is not available from free data)", "rows": mm, "disclaimer": cfg["disclaimer"]})
+    try:                                                    # market-wide stress ribbon for the chart (filtered probabilities only: a value never changes when later data arrives)
+        from . import meta as MT
+        nf = L.load_index(term=term)
+        if nf is not None and len(nf) > 800:
+            pr = MT.stress_probability(nf).tail(750); sizes["regime.json"] = _w(out / "regime.json", {"d": [str(x.date()) for x in pr.index], "p": [round(float(v), 2) for v in pr.values], "note": "filtered probability of the high-volatility regime, NIFTY 50"})
+    except Exception:                                       # noqa: BLE001  the ribbon is optional
+        pass
     jf = journal_dir / "journal.json"
     sizes["journal.json"] = _w(out / "journal.json", json.loads(jf.read_text()) if jf.exists() else {"events": []})
     total = sum(sizes.values()); biggest = max((v for k, v in sizes.items() if k not in ("index.json", "scoreboard.json", "journal.json", "market_map.json")), default=0)
