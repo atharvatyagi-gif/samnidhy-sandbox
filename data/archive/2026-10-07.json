@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-08T03:31:25+00:00",
+  "generated_on": "2026-10-08T08:22:24+00:00",
   "session_date": "2026-10-07",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,8 +40,8 @@
         "turnover_crore": 3133.04
       },
       "latest_close": 1612.3,
-      "trailing_pe": 5.0149302,
-      "market_cap": 240089841664,
+      "trailing_pe": 5.51873,
+      "market_cap": 230351028224,
       "history": {
         "first_date": "2021-09-30",
         "trading_days": 1239,
@@ -69,8 +69,8 @@
         "turnover_crore": 678.69
       },
       "latest_close": 1343.8,
-      "trailing_pe": 48.495132,
-      "market_cap": 129180844032,
+      "trailing_pe": 47.170696,
+      "market_cap": 125652828160,
       "history": {
         "first_date": "2021-09-30",
         "trading_days": 1237,
@@ -98,8 +98,8 @@
         "turnover_crore": 283.98
       },
       "latest_close": 24685.0,
-      "trailing_pe": 294.78146,
-      "market_cap": 370091065344,
+      "trailing_pe": 311.06577,
+      "market_cap": 365818183680,
       "history": {
         "first_date": "2023-06-09",
         "trading_days": 819,
@@ -127,8 +127,8 @@
         "turnover_crore": 308.18
       },
       "latest_close": 321.3,
-      "trailing_pe": 8.7404785,
-      "market_cap": 590109802496,
+      "trailing_pe": 8.517411,
+      "market_cap": 575049433088,
       "history": {
         "first_date": "2021-09-30",
         "trading_days": 1239,
@@ -136,7 +136,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.553406,
-      "total_return": 3.33342,
+      "total_return": 3.333419,
       "annualised_volatility": 0.428295,
       "max_drawdown": -0.421203,
       "beta": 1.5013
@@ -156,8 +156,8 @@
         "turnover_crore": 33.19
       },
       "latest_close": 2634.0,
-      "trailing_pe": 43.696087,
-      "market_cap": 446215487488,
+      "trailing_pe": 40.215702,
+      "market_cap": 429545947136,
       "history": {
         "first_date": "2021-09-30",
         "trading_days": 1239,
@@ -185,8 +185,8 @@
         "turnover_crore": 1291.33
       },
       "latest_close": 4377.0,
-      "trailing_pe": 70.13299,
-      "market_cap": 3883766120448,
+      "trailing_pe": 70.312454,
+      "market_cap": 3893703999488,
       "history": {
         "first_date": "2021-09-30",
         "trading_days": 1239,
@@ -308,7 +308,7 @@
       "PTCIL.NS": 0.054219,
       "NATIONALUM.NS": 0.183437,
       "GLAXO.NS": 0.025476,
-      "TITAN.NS": 0.017428
+      "TITAN.NS": 0.017429
     },
     "GLAXO.NS": {
       "CHENNPETRO.NS": 0.022293,
@@ -322,7 +322,7 @@
       "CHENNPETRO.NS": 0.013733,
       "PVRINOX.NS": 0.012455,
       "PTCIL.NS": 0.006895,
-      "NATIONALUM.NS": 0.017428,
+      "NATIONALUM.NS": 0.017429,
       "GLAXO.NS": 0.013076,
       "TITAN.NS": 0.049532
     }
@@ -720,7 +720,7 @@
         804.61,
         804.88,
         856.57,
-        855.31,
+        855.3,
         806.28,
         814.62,
         790.6,
@@ -1408,7 +1408,7 @@
         91.52,
         87.25,
         87.69,
-        94.99,
+        94.98,
         98.73,
         95.17,
         96.95,
@@ -1774,7 +1774,7 @@
         1660.06,
         1796.43,
         2034.36,
-        2136.05,
+        2136.06,
         2173.06,
         2075.72,
         2183.85,
@@ -1796,7 +1796,7 @@
         2300.59,
         2509.9,
         2402.77,
-        2543.96,
+        2543.97,
         2431.61,
         2540.28,
         2432.76,
@@ -1947,7 +1947,7 @@
         2659.26,
         2483.06,
         2480.06,
-        2469.34,
+        2469.33,
         2421.52,
         2472.04,
         2418.42,
@@ -1976,7 +1976,7 @@
         2695.82,
         2584.55,
         2631.79,
-        2701.65,
+        2701.64,
         2734.52,
         2618.12,
         2533.21,
@@ -2023,13 +2023,13 @@
         3087.18,
         3168.7,
         3217.73,
-        3243.38,
+        3243.39,
         3118.88,
         3278.3,
         3252.55,
         3235.16,
         3091.05,
-        3243.38,
+        3243.39,
         3225.41,
         3307.12,
         3364.67,
@@ -2037,7 +2037,7 @@
         3600.11,
         3566.34,
         3592.88,
-        3640.53,
+        3640.52,
         3677.27,
         3690.59,
         3774.39,
