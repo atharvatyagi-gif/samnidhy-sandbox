@@ -17,7 +17,7 @@ def fake_root(tmp_path, **over):
     html = (ROOT / "expert-terminal.html").read_text(encoding="utf-8")
     (tmp_path / "expert-terminal.html").write_text(over.pop("html", html), encoding="utf-8")
     (tmp_path / "README.md").write_text("plain", encoding="utf-8")
-    for n in ("desk-aladin.js", "desk-nexus.js"):
+    for n in ("desk-aladin.js", "desk-nexus.js", "desk-aladin2.js"):
         (tmp_path / n).write_text(over.pop(n, f"const DISCLAIMER = '{cb.DISCLAIMER}';"), encoding="utf-8")
     (tmp_path / "data" / "aladin").mkdir(parents=True)
     for rel, doc in over.items():

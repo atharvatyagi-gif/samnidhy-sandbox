@@ -935,3 +935,25 @@ button, input, select { transition: color 150ms, background-color 150ms, border-
 .desk.calm .statstrip { margin-bottom: 28px; }
 @media (max-width: 1000px) { .page { padding: 22px 16px 70px; } #mov-table.ess :is(th, td):is(:nth-child(8), :nth-child(9), :nth-child(10), :nth-child(12)) { display: none; } }
 .gd-wrap .globe-legend { bottom: 34px; z-index: 5; }
+
+/* ---------- ALADIN2 ---------- */
+.a2 { margin-bottom: 14px; }
+.a2-verdict { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 2px 0 6px; }
+.a2-sig { font: 700 13px var(--mono); letter-spacing: 0.04em; } .a2-sig.up { color: var(--up); } .a2-sig.down { color: var(--down); }
+.a2-sentence { margin: 4px 0 8px; font-size: 13px; line-height: 1.45; color: var(--ink); }
+.a2-fan { border: 1px solid var(--rule); border-radius: var(--r-card); background: var(--card); padding: 6px 6px 4px; }
+.a2-fan svg { width: 100%; height: auto; display: block; }
+.a2-ax { font: 9px var(--mono); fill: var(--ink-3); } .a2-ax.mid { text-anchor: middle; }
+.a2-grid { stroke: var(--rule); stroke-width: 1; }
+.a2-hist { fill: none; stroke: var(--ink-2); stroke-width: 1.4; }
+.a2-b95 { fill: var(--acc); fill-opacity: 0.06; } .a2-b80 { fill: var(--acc); fill-opacity: 0.10; } .a2-b50 { fill: var(--acc); fill-opacity: 0.16; }
+.a2-med { fill: none; stroke: var(--acc); stroke-width: 1.2; stroke-dasharray: 3 2; }
+.a2-dot { fill: var(--acc); } .a2-mk { stroke: var(--acc-edge); stroke-width: 1; }
+.a2-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; padding: 4px 4px 2px; font: 10.5px var(--mono); color: var(--ink-2); }
+.a2-legend label { display: inline-flex; gap: 4px; align-items: center; cursor: pointer; } .a2-legend .mut { color: var(--ink-3); }
+.a2-det { margin-top: 8px; border: 1px solid var(--rule); border-radius: var(--r); padding: 6px 10px; } .a2-det summary { cursor: pointer; font: 600 11px var(--mono); color: var(--ink-2); letter-spacing: 0.04em; }
+.a2-tbl { width: 100%; border-collapse: collapse; font: 11px var(--mono); margin-top: 6px; } .a2-tbl th { text-align: left; color: var(--ink-3); font-weight: 600; padding: 3px 4px; border-bottom: 1px solid var(--rule); } .a2-tbl td { padding: 3px 4px; border-bottom: 1px solid var(--rule); color: var(--ink); }
+.a2-card { border: 1px solid var(--rule); border-radius: var(--r); padding: 6px 8px; margin-bottom: 6px; } .a2-card-t { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 12px; }
+.a2-risk { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 6px 0; } .a2-risk label { font: 11px var(--mono); color: var(--ink-2); display: flex; gap: 6px; align-items: center; }
+.a2-risk input { width: 92px; background: var(--paper); color: var(--ink); border: 1px solid var(--rule-2); border-radius: var(--r); padding: 3px 6px; font: 11px var(--mono); }
+@media (max-width: 520px) { .a2-tbl { font-size: 10px; } .a2-risk input { width: 78px; } }

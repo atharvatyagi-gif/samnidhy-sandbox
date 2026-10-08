@@ -1,0 +1,148 @@
+/* ALADIN 2.0 brief: the block at the top of the Details rail for the open stock.
+   Verdict strip (product state, signal, why), forecast fan chart (inline SVG, existing colour tokens only), range table, strategy panel, risk panel, reliability and coverage,
+   "What does this mean?" disclosures. Data: aladin2/stock/<SYM>.json (one small file, fetched when a stock opens), aladin2/scoreboard.json (once). Nothing is estimated here:
+   every number is read from a file the engine wrote, and a missing input says "not measured" with its reason.
+   All wording comes from the labels dictionary the engine publishes (index.json / scoreboard.json), so switching the signal vocabulary is a one-line config change.
+   ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results. */
+
+let ctx = null, onReady = null;
+const cache = new Map(), pending = new Map();
+let board = null, boardP = null, failed = new Set();
+const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.";
+const LS = "aladin2.risk";
+
+export function init(c, ready) { ctx = c; onReady = ready; }
+
+/* ---------- pure helpers (tested in tests/js/aladin2.test.mjs) ---------- */
+export const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+export const inr = (v, dp = 2) => v == null || !isFinite(v) ? "--" : Number(v).toLocaleString("en-IN", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+export const pct = (v, dp = 1) => v == null || !isFinite(v) ? "--" : (v >= 0 ? "+" : "") + v.toFixed(dp) + "%";
+
+/* Position size: identical rules to signals.position_size() in Python (tests/aladin2/test_signals.py has the same numbers). */
+export function riskCalc({ capital, riskPct, entry, stop, advShares, mu, sd }, limits = { maxPosPct: 10, advPart: 0.05, kelly: 0.25 }) {
+  const per = entry - stop;
+  if (!(per > 0) || !(entry > 0) || !(capital > 0)) return { qty: 0, binding: "invalid inputs", capitalAtRisk: 0 };
+  const eps = 1e-9, kel = mu > 0 && sd > 0 ? mu / (sd * sd) : 0;
+  const caps = { "risk per trade": Math.floor(capital * riskPct / 100 / per), "max position size": Math.floor(capital * limits.maxPosPct / 100 / entry), "liquidity": Math.floor(limits.advPart * (advShares || 0)),
+    "fractional Kelly (edge too small)": Math.floor(capital * Math.min(1, kel * limits.kelly) / entry + eps) };
+  const binding = Object.keys(caps).reduce((a, b) => caps[b] < caps[a] ? b : a), qty = caps[binding];
+  return { qty, binding, caps, capitalAtRisk: qty * per, positionValue: qty * entry };
+}
+export function lossLadder(entry, atr, qty) { return [-1, -2, -3].map(k => ({ k, price: entry + k * atr, loss: qty * -k * atr })); }
+
+/* Fan geometry: history closes on the left, forecast bands to the right at each horizon (x proportional to sqrt of the horizon so short horizons stay readable). */
+export function fanGeometry(d, w = 320, h = 150, pad = { l: 44, r: 8, t: 8, b: 18 }) {
+  const c = d.series.c, n = c.length, Hs = d.horizons, maxH = Hs[Hs.length - 1];
+  const lo = Math.min(...c, ...d.bands.map(b => b.lo95)), hi = Math.max(...c, ...d.bands.map(b => b.hi95)), span = hi - lo || 1, ymin = lo - span * 0.04, ymax = hi + span * 0.04;
+  const histW = (w - pad.l - pad.r) * 0.45, fanW = (w - pad.l - pad.r) - histW, x0 = pad.l + histW;
+  const y = v => pad.t + (h - pad.t - pad.b) * (1 - (v - ymin) / (ymax - ymin));
+  const xh = H => x0 + fanW * Math.sqrt(H / maxH), xi = i => pad.l + histW * (i / Math.max(n - 1, 1));
+  const hist = c.map((v, i) => [xi(i), y(v)]), last = d.close;
+  const band = (lo, hi) => [[x0, y(last)], ...d.bands.map(b => [xh(b.H), y(b[hi])])].concat([...d.bands].reverse().map(b => [xh(b.H), y(b[lo])]), [[x0, y(last)]]);
+  const med = [[x0, y(last)], ...d.bands.map(b => [xh(b.H), y((b.lo50 + b.hi50) / 2)])];
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map(f => { const v = ymin + (ymax - ymin) * f; return { y: y(v), v }; });
+  return { w, h, hist, band50: band("lo50", "hi50"), band80: band("lo80", "hi80"), band95: band("lo95", "hi95"), med, ticks, xh, x0, y, last };
+}
+const pts = a => a.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+
+/* ---------- data ---------- */
+function load(sym) {
+  if (cache.has(sym) || pending.has(sym) || failed.has(sym) || !ctx) return;
+  const p = ctx.getJSON(`aladin2/stock/${encodeURIComponent(sym)}.json`, false).then(d => { cache.set(sym, d); }).catch(() => { failed.add(sym); }).finally(() => { pending.delete(sym); if (onReady) onReady(sym); });
+  pending.set(sym, p);
+}
+function loadBoard() {
+  if (board || boardP || !ctx) return;
+  boardP = ctx.getJSON("aladin2/scoreboard.json", false).then(d => { board = d; }).catch(() => { board = { missing: true }; }).finally(() => { boardP = null; if (onReady) onReady(null); });
+}
+export function settings() { try { return Object.assign({ capital: 1000000, riskPct: 1 }, JSON.parse(localStorage.getItem(LS) || "{}")); } catch { return { capital: 1000000, riskPct: 1 }; } }
+function saveSettings(s) { try { localStorage.setItem(LS, JSON.stringify(s)); } catch { /* private window: fine */ } }
+
+/* ---------- HTML ---------- */
+const STATE_NOTE = { Learning: "ALADIN has not yet found enough evidence for this stock. It is still learning what works.", Provisional: "Some evidence, not enough to trust: ranges shown, no trade plan.",
+  Validated: "Enough live and out-of-sample evidence.", Suspended: "ALADIN switched itself off here because its own live record broke its limits." };
+export function html(sym) {
+  load(sym); loadBoard();
+  const head = `<div class="sec-t">ALADIN 2.0 brief</div>`;
+  if (failed.has(sym)) return head + `<p class="note">ALADIN has no forecast for ${esc(sym)} today (only the 500 most-traded stocks are covered). Not measured.</p>`;
+  const d = cache.get(sym);
+  if (!d) return head + `<p class="note">Loading the brief…</p>`;
+  const lab = (board && board.labels) || { none: "NO EDGE", bull: "BULLISH SIGNAL", bear: "BEARISH SIGNAL", range: "forecast range", level: "price level likelihood", plan_level: "profit level" };
+  const key = d.signal || "none", cls = key === "bull" ? "up" : key === "bear" ? "down" : "";
+  const g = fanGeometry(d), s = settings();
+  const verdict = `<div class="a2-verdict"><span class="tag ${d.state === "Validated" ? "acc" : d.state === "Suspended" ? "warn" : ""}" title="${esc(STATE_NOTE[d.state] || "")}">${esc(d.state.toUpperCase())}</span>
+    <b class="a2-sig ${cls}">${esc(lab[key] || lab.none)}${key === "none" ? ": stand aside" : ""}</b><span class="mut">as of ${esc(d.as_of)} close</span></div>
+    <p class="a2-sentence">${esc(sentence(d, lab))}</p>`;
+  const chart = fanSvg(d, g);
+  const table = `<details class="a2-det"><summary>Range table (${esc(lab.range)})</summary><table class="a2-tbl"><thead><tr><th>Days</th><th>50% range</th><th>80% range</th><th>95% range</th><th>Closes higher*</th></tr></thead><tbody>${d.bands.map(b =>
+    `<tr><td>${b.H}</td><td>${inr(b.lo50)}–${inr(b.hi50)}</td><td>${inr(b.lo80)}–${inr(b.hi80)}</td><td>${inr(b.lo95)}–${inr(b.hi95)}</td><td>${b.p_up != null ? Math.round(b.p_up * 100) + "%" : b.base_rate != null ? "about " + Math.round(b.base_rate * 100) + "% (history; no directional information)" : "--"}</td></tr>`).join("")}</tbody></table>
+    <p class="note">*For 1 and 5 days a calibrated number; for longer horizons only how often stocks like this closed higher historically. Ranges are tested out of sample: the 80% range held the price about 80% of the time.</p></details>`;
+  return head + verdict + chart + table + strategyPanel(d) + riskPanel(d, s) + reliability() + what(d, lab) + `<p class="note">${DISCLAIMER}</p>`;
+}
+
+export function sentence(d, lab) {
+  const b = d.bands.find(x => x.H === 20) || d.bands[d.bands.length - 1], p = (v) => (v / d.close - 1) * 100;
+  const base = `In ${b.H} trading days ${d.sym} is likely to be between ₹${inr(b.lo80)} and ₹${inr(b.hi80)} (${pct(p(b.lo80))} to ${pct(p(b.hi80))}) about 80% of the time.`;
+  return d.signal === "none" ? `${base} ALADIN sees no reliable edge in the direction: ${d.signal_why}.` : base;
+}
+
+function fanSvg(d, g) {
+  const lab = (board && board.labels && board.labels.range) || "forecast range";
+  const axis = g.ticks.map(t => `<text x="2" y="${t.y.toFixed(1)}" class="a2-ax">${inr(t.v, t.v < 100 ? 1 : 0)}</text><line x1="40" x2="${g.w - 8}" y1="${t.y.toFixed(1)}" y2="${t.y.toFixed(1)}" class="a2-grid"/>`).join("");
+  const marks = d.bands.map(b => `<g><line x1="${g.xh(b.H).toFixed(1)}" x2="${g.xh(b.H).toFixed(1)}" y1="${g.y(b.hi95).toFixed(1)}" y2="${g.y(b.lo95).toFixed(1)}" class="a2-mk"/><text x="${g.xh(b.H).toFixed(1)}" y="${g.h - 4}" class="a2-ax mid">${b.H}d</text>
+    <title>${b.H} days: 50% ${inr(b.lo50)}–${inr(b.hi50)}; 80% ${inr(b.lo80)}–${inr(b.hi80)}; 95% ${inr(b.lo95)}–${inr(b.hi95)}</title></g>`).join("");
+  return `<div class="a2-fan" data-a2-fan><svg viewBox="0 0 ${g.w} ${g.h}" role="img" aria-label="${esc(lab)} for ${esc(d.sym)}: last ${d.series.c.length} closes then 50, 80 and 95 percent ranges out to ${d.horizons[d.horizons.length - 1]} days">
+    ${axis}<polyline points="${pts(g.hist)}" class="a2-hist"/><polygon points="${pts(g.band95)}" class="a2-b95" data-layer="95"/><polygon points="${pts(g.band80)}" class="a2-b80" data-layer="80"/><polygon points="${pts(g.band50)}" class="a2-b50" data-layer="50"/>
+    <polyline points="${pts(g.med)}" class="a2-med"/><circle cx="${g.x0.toFixed(1)}" cy="${g.y(g.last).toFixed(1)}" r="2.5" class="a2-dot"/>${marks}</svg>
+    <div class="a2-legend"><label><input type="checkbox" data-a2-layer="95" checked> 95%</label><label><input type="checkbox" data-a2-layer="80" checked> 80%</label><label><input type="checkbox" data-a2-layer="50" checked> 50%</label>
+    <span class="mut">line = centre of the 50% range · as of ${esc(d.as_of)}</span></div></div>`;
+}
+
+function strategyPanel(d) {
+  const cs = d.strategies || [];
+  const rows = cs.map(c => `<div class="a2-card"><div class="a2-card-t"><b>${esc(c.name)}</b><span class="tag ${c.state === "Active" ? "acc" : ""}">${esc(c.state.toUpperCase())}</span></div><div class="note">${esc(c.last_change)}</div></div>`).join("");
+  return `<div class="sec-t">Strategies ALADIN is judging</div>${rows || '<p class="note">No strategies yet.</p>'}<p class="note">Evidence is pooled across all stocks, because one stock alone has too few trades to prove anything. No strategy is Active today, so none is behind a signal for ${esc(d.sym)}.</p>`;
+}
+
+function riskPanel(d, s) {
+  const head = `<div class="sec-t">Risk and position size</div>`;
+  if (!d.plan) return head + `<p class="note">${esc(d.plan_why)}</p><div class="a2-risk"><label>Capital ₹ <input type="number" min="0" step="10000" value="${s.capital}" data-a2-cap></label><label>Risk per trade % <input type="number" min="0.1" max="5" step="0.1" value="${s.riskPct}" data-a2-risk></label></div>
+    <p class="note">Your capital and risk limit are saved in this browser only. When a stock reaches Validated, ALADIN shows an entry zone, an invalidation level, the quantity for your numbers, the money at risk, the chance of being stopped out and a loss ladder. A stop does not always fill at its level: overnight gaps and circuit limits can go past it. Sizing reduces the risk of loss; it does not remove it.</p>`;
+  const p = d.plan, r = riskCalc({ capital: s.capital, riskPct: s.riskPct, entry: p.entry, stop: p.stop, advShares: p.adv_shares, mu: p.mu, sd: p.sd });
+  return head + `<div class="stats"><div><span>Entry zone</span><b>${inr(p.zone[0])}–${inr(p.zone[1])}</b></div><div><span>Invalidation</span><b>${inr(p.stop)}</b></div><div><span>Quantity</span><b>${r.qty}</b></div><div><span>Money at risk</span><b>₹${inr(r.capitalAtRisk, 0)}</b></div></div>
+    <p class="note">Limited by: ${esc(r.binding)}. Chance of being stopped out within ${p.horizon} days: ${Math.round(p.p_stop * 100)}%.</p>`;
+}
+
+function reliability() {
+  if (!board) return `<div class="sec-t">Reliability and coverage</div><p class="note">Loading…</p>`;
+  if (board.missing) return `<div class="sec-t">Reliability and coverage</div><p class="note">Scoreboard not available. Not measured.</p>`;
+  const h = board.historical_simulation && board.historical_simulation.horizons || {};
+  const rows = Object.keys(h).map(k => `<tr><td>${k}</td><td>${Math.round(h[k].coverage["80"] * 1000) / 10}%</td><td>${Math.round(h[k].coverage["95"] * 1000) / 10}%</td></tr>`).join("");
+  const live = Object.keys(board.live || {}).length ? "Live results are building up: see the scoreboard." : "No live forecast has resolved yet: the live record starts with the 5-day forecasts from 6 October 2026.";
+  return `<div class="sec-t">Reliability and coverage</div><table class="a2-tbl"><thead><tr><th>Days</th><th>80% range held</th><th>95% range held</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="note"><b>Historical simulation</b> (out of sample, 2012–2026, survivors to today only), not live results. ${esc(live)}</p>`;
+}
+
+function what(d, lab) {
+  return `<details class="a2-det"><summary>What does this mean?</summary><p class="note">The shaded fan is the ${esc(lab.range)}: the darker band holds the price about half the time, the lighter ones about 80% and 95% of the time. It is about the size of the move, not its direction.
+    <b>${esc((lab.none || "NO EDGE"))}</b> means ALADIN has not found a reliable reason to expect up or down for this stock. That is the usual answer, and standing aside is a valid result. Strategies move from Probation to Active only after weeks of live paper trading, and a stock becomes Validated only after at least 60 live days, 60 out-of-sample trades and a calibration check.</p></details>`;
+}
+
+/* The block the Details rail inserts. The rail re-renders every couple of seconds while prices tick; the caller keeps the existing DOM node when `data-sig` is unchanged,
+   so an opened "What does this mean?", a hidden band or a half-typed number is never thrown away. */
+export function wrap(sym) {
+  const h = html(sym); let x = 5381; for (let i = 0; i < h.length; i++) x = ((x << 5) + x + h.charCodeAt(i)) | 0;
+  return `<div id="a2-brief" class="a2" data-sym="${esc(sym)}" data-sig="${x}">${h}</div>`;
+}
+
+/* ---------- events ---------- */
+export function bind(root, sym) {
+  if (!root) return;
+  root.querySelectorAll("[data-a2-layer]").forEach(cb => cb.onchange = () => root.querySelectorAll(`[data-layer="${cb.dataset.a2Layer}"]`).forEach(el => { el.style.display = cb.checked ? "" : "none"; }));
+  const cap = root.querySelector("[data-a2-cap]"), rk = root.querySelector("[data-a2-risk]");
+  const upd = () => { const s = settings(); s.capital = Math.max(0, +cap.value || 0); s.riskPct = Math.min(5, Math.max(0.1, +rk.value || 1)); saveSettings(s); if (onReady) onReady(sym); };
+  if (cap) cap.onchange = upd; if (rk) rk.onchange = upd;
+}
+
+/* test hook: lets tests/js put data in the caches without a network */
+export const _test = { put: (sym, d) => cache.set(sym, d), board: b => { board = b; }, reset: () => { cache.clear(); board = null; failed.clear(); } };
