@@ -46,7 +46,7 @@ def has(t, d, folder=None, H=None):
 
 def append(rec, folder=None):
     """Append one record. Returns 'written', or 'duplicate' when an identical record is already there. Raises ValueError for a different record with the same key."""
-    if rec["t"] not in ("fc", "sig", "out", "corr"):
+    if rec["t"] not in ("fc", "sig", "out", "corr", "wk", "wkout"):
         raise ValueError(f"unknown ledger line type {rec['t']}")
     line = json.dumps(rec, separators=(",", ":"), sort_keys=True)
     if rec["t"] != "corr":

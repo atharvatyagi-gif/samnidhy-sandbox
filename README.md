@@ -457,13 +457,25 @@ A stock shows a bullish signal only if it is Validated (at least 60 live days, 6
 
 Switches stop ALADIN by itself: a stock, a sector or the whole engine becomes Suspended when its live calibration error passes 0.05, its live range coverage is more than 4 points from nominal, or a live-return alarm fires. Signals then disappear and a banner says why.
 
+**The weekly signal: a positive or negative call for the next five trading days**
+
+Each night ALADIN ranks about 1,300 liquid stocks (at least Rs 2 crore traded a day) by ALADIN 1's five-day score. The best 1% get the positive signal, the worst 5% the negative one, everything else nothing. A signal is for five trading days: enter at the next open, leave at the open of the fifth trading day after, or earlier if the price closes below the exit level. The words used for a positive and a negative signal come from one setting in the configuration file.
+
+The rule was fixed from a measurement first: 310,816 stock-weeks (655 Fridays, 2013 to 2026), traded at the next open with the full cost stack, against the equal-weight market of the same week. The negative side is the reliable one: the worst 5% each week fell below the market in 14 of 14 years, by about 72 basis points a week before costs (95% range -87 to -56), and closed higher only 42% of the time. Cash shares cannot be shorted, so a negative signal means exit if you hold it and do not add it; a short is possible only through futures, in stocks that have them.
+
+The positive side is weaker. The best 10% each week beat the market by about 30 basis points before costs against a round trip of about 37, so on average it does not pay (-7 basis points after costs). Only the very best 1% cleared costs: +27 basis points after costs (95% range +6 to +47), positive after costs in 9 of 14 years. Four thresholds were looked at on each side before choosing, so the positive result is the weaker claim. Size it small.
+
+Nothing else added to the weekly result. Five-day reversal, three-month momentum, and a blend or a learned combination of all three did not beat costs. Fundamental, sentiment and supply-chain views have no weekly history, so they cannot be tested, and the ALADIN 2 strategy library has no Active rule; all of them are shown beside each signal as context, not as part of the rule. Survivorship flatters the positive side and understates the negative side.
+
+Every weekly signal is Provisional: it rests on 13 years of out-of-sample history but ALADIN has no live weekly record yet. A signal counts as live only if it was published before its entry open, and the weekly record on the page is recomputed from the ledger. Signals made on days other than Friday use the same score but were not separately tested.
+
 **The record**
 
 Every forecast is written to an append-only ledger when it is made and scored when its date arrives; nothing is edited afterwards, and git history is the audit trail. Only forecasts made before the day they are about count as live. Live results start with the 5-day forecasts of 6 October 2026. Everything labelled historical simulation is out-of-sample testing on past data and is not live.
 
 **What it has found so far (as of 8 October 2026)**
 
-No stock has enough evidence for a trade plan: 500 of 500 read Learning and NO EDGE. Tested one stock at a time, no rule passed in any of 56 test blocks. Pooled across stocks, five trend-following rules passed repeatedly (about 3 to 5 basis points a day above the market while invested) but they faded in 2025 and were retired. Short-term reversal looked strong until the benchmark was corrected: that result was an artefact and was withdrawn. A rule that fades is noticed slowly: about 850 days at the median in simulation, because one trade is noisy next to a 1% edge.
+No stock has enough evidence for a trade plan: 500 of 500 read Learning and NO EDGE. Tested one stock at a time, no rule passed in any of 56 test blocks. Pooled across stocks, five trend-following rules passed repeatedly (about 3 to 5 basis points a day above the market while invested) but they faded in 2025 and were retired. Short-term reversal looked strong until the benchmark was corrected: that result was an artefact and was withdrawn. A rule that fades is noticed slowly: about 850 days at the median in simulation, because one trade is noisy next to a 1% edge. At the weekly horizon the worst 5% reliably fell behind the market and the best 1% only barely beat their costs; the best 10% did not.
 
 **Not measured, and why**
 
@@ -478,6 +490,8 @@ No stock has enough evidence for a trade plan: 500 of 500 read Learning and NO E
 - Trails in the sector rotation chart: need daily sector history
 - Step times of the nightly job on GitHub: not measured until the workflow has run there; local timings only
 - Exchange holidays in future dates on the chart: unknown; dates skip weekends only
+- The weekly signal's live record: none yet; the first weekly book was written after its entry open, so it does not count as live
+- Fundamental, sentiment and supply-chain views at the weekly horizon: no weekly history exists, so they cannot be tested; they are context only
 <!-- ALADIN2-METHOD:END -->
 
 ## Design system & motion

@@ -17,7 +17,7 @@ def make_ledger(tmp_path, n=12):
 
 def test_shards_have_the_published_shape_sizes_and_neutral_wording(tmp_path):
     syms = make_ledger(tmp_path); out = tmp_path / "site" / "aladin2"
-    r = PB.build(out, ledger_dir=tmp_path / "ledger", state_dir=tmp_path / "state", journal_dir=tmp_path)
+    r = PB.build(out, ledger_dir=tmp_path / "ledger", state_dir=tmp_path / "state", journal_dir=tmp_path, mode="neutral", weekly_path=tmp_path / "none.json")
     assert r["built"] and r["stocks"] == 12 and r["biggest_stock_shard_bytes"] < 80_000 and r["index_bytes"] < 200 * 12 + 2000
     idx = json.loads((out / "index.json").read_text()); assert idx["mode"] == "neutral" and idx["labels"]["none"] == "NO EDGE" and len(idx["rows"]) == 12 and idx["rows"][0][1] == "L"
     d = json.loads((out / "stock" / "S0.json").read_text())

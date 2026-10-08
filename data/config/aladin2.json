@@ -15,7 +15,8 @@
     "backtest": "assumed_order_inr is the reference order size used for the participation check; circuit_proxy_min_move is the smallest |close/prev close - 1| of a one-price day that counts as a circuit-limit lock (no fill)",
     "signals": "entry_atr_mult = half-width of the entry zone in ATRs; stop_atr_min/max/default = allowed range of the volatility stop; swing_low_days = structure-stop lookback; event_window_d = days before a known event that force NO EDGE; plan_horizon_d = horizon of the trade plan simulation; touch_min_prob = a profit level is listed when its touch probability is at least this",
     "kill": "engine/sector/stock is Suspended when live ECE > ece_max (n >= min_n), live interval coverage is off by more than coverage_tol (n >= min_coverage_n), or a CUSUM alarm is active; sector_share = share of a sector's stocks suspended that suspends the sector",
-    "forward_clock_start": "first as-of date of the live ledger; journal events dated before it are replays of history (simulation), not live learning, and are tagged as such"
+    "forward_clock_start": "first as-of date of the live ledger; journal events dated before it are replays of history (simulation), not live learning, and are tagged as such",
+    "weekly": "weekly signal rule, fixed from the weekly study: BUY = best 1% (rank percentile >= buy_top_pct) of liquid stocks by ALADIN 1's 5-day score, SELL = worst 5% (<= sell_bottom_pct); weekly_sd = assumed standard deviation of one weekly trade for the Kelly cap"
   },
   "horizons_d": [
     1,
@@ -25,7 +26,7 @@
     60
   ],
   "primary_horizon_d": 10,
-  "signal_labels": "neutral",
+  "signal_labels": "directional",
   "universe": {
     "min_adv_inr_cr": 2.0,
     "min_history_d": 750,
@@ -145,7 +146,9 @@
       "none": "NO EDGE",
       "range": "forecast range",
       "level": "price level likelihood",
-      "plan_level": "profit level"
+      "plan_level": "profit level",
+      "bear_note": "exit if you hold it, do not add it; a short is possible only through futures",
+      "weekly": "weekly signal"
     },
     "directional": {
       "bull": "BUY",
@@ -153,7 +156,9 @@
       "none": "HOLD",
       "range": "price range",
       "level": "price target probability",
-      "plan_level": "price target"
+      "plan_level": "price target",
+      "bear_note": "exit if you hold it, do not buy it; a short is possible only through futures",
+      "weekly": "weekly signal"
     }
   },
   "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
@@ -175,5 +180,10 @@
     "min_coverage_n": 300,
     "sector_share": 0.5
   },
-  "forward_clock_start": "2026-10-06"
+  "forward_clock_start": "2026-10-06",
+  "weekly": {
+    "buy_top_pct": 0.99,
+    "sell_bottom_pct": 0.05,
+    "weekly_sd": 0.06
+  }
 }

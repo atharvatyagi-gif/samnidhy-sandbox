@@ -40,7 +40,7 @@ from . import run_phase2 as P
 from .strategies import registry as R
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-STEPS = ["ingest", "resolve", "learn", "drift", "discover", "forecast", "publish"]
+STEPS = ["ingest", "resolve", "learn", "drift", "discover", "forecast", "weekly", "publish"]
 
 
 class Run:
@@ -183,13 +183,20 @@ class Run:
         s = LV.run(self.a.workers, False, str(self.ledger), self.a.limit, self.state); self.counts["forecast"] = {k: s[k] for k in ("as_of", "stocks_forecast", "product_state_counts", "ledger_status")}
         return f"as of {s['as_of']}, {s['stocks_forecast']} stocks, states {s['product_state_counts']}, ledger {s['ledger_status']}"
 
+    def s_weekly(self):
+        from . import weekly_run as WR
+        r = WR.run(False, str(self.ledger), str(self.base))
+        if not r.get("built"):
+            return r.get("why", "not built")
+        b = r["book"]; self.counts["weekly"] = b["counts"]; return f"as of {b['as_of']}: bull {b['counts']['bull']}, bear {b['counts']['bear']}, hold {b['counts']['hold']}; ledger {r['ledger_status']}; {r['outcome_lines_written']} outcome lines"
+
     def s_publish(self):
         n = J.publish(self.base); return f"journal.json with {n} events"
 
     # ------------------------------------------------------------------ driver
     def run_day(self, day, steps):
         done = self.done_steps(day) if self.a.resume else set(); self.rows = []; self.errors = []
-        fns = {"ingest": self.s_ingest, "resolve": self.s_resolve, "learn": self.s_learn, "drift": self.s_drift, "discover": self.s_discover, "forecast": self.s_forecast, "publish": self.s_publish}
+        fns = {"ingest": self.s_ingest, "resolve": self.s_resolve, "learn": self.s_learn, "drift": self.s_drift, "discover": self.s_discover, "forecast": self.s_forecast, "weekly": self.s_weekly, "publish": self.s_publish}
         for s in [x for x in STEPS if x in steps]:
             self.step(s, fns[s], day, done)
         rep = {"day": day, "weekday": pd.Timestamp(day).day_name(), "full_refit_day": pd.Timestamp(day).weekday() == 6, "budget_min": self.a.budget_min, "total_s": round(time.time() - self.t0), "steps": [{"step": n, "seconds": s, "note": m} for n, s, m in self.rows],

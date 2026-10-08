@@ -2,13 +2,22 @@
  "base": "http://127.0.0.1:8767",
  "viewports": {
   "desk": {
-   "desk_ready_ms": 1218,
+   "desk_ready_ms": 483,
    "aladin2_requests_before_opening_a_stock_or_the_tab": [
     "stock/TCS.json",
     "scoreboard.json",
     "regime.json"
    ],
    "pages": {
+    "weekly": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
     "score": {
      "disclaimer": true,
      "as_of": true,
@@ -89,13 +98,22 @@
    "unexpected_404s": []
   },
   "phone": {
-   "desk_ready_ms": 986,
+   "desk_ready_ms": 417,
    "aladin2_requests_before_opening_a_stock_or_the_tab": [
     "stock/TCS.json",
     "scoreboard.json",
     "regime.json"
    ],
    "pages": {
+    "weekly": {
+     "disclaimer": true,
+     "as_of": true,
+     "svg_charts": 0,
+     "svg_charts_with_aria_label": 0,
+     "svg_titles": 0,
+     "buttons_without_name": 0,
+     "has_numbers_fallback": true
+    },
     "score": {
      "disclaimer": true,
      "as_of": true,
@@ -178,14 +196,14 @@
  },
  "throttled_stock_shard": {
   "profile": "150 ms round trip, 1.6 Mbit/s",
-  "ms_median": 200,
-  "ms_max": 215,
+  "ms_median": 195,
+  "ms_max": 204,
   "bytes": [
-   5988,
-   5988,
-   5953,
-   5859,
-   5960
+   6002,
+   6002,
+   5967,
+   5873,
+   5974
   ]
  }
 }

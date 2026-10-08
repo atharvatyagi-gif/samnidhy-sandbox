@@ -47,8 +47,11 @@ def _strategy_cards(state):
     return sorted(out, key=lambda c: (order.get(c["state"], 9), c["id"]))
 
 
-def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None):
-    out = Path(out); cfg = C.load_cfg(); ledger_dir = ledger_dir or LG.LEDGER; state_dir = Path(state_dir or DATA / "state"); journal_dir = Path(journal_dir or DATA)
+def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None, mode=None, weekly_path=None):
+    out = Path(out); cfg = C.load_cfg()
+    if mode:
+        cfg["signal_labels"] = mode
+    ledger_dir = ledger_dir or LG.LEDGER; state_dir = Path(state_dir or DATA / "state"); journal_dir = Path(journal_dir or DATA)
     fc = _latest("fc", ledger_dir)
     if fc is None:
         return {"built": False, "why": "no forecast batch in the ledger yet"}
@@ -61,23 +64,44 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None):
             uni[s["s"]] = s
     except Exception:                                                      # noqa: BLE001  names and sectors are nice to have, not required
         pass
+    wkf = Path(weekly_path) if weekly_path else DATA / "weekly.json"; wk = json.loads(wkf.read_text(encoding="utf-8")) if wkf.exists() else None; wsig = {}
+    if wk and wk.get("built"):
+        for side, key in (("bull", "bull"), ("bear", "bear")):
+            for r_ in wk["book"][side]:
+                wsig[r_["sym"]] = r_
     cards = _strategy_cards(state); active = [c for c in cards if c["state"] == "Active"]; Hs = fc["H"]; sizes = {}
     labels = cfg["labels"][cfg["signal_labels"]]; base = {int(h): v["p_up"]["base_rate"] for h, v in (p3.get("horizons") or {}).items()}
     rows = []; mm = []
     for i, sym in enumerate(fc["syms"]):
         u = uni.get(sym, {}); close = fc["close"][i]; b = fc["bands"][i]; j5 = Hs.index(5) if 5 in Hs else 0; j20 = Hs.index(20) if 20 in Hs else len(Hs) - 1
         lo5, hi5 = (b[j5][2] / close - 1) * 100, (b[j5][3] / close - 1) * 100; lo20, hi20 = (b[j20][2] / close - 1) * 100, (b[j20][3] / close - 1) * 100
-        stt = "Learning" if not active else "Provisional"; sector = u.get("ind") or "Unknown"
-        rows.append([sym, stt[0], "n", round(lo5, 1), round(hi5, 1), round(lo20, 1), round(hi20, 1), sector]); mm.append([sym, sector, round((u.get("avgv20") or 0) * (u.get("c") or close) / 1e7, 1), round(hi20 - lo20, 1), stt[0]])
+        stt = "Learning" if not active else "Provisional"; ws = wsig.get(sym)
+        if ws:
+            stt = "Provisional"
+        sector = u.get("ind") or "Unknown"
+        rows.append([sym, stt[0], ("b" if ws and ws["signal"] == "bull" else "s" if ws else "n"), round(lo5, 1), round(hi5, 1), round(lo20, 1), round(hi20, 1), sector]); mm.append([sym, sector, round((u.get("avgv20") or 0) * (u.get("c") or close) / 1e7, 1), round(hi20 - lo20, 1), stt[0]])
         try:
             px = L.load_prices(sym, term); px = px.tail(SERIES_N) if px is not None else None
         except Exception:                                                  # noqa: BLE001
             px = None
         shard = {"sym": sym, "name": u.get("n") or sym, "sector": sector, "as_of": fc["d"], "created": fc["created"], "close": close, "state": stt, "state_why": ["no strategy has passed the evaluation protocol for this stock yet"] if stt == "Learning" else ["Probation only"],
-                 "signal": "none", "signal_why": f"state is {stt}", "horizons": Hs, "sigma": fc["sigma"][i],
+                 "signal": ws["signal"] if ws else "none", "signal_why": (ws["state_why"] if ws else f"state is {stt}"), "weekly": ws, "horizons": Hs, "sigma": fc["sigma"][i],
                  "bands": [{"H": h, "lo50": b[k][0], "hi50": b[k][1], "lo80": b[k][2], "hi80": b[k][3], "lo95": b[k][4], "hi95": b[k][5], "p_up": fc["p_up"][i][k], "base_rate": base.get(h)} for k, h in enumerate(Hs)],
                  "strategies": cards, "plan": None, "plan_why": "A trade plan is shown only for Validated stocks. None is Validated yet: the live record is too short.",
                  "series": {"d": [str(x.date()) for x in px.index] if px is not None else [], "c": [round(float(x), 2) for x in px["c"]] if px is not None else []}, "disclaimer": cfg["disclaimer"]}
+        if ws and ws["signal"] == "bull":                    # the weekly plan, in the shape the brief's risk panel reads (sizing is done in the browser with the visitor's own capital)
+            shard["plan"] = {"entry": ws["close"], "zone": ws["entry_zone"], "stop": ws["invalidation"], "atr": ws["atr"], "adv_shares": ws["adv_shares"], "mu": (ws["expected_net_bps"] or 0) / 1e4, "sd": cfg["weekly"]["weekly_sd"], "p_stop": None, "horizon": 5}
+        elif ws:
+            shard["plan_why"] = ws["what_to_do"]
+        sizes[sym] = _w(out / "stock" / f"{sym}.json", shard)
+    for sym, ws in wsig.items():                              # signal stocks outside the 500 forecast stocks: a shard without ranges, so the brief can still show the signal
+        if sym in fc["syms"]:
+            continue
+        u = uni.get(sym, {}); px = L.load_prices(sym, term); px = px.tail(SERIES_N) if px is not None else None
+        shard = {"sym": sym, "name": ws["name"], "sector": ws["sector"], "as_of": wk["book"]["as_of"], "created": wk["book"]["as_of"], "close": ws["close"], "state": "Provisional", "state_why": [ws["state_why"]], "signal": ws["signal"], "signal_why": ws["state_why"], "weekly": ws, "horizons": [], "sigma": [], "bands": [],
+                 "strategies": cards, "plan": None, "plan_why": ws["what_to_do"], "series": {"d": [str(x.date()) for x in px.index] if px is not None else [], "c": [round(float(x), 2) for x in px["c"]] if px is not None else []}, "disclaimer": cfg["disclaimer"]}
+        if ws["signal"] == "bull":
+            shard["plan"] = {"entry": ws["close"], "zone": ws["entry_zone"], "stop": ws["invalidation"], "atr": ws["atr"], "adv_shares": ws["adv_shares"], "mu": (ws["expected_net_bps"] or 0) / 1e4, "sd": cfg["weekly"]["weekly_sd"], "p_stop": None, "horizon": 5}
         sizes[sym] = _w(out / "stock" / f"{sym}.json", shard)
     states = {}
     for r in rows:
@@ -93,6 +117,9 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None):
     cf = state_dir / "learning_curve.jsonl"; curve = [json.loads(x) for x in cf.read_text().splitlines() if x.strip()] if cf.exists() else []
     score["learning_curve"] = curve; score["barrier_check_20d"] = {k: v for k, v in (p3.get("barrier_check_20d") or {}).items() if k in ("touch_up_1sigma", "touch_down_1sigma", "paths_80pct_band_coverage_20d")}
     index = {"as_of": fc["d"], "created": fc["created"], "mode": cfg["signal_labels"], "labels": labels, "counts": states, "horizons": Hs, "cols": ["sym", "state", "signal", "lo80_5d", "hi80_5d", "lo80_20d", "hi80_20d", "sector"], "rows": rows, "disclaimer": cfg["disclaimer"]}
+    index["weekly"] = {"as_of": wk["book"]["as_of"], "counts": wk["book"]["counts"]} if wk and wk.get("built") else None
+    if wk and wk.get("built"):
+        wk["labels"] = labels; wk["mode"] = cfg["signal_labels"]; sizes["weekly.json"] = _w(out / "weekly.json", wk); score["weekly_live_record"] = wk["live_record"]
     sizes["index.json"] = _w(out / "index.json", index); sizes["scoreboard.json"] = _w(out / "scoreboard.json", score)
     sizes["market_map.json"] = _w(out / "market_map.json", {"as_of": fc["d"], "cols": ["sym", "sector", "traded_value_cr", "range80_20d_pct", "state"], "area": "20-day average traded value, Rs crore (market capitalisation is not available from free data)", "rows": mm, "disclaimer": cfg["disclaimer"]})
     try:                                                    # market-wide stress ribbon for the chart (filtered probabilities only: a value never changes when later data arrives)
@@ -107,7 +134,7 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None):
         sizes["method.json"] = _w(out / "method.json", json.loads(mf.read_text(encoding="utf-8")))
     jf = journal_dir / "journal.json"
     sizes["journal.json"] = _w(out / "journal.json", json.loads(jf.read_text()) if jf.exists() else {"events": []})
-    total = sum(sizes.values()); biggest = max((v for k, v in sizes.items() if k not in ("index.json", "scoreboard.json", "journal.json", "market_map.json")), default=0)
+    total = sum(sizes.values()); biggest = max((v for k, v in sizes.items() if k not in ("index.json", "scoreboard.json", "journal.json", "market_map.json", "weekly.json", "method.json", "regime.json")), default=0)
     return {"built": True, "as_of": fc["d"], "stocks": len(rows), "total_bytes": total, "index_bytes": sizes["index.json"], "biggest_stock_shard_bytes": biggest, "states": states}
 
 
