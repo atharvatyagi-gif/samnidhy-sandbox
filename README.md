@@ -465,6 +465,8 @@ The rule was fixed from a measurement first: 310,816 stock-weeks (655 Fridays, 2
 
 The positive side is weaker. The best 10% each week beat the market by about 30 basis points before costs against a round trip of about 37, so on average it does not pay (-7 basis points after costs). Only the very best 1% cleared costs: +27 basis points after costs (95% range +6 to +47), positive after costs in 9 of 14 years. Four thresholds were looked at on each side before choosing, so the positive result is the weaker claim. Size it small.
 
+Every stock also gets a measured chance for the coming five trading days: how often stocks at its rank closed higher, and how often they beat the market, in 2013 to 2026, with 95% intervals. The best 1% closed higher 55% of the time and beat the market 53% of the time; the worst 5% closed higher 41% to 44% of the time and fell behind the market about 62% to 65% of the time. These are frequencies for a typical stock at that rank, checked on years the numbers had not seen (calibration error 0.015 for closing higher and 0.010 for beating the market), not a forecast for one stock.
+
 Nothing else added to the weekly result. Five-day reversal, three-month momentum, and a blend or a learned combination of all three did not beat costs. Fundamental, sentiment and supply-chain views have no weekly history, so they cannot be tested, and the ALADIN 2 strategy library has no Active rule; all of them are shown beside each signal as context, not as part of the rule. Survivorship flatters the positive side and understates the negative side.
 
 Every weekly signal is Provisional: it rests on 13 years of out-of-sample history but ALADIN has no live weekly record yet. A signal counts as live only if it was published before its entry open, and the weekly record on the page is recomputed from the ledger. Signals made on days other than Friday use the same score but were not separately tested.
@@ -472,6 +474,8 @@ Every weekly signal is Provisional: it rests on 13 years of out-of-sample histor
 **The record**
 
 Every forecast is written to an append-only ledger when it is made and scored when its date arrives; nothing is edited afterwards, and git history is the audit trail. Only forecasts made before the day they are about count as live. Live results start with the 5-day forecasts of 6 October 2026. Everything labelled historical simulation is out-of-sample testing on past data and is not live.
+
+The ALADIN BOT console, which shows step by step what the system is doing and how it reaches a call, is locked behind an access code: its data is encrypted in the browser with that code, and without it the file cannot be read.
 
 **What it has found so far (as of 8 October 2026)**
 

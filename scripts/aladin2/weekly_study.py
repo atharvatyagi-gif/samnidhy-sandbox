@@ -88,6 +88,43 @@ def main():
     out["thresholds_looked_at"] = {"buy_top_pct": {str(q): {"net_bps": round(float(D[D["s_aladin"] >= q]["exn"].mean() * 1e4), 1), "gross_bps": round(float(D[D["s_aladin"] >= q]["ex"].mean() * 1e4), 1), "n": int((D["s_aladin"] >= q).sum())} for q in (0.9, 0.95, 0.98, 0.99)},
                                    "sell_bottom_pct": {str(q): {"gross_bps": round(float(D[D["s_aladin"] <= q]["ex"].mean() * 1e4), 1), "n": int((D["s_aladin"] <= q).sum())} for q in (0.1, 0.05, 0.02, 0.01)},
                                    "note": "four thresholds were looked at on each side; the BUY side's 1% and the SELL side's 5% were chosen. With four looks, the BUY interval (+6 to +47) is the weaker claim."}
+    # ---- chances: how often each rank bucket closed higher / beat the market that week, with month-block 95% intervals, and a walk-forward check that the numbers are honest out of sample
+    edges = [0, 0.01, 0.02, 0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95, 0.98, 0.99, 1.0001]
+    D["bin"] = pd.cut(D["s_aladin"], edges, right=False, labels=False)
+    def pci(ind, months, n=1500):
+        s_ = pd.Series(ind.astype(float)).groupby(months.values).agg(["sum", "count"]); rng = np.random.default_rng(0); i_ = rng.integers(0, len(s_), size=(n, len(s_))); b_ = s_["sum"].values[i_].sum(1) / s_["count"].values[i_].sum(1)
+        return [round(float(np.percentile(b_, 2.5)), 4), round(float(np.percentile(b_, 97.5)), 4)]
+    curve = []
+    for k in range(len(edges) - 1):
+        g = D[D["bin"] == k]
+        if len(g) < 200:
+            continue
+        curve.append({"from": edges[k], "to": min(edges[k + 1], 1.0), "n": int(len(g)), "p_up": round(float((g["ret"] > 0).mean()), 4), "p_up_ci95": pci((g["ret"] > 0).values, g["month"]), "p_beat_market": round(float((g["ex"] > 0).mean()), 4),
+                      "p_beat_market_ci95": pci((g["ex"] > 0).values, g["month"]), "mean_excess_bps": round(float(g["ex"].mean() * 1e4), 1)})
+    out["probability_curve"] = curve; out["base_rates"] = {"p_up": round(float((D["ret"] > 0).mean()), 4), "p_beat_market": round(float((D["ex"] > 0).mean()), 4)}
+    # walk-forward: probabilities fitted on earlier years only, scored on the next year (Brier vs the base rate of the earlier years, and expected calibration error)
+    pu_hat, pb_hat = np.full(len(D), np.nan), np.full(len(D), np.nan)
+    for y in sorted(D["year"].unique())[2:]:
+        tr = D[D["year"] < y]; te = (D["year"] == y).values
+        if len(tr) < 20000:
+            continue
+        tab_u = tr.groupby("bin").apply(lambda g: (g["ret"] > 0).mean()); tab_b = tr.groupby("bin").apply(lambda g: (g["ex"] > 0).mean())
+        pu_hat[te] = D.loc[te, "bin"].map(tab_u).values; pb_hat[te] = D.loc[te, "bin"].map(tab_b).values
+    ok = ~np.isnan(pu_hat); yu = (D["ret"] > 0).values[ok].astype(float); yb = (D["ex"] > 0).values[ok].astype(float)
+    def ece(p, y, bins=10):
+        o = np.argsort(p); e_ = 0.0
+        for c in np.array_split(o, bins):
+            e_ += len(c) / len(p) * abs(p[c].mean() - y[c].mean())
+        return round(float(e_), 4)
+    out["probability_check"] = {"scored_stock_weeks": int(ok.sum()), "from_year": int(D.loc[ok, "year"].min()), "closes_higher": {"brier": round(float(np.mean((pu_hat[ok] - yu) ** 2)), 5), "brier_base_rate": round(float(np.mean((yu.mean() - yu) ** 2)), 5), "ece": ece(pu_hat[ok], yu)},
+                                "beats_market": {"brier": round(float(np.mean((pb_hat[ok] - yb) ** 2)), 5), "brier_base_rate": round(float(np.mean((yb.mean() - yb) ** 2)), 5), "ece": ece(pb_hat[ok], yb)}}
+    # ---- chart data for the Bot page
+    dec = pd.cut(D["s_aladin"], [0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0001], right=False, labels=False)
+    out["charts"] = {"by_decile": [{"decile": int(k) + 1, "n": int(len(g)), "gross_excess_bps": round(float(g["ex"].mean() * 1e4), 1), "net_excess_bps": round(float(g["exn"].mean() * 1e4), 1), "share_closing_up": round(float((g["ret"] > 0).mean()), 4)} for k, g in D.groupby(dec)],
+                     "by_year": [{"year": int(y), "bull_net_bps": round(float(g[g["s_aladin"] >= 0.99]["exn"].mean() * 1e4), 1), "bear_gross_bps": round(float(g[g["s_aladin"] <= 0.05]["ex"].mean() * 1e4), 1)} for y, g in D.groupby("year")]}
+    wk = D.groupby("date").apply(lambda g: pd.Series({"bull_net": g[g["s_aladin"] >= 0.99]["net"].mean(), "bull_ex_net": g[g["s_aladin"] >= 0.99]["exn"].mean(), "bear_ex": g[g["s_aladin"] <= 0.05]["ex"].mean(), "mkt": g["ret"].mean()})).sort_index()
+    bull_cum = wk["bull_ex_net"].fillna(0).cumsum(); avoid = (-wk["bear_ex"].fillna(0)).cumsum()
+    out["charts"]["weekly_curves"] = {"dates": [str(d.date()) for d in wk.index], "bull_cumulative_net_excess": [round(float(x), 4) for x in bull_cum], "bear_cumulative_underperformance": [round(float(x), 4) for x in avoid]}
     by_year = {int(y): round(float(g[g["s_aladin"] >= 0.9]["exn"].mean() * 1e4), 1) for y, g in D.groupby("year")}; out["aladin_top_decile_net_excess_by_year_bps"] = by_year
     if a.panel:
         D.to_pickle(a.panel)

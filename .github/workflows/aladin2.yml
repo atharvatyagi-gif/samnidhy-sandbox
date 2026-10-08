@@ -16,9 +16,9 @@ on:
         type: string
         default: ""
       phase:
-        description: "Steps to run (comma list of ingest,resolve,learn,drift,discover,forecast,weekly,publish)"
+        description: "Steps to run (comma list of ingest,resolve,learn,drift,discover,forecast,weekly,bot,publish)"
         type: string
-        default: "ingest,resolve,learn,drift,discover,forecast,weekly,publish"
+        default: "ingest,resolve,learn,drift,discover,forecast,weekly,bot,publish"
       full_refit:
         description: "Record this run as a full refit"
         type: boolean
@@ -80,10 +80,11 @@ jobs:
         continue-on-error: true
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          ALADIN_BOT_CODE: ${{ secrets.ALADIN_BOT_CODE }}
         run: |
           LIM=""
           if [ -n "${{ inputs.symbols }}" ]; then LIM="--limit ${{ inputs.symbols }}"; fi
-          STEPS="${{ inputs.phase }}"; if [ -z "$STEPS" ]; then STEPS="ingest,resolve,learn,drift,discover,forecast,weekly,publish"; fi
+          STEPS="${{ inputs.phase }}"; if [ -z "$STEPS" ]; then STEPS="ingest,resolve,learn,drift,discover,forecast,weekly,bot,publish"; fi
           python -m scripts.aladin2.run_nightly --budget-min 110 --workers 2 --steps "$STEPS" $LIM | tee run_summary.txt
           { echo '## ALADIN2 nightly'; echo '```'; cat run_summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
@@ -117,7 +118,7 @@ jobs:
           import sys
           sys.path.insert(0, "scripts")
           from gitops import commit_and_push
-          ok = commit_and_push(["data/aladin2/ledger", "data/aladin2/state", "data/aladin2/journal.jsonl", "data/aladin2/journal.json"],
+          ok = commit_and_push(["data/aladin2/ledger", "data/aladin2/state", "data/aladin2/journal.jsonl", "data/aladin2/journal.json", "data/aladin2/weekly.json", "data/aladin2/bot.enc.json"],
                                "ALADIN2 nightly: ledger, states, journal [skip ci]", min_interval_s=0, state_file="data/aladin2_cache/gitops_state.json")
           print("committed and pushed" if ok else "nothing new to save (or push not allowed)")
           EOF

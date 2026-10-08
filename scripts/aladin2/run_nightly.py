@@ -40,7 +40,7 @@ from . import run_phase2 as P
 from .strategies import registry as R
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-STEPS = ["ingest", "resolve", "learn", "drift", "discover", "forecast", "weekly", "publish"]
+STEPS = ["ingest", "resolve", "learn", "drift", "discover", "forecast", "weekly", "bot", "publish"]
 
 
 class Run:
@@ -190,13 +190,20 @@ class Run:
             return r.get("why", "not built")
         b = r["book"]; self.counts["weekly"] = b["counts"]; return f"as of {b['as_of']}: bull {b['counts']['bull']}, bear {b['counts']['bear']}, hold {b['counts']['hold']}; ledger {r['ledger_status']}; {r['outcome_lines_written']} outcome lines"
 
+    def s_bot(self):
+        from . import bot as BT
+        code = os.environ.get("ALADIN_BOT_CODE", "")
+        if not code:
+            return "ALADIN_BOT_CODE is not set: the locked console is not rebuilt (the last encrypted file, if any, stays)"
+        r = BT.build_from_files(code, self.base / "bot.enc.json"); return f"encrypted console data rebuilt: {r.get('bytes', 0):,} bytes, {r.get('signals', 0)} signals, as of {r.get('as_of')}" if r.get("built") else r.get("why", "not built")
+
     def s_publish(self):
         n = J.publish(self.base); return f"journal.json with {n} events"
 
     # ------------------------------------------------------------------ driver
     def run_day(self, day, steps):
         done = self.done_steps(day) if self.a.resume else set(); self.rows = []; self.errors = []
-        fns = {"ingest": self.s_ingest, "resolve": self.s_resolve, "learn": self.s_learn, "drift": self.s_drift, "discover": self.s_discover, "forecast": self.s_forecast, "weekly": self.s_weekly, "publish": self.s_publish}
+        fns = {"ingest": self.s_ingest, "resolve": self.s_resolve, "learn": self.s_learn, "drift": self.s_drift, "discover": self.s_discover, "forecast": self.s_forecast, "weekly": self.s_weekly, "bot": self.s_bot, "publish": self.s_publish}
         for s in [x for x in STEPS if x in steps]:
             self.step(s, fns[s], day, done)
         rep = {"day": day, "weekday": pd.Timestamp(day).day_name(), "full_refit_day": pd.Timestamp(day).weekday() == 6, "budget_min": self.a.budget_min, "total_s": round(time.time() - self.t0), "steps": [{"step": n, "seconds": s, "note": m} for n, s, m in self.rows],

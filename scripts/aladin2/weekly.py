@@ -63,6 +63,18 @@ def rank_universe(aladin, liq):
     return D
 
 
+def chance(pct, curve):
+    """The measured chance, for a stock whose rank percentile is `pct`: how often stocks in that rank bucket CLOSED HIGHER over the next 5 trading days and how often they BEAT THE MARKET, with 95% intervals
+    (calendar months resampled), from the weekly study. The numbers are frequencies from 2013-2026 (and were checked out of sample: calibration error 0.015 and 0.010). They are the chance for a typical
+    stock in that bucket, not a forecast for one stock. None if the study is not on disk."""
+    if not curve:
+        return None
+    for b in curve:
+        if b["from"] <= pct < b["to"] + (1e-9 if b["to"] >= 1.0 else 0):
+            return {"closes_higher": b["p_up"], "closes_higher_ci95": b["p_up_ci95"], "beats_market": b["p_beat_market"], "beats_market_ci95": b["p_beat_market_ci95"], "n_stock_weeks": b["n"], "bucket": [b["from"], b["to"]]}
+    return None
+
+
 def decide(pct, cfg_w):
     return "bull" if pct >= cfg_w["buy_top_pct"] else "bear" if pct <= cfg_w["sell_bottom_pct"] else "none"
 
@@ -87,7 +99,7 @@ def business_day(d, n):
 def build(as_of, aladin, universe_stocks, cfg, predict=None, sentiment=None, fno=None, forecasts=None, prices=None, calendar=None, capital=1_000_000):
     """The weekly signal book for the signal date `as_of` (a string date). All inputs are plain dicts so the function is testable without files.
     forecasts: {sym: {"bands5": [lo50, hi50, lo80, hi80, lo95, hi95], "bands20": [...]}} from the ledger batch; prices: {sym: DataFrame o,h,l,c,v} for ATR; fno: set of futures-eligible symbols."""
-    W = cfg["weekly"]; st = study(); liq = liquid(universe_stocks); R = rank_universe(aladin, liq); decile_pool = [v["adv_cr"] for v in liq.values()]; out = {"bull": [], "bear": [], "universe": int(len(R))}
+    W = cfg["weekly"]; st = study(); liq = liquid(universe_stocks); R = rank_universe(aladin, liq); curve = (st or {}).get("probability_curve"); decile_pool = [v["adv_cr"] for v in liq.values()]; out = {"bull": [], "bear": [], "universe": int(len(R))}
     pred = (predict or {}).get("stocks", {}); sent = (sentiment or {}).get("stocks", {}); fno = fno or set()
     friday = pd.Timestamp(as_of).weekday() == 4
     for r in R.itertuples():
@@ -99,7 +111,7 @@ def build(as_of, aladin, universe_stocks, cfg, predict=None, sentiment=None, fno
         atr = float(L.price_features(L.clean_prices(px))["atr14"].iloc[-1]) if px is not None and len(px) > 60 else close * 0.02
         rec = record_of(st, key); f = (forecasts or {}).get(sym) or {}
         row = {"sym": sym, "name": meta["name"], "sector": meta["sector"], "signal": key, "rank_pct": round(float(r.pct), 4), "p5": r.p5, "close": round(close, 2), "atr": round(atr, 2), "round_trip_cost_bps": round(rt, 1),
-               "entry": "next session open", "adv_shares": int(meta["adv_cr"] * 1e7 / max(close, 1)), "exit": f"open of the 5th trading day after entry ({business_day(as_of, 6)})", "weekday_validated": bool(friday), "fno": sym in fno, "state": "Provisional",
+               "entry": "next session open", "adv_shares": int(meta["adv_cr"] * 1e7 / max(close, 1)), "exit": f"open of the 5th trading day after entry ({business_day(as_of, 6)})", "weekday_validated": bool(friday), "chance": chance(float(r.pct), curve), "fno": sym in fno, "state": "Provisional",
                "state_why": "supported by 13 years of out-of-sample weekly history, but ALADIN has no live weekly record yet: it needs 60 live days and a positive live result to become Validated",
                "evidence": {"aladin1_technical_p5": r.p5, "aladin1_combined_p5": r.comb5, "aladin1_confidence": r.conf, "aladin1_agreement": r.agree, "outlook_p_beat_nifty_20d": (pred.get(sym) or {}).get("p") if isinstance(pred.get(sym), dict) else None,
                             "sentiment_level": (sent.get(sym) or {}).get("lvl"), "supply_chain_impact": ((aladin["stocks"].get(sym) or {}).get("x") or {}).get("i"), "range_5d_80pct": f.get("bands5", [None] * 6)[2:4] if f else None,
@@ -113,6 +125,7 @@ def build(as_of, aladin, universe_stocks, cfg, predict=None, sentiment=None, fno
             row.update({"expected_vs_market_bps": (rec or {}).get("gross_excess_bps"), "record": rec, "short_net_bps_via_futures": round(abs((rec or {}).get("gross_excess_bps", 0)) - fut, 1) if (sym in fno and rec) else None,
                         "what_to_do": "If you hold it, exit at the next open. If you do not, do not add it this week. Cash shares cannot be shorted" + ("; it has futures, so a short through futures is possible (costs about %.0f bps a round trip)." % fut if sym in fno else ".")})
             out["bear"].append(row)
+    out["ranks"] = {x.sym: [round(float(x.pct), 4), (chance(float(x.pct), curve) or {}).get("closes_higher"), (chance(float(x.pct), curve) or {}).get("beats_market")] for x in R.itertuples()}
     out["as_of"] = str(as_of); out["horizon_trading_days"] = H; out["counts"] = {"bull": len(out["bull"]), "bear": len(out["bear"]), "hold": int(len(R) - len(out["bull"]) - len(out["bear"]))}
     out["rules"] = {"bull": f"best {100 - W['buy_top_pct'] * 100:.0f}% of {len(R)} liquid stocks by the 5-day score", "bear": f"worst {W['sell_bottom_pct'] * 100:.0f}%"}
     out["study"] = {k: st[k] for k in ("rows", "weeks", "stocks", "from", "to", "universe_mean_weekly_return_bps", "avg_round_trip_cost_bps")} if st else None
