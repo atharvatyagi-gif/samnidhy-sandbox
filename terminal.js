@@ -227,7 +227,7 @@ const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json
 const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "telemetry", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
 function deskCtx() { return { serverNow: Ticks.serverNow, renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
-function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2V.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); }); }
+function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2V.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); if (view === "terminal" && sec && (sym === sec || sym === "*") && !isIntra(iv)) drawChart(true); }); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
@@ -596,7 +596,8 @@ function drawChart(keepRange) {
   }
   showMsg("");
   const intraday = typeof bars[0].time === "number";
-  eng.load({ sym: sec, name: s ? s.n : sec, iv, bars, intraday, keepRange, compare: compareSeries(bars) });
+  eng.load({ sym: sec, name: s ? s.n : sec, iv, bars, intraday, keepRange, compare: compareSeries(bars), fan: intraday ? null : A2.fanLines(sec), regime: intraday ? null : A2.regime() });
+  if (!keepRange && !intraday && eng.fanSeries && eng.fanSeries.length && eng.chart) requestAnimationFrame(() => { const ts = eng.chart && eng.chart.timeScale(), r = ts && ts.getVisibleLogicalRange(); if (r) ts.setVisibleLogicalRange({ from: r.from, to: Math.max(r.to, bars.length + 45) }); });   // make room on the right for the ALADIN forecast ranges
   $("#src-note").textContent = RP.on ? `Replay of ${dayLbl(RP.day)} · real NSE 1-minute prices` : intraday ? (LIVE.ok ? (IVSEC[iv] < 60 ? "Live ticks since you opened the chart" : "NSE real-time · Angel One") : "Yahoo Finance, delayed") : S.daily[sec] ? `${bars.length.toLocaleString("en-IN")} bars since ${bars[0].day.slice(0, 4)} · split-adjusted${S.arch[sec] === undefined ? " · scroll back for more" : ""}` : "NSE end-of-day (1 year)";
   updIndCount();
 }
