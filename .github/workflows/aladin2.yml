@@ -53,17 +53,25 @@ jobs:
       - name: Install Python packages
         run: pip install -r requirements.txt -r requirements-aladin2.txt
 
-      - name: Restore the terminal's NSE data cache and ALADIN2's own cache
+      # Two separate restores. A cache only matches a restore with the SAME path list, so the old combined restore (data/terminal + data/aladin2_cache) never matched
+      # the "terminal-" caches that Daily update saves: every run fell back to the history branch alone and the newest price bar was 2021-10-12 (found 2026-10-09).
+      - name: Restore the terminal's NSE data cache (saved by Daily update, fresh prices)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: data/terminal
+          key: terminal-${{ github.run_id }}
+          restore-keys: terminal-
+
+      - name: Restore ALADIN2's own cache (delivery, F&O, macro, model cache)
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
           path: |
-            data/terminal
+            data/terminal/aladin2
             data/aladin2_cache
-          key: aladin2-cache-${{ github.run_id }}
-          restore-keys: |
-            aladin2-cache-
-            terminal-
+          key: aladin2-own-${{ github.run_id }}
+          restore-keys: aladin2-own-
 
       - name: Older price history (history branch)
         continue-on-error: true
@@ -99,15 +107,15 @@ jobs:
           path: data/aladin2/state/run_report.json
           if-no-files-found: ignore
 
-      - name: Save caches for the next run
+      - name: Save ALADIN2's own cache for the next run (the price cache belongs to Daily update and is not saved here)
         if: always()
         uses: actions/cache/save@v4
         continue-on-error: true
         with:
           path: |
-            data/terminal
+            data/terminal/aladin2
             data/aladin2_cache
-          key: aladin2-cache-${{ github.run_id }}
+          key: aladin2-own-${{ github.run_id }}
 
       - name: Save the results in the repository (state shards only if changed; never raw histories or model binaries)
         continue-on-error: true
