@@ -1,7 +1,7 @@
 {
  "as_of": "2026-10-09",
- "created_utc": "2026-10-09T10:16:17.638203+00:00",
- "stocks_forecast": 1358,
+ "created_utc": "2026-10-09T12:01:32.152306+00:00",
+ "stocks_forecast": 1357,
  "horizons": [
   1,
   5,
@@ -11,9 +11,25 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Learning": 1358
+  "Learning": 1357
  },
- "active_strategies": [],
+ "active_strategies": [
+  "disc_f3a0927e",
+  "disc_c57140f1",
+  "disc_de46d8da",
+  "disc_c2ca1f6e",
+  "disc_d2734315",
+  "disc_fc511ddb",
+  "disc_280912c0",
+  "disc_b9d63934",
+  "disc_7c0b5a66",
+  "disc_f166572b",
+  "disc_146a0748",
+  "ma_cross_50_200",
+  "disc_bd1271ac",
+  "disc_c50d4fbc",
+  "disc_c16d1e13"
+ ],
  "probation_strategies": [],
  "bullish_signals": 0,
  "live_stats": {
@@ -22,48 +38,48 @@
  },
  "engine_suspended": false,
  "kill_reasons": [],
- "ledger_status": "written",
+ "ledger_status": "already in the ledger, not rewritten",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   40.3,
-   955564
+   65.4,
+   955561
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
-   0.1,
-   1358
+   0.0,
+   1357
   ],
   [
    "fit + predict H=1",
-   14.2,
-   1358
+   20.2,
+   1357
   ],
   [
    "fit + predict H=5",
-   14.5,
-   1358
+   20.1,
+   1357
   ],
   [
    "fit + predict H=10",
-   14.7,
-   1358
+   20.2,
+   1357
   ],
   [
    "fit + predict H=20",
-   14.9,
-   1358
+   20.2,
+   1357
   ],
   [
    "fit + predict H=60",
-   14.7,
-   1358
+   20.1,
+   1357
   ],
   [
-   "ledger forecast batch (written)",
+   "ledger forecast batch (already in the ledger, not rewritten)",
    0.1,
-   1358
+   1357
   ],
   [
    "resolve matured forecasts",
@@ -73,8 +89,8 @@
   [
    "states, signals, kill switches",
    0.0,
-   1358
+   1357
   ]
  ],
- "total_s": 113
+ "total_s": 166
 }

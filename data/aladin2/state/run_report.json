@@ -3,46 +3,46 @@
  "weekday": "Friday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 1020,
+ "total_s": 1613,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 19.3,
+   "seconds": 4.5,
    "note": "latest price bar 2026-10-09; delivery / F&O / macro refreshed"
   },
   {
    "step": "resolve",
-   "seconds": 4.7,
-   "note": "1 outcome lines"
+   "seconds": 0.0,
+   "note": "0 outcome lines"
   },
   {
    "step": "learn",
-   "seconds": 193.9,
-   "note": "1446 stocks, 35 strategies; 48 lifecycle events (22 new in the journal); states {'Retired': 6}"
+   "seconds": 409.2,
+   "note": "1446 stocks, 49 strategies; 204 lifecycle events (194 new in the journal); states {'Active': 15, 'Retired': 6, 'Demoted': 1}"
   },
   {
    "step": "drift",
-   "seconds": 0.0,
-   "note": "no Probation/Active strategy to check"
+   "seconds": 5.0,
+   "note": "15 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 676.1,
-   "note": "50 generations, 1200 new rules, 14 passed, 1200 tested in total"
+   "seconds": 1011.0,
+   "note": "50 generations, 1200 new rules, 15 passed, 2400 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 113.5,
-   "note": "as of 2026-10-09, 1358 stocks, states {'Learning': 1358}, ledger written"
+   "seconds": 166.5,
+   "note": "as of 2026-10-09, 1357 stocks, states {'Learning': 1357}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 12.2,
-   "note": "as of 2026-10-09: bull 13, bear 25, hold 1212; ledger written; 0 outcome lines"
+   "seconds": 16.2,
+   "note": "as of 2026-10-09: bull 13, bear 25, hold 1212; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 0.4,
+   "seconds": 0.5,
    "note": "live paper account: 1 book(s); no live trade yet (the first Friday book enters at the next open)"
   },
   {
@@ -53,30 +53,33 @@
   {
    "step": "publish",
    "seconds": 0.0,
-   "note": "journal.json with 86 events"
+   "note": "journal.json with 295 events"
   }
  ],
  "errors": [],
  "counts": {
-  "outcomes_written": 1,
-  "lifecycle_events": 48,
-  "journal_new": 22,
+  "outcomes_written": 0,
+  "lifecycle_events": 204,
+  "journal_new": 194,
   "strategy_states": {
-   "Retired": 6
+   "Active": 15,
+   "Retired": 6,
+   "Demoted": 1
   },
+  "drift_alarms": 0,
   "discovery": {
    "generations": 50,
    "new_rules": 1200,
-   "passed": 14,
-   "total_tested": 1200
+   "passed": 15,
+   "total_tested": 2400
   },
   "forecast": {
    "as_of": "2026-10-09",
-   "stocks_forecast": 1358,
+   "stocks_forecast": 1357,
    "product_state_counts": {
-    "Learning": 1358
+    "Learning": 1357
    },
-   "ledger_status": "written"
+   "ledger_status": "already in the ledger, not rewritten"
   },
   "weekly": {
    "bull": 13,
