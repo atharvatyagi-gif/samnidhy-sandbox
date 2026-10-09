@@ -22,12 +22,12 @@ def test_universe_is_liquid_main_board_only_and_ranks_are_percentiles():
     R = W.rank_universe(al, liq); assert list(R["sym"][:2]) == ["S000", "S001"] and R["pct"].iloc[0] > 0.99 and R["pct"].iloc[-1] < 0.01 and R["pct"].is_monotonic_decreasing
 
 
-def test_rule_gives_best_one_percent_bull_and_worst_five_percent_bear_and_exit_is_five_trading_days():
+def test_rule_gives_best_one_percent_bull_and_worst_two_percent_bear_and_exit_is_five_trading_days():
     stocks, al = world(400); book = W.build("2026-10-09", al, stocks, CFG)                                                              # a Friday
-    assert book["counts"] == {"bull": 4, "bear": 20, "hold": 376} and [r["sym"] for r in book["bull"]] == ["S000", "S001", "S002", "S003"]
+    assert CFG["weekly"]["sell_bottom_pct"] == 0.02 and book["counts"] == {"bull": 4, "bear": 8, "hold": 388} and [r["sym"] for r in book["bull"]] == ["S000", "S001", "S002", "S003"]
     b = book["bull"][0]; assert b["weekday_validated"] and b["state"] == "Provisional" and b["entry_zone"][0] < b["close"] < b["entry_zone"][1] and b["invalidation"] < b["close"]
     assert "2026-10-19" in b["exit"] and "leave at the open of the 5th trading day" in b["what_to_do"] and b["round_trip_cost_bps"] > 30
-    assert all(r["signal"] == "bear" and r["rank_pct"] <= 0.05 for r in book["bear"]) and "Cash shares cannot be shorted" in book["bear"][0]["what_to_do"]
+    assert all(r["signal"] == "bear" and r["rank_pct"] <= 0.02 for r in book["bear"]) and "Cash shares cannot be shorted" in book["bear"][0]["what_to_do"]
     assert W.business_day("2026-10-09", 6) == "2026-10-19" and W.business_day("2026-10-07", 1) == "2026-10-08"                                # weekends skipped
 
 

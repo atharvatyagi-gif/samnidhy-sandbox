@@ -160,6 +160,13 @@ function showPage(p) {
   if (p === "paper") { paintPaper(); loadPaper(); }
 }
 
+/* How often the rule was right on years it was never chosen on (2021 to 2026), from the weekly study. the positive side carries a weak-evidence warning (owner's choice A, 2026-10-09). */
+export function heldOutHtml(rec, bull) {
+  const h = rec && rec.held_out; if (!h) return "";
+  const ci = h.excess_ci95_bps ? ` (95% range ${h.excess_ci95_bps[0]} to ${h.excess_ci95_bps[1]} bps)` : "";
+  const line = `<p class="note">On ${esc(h.years)}, years the rule was not picked on: ${esc(h.right_means)} in <b>${pct0(h.right_rate)}</b> of ${h.n.toLocaleString("en-IN")} stock-weeks, ${h.excess_bps >= 0 ? "+" : ""}${h.excess_bps} bps a week on average${ci}.</p>`;
+  return bull && rec.evidence === "weak" ? `<p class="sg-warn"><b>Weak evidence.</b> This side is close to a coin flip after costs; its average could be luck. Size small or skip.</p>${line}` : line;
+}
 /* ----- the sheet (detail) ----- */
 function meter(label, v, ci, n) {
   if (v == null) return `<div class="sg-meter"><div class="sg-ml"><span>${esc(label)}</span><b>not measured</b></div></div>`;
@@ -177,7 +184,7 @@ function summaryHtml(r) {
       ${tile(L.stop || "Stop loss", `${inr(r.stop)} <em class="${r.stopPct >= 0 ? "up" : "down"}">${pct(r.stopPct, 1)}</em>`, esc(b.stop_basis || ""))}</div>${rrText}
     <div class="sg-card"><h4>Chance, from 13 years of out-of-sample history</h4>${c ? meter("Closes higher in 5 trading days", c.closes_higher, c.closes_higher_ci95, c.n_stock_weeks) + meter("Beats the market in 5 trading days", c.beats_market, c.beats_market_ci95, c.n_stock_weeks) : '<p class="note">Not measured for this rank.</p>'}</div>
     <div class="sg-card"><h4>What to do</h4><p>${esc(b.what_to_do)}</p>${bull && b.entry_zone ? `<dl class="sg-dl"><div><dt>Entry zone</dt><dd>${inr(b.entry_zone[0])} to ${inr(b.entry_zone[1])}</dd></div><div><dt>Exit</dt><dd>${esc(b.exit)}</dd></div><div><dt>Round trip cost</dt><dd>${esc(String(b.round_trip_cost_bps))} bps</dd></div>${b.size_for_capital ? `<div><dt>Size for ₹${b.size_for_capital.capital.toLocaleString("en-IN")}</dt><dd>${b.size_for_capital.qty.toLocaleString("en-IN")} shares, ₹${b.size_for_capital.capital_at_risk.toLocaleString("en-IN")} at risk</dd></div>` : ""}</dl>` : ""}</div>
-    ${rec ? `<div class="sg-card"><h4>The same signal in the past (history, not live)</h4><dl class="sg-dl"><div><dt>Stock-weeks</dt><dd>${rec.n.toLocaleString("en-IN")}</dd></div><div><dt>Closed higher</dt><dd>${pct0(rec.share_closing_up)}</dd></div>${bull ? `<div><dt>After costs, vs the market</dt><dd>${rec.net_bps >= 0 ? "+" : ""}${rec.net_bps} bps a week</dd></div><div><dt>Years positive</dt><dd>${esc(rec.years_positive_net || "--")}</dd></div>` : `<div><dt>Vs the market, before costs</dt><dd>${rec.gross_excess_bps} bps a week</dd></div><div><dt>Years below the market</dt><dd>${esc(rec.years_below_market || "--")}</dd></div>`}</dl></div>` : ""}`;
+    ${rec ? `<div class="sg-card"><h4>The same signal in the past (history, not live)</h4><dl class="sg-dl"><div><dt>Stock-weeks</dt><dd>${rec.n.toLocaleString("en-IN")}</dd></div><div><dt>Closed higher</dt><dd>${pct0(rec.share_closing_up)}</dd></div>${bull ? `<div><dt>After costs, vs the market</dt><dd>${rec.net_bps >= 0 ? "+" : ""}${rec.net_bps} bps a week</dd></div><div><dt>Years positive</dt><dd>${esc(rec.years_positive_net || "--")}</dd></div>` : `<div><dt>Vs the market, before costs</dt><dd>${rec.gross_excess_bps} bps a week</dd></div><div><dt>Years below the market</dt><dd>${esc(rec.years_below_market || "--")}</dd></div>`}</dl>${heldOutHtml(rec, bull)}</div>` : ""}`;
 }
 function holdSummary(r) {
   const L = lab(), none = r.sig === "none";

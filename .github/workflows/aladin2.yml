@@ -7,7 +7,7 @@ name: ALADIN2 nightly
 
 on:
   workflow_run:
-    workflows: ["Daily update"]
+    workflows: ["Daily update", "ALADIN nightly"]     # also after ALADIN 1: its scores feed the weekly book, and without this the Friday book waited for the next day's run
     types: [completed]
   workflow_dispatch:
     inputs:

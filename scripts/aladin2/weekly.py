@@ -7,7 +7,7 @@ What was measured first (scripts/aladin2/weekly_study.py, 310,816 stock-weeks, 6
   * BUY side: the best 10% earns about +30 bps a week before costs against a 37 bps round trip, so it does NOT pay on average. Only the very best 1% clears costs (+27 bps net, interval +6 to +47, 9 of 14 years positive).
 Rules (fixed before this code was written, from that study):
   BUY   = top 1% of the week's liquid stocks by the 5-day score (about 5 stocks), Friday close basis
-  SELL  = bottom 5% (about 24 stocks). Cash-equity delivery cannot be shorted: SELL means EXIT if you hold it, do not buy it; a short is possible only through futures in F&O stocks.
+  SELL  = bottom 2% since 2026-10-09 (was 5%; precision_study.py picked 2% on 2013-2020 and it held on 2021-2026: 64.6% fell behind the market vs 63.0%). Cash-equity delivery cannot be shorted: SELL means EXIT if you hold it, do not buy it; a short is possible only through futures in F&O stocks.
   HOLD  = everything else. Exit rule for every signal: the open of the 5th trading day after entry (the weekly time limit), or the invalidation level if hit first.
 The other inputs (fundamental, sentiment, supply-chain impact, the 20-day Outlook, the forecast range, the strategy states) are shown with every signal and tested: none of them improved the weekly result,
 and the ones with no weekly history (fundamental, sentiment, supply-chain impact) cannot be tested at all. They are context, not part of the rule. Survivorship flatters the BUY side and understates the SELL side.
@@ -80,7 +80,7 @@ def decide(pct, cfg_w):
 
 
 def record_of(st, key):
-    """The measured weekly record of a signal bucket, as stored by the study (bull -> top 1%, bear -> bottom 5%)."""
+    """The measured weekly record of a signal bucket, as stored by the study (bull -> top 1%, bear -> bottom 2%; the thresholds come from the config)."""
     if not st:
         return None
     return st.get("record", {}).get("buy" if key == "bull" else "sell")

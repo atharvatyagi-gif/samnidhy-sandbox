@@ -274,13 +274,34 @@ def live_books(ledger_dir=None, cfg=None, start=None):
     return books
 
 
+ANCHORS = ("RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "SBIN", "ITC", "LT")
+
+
+def trading_calendar(prices, since=None):
+    """Trading days = every date on which the NIFTY index OR any of a few always-traded large stocks OR any traded name has a bar. The index file alone is not enough: on the GitHub runner its daily
+    part was not refreshed and the calendar stopped in 2021, which would have frozen the live front test (found 2026-10-09)."""
+    days = set()
+    ix = L.load_index()
+    if ix is not None:
+        days.update(ix.index)
+    for s in ANCHORS:
+        p = L.load_prices(s)
+        if p is not None:
+            days.update(p.index)
+    for p in prices.values():
+        days.update(p.index)
+    cal = pd.DatetimeIndex(sorted(days))
+    return cal[cal >= pd.Timestamp(since)] if since else cal
+
+
 def run_live(ledger_dir=None, out=None):
-    cfg = C.load_cfg(); books = live_books(ledger_dir, cfg); idx = L.load_index().index; start = cfg["forward_clock_start"]
+    cfg = C.load_cfg(); books = live_books(ledger_dir, cfg); start = cfg["forward_clock_start"]
     syms = sorted({p["sym"] for b in books for p in b["picks"]}); prices = {}
     for s in syms:
         p = L.load_prices(s)
         if p is not None:
             prices[s] = L.clean_prices(p)
+    idx = trading_calendar(prices, pd.Timestamp(start) - pd.Timedelta(days=10))
     last_bar = str(idx[-1].date()); doc = {"kind": "LIVE FRONT TEST (paper)", "label": "LIVE FRONT TEST: simulated trades on real prices from the forward clock. Simulated money, no broker.", "created_utc": pd.Timestamp.utcnow().isoformat(), "rules": RULES,
            "rule_history": RULE_HISTORY, "forward_clock_start": start, "books_used": [b["as_of"] for b in books], "last_price_date": last_bar}
     if not books:

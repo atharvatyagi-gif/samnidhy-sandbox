@@ -39,3 +39,10 @@ test("paper account helpers: weekly returns compound from the budget, long serie
   const a = Array.from({ length: 1000 }, (_, i) => i), d = downsample(a, 100); assert.equal(d.length, 100); assert.equal(d[0], 0); assert.equal(d[99], 999); assert.equal(downsample([1, 2], 100).length, 2);
   const svg = lineChart([{ name: "Paper account", pts: [["2020-01-01", 100], ["2021-01-01", 120]], cls: "a" }], { base: 100, label: "value", fmt: v => "Rs " + v.toFixed(0) }); assert.match(svg, /aria-label="value"/); assert.match(svg, /Paper account/); assert.match(svg, /Rs 120/); assert.equal(lineChart([{ name: "x", pts: [["2020-01-01", 1]] }]), "");
 });
+
+test("held-out line: the positive side carries the weak-evidence warning, the negative side does not", async () => {
+  const { heldOutHtml } = await import("../../desk-signals.js");
+  const h = { years: "2021-2026", n: 2145, right_rate: 0.4741, excess_bps: 13.1, excess_ci95_bps: [-14, 38.2], right_means: "beat the market after costs" };
+  const pos = heldOutHtml({ held_out: h, evidence: "weak" }, true), neg = heldOutHtml({ held_out: { ...h, right_rate: 0.646, excess_bps: -88.7, right_means: "fell behind the market" } }, false);
+  assert.match(pos, /Weak evidence/); assert.match(pos, /47\.4%/); assert.doesNotMatch(neg, /Weak evidence/); assert.match(neg, /64\.6%/); assert.equal(heldOutHtml({}, true), "");
+});

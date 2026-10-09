@@ -79,12 +79,17 @@ def main():
     def rec(mask, side):
         g = D[mask]; yrs = g.groupby("year")["exn" if side == "buy" else "ex"].mean() * 1e4
         r = {"n": int(len(g)), "gross_excess_bps": round(float(g["ex"].mean() * 1e4), 1), "gross_excess_ci95_bps": boot(g["ex"].values, g["month"].values), "share_closing_up": round(float((g["ret"] > 0).mean()), 4), "avg_round_trip_cost_bps": round(float(g["cost"].mean() * 1e4), 1)}
+        h = g[g["date"] >= pd.Timestamp("2021-01-01")]                                       # held-out years of the precision study (rules picked on 2013-2020 only)
+        r["held_out"] = {"years": "2021-2026", "n": int(len(h)), "right_rate": round(float(((h["exn"] > 0) if side == "buy" else (h["ex"] < 0)).mean()), 4),
+                         "excess_bps": round(float(h["exn" if side == "buy" else "ex"].mean() * 1e4), 1), "excess_ci95_bps": boot(h["exn" if side == "buy" else "ex"].values, h["month"].values),
+                         "right_means": "beat the market after costs" if side == "buy" else "fell behind the market"}
         if side == "buy":
+            r["evidence"] = "weak"
             r.update({"net_bps": round(float(g["exn"].mean() * 1e4), 1), "net_ci95_bps": boot(g["exn"].values, g["month"].values), "years_positive_net": f"{int((yrs > 0).sum())}/{len(yrs)}"})
         else:
             r.update({"years_below_market": f"{int((yrs < 0).sum())}/{len(yrs)}"})
         return r
-    out["record"] = {"buy": rec(D["s_aladin"] >= 0.99, "buy"), "sell": rec(D["s_aladin"] <= 0.05, "sell")}
+    Wc = cfg["weekly"]; out["record"] = {"buy": rec(D["s_aladin"] >= Wc["buy_top_pct"], "buy"), "sell": rec(D["s_aladin"] <= Wc["sell_bottom_pct"], "sell")}; out["record"]["rule"] = {"buy_top_pct": Wc["buy_top_pct"], "sell_bottom_pct": Wc["sell_bottom_pct"], "why": "SELL narrowed from the worst 5% to the worst 2% on 2026-10-09: picked on 2013-2020 by precision_study.py, held-out 2021-2026 fell behind the market 64.6% of the time vs 63.0%"}
     out["thresholds_looked_at"] = {"buy_top_pct": {str(q): {"net_bps": round(float(D[D["s_aladin"] >= q]["exn"].mean() * 1e4), 1), "gross_bps": round(float(D[D["s_aladin"] >= q]["ex"].mean() * 1e4), 1), "n": int((D["s_aladin"] >= q).sum())} for q in (0.9, 0.95, 0.98, 0.99)},
                                    "sell_bottom_pct": {str(q): {"gross_bps": round(float(D[D["s_aladin"] <= q]["ex"].mean() * 1e4), 1), "n": int((D["s_aladin"] <= q).sum())} for q in (0.1, 0.05, 0.02, 0.01)},
                                    "note": "four thresholds were looked at on each side; the BUY side's 1% and the SELL side's 5% were chosen. With four looks, the BUY interval (+6 to +47) is the weaker claim."}
@@ -121,8 +126,8 @@ def main():
     # ---- chart data for the Bot page
     dec = pd.cut(D["s_aladin"], [0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0001], right=False, labels=False)
     out["charts"] = {"by_decile": [{"decile": int(k) + 1, "n": int(len(g)), "gross_excess_bps": round(float(g["ex"].mean() * 1e4), 1), "net_excess_bps": round(float(g["exn"].mean() * 1e4), 1), "share_closing_up": round(float((g["ret"] > 0).mean()), 4)} for k, g in D.groupby(dec)],
-                     "by_year": [{"year": int(y), "bull_net_bps": round(float(g[g["s_aladin"] >= 0.99]["exn"].mean() * 1e4), 1), "bear_gross_bps": round(float(g[g["s_aladin"] <= 0.05]["ex"].mean() * 1e4), 1)} for y, g in D.groupby("year")]}
-    wk = D.groupby("date").apply(lambda g: pd.Series({"bull_net": g[g["s_aladin"] >= 0.99]["net"].mean(), "bull_ex_net": g[g["s_aladin"] >= 0.99]["exn"].mean(), "bear_ex": g[g["s_aladin"] <= 0.05]["ex"].mean(), "mkt": g["ret"].mean()})).sort_index()
+                     "by_year": [{"year": int(y), "bull_net_bps": round(float(g[g["s_aladin"] >= Wc["buy_top_pct"]]["exn"].mean() * 1e4), 1), "bear_gross_bps": round(float(g[g["s_aladin"] <= Wc["sell_bottom_pct"]]["ex"].mean() * 1e4), 1)} for y, g in D.groupby("year")]}
+    wk = D.groupby("date").apply(lambda g: pd.Series({"bull_net": g[g["s_aladin"] >= Wc["buy_top_pct"]]["net"].mean(), "bull_ex_net": g[g["s_aladin"] >= Wc["buy_top_pct"]]["exn"].mean(), "bear_ex": g[g["s_aladin"] <= Wc["sell_bottom_pct"]]["ex"].mean(), "mkt": g["ret"].mean()})).sort_index()
     bull_cum = wk["bull_ex_net"].fillna(0).cumsum(); avoid = (-wk["bear_ex"].fillna(0)).cumsum()
     out["charts"]["weekly_curves"] = {"dates": [str(d.date()) for d in wk.index], "bull_cumulative_net_excess": [round(float(x), 4) for x in bull_cum], "bear_cumulative_underperformance": [round(float(x), 4) for x in avoid]}
     by_year = {int(y): round(float(g[g["s_aladin"] >= 0.9]["exn"].mean() * 1e4), 1) for y, g in D.groupby("year")}; out["aladin_top_decile_net_excess_by_year_bps"] = by_year
