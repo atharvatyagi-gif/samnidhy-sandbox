@@ -17,51 +17,18 @@ Each option is also reported for 2013-2020 and 2021-2026 separately, so an optio
 """
 import argparse
 import json
-import os
 import time
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import requests
 
 from . import costs as C
 from . import data_lake as L
 from . import paper as P
 
-RATE_FILE = P.OUT / "india_call_rate.json"
 SPLIT = "2021-01-01"
-FUND_FEE = 0.003
-
-
-def india_rate(refresh=False):
-    """Monthly India call-money rate in % a year (FRED IRSTCI01INM156N), cached in the repository so tests and the runner never need the key."""
-    if RATE_FILE.exists() and not refresh:
-        d = json.loads(RATE_FILE.read_text(encoding="utf-8"))
-    else:
-        key = os.environ.get("FRED_API_KEY", "")
-        for f in (P.ROOT / ".env", P.ROOT.parent / "SAMNIDHY_EDUCATIONAL_DASHBOARD" / ".env"):
-            if not key and f.exists():
-                for line in f.read_text(encoding="utf-8").splitlines():
-                    if line.startswith("FRED_API_KEY="):
-                        key = line.split("=", 1)[1].strip().strip('"').strip("'")
-        r = requests.get("https://api.stlouisfed.org/fred/series/observations", params={"series_id": "IRSTCI01INM156N", "file_type": "json", "api_key": key}, timeout=40); r.raise_for_status()
-        d = {"src": "FRED IRSTCI01INM156N (India, immediate rates: call money / interbank, % a year, monthly)", "d": [[o["date"], float(o["value"])] for o in r.json()["observations"] if o["value"] not in (".", "")]}
-        RATE_FILE.parent.mkdir(parents=True, exist_ok=True); RATE_FILE.write_text(json.dumps(d, separators=(",", ":")), encoding="utf-8")
-    s = pd.Series({pd.Timestamp(a): b for a, b in d["d"]}).sort_index()
-    return s
-
-
-def overlay(equity, daily_ret, switch_cost=0.0):
-    """equity rows [date, equity, cash, n_open] of the bot; daily_ret: Series of the idle-cash asset's daily return on the same dates. The cash held at the previous close earns that day's return;
-    the gains sit in their own pot that compounds. switch_cost: fraction paid on every change of the cash amount (money moved into or out of the fund). -> new equity rows."""
-    out, pot, prev_cash = [], 0.0, None
-    for d, e, cash, n in equity:
-        r = float(daily_ret.get(pd.Timestamp(d), 0.0))
-        if prev_cash is not None:
-            pot = pot * (1 + r) + prev_cash * r - abs(cash - prev_cash) * switch_cost
-        out.append([d, round(e + pot, 2), round(cash + pot, 2), n]); prev_cash = cash
-    return out
+india_rate, overlay, RATE_FILE, FUND_FEE = P.india_rate, P.overlay, P.RATE_FILE, P.FUND_FEE          # moved into paper.py when O7 became the bot (2026-10-09)
 
 
 def period(eq, start=None, end=None):

@@ -100,3 +100,19 @@ def test_front_test_timeline_marks_each_friday_in_time_late_missed_or_waiting():
     assert st == {"2026-10-09": "in time", "2026-10-16": "late", "2026-10-23": "missed", "2026-10-30": "waiting"}
     w = t["weeks"][0]; assert (w["closed"], w["wins"], w["net"], w["entry_day"]) == (2, 1, 300.0, "2026-10-12")
     assert t["closed_trades"] == 2 and t["progress"] == 0.02 and t["next_book"] == "2026-10-30" and t["next_entry"] == "2026-11-02"
+
+
+def test_rule_v3_ignores_the_stop_holds_five_days_and_idle_cash_earns_the_fund_rate():
+    prices = {"AAA": px({3: (100.0, 100.5, 90.0, 92.0)})}                                         # day 3 trades far below the 95 stop
+    rate = pd.Series({pd.Timestamp("2025-12-01"): 6.3})                                              # 6.3% a year, minus the 0.30% fund fee = 6.0%
+    r = P.run_bot([book()], prices, CAL, CFG, rate)
+    t = r["trades"][0]; assert t["reason"] == "time" and t["days"] == 5                           # v2 would have left at the stop on day 3
+    no_fund = P.simulate([book()], prices, CAL, CFG, exits=P.BOT["exits"], risk_pct=2.0, max_pos_pct=20.0)
+    gain = r["equity"][-1][1] - no_fund["equity"][-1][1]
+    days = len(r["equity"]) - 1; assert gain > 0 and gain == pytest.approx(sum(row[2] for row in no_fund["equity"][:-1]) * 0.06 / 252, rel=0.02)
+    assert P.RULES["risk_per_trade_pct"] == 2.0 and P.RULES["max_position_pct"] == 20 and P.RULE_HISTORY[-1]["v"] == 3 and days > 0
+
+
+def test_fund_rate_carries_the_last_known_month_forward():
+    rate = pd.Series({pd.Timestamp("2026-07-01"): 5.8}); d = P.fund_daily(pd.bdate_range("2026-10-01", periods=3), rate)
+    assert d.round(8).tolist() == [round(0.055 / 252, 8)] * 3

@@ -6,7 +6,17 @@ Written for: the project owner, to judge what the paper account shows and what i
 A simulated, long-only account with a fixed budget of Rs 10,00,000. It trades the weekly Friday book of positive signals by written rules (see `scripts/aladin2/paper.py`, top of file; the same rules are printed on the page). Nothing touches a broker.
 One simulator serves both the history and the live test, so they cannot drift apart. The live test is replayed from the immutable ledger every night, so it is auditable.
 
-## Rules
+## Rule v3 (current, owner's choice O7, 2026-10-09, before any live trade)
+Exit only at the open of the 5th trading day (the stop level still sizes the trade and is shown, but is not an order); 2% of the account at risk per trade, at most 20% in one stock (the Kelly cap of 18.75% often binds); cash not in stocks earns a liquid fund's return (India call-money rate from FRED IRSTCI01INM156N minus 0.30% a year), kept in its own pot. Chosen from `scripts/aladin2/paper_options.py` (data/aladin2/paper/options.json). O7 was added after the first option results were seen, so its history is the weaker claim.
+
+| History 2013 to 2026 (same caveats as below) | Return | Per year | Worst fall | Win rate | Profit factor |
+|---|---|---|---|---|---|
+| v3 (the bot now) | +1,249% (Rs 10 lakh to Rs 1.35 crore) | +20.8% | -27.5% | 51.6% | 1.26 |
+| v2 (dropped) | +223% | +8.9% | -24.4% | 51% | 1.20 |
+| NIFTY 50 held (price index) | +285% | +10.3% | -38.4% | | |
+Losing years: 2022 (-1.8%), 2025 (-6.9%). Bigger positions magnify the survivorship bias (stocks listed today) as much as the edge. Average 57% of the account in stocks.
+
+## Rules (v2, kept for the record)
 Enter at the next trading day's open. Size: 1% of the account at risk to the stop, at most 10% in one stock, at most 5% of its daily volume, at most 10 stocks, at most 30% in one sector. Exit at the stop (or the open if the stock gaps through it) or at the open of the 5th trading day after entry. Every leg pays the full Indian delivery cost model at the stock's liquidity decile. The price goal is shown but is not an order.
 
 ## Rule history (kept in the open)
