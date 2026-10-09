@@ -201,7 +201,7 @@
    -0.03958,
    -0.03629,
    -0.03594,
-   -0.03555,
+   -0.03556,
    -0.0346,
    -0.03336,
    -0.03322,
@@ -566,7 +566,7 @@
    0.65526,
    0.6553,
    0.65552,
-   0.65588,
+   0.65589,
    0.65808,
    0.66035,
    0.66125,
@@ -1437,9 +1437,9 @@
    1.11039
   ]
  },
- "generated_utc": "2026-10-09T10:54:22+00:00",
- "generated_ist": "09 Oct 2026, 04:24 PM IST",
- "screened_ist": "09 Oct 2026, 04:24 PM IST",
+ "generated_utc": "2026-10-09T13:33:22+00:00",
+ "generated_ist": "09 Oct 2026, 07:03 PM IST",
+ "screened_ist": "09 Oct 2026, 07:03 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1469,11 +1469,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 282
+   "count": 280
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 164
+   "count": 163
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1486,9 +1486,9 @@
   "2": 3,
   "3": 18,
   "4": 35,
-  "5": 62,
+  "5": 61,
   "6": 74,
-  "7": 47,
+  "7": 46,
   "8": 28,
   "9": 15
  },
@@ -1501,6 +1501,8 @@
    "NESTLEIND"
   ],
   "download failed (YFRateLimitError)": [
+   "STLTECH",
+   "SUMICHEM",
    "SUNPHARMA",
    "SUNTV",
    "SUPREMEIND",
@@ -1589,7 +1591,7 @@
    "capital_cr": 21.6,
    "ev_cr": 6565.9,
    "market_cap_cr": 9663.1,
-   "pe": 19.602293,
+   "pe": 19.633432,
    "pb": 4.3531623,
    "roe": 0.23146,
    "debt_to_equity": 0.974,
@@ -1602,7 +1604,7 @@
    "estimate_mean": 2093.1667,
    "estimate_high": 2540.0,
    "estimate_low": 1650.0,
-   "eps": 81.97,
+   "eps": 81.84,
    "shares_out": 60138656.0,
    "employees": null,
    "website": "https://www.indiamart.com",
@@ -1612,7 +1614,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 17,
-   "of": 164
+   "of": 163
   },
   {
    "symbol": "SIGNATURE",
@@ -1665,7 +1667,7 @@
    "magic_rank": 2,
    "rank_roc": 10,
    "rank_ey": 10,
-   "of": 164
+   "of": 163
   },
   {
    "symbol": "BLS",
@@ -1693,8 +1695,8 @@
    },
    "ebit_cr": 820.4,
    "capital_cr": 457.7,
-   "ev_cr": 7815.1,
-   "market_cap_cr": 8898.3,
+   "ev_cr": 7816.0,
+   "market_cap_cr": 8899.3,
    "pe": 12.637638,
    "pb": 3.6125033,
    "roe": null,
@@ -1709,7 +1711,7 @@
    "estimate_high": 330.0,
    "estimate_low": 330.0,
    "eps": 17.11,
-   "shares_out": 411522253.0,
+   "shares_out": 411564253.0,
    "employees": 63000.0,
    "website": "https://www.blsinternational.com",
    "city": "New Delhi",
@@ -1718,7 +1720,7 @@
    "magic_rank": 3,
    "rank_roc": 12,
    "rank_ey": 15,
-   "of": 164
+   "of": 163
   },
   {
    "symbol": "NBCC",
@@ -1752,7 +1754,7 @@
    "pb": 6.6930337,
    "roe": null,
    "debt_to_equity": 0.008,
-   "dividend_yield": 1.27,
+   "dividend_yield": 1.22,
    "held_institutions": 0.14513,
    "held_insiders": 0.61754,
    "analysts": 1,
@@ -1771,7 +1773,7 @@
    "magic_rank": 4,
    "rank_roc": 11,
    "rank_ey": 25,
-   "of": 164
+   "of": 163
   },
   {
    "symbol": "CASTROLIND",
@@ -1824,7 +1826,7 @@
    "magic_rank": 5,
    "rank_roc": 5,
    "rank_ey": 33,
-   "of": 164
+   "of": 163
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1858,7 +1860,7 @@
    "pb": 4.5325556,
    "roe": null,
    "debt_to_equity": 3.57,
-   "dividend_yield": 3.7,
+   "dividend_yield": 3.81,
    "held_institutions": 0.37803,
    "held_insiders": 0.37236,
    "analysts": 35,
@@ -1877,7 +1879,7 @@
    "magic_rank": 6,
    "rank_roc": 19,
    "rank_ey": 20,
-   "of": 164
+   "of": 163
   },
   {
    "symbol": "ENGINERSIN",
@@ -1930,7 +1932,7 @@
    "magic_rank": 7,
    "rank_roc": 6,
    "rank_ey": 42,
-   "of": 164
+   "of": 163
   },
   {
    "symbol": "NATIONALUM",
@@ -1983,7 +1985,7 @@
    "magic_rank": 8,
    "rank_roc": 42,
    "rank_ey": 8,
-   "of": 164
+   "of": 163
   },
   {
    "symbol": "HINDZINC",
@@ -2036,7 +2038,7 @@
    "magic_rank": 9,
    "rank_roc": 30,
    "rank_ey": 23,
-   "of": 164
+   "of": 163
   },
   {
    "symbol": "FORCEMOT",
@@ -2089,7 +2091,7 @@
    "magic_rank": 10,
    "rank_roc": 28,
    "rank_ey": 29,
-   "of": 164
+   "of": 163
   }
  ]
 }
