@@ -72,3 +72,19 @@ def test_goal_and_stop_for_every_signal_the_goal_is_the_50_percent_range_edge_an
     nb = book["bull"][3]; assert nb["goal"] is None and nb["reward_risk"] is None and "not measured" in nb["goal_basis"] and nb["stop"] < nb["close"]                       # no forecast range for this stock: not measured, the stop still exists
     s = W.build("2026-10-09", al, stocks, CFG, forecasts={"S399": {"bands5": [90.0, 96.0, 88.0, 98.0, 85.0, 101.0], "bands20": [0] * 6}})["bear"][-1]
     assert s["signal"] == "bear" and s["goal"] == 90.0 and "lower edge" in s["goal_basis"] and s["stop"] > s["close"]                                                              # a weak view is wrong when the price closes ABOVE the stop
+
+
+def _px(end, close, n=120):
+    idx = pd.bdate_range(end=end, periods=n); c = [close] * n
+    return pd.DataFrame({"o": c, "h": [x * 1.01 for x in c], "l": [x * 0.99 for x in c], "c": c, "v": [1e6] * n}, index=idx)
+
+
+def test_a_stale_price_history_or_an_implausible_range_never_shows_a_target_or_stop():
+    stocks, al = world(400); top = ["S000", "S001", "S002"]
+    fc = {s: {"bands5": [98.0, 104.0, 95.0, 107.0, 90.0, 112.0]} for s in top}; fc["S002"] = {"bands5": [1150.0, 1213.1, 1100.0, 1250.0, 1000.0, 1300.0]}       # S002: range from a different price level
+    prices = {"S000": _px("2026-10-09", 100.0), "S001": _px("2021-10-12", 84.7), "S002": _px("2026-10-09", 100.0)}                                              # S001: history stops in 2021 (the bug)
+    rows = {r["sym"]: r for r in W.build("2026-10-09", al, stocks, CFG, forecasts=fc, prices=prices)["bull"]}
+    ok, stale, bad = rows["S000"], rows["S001"], rows["S002"]
+    assert ok["goal"] == 104.0 and ok["stop"] is not None and ok["goal_by"] == "2026-10-16" and "by the close on 2026-10-16" in ok["goal_basis"]
+    assert stale["goal"] is None and stale["stop"] is None and stale["close"] == 100.0 and "2021-10-12" in stale["goal_basis"] and stale["entry_zone"] is None and "not measured" in stale["what_to_do"]
+    assert bad["goal"] is None and "disagree" in bad["goal_basis"] and bad["stop"] is not None

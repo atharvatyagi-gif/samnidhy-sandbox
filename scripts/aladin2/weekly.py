@@ -86,6 +86,10 @@ def record_of(st, key):
     return st.get("record", {}).get("buy" if key == "bull" else "sell")
 
 
+MAX_PRICE_AGE_DAYS = 7          # the newest price bar may be at most this many calendar days before the signal date (weekends and short holidays)
+MAX_GOAL_MOVE = 0.25            # a 5-day 50% range edge further than this from the price is treated as a data error
+
+
 def business_day(d, n):
     """The date n weekdays after d (exchange holidays are not known, so it can be a day or two early)."""
     x = pd.Timestamp(d); k = 0
@@ -107,23 +111,35 @@ def build(as_of, aladin, universe_stocks, cfg, predict=None, sentiment=None, fno
         if key == "none":
             continue
         sym = r.sym; meta = liq[sym]; dec = C.adv_decile(meta["adv_cr"], decile_pool); rt = C.round_trip_bps("long", "delivery", dec, cfg); fut = C.round_trip_bps("long", "futures", dec, cfg)
-        px = (prices or {}).get(sym); close = float(px["c"].iloc[-1]) if px is not None and len(px) else float(meta["close"] or 0)
-        atr = float(L.price_features(L.clean_prices(px))["atr14"].iloc[-1]) if px is not None and len(px) > 60 else close * 0.02
+        px = (prices or {}).get(sym); last = px.index[-1] if px is not None and len(px) else None
+        fresh = last is not None and (pd.Timestamp(as_of) - last).days <= MAX_PRICE_AGE_DAYS                     # a price history that stops long before the signal date gives wrong levels (found 2026-10-09)
+        close = float(px["c"].iloc[-1]) if fresh else float(meta["close"] or 0)
+        atr = float(L.price_features(L.clean_prices(px))["atr14"].iloc[-1]) if fresh and len(px) > 60 else None if last is not None else close * 0.02     # no history at all: the old 2% stand-in (unchanged); a stale history: not measured
         rec = record_of(st, key); f = (forecasts or {}).get(sym) or {}
-        row = {"sym": sym, "name": meta["name"], "sector": meta["sector"], "signal": key, "rank_pct": round(float(r.pct), 4), "p5": r.p5, "close": round(close, 2), "atr": round(atr, 2), "round_trip_cost_bps": round(rt, 1),
+        row = {"sym": sym, "name": meta["name"], "sector": meta["sector"], "signal": key, "rank_pct": round(float(r.pct), 4), "p5": r.p5, "close": round(close, 2), "atr": round(atr, 2) if atr is not None else None, "round_trip_cost_bps": round(rt, 1),
                "entry": "next session open", "adv_shares": int(meta["adv_cr"] * 1e7 / max(close, 1)), "exit": f"open of the 5th trading day after entry ({business_day(as_of, 6)})", "weekday_validated": bool(friday), "chance": chance(float(r.pct), curve), "fno": sym in fno, "state": "Provisional",
                "state_why": "supported by 13 years of out-of-sample weekly history, but ALADIN has no live weekly record yet: it needs 60 live days and a positive live result to become Validated",
                "evidence": {"aladin1_technical_p5": r.p5, "aladin1_combined_p5": r.comb5, "aladin1_confidence": r.conf, "aladin1_agreement": r.agree, "outlook_p_beat_nifty_20d": (pred.get(sym) or {}).get("p") if isinstance(pred.get(sym), dict) else None,
                             "sentiment_level": (sent.get(sym) or {}).get("lvl"), "supply_chain_impact": ((aladin["stocks"].get(sym) or {}).get("x") or {}).get("i"), "range_5d_80pct": f.get("bands5", [None] * 6)[2:4] if f else None,
                             "strategies_active": 0}}
-        b5 = f.get("bands5") if f else None; have = bool(b5) and b5[0] is not None; stop0 = SG.choose_stop(close, atr, None, None, cfg)           # goal and stop: the three numbers the page shows first
-        row["goal"] = round(float(b5[1] if key == "bull" else b5[0]), 2) if have else None
-        row["goal_basis"] = (("upper" if key == "bull" else "lower") + " edge of the 5-day 50% price range") if have else "not measured: no 5-day forecast range for this stock yet"
-        row["stop"] = round(float(stop0 if key == "bull" else 2 * close - stop0), 2)
-        row["stop_basis"] = "a close below this level, 2 x ATR under the price, ends the idea" if key == "bull" else "a close above this level, 2 x ATR over the price, means the weak view was wrong"
-        row["reward_risk"] = round(abs(row["goal"] - close) / abs(close - row["stop"]), 2) if have and close != row["stop"] else None
-        row["evidence"]["range_5d_50pct"] = [round(float(x), 2) for x in b5[0:2]] if have else None
-        if key == "bull":
+        b5 = f.get("bands5") if f else None; have = bool(b5) and b5[0] is not None and atr is not None                # goal and stop: the three numbers the page shows first
+        edge = float(b5[1] if key == "bull" else b5[0]) if have else None
+        sane = have and close > 0 and abs(edge / close - 1) <= MAX_GOAL_MOVE                                     # a 5-day 50% range edge more than 25% from the price means the range and the price disagree
+        row["goal"] = round(edge, 2) if sane else None; row["goal_by"] = business_day(as_of, H)
+        row["goal_basis"] = ((("upper" if key == "bull" else "lower") + f" edge of the 5-day 50% price range, by the close on {business_day(as_of, H)}") if sane
+                             else f"not measured: price history ends {last.date() if last is not None else 'nowhere'}, older than the signal date" if atr is None
+                             else "not measured: the forecast range and today's price disagree (data check failed)" if have
+                             else "not measured: no 5-day forecast range for this stock yet")
+        stop0 = SG.choose_stop(close, atr, None, None, cfg) if atr is not None else None
+        row["stop"] = round(float(stop0 if key == "bull" else 2 * close - stop0), 2) if stop0 is not None else None
+        row["stop_basis"] = ("a close below this level, 2 x ATR under the price, ends the idea" if key == "bull" else "a close above this level, 2 x ATR over the price, means the weak view was wrong") if stop0 is not None else row["goal_basis"] if atr is None else "not measured"
+        row["reward_risk"] = round(abs(row["goal"] - close) / abs(close - row["stop"]), 2) if sane and row["stop"] is not None and close != row["stop"] else None
+        row["evidence"]["range_5d_50pct"] = [round(float(x), 2) for x in b5[0:2]] if sane else None
+        if key == "bull" and stop0 is None:
+            row.update({"entry_zone": None, "invalidation": None, "expected_net_bps": (rec or {}).get("net_bps"), "record": rec, "size_for_capital": None,
+                        "what_to_do": "The signal stands, but today's levels are not measured (the price history is out of date). Wait for the next run before acting on it."})
+            out["bull"].append(row)
+        elif key == "bull":
             stop = SG.choose_stop(close, atr, None, None, cfg); zone = SG.entry_zone(close, atr, cfg); sz = SG.position_size(capital, close, stop, (meta["adv_cr"] * 1e7 / max(close, 1)), (rec or {}).get("net_bps", 0) / 1e4, W["weekly_sd"], cfg)
             row.update({"entry_zone": [round(zone[0], 2), round(zone[1], 2)], "invalidation": round(stop, 2), "expected_net_bps": (rec or {}).get("net_bps"), "record": rec, "size_for_capital": {"capital": capital, "qty": sz["qty"], "binding": sz["binding"], "capital_at_risk": round(sz["capital_at_risk"], 0)},
                         "what_to_do": f"Enter near {zone[0]:.2f}-{zone[1]:.2f} at the next open; leave at the open of the 5th trading day, or earlier if the price closes below {stop:.2f}."})

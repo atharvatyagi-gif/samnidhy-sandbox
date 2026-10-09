@@ -56,3 +56,10 @@ test("front-test card: heartbeat, progress and one tile per Friday with its stat
   assert.match(h, /Day 6/); assert.match(h, /3 of 100 closed trades/); assert.match(h, /sg-wk in-time/); assert.match(h, /2\/3 profitable/); assert.match(h, /width:3\.0%/);
   assert.equal(frontTestHtml({}), "");
 });
+
+test("the target cell carries its time limit; a missing stop reads not measured", async () => {
+  const { buildRows, shortDate } = await import("../../desk-signals.js");
+  assert.equal(shortDate("2026-10-16"), "16 Oct");
+  const w = { book: { as_of: "2026-10-09", bull: [{ sym: "AAA", name: "A", signal: "bull", close: 100, goal: 104, goal_by: "2026-10-16", stop: null, stop_basis: "not measured: price history ends 2021-10-12", rank_pct: 0.995 }], bear: [], ranks: {}, counts: { bull: 1, bear: 0, hold: 0 } } };
+  const r = buildRows(w, [{ s: "AAA", n: "A", c: 100 }]).rows[0]; assert.equal(Math.round(r.goalPct * 10) / 10, 4); assert.equal(r.stop, null); assert.equal(r.book.goal_by, "2026-10-16");
+});
