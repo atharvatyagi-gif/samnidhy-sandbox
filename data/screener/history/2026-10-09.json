@@ -530,7 +530,7 @@
    0.59801,
    0.6017,
    0.60413,
-   0.60474,
+   0.60473,
    0.60491,
    0.61056,
    0.61639,
@@ -673,7 +673,7 @@
    0.75191,
    0.75245,
    0.75269,
-   0.75363,
+   0.75364,
    0.75517,
    0.75542,
    0.75636,
@@ -1437,9 +1437,9 @@
    1.10996
   ]
  },
- "generated_utc": "2026-10-09T02:04:25+00:00",
- "generated_ist": "09 Oct 2026, 07:34 AM IST",
- "screened_ist": "09 Oct 2026, 07:34 AM IST",
+ "generated_utc": "2026-10-09T03:33:58+00:00",
+ "generated_ist": "09 Oct 2026, 09:03 AM IST",
+ "screened_ist": "09 Oct 2026, 09:03 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1469,11 +1469,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 295
+   "count": 291
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 169
+   "count": 167
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1484,11 +1484,11 @@
   "0": 0,
   "1": 0,
   "2": 3,
-  "3": 21,
+  "3": 20,
   "4": 36,
-  "5": 66,
-  "6": 77,
-  "7": 49,
+  "5": 65,
+  "6": 76,
+  "7": 48,
   "8": 28,
   "9": 15
  },
@@ -1501,6 +1501,10 @@
    "NESTLEIND"
   ],
   "download failed (YFRateLimitError)": [
+   "TATACHEM",
+   "TATACOMM",
+   "TATACONSUM",
+   "TATAELXSI",
    "TATASTEEL",
    "TATATECH",
    "TBOTEK",
@@ -1581,7 +1585,7 @@
    "pb": 4.3420544,
    "roe": 0.23146,
    "debt_to_equity": 0.974,
-   "dividend_yield": 1.87,
+   "dividend_yield": 1.88,
    "held_institutions": 0.13553001,
    "held_insiders": 0.58076,
    "analysts": 18,
@@ -1600,7 +1604,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 18,
-   "of": 169
+   "of": 167
   },
   {
    "symbol": "SIGNATURE",
@@ -1653,7 +1657,7 @@
    "magic_rank": 2,
    "rank_roc": 10,
    "rank_ey": 10,
-   "of": 169
+   "of": 167
   },
   {
    "symbol": "BLS",
@@ -1706,7 +1710,7 @@
    "magic_rank": 3,
    "rank_roc": 12,
    "rank_ey": 14,
-   "of": 169
+   "of": 167
   },
   {
    "symbol": "NBCC",
@@ -1759,7 +1763,7 @@
    "magic_rank": 4,
    "rank_roc": 11,
    "rank_ey": 26,
-   "of": 169
+   "of": 167
   },
   {
    "symbol": "CASTROLIND",
@@ -1812,7 +1816,7 @@
    "magic_rank": 5,
    "rank_roc": 5,
    "rank_ey": 34,
-   "of": 169
+   "of": 167
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1865,7 +1869,7 @@
    "magic_rank": 6,
    "rank_roc": 19,
    "rank_ey": 20,
-   "of": 169
+   "of": 167
   },
   {
    "symbol": "ENGINERSIN",
@@ -1918,7 +1922,7 @@
    "magic_rank": 7,
    "rank_roc": 6,
    "rank_ey": 41,
-   "of": 169
+   "of": 167
   },
   {
    "symbol": "NATIONALUM",
@@ -1971,7 +1975,7 @@
    "magic_rank": 8,
    "rank_roc": 42,
    "rank_ey": 8,
-   "of": 169
+   "of": 167
   },
   {
    "symbol": "HINDZINC",
@@ -2005,7 +2009,7 @@
    "pb": 9.92886,
    "roe": null,
    "debt_to_equity": 39.034,
-   "dividend_yield": 2.0,
+   "dividend_yield": 1.97,
    "held_institutions": 0.055419996,
    "held_insiders": 0.88629997,
    "analysts": 14,
@@ -2024,7 +2028,7 @@
    "magic_rank": 9,
    "rank_roc": 30,
    "rank_ey": 21,
-   "of": 169
+   "of": 167
   },
   {
    "symbol": "FORCEMOT",
@@ -2077,7 +2081,7 @@
    "magic_rank": 10,
    "rank_roc": 28,
    "rank_ey": 28,
-   "of": 169
+   "of": 167
   }
  ]
 }
