@@ -1,13 +1,13 @@
 {
- "day": "2026-10-08",
- "weekday": "Thursday",
+ "day": "2026-10-09",
+ "weekday": "Friday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 18,
+ "total_s": 29,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 6.6,
+   "seconds": 18.5,
    "note": "latest price bar 2021-10-12; delivery / F&O / macro refreshed"
   },
   {
@@ -37,8 +37,13 @@
   },
   {
    "step": "weekly",
-   "seconds": 11.5,
-   "note": "as of 2026-10-08: bull 13, bear 66, hold 1246; ledger written; 0 outcome lines"
+   "seconds": 10.5,
+   "note": "as of 2026-10-07: bull 13, bear 64, hold 1200; ledger already in the ledger; 0 outcome lines"
+  },
+  {
+   "step": "paper",
+   "seconds": 0.0,
+   "note": "live paper account: 0 book(s); no live trade yet (the first Friday book enters at the next open)"
   },
   {
    "step": "bot",
@@ -72,8 +77,8 @@
   "outcomes_written": 0,
   "weekly": {
    "bull": 13,
-   "bear": 66,
-   "hold": 1246
+   "bear": 64,
+   "hold": 1200
   }
  },
  "within_budget": true
