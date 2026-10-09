@@ -46,3 +46,13 @@ test("held-out line: the positive side carries the weak-evidence warning, the ne
   const pos = heldOutHtml({ held_out: h, evidence: "weak" }, true), neg = heldOutHtml({ held_out: { ...h, right_rate: 0.646, excess_bps: -88.7, right_means: "fell behind the market" } }, false);
   assert.match(pos, /Weak evidence/); assert.match(pos, /47\.4%/); assert.doesNotMatch(neg, /Weak evidence/); assert.match(neg, /64\.6%/); assert.equal(heldOutHtml({}, true), "");
 });
+
+test("front-test card: heartbeat, progress and one tile per Friday with its status", async () => {
+  const { frontTestHtml } = await import("../../desk-signals.js");
+  const doc = { created_utc: "2026-10-12T14:00:00Z", last_price_date: "2026-10-12", stats: { started: true, win_rate: 0.5, profit_factor: 1.1 },
+    timeline: { start: "2026-10-06", days_running: 6, next_book: "2026-10-16", next_entry: "2026-10-19", closed_trades: 3, judge_after_trades: 100, progress: 0.03, expect_from_history: { win_rate: 0.51, profit_factor: 1.2 },
+      weeks: [{ friday: "2026-10-09", entry_day: "2026-10-12", status: "in time", names: 13, closed: 3, open: 7, wins: 2, net: 1500 }] } };
+  const h = frontTestHtml(doc);
+  assert.match(h, /Day 6/); assert.match(h, /3 of 100 closed trades/); assert.match(h, /sg-wk in-time/); assert.match(h, /2\/3 profitable/); assert.match(h, /width:3\.0%/);
+  assert.equal(frontTestHtml({}), "");
+});

@@ -89,3 +89,14 @@ def test_live_calendar_does_not_stop_at_a_stale_index_file(monkeypatch):
     monkeypatch.setattr(P.L, "load_prices", lambda s, *a, **k: fresh if s == "RELIANCE" else None)
     cal = P.trading_calendar({}, pd.Timestamp("2026-10-01"))
     assert cal[0] == pd.Timestamp("2026-10-01") and cal[-1] == pd.Timestamp("2026-10-16") and len(cal) == 12
+
+
+def test_front_test_timeline_marks_each_friday_in_time_late_missed_or_waiting():
+    lines = [{"t": "wk", "d": "2026-10-09", "created": "2026-10-09T14:10:00+00:00", "buy": [["AAA", 100, 0.995], ["BBB", 50, 0.991]]},
+             {"t": "wk", "d": "2026-10-16", "created": "2026-10-19T05:00:00+00:00", "buy": [["CCC", 10, 0.993]]}]       # written after Monday's open: late
+    trades = [{"as_of": "2026-10-09", "net": 500.0}, {"as_of": "2026-10-09", "net": -200.0}]
+    t = P.timeline(lines, trades, [], "2026-10-06", today="2026-10-30")
+    st = {w["friday"]: w["status"] for w in t["weeks"]}
+    assert st == {"2026-10-09": "in time", "2026-10-16": "late", "2026-10-23": "missed", "2026-10-30": "waiting"}
+    w = t["weeks"][0]; assert (w["closed"], w["wins"], w["net"], w["entry_day"]) == (2, 1, 300.0, "2026-10-12")
+    assert t["closed_trades"] == 2 and t["progress"] == 0.02 and t["next_book"] == "2026-10-30" and t["next_entry"] == "2026-11-02"

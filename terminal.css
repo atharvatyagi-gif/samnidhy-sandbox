@@ -1088,3 +1088,14 @@ html.sg-lock, html.sg-lock body { overflow: hidden; }
 
 #sg-p1, #sg-p2 { display: flex; flex-direction: column; gap: 14px; } #sg-p1[hidden], #sg-p2[hidden] { display: none; }
 .sg-ln.c { stroke: var(--ink); stroke-width: 1.4; } .sg-k.c { color: var(--ink); }
+/* ALADIN paper account: the continuous front test (desk-signals.js frontTestHtml) */
+.sg-ft { display: flex; flex-direction: column; gap: 10px; }
+.sg-beat { margin: 0; display: flex; align-items: baseline; gap: 8px; font: 500 12px var(--mono); color: var(--ink-2); } .sg-beat span { flex: 1; min-width: 0; }
+.sg-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--up); box-shadow: 0 0 0 0 var(--up-soft); animation: sg-pulse 2s ease-out infinite; flex: none; }
+@keyframes sg-pulse { 0% { box-shadow: 0 0 0 0 var(--up-soft); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .sg-dot { animation: none; } }
+.sg-prog { height: 8px; border-radius: 999px; background: var(--sunken); border: 1px solid var(--rule); overflow: hidden; } .sg-prog i { display: block; height: 100%; background: var(--up); min-width: 2px; }
+.sg-wks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+.sg-wk { border: 1px solid var(--rule-2); border-radius: var(--r); padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--ink-2); }
+.sg-wk b { font: 600 12px var(--mono); color: var(--ink); } .sg-wk small { color: var(--ink-3); } .sg-wk i { font-style: normal; white-space: nowrap; } .sg-wk i.up { color: var(--up); } .sg-wk i.down { color: var(--down); }
+.sg-wk.in-time { border-color: var(--up); } .sg-wk.late, .sg-wk.missed { border-style: dashed; } .sg-wk.missed span, .sg-wk.late span { color: var(--down); } .sg-wk.waiting { border-style: dotted; }
