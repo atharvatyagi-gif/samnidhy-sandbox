@@ -40,7 +40,7 @@ export function replayAt(w, tab, i) {
 export function decisionLines(t, P) {
   const ch = t.chance, N = (P.kpis.stocks_ranked || 0).toLocaleString("en-IN");
   return [`Score ${pc(t.p5, 1)} → rank ${(t.rank_pct * 100).toFixed(2)}th percentile of ${N} liquid stocks`,
-    t.signal === "bull" ? "Rank is inside the best 1%: the positive band" : "Rank is inside the worst 5%: the negative band",
+    t.signal === "bull" ? `Rank is inside the best ${pctTxt(1 - setCuts(P).bull)}: the positive band` : `Rank is inside the worst ${pctTxt(setCuts(P).bear)}: the negative band`,
     ch ? `Closed higher ${pc(ch.closes_higher, 1)} of the time (${pc(ch.closes_higher_ci95[0], 1)} to ${pc(ch.closes_higher_ci95[1], 1)}); beat the market ${pc(ch.beats_market, 1)}` : "chance: not measured for this rank",
     `Round trip costs about ${Number(t.cost_bps).toFixed(0)} bps`,
     t.signal === "bull" ? `Exit level ${inr(t.invalidation)}; ${t.exit}` : `Exit if held; ${t.fno ? "futures exist, so a short is possible" : "no futures: cash shares cannot be shorted"}`,
@@ -59,7 +59,11 @@ function fit(cv) {
 }
 const txt = (g, C, s, x, y, col, size = 10, align = "left", weight = "") => { g.font = `${weight} ${size}px ${C.mono}`.trim(); g.fillStyle = col; g.textAlign = align; g.fillText(s, x, y); };
 const line = (g, x0, y0, x1, y1, col, wd = 1, dash = null) => { g.beginPath(); g.setLineDash(dash || []); g.lineWidth = wd; g.strokeStyle = col; g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.setLineDash([]); };
-const zoneCol = (C, r) => r >= 0.99 ? C.up : r <= 0.05 ? C.down : C.ink3;
+let CUTS = { bull: 0.99, bear: 0.05 };
+/* the cut-offs come from the payload (data/config/aladin2.json `weekly`), so the console follows the rule */
+export function setCuts(P) { const c = (P && P.cuts) || {}; CUTS = { bull: c.bull ?? 0.99, bear: c.bear ?? 0.05 }; return CUTS; }
+const pctTxt = f => `${+(f * 100).toFixed(1)}%`;
+const zoneCol = (C, r) => r >= CUTS.bull ? C.up : r <= CUTS.bear ? C.down : C.ink3;
 
 /* ---------- panels ---------- */
 function drawScan(f, C, P, ts, focusSym) {
@@ -82,7 +86,7 @@ function drawDial(f, C, t, ph, ts, P) {
   g.globalAlpha = 0.5; arc(r, 1, C.rule, 9); arc(r - 14, 1, C.rule, 5); g.globalAlpha = 1;
   const z = zoneCol(C, t.rank_pct), rk = clamp(t.rank_pct, 0, 1) * e; arc(r, rk, z, 9);
   const pu = t.chance ? t.chance.closes_higher : null; if (pu != null) arc(r - 14, clamp(pu, 0, 1) * e, C.cyan, 5);
-  for (const cut of [0.05, 0.99]) { const a = a0 + sp * cut; line(g, cx + Math.cos(a) * (r - 8), cy + Math.sin(a) * (r - 8), cx + Math.cos(a) * (r + 8), cy + Math.sin(a) * (r + 8), C.ink, 1.5); }
+  for (const cut of [CUTS.bear, CUTS.bull]) { const a = a0 + sp * cut; line(g, cx + Math.cos(a) * (r - 8), cy + Math.sin(a) * (r - 8), cx + Math.cos(a) * (r + 8), cy + Math.sin(a) * (r + 8), C.ink, 1.5); }
   g.save(); g.translate(cx, cy); g.rotate(ts / 6000); g.beginPath(); g.setLineDash([2, 7]); g.strokeStyle = C.ink3; g.lineWidth = 1; g.arc(0, 0, r - 28, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); g.restore();
   txt(g, C, (t.rank_pct * 100 * e).toFixed(2), cx, cy + 4, C.ink, Math.max(18, r / 2.6), "center", "bold"); txt(g, C, "rank percentile", cx, cy + 20, C.ink3, 10, "center");
   txt(g, C, pu == null ? "chance: not measured" : `${(pu * 100 * e).toFixed(1)}% chance higher`, cx, cy + 36, C.cyan, 11, "center"); txt(g, C, t.sym, cx, cy - r / 2.2, z, 12, "center", "bold");
@@ -135,7 +139,7 @@ function drawReplay(f, C, P, tab, ts) {
   const draw = (s, col) => { g.beginPath(); g.lineWidth = 1.6; g.strokeStyle = col; for (let k = 0; k <= i; k++) g[k ? "lineTo" : "moveTo"](X(k), Y(s[k])); g.stroke(); g.fillStyle = col; g.beginPath(); g.arc(X(i), Y(s[i]), 3, 0, 7); g.fill(); };
   draw(b, C.down); draw(a, C.up); const st = replayAt(W, tab, i); line(g, X(i), T, X(i), h - B, C.ink3, 1, [2, 3]);
   txt(g, C, `${st.date} · week ${st.week} of ${n}`, L, 12, C.ink2, 10); txt(g, C, `positive signals ${(st.cum * 100).toFixed(0)}% added up · beat the market in ${pc(st.hit)} of weeks`, w - R, 12, C.ink, 10, "right");
-  txt(g, C, "green: positive signals, after costs, added up", L + 6, T + 12, C.up, 9); txt(g, C, "red: how far the worst 5% trailed the market", L + 6, T + 24, C.down, 9);
+  txt(g, C, "green: positive signals, after costs, added up", L + 6, T + 12, C.up, 9); txt(g, C, `red: how far the worst ${pctTxt(CUTS.bear)} trailed the market`, L + 6, T + 24, C.down, 9);
   txt(g, C, W.dates[0].slice(0, 4), L, h - 4, C.ink3, 9); txt(g, C, W.dates[n - 1].slice(0, 4), w - R, h - 4, C.ink3, 9, "right"); return st;
 }
 function drawHist(f, C, P, ts) {
@@ -149,6 +153,7 @@ function drawHist(f, C, P, ts) {
 /* ---------- markup ---------- */
 const panel = (cls, title, body, sub = "") => `<section class="a2l-p ${cls}"><h4><span>${title}</span><i ${sub ? `id="${sub}"` : ""}></i></h4>${body}</section>`;
 export function markup(P, helpers = {}) {
+  setCuts(P);
   const k = P.kpis, h = k.history || {}, L = P.labels || {}, S = P.status || {}, chk = P.charts.probability_check, bl = esc(L.bull || "positive"), br = esc(L.bear || "negative"), n = x => x == null ? "--" : Number(x).toLocaleString("en-IN");
   const best = (P.charts.probability_curve || []).slice(-1)[0], live = k.live_weekly || {}, lv = (live.bull && live.bull.n) || (live.bear && live.bear.n) ? `${(live.bull.n || 0) + (live.bear.n || 0)} resolved` : "none resolved yet";
   const kp = (lab, val, sub, cls = "") => `<div class="a2l-k ${cls}"><span>${lab}</span><b>${val}</b><small>${sub}</small></div>`;
@@ -163,7 +168,7 @@ export function markup(P, helpers = {}) {
     ${kp("Chance table check", chk ? `${chk.closes_higher.ece}<em> error</em>` : "--", chk ? `on years it had not seen; beats-the-market error ${chk.beats_market.ece}` : "not measured")}
     ${kp("Forecasts written", `<span id="a2l-fc" data-n="${k.forecasts_made || 0}">${n(k.forecasts_made)}</span>`, `${k.forecast_batches} nightly batch(es); live record: ${lv}`)}</div>
   <div class="a2l-grid">
-    ${panel("a2l-scan", "SCANNER · every ranked stock, best to worst", `<div class="a2l-cv" style="height:236px"><canvas data-c="scan" aria-label="Chance of closing higher for every ranked stock, best ranked to worst, with a scan line"></canvas></div><p class="a2l-note">Bar height = measured chance of closing higher at that stock's rank. Green = the best 1%, red = the worst 5%.</p>`, "a2l-scan-n")}
+    ${panel("a2l-scan", "SCANNER · every ranked stock, best to worst", `<div class="a2l-cv" style="height:236px"><canvas data-c="scan" aria-label="Chance of closing higher for every ranked stock, best ranked to worst, with a scan line"></canvas></div><p class="a2l-note">Bar height = measured chance of closing higher at that stock's rank. Green = the best ${pctTxt(1 - CUTS.bull)}, red = the worst ${pctTxt(CUTS.bear)}.</p>`, "a2l-scan-n")}
     ${panel("a2l-dial", "RANK DIAL · stock in focus", `<div class="a2l-cv" style="height:230px"><canvas data-c="dial" aria-label="Rank percentile and chance of closing higher for the stock in focus"></canvas></div>`)}
     ${panel("a2l-focus", "DECISION · price, entry zone, exit level, past 5-day moves", `<div class="a2l-who" id="a2l-who"></div><div class="a2l-cv" style="height:300px"><canvas data-c="focus" aria-label="Candles for the stock in focus with the entry zone, exit level and its past 5-day moves"></canvas></div>`)}
     ${panel("a2l-steps", "HOW IT DECIDES · step by step", `<ol class="a2l-steplist" id="a2l-steps">${P.decision_steps.map((s, i) => `<li data-i="${i}"><span>${i + 1}</span><div><b>${esc(s)}</b><em></em></div></li>`).join("")}</ol>`)}

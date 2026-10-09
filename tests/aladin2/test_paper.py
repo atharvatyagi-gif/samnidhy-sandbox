@@ -80,3 +80,12 @@ def test_published_paper_files_use_no_banned_word_and_state_their_kind():
             continue
         txt = f.read_text(encoding="utf-8"); assert not re.search(r"(buy|sell|target|recommendation|guaranteed)", txt, re.I), f.name
         assert ("HISTORICAL SIMULATION" in txt) if f.name == "backtest.json" else ("LIVE FRONT TEST" in txt)
+
+
+def test_live_calendar_does_not_stop_at_a_stale_index_file(monkeypatch):
+    stale = pd.Series(1.0, index=pd.bdate_range("2021-10-01", "2021-10-14"))                  # the GitHub runner's NIFTY file stopped here
+    fresh = pd.DataFrame({"o": 1.0, "h": 1.0, "l": 1.0, "c": 1.0, "v": 1.0}, index=pd.bdate_range("2026-10-01", "2026-10-16"))
+    monkeypatch.setattr(P.L, "load_index", lambda *a, **k: stale)
+    monkeypatch.setattr(P.L, "load_prices", lambda s, *a, **k: fresh if s == "RELIANCE" else None)
+    cal = P.trading_calendar({}, pd.Timestamp("2026-10-01"))
+    assert cal[0] == pd.Timestamp("2026-10-01") and cal[-1] == pd.Timestamp("2026-10-16") and len(cal) == 12

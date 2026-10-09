@@ -20,6 +20,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+CUT = json.loads((ROOT / "data" / "config" / "aladin2.json").read_text(encoding="utf-8"))["weekly"]          # the signal cut-offs (best / worst share of the ranked stocks)
 DATA = ROOT / "data" / "aladin2"
 AAD = b"aladin-bot-v1"
 ITER = 600_000
@@ -62,6 +63,10 @@ def _j(p):
     p = Path(p); return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
 
 
+def _cut_txt(f):
+    return f"{round(f * 100, 1):g}%"
+
+
 def build_payload(weekly=None, study=None, phase3=None, ledger_lines=None, journal=None, summary=None, run_report=None, strategies=None, prices=None, aladin=None, counts=None):
     """Everything the console draws, from plain dicts (testable without files). Nothing is invented: a missing input is None and the page says so."""
     book = (weekly or {}).get("book") or {}; ch = (study or {}).get("charts") or {}; rec = (study or {}).get("record") or {}
@@ -80,7 +85,7 @@ def build_payload(weekly=None, study=None, phase3=None, ledger_lines=None, journ
          "numbers": {"stocks_with_prices": (counts or {}).get("price_files"), "delivery_files": (counts or {}).get("deliv_files"), "futures_files": (counts or {}).get("fno_files"), "last_bar": (counts or {}).get("last_bar")}},
         {"id": "score", "name": "2 · Score every stock", "what": "ALADIN 1's ensemble of gradient-boosted trees turns about 60 price, volume and market inputs per stock into a 5-day probability of closing higher.", "how": "Trained only on earlier years and tested on unseen ones; the 5-day score is the one input that ranked next week's winners and losers.",
          "numbers": {"stocks_scored": len((aladin or {}).get("stocks", {})) or None, "liquid_stocks_ranked": book.get("universe")}},
-        {"id": "rank", "name": "3 · Rank and apply the rule", "what": "Ranks the liquid stocks (at least Rs 2 crore traded a day). Best 1% get a positive signal, worst 5% a negative one, the rest nothing.", "how": "The cut-offs were fixed from a 310,816 stock-week study before any live signal existed.",
+        {"id": "rank", "name": "3 · Rank and apply the rule", "what": "Ranks the liquid stocks (at least Rs 2 crore traded a day). Best " + _cut_txt(1 - CUT["buy_top_pct"]) + " get a positive signal, worst " + _cut_txt(CUT["sell_bottom_pct"]) + " a negative one, the rest nothing.", "how": "The cut-offs were fixed from a 310,816 stock-week study before any live signal existed; the negative band was narrowed from 5% to 2% on 2026-10-09 (picked on 2013-2020, held-out 2021-2026 confirmed it).",
          "numbers": {"positive": (book.get("counts") or {}).get("bull"), "negative": (book.get("counts") or {}).get("bear"), "none": (book.get("counts") or {}).get("hold")}},
         {"id": "chance", "name": "4 · Turn rank into a chance", "what": "Looks up how often stocks at that rank closed higher, and beat the market, in the next 5 trading days.", "how": "Frequencies from 2013-2026 with 95% intervals; checked out of sample (calibration error 0.015 and 0.010).",
          "numbers": {"buckets": len((study or {}).get("probability_curve") or []), "check": (study or {}).get("probability_check")}},
@@ -95,7 +100,7 @@ def build_payload(weekly=None, study=None, phase3=None, ledger_lines=None, journ
         ps = sorted(float(e["t"]["p"]["5"]) for s, e in aladin["stocks"].items() if s in (book.get("ranks") or {}) and (e.get("t") or {}).get("p", {}).get("5") is not None)
         if ps:
             import numpy as np
-            h, edges = np.histogram(ps, bins=40); q = lambda f: float(np.quantile(ps, f)); cs["score_hist"] = {"counts": [int(x) for x in h], "edges": [round(float(x), 4) for x in edges], "cut_bull": round(q(0.99), 4), "cut_bear": round(q(0.05), 4), "n": len(ps)}
+            h, edges = np.histogram(ps, bins=40); q = lambda f: float(np.quantile(ps, f)); cs["score_hist"] = {"counts": [int(x) for x in h], "edges": [round(float(x), 4) for x in edges], "cut_bull": round(q(CUT["buy_top_pct"]), 4), "cut_bear": round(q(CUT["sell_bottom_pct"]), 4), "n": len(ps)}
     state, pts, mp = {}, [], {"promoted_to_probation": "P", "reentered": "P", "capped": "P", "promoted_to_active": "A", "demoted": "D", "retired": "R"}
     for e in sorted(((journal or {}).get("events") or []), key=lambda e: e["date"]):
         if e.get("kind") in mp and e.get("scope") == "universe":
@@ -121,9 +126,9 @@ def build_payload(weekly=None, study=None, phase3=None, ledger_lines=None, journ
         act.append({"when": (summary or {}).get("created_utc"), "what": f"Step '{t[0]}' took {t[1]} s" + (f" ({t[2]:,} items)" if len(t) > 2 and isinstance(t[2], int) else "")})
     for e in ((journal or {}).get("events") or [])[:8]:
         act.append({"when": e["date"], "what": e["text"], "historical": e.get("historical")})
-    return {"v": 1, "as_of": book.get("as_of"), "built_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "mode": (weekly or {}).get("mode"), "labels": (weekly or {}).get("labels"), "disclaimer": (weekly or {}).get("disclaimer"),
+    return {"v": 1, "cuts": {"bull": CUT["buy_top_pct"], "bear": CUT["sell_bottom_pct"]}, "as_of": book.get("as_of"), "built_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "mode": (weekly or {}).get("mode"), "labels": (weekly or {}).get("labels"), "disclaimer": (weekly or {}).get("disclaimer"),
             "kpis": k, "stages": stages, "charts": cs, "scan": scan, "traces": traces, "activity": act, "status": {"engine_suspended": (summary or {}).get("engine_suspended"), "states": (summary or {}).get("product_state_counts"), "kill_reasons": (summary or {}).get("kill_reasons"), "rule": book.get("rules")},
-            "decision_steps": ["Rank the stock's 5-day score among all liquid stocks", "Compare the rank with the fixed cut-offs (best 1%, worst 5%)", "Look up the measured chance for that rank", "Subtract the stock's round-trip cost", "Set the exit level and the 5-day time limit", "Size the position for your capital and stand aside if the edge is inside the cost"]}
+            "decision_steps": ["Rank the stock's 5-day score among all liquid stocks", "Compare the rank with the fixed cut-offs (best " + _cut_txt(1 - CUT["buy_top_pct"]) + ", worst " + _cut_txt(CUT["sell_bottom_pct"]) + ")", "Look up the measured chance for that rank", "Subtract the stock's round-trip cost", "Set the exit level and the 5-day time limit", "Size the position for your capital and stand aside if the edge is inside the cost"]}
 
 
 def build_from_files(code, out=None):

@@ -31,3 +31,10 @@ test("the page markup carries every panel, the labels from the file and the disc
   const m = markup(P); for (const k of ["a2l-scan", "a2l-dial", "a2l-focus", "a2l-steps", "a2l-curve", "a2l-replay", "a2l-hist", "a2l-sig", "a2l-tape", "a2l-pipe"]) assert.ok(m.includes(k), k);
   assert.match(m, /BUY/); assert.match(m, /not investment advice/); assert.match(m, /did a thing/);
 });
+
+test("the console's cut-offs follow the payload (worst 2% since 2026-10-09)", async () => {
+  const { setCuts } = await import("../../desk-a2live.js");
+  assert.deepEqual(setCuts({ cuts: { bull: 0.99, bear: 0.02 } }), { bull: 0.99, bear: 0.02 });
+  assert.match(decisionLines({ signal: "bear", rank_pct: 0.01, p5: 0.4, chance: null, cost_bps: 40, fno: false }, { kpis: { stocks_ranked: 1000 }, cuts: { bull: 0.99, bear: 0.02 } })[1], /worst 2%/);
+  setCuts({});
+});

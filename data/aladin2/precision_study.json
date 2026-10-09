@@ -1,0 +1,726 @@
+{
+ "protocol": "ALADIN precision study: can a confirmation filter make the weekly BUY / SELL lists right more often, on years the filter never saw?\n\n  python -m scripts.aladin2.precision_study --workers 12      -> data/aladin2/precision_study.json\nSame rows, trade and costs as weekly_study.py (Friday signal, next open entry, exit at the open 5 trading days later, full cost model, excess vs the equal-weight liquid market).\nProtocol, declared before any result was seen (2026-10-09):\n  1. The candidate rules below are the whole list. None is added or changed after a result.\n  2. Pick ONE BUY rule and ONE SELL rule on 2013-2020 only (selection years).\n     BUY: highest lower 95% bound of net excess per trade, at least 8 trades a year on average.\n     SELL: lowest upper 95% bound of gross excess (most reliably below the market), at least 8 trades a year.\n  3. Report the picked rules, and the current rules, on 2021-2026 (held-out years) once. That number is the claim.\n\"Right\" for BUY = beat the market that week after costs; for SELL = fell behind the market that week (cash cannot be shorted, so SELL means exit / avoid).\nBreadth = share of the week's liquid stocks above their own 200-day average (known at the signal close).",
+ "rows": 310816,
+ "selection_years": "2013-2020",
+ "held_out_years": "2021-2026",
+ "base_rates_held_out": {
+  "closed_up": 0.4864,
+  "beat_market_gross": 0.442
+ },
+ "buy": {
+  "B0 current: best 1%": {
+   "selection": {
+    "trades": 1285,
+    "per_week": 3.3,
+    "weeks_with_a_signal": 384,
+    "share_closing_up": 0.5751,
+    "gross_excess_bps": 86.7,
+    "gross_excess_ci95_bps": [
+     57.4,
+     118.5
+    ],
+    "right_rate": 0.5035,
+    "net_excess_bps": 50.3,
+    "net_excess_ci95_bps": [
+     20.9,
+     81.9
+    ],
+    "years_positive": "6/8"
+   },
+   "held_out": {
+    "trades": 2145,
+    "per_week": 7.9,
+    "weeks_with_a_signal": 271,
+    "share_closing_up": 0.5427,
+    "gross_excess_bps": 49.7,
+    "gross_excess_ci95_bps": [
+     22.5,
+     74.9
+    ],
+    "right_rate": 0.4741,
+    "net_excess_bps": 13.1,
+    "net_excess_ci95_bps": [
+     -14.0,
+     38.2
+    ],
+    "years_positive": "3/6"
+   }
+  },
+  "B1 best 2%": {
+   "selection": {
+    "trades": 2402,
+    "per_week": 6.3,
+    "weeks_with_a_signal": 384,
+    "share_closing_up": 0.572,
+    "gross_excess_bps": 76.6,
+    "gross_excess_ci95_bps": [
+     49.7,
+     104.6
+    ],
+    "right_rate": 0.4996,
+    "net_excess_bps": 40.4,
+    "net_excess_ci95_bps": [
+     13.5,
+     68.2
+    ],
+    "years_positive": "6/8"
+   },
+   "held_out": {
+    "trades": 4144,
+    "per_week": 15.3,
+    "weeks_with_a_signal": 271,
+    "share_closing_up": 0.5449,
+    "gross_excess_bps": 37.4,
+    "gross_excess_ci95_bps": [
+     14.1,
+     59.4
+    ],
+    "right_rate": 0.4667,
+    "net_excess_bps": 0.9,
+    "net_excess_ci95_bps": [
+     -22.3,
+     22.8
+    ],
+    "years_positive": "3/6"
+   }
+  },
+  "B2 best 1% + stock above its 200-day average": {
+   "selection": {
+    "trades": 926,
+    "per_week": 2.6,
+    "weeks_with_a_signal": 352,
+    "share_closing_up": 0.5745,
+    "gross_excess_bps": 86.3,
+    "gross_excess_ci95_bps": [
+     54.1,
+     117.5
+    ],
+    "right_rate": 0.5184,
+    "net_excess_bps": 49.7,
+    "net_excess_ci95_bps": [
+     17.5,
+     81.2
+    ],
+    "years_positive": "7/8"
+   },
+   "held_out": {
+    "trades": 1682,
+    "per_week": 6.3,
+    "weeks_with_a_signal": 265,
+    "share_closing_up": 0.547,
+    "gross_excess_bps": 57.8,
+    "gross_excess_ci95_bps": [
+     30.8,
+     84.1
+    ],
+    "right_rate": 0.4756,
+    "net_excess_bps": 21.2,
+    "net_excess_ci95_bps": [
+     -6.0,
+     47.4
+    ],
+    "years_positive": "5/6"
+   }
+  },
+  "B3 best 2% + stock above its 200-day average": {
+   "selection": {
+    "trades": 1720,
+    "per_week": 4.7,
+    "weeks_with_a_signal": 369,
+    "share_closing_up": 0.5703,
+    "gross_excess_bps": 77.1,
+    "gross_excess_ci95_bps": [
+     48.4,
+     105.9
+    ],
+    "right_rate": 0.507,
+    "net_excess_bps": 40.7,
+    "net_excess_ci95_bps": [
+     12.0,
+     69.6
+    ],
+    "years_positive": "6/8"
+   },
+   "held_out": {
+    "trades": 3181,
+    "per_week": 12.0,
+    "weeks_with_a_signal": 266,
+    "share_closing_up": 0.5467,
+    "gross_excess_bps": 46.7,
+    "gross_excess_ci95_bps": [
+     22.1,
+     70.1
+    ],
+    "right_rate": 0.4662,
+    "net_excess_bps": 10.2,
+    "net_excess_ci95_bps": [
+     -14.2,
+     33.6
+    ],
+    "years_positive": "4/6"
+   }
+  },
+  "B4 best 1% + market breadth above 50%": {
+   "selection": {
+    "trades": 898,
+    "per_week": 3.4,
+    "weeks_with_a_signal": 262,
+    "share_closing_up": 0.5679,
+    "gross_excess_bps": 70.2,
+    "gross_excess_ci95_bps": [
+     37.4,
+     104.1
+    ],
+    "right_rate": 0.4866,
+    "net_excess_bps": 34.0,
+    "net_excess_ci95_bps": [
+     0.9,
+     68.0
+    ],
+    "years_positive": "6/8"
+   },
+   "held_out": {
+    "trades": 1700,
+    "per_week": 8.0,
+    "weeks_with_a_signal": 212,
+    "share_closing_up": 0.5371,
+    "gross_excess_bps": 53.9,
+    "gross_excess_ci95_bps": [
+     27.8,
+     79.4
+    ],
+    "right_rate": 0.4706,
+    "net_excess_bps": 17.4,
+    "net_excess_ci95_bps": [
+     -8.7,
+     42.9
+    ],
+    "years_positive": "4/6"
+   }
+  },
+  "B5 best 2% + market breadth above 50%": {
+   "selection": {
+    "trades": 1693,
+    "per_week": 6.5,
+    "weeks_with_a_signal": 262,
+    "share_closing_up": 0.5635,
+    "gross_excess_bps": 67.8,
+    "gross_excess_ci95_bps": [
+     37.9,
+     97.8
+    ],
+    "right_rate": 0.4879,
+    "net_excess_bps": 31.7,
+    "net_excess_ci95_bps": [
+     2.1,
+     61.6
+    ],
+    "years_positive": "6/8"
+   },
+   "held_out": {
+    "trades": 3289,
+    "per_week": 15.5,
+    "weeks_with_a_signal": 212,
+    "share_closing_up": 0.5439,
+    "gross_excess_bps": 43.7,
+    "gross_excess_ci95_bps": [
+     19.0,
+     68.0
+    ],
+    "right_rate": 0.4658,
+    "net_excess_bps": 7.3,
+    "net_excess_ci95_bps": [
+     -17.4,
+     31.6
+    ],
+    "years_positive": "4/6"
+   }
+  },
+  "B6 best 5% + 3-month momentum in the top 30%": {
+   "selection": {
+    "trades": 1688,
+    "per_week": 4.6,
+    "weeks_with_a_signal": 367,
+    "share_closing_up": 0.5764,
+    "gross_excess_bps": 80.1,
+    "gross_excess_ci95_bps": [
+     47.5,
+     110.4
+    ],
+    "right_rate": 0.5095,
+    "net_excess_bps": 43.3,
+    "net_excess_ci95_bps": [
+     10.5,
+     73.6
+    ],
+    "years_positive": "7/8"
+   },
+   "held_out": {
+    "trades": 3519,
+    "per_week": 13.1,
+    "weeks_with_a_signal": 268,
+    "share_closing_up": 0.5271,
+    "gross_excess_bps": 33.0,
+    "gross_excess_ci95_bps": [
+     7.2,
+     57.9
+    ],
+    "right_rate": 0.4496,
+    "net_excess_bps": -3.6,
+    "net_excess_ci95_bps": [
+     -29.3,
+     21.4
+    ],
+    "years_positive": "4/6"
+   }
+  },
+  "B7 best 5% + within 10% of its 52-week high": {
+   "selection": {
+    "trades": 2527,
+    "per_week": 7.4,
+    "weeks_with_a_signal": 342,
+    "share_closing_up": 0.5477,
+    "gross_excess_bps": 52.2,
+    "gross_excess_ci95_bps": [
+     23.3,
+     79.6
+    ],
+    "right_rate": 0.4836,
+    "net_excess_bps": 16.7,
+    "net_excess_ci95_bps": [
+     -12.2,
+     44.1
+    ],
+    "years_positive": "5/8"
+   },
+   "held_out": {
+    "trades": 4825,
+    "per_week": 19.0,
+    "weeks_with_a_signal": 254,
+    "share_closing_up": 0.5181,
+    "gross_excess_bps": 19.5,
+    "gross_excess_ci95_bps": [
+     -1.9,
+     41.7
+    ],
+    "right_rate": 0.4315,
+    "net_excess_bps": -16.3,
+    "net_excess_ci95_bps": [
+     -37.7,
+     5.8
+    ],
+    "years_positive": "1/6"
+   }
+  },
+  "B8 best 2% + calmer than the week's median stock": {
+   "selection": {
+    "trades": 1679,
+    "per_week": 4.4,
+    "weeks_with_a_signal": 380,
+    "share_closing_up": 0.5646,
+    "gross_excess_bps": 65.5,
+    "gross_excess_ci95_bps": [
+     38.0,
+     95.9
+    ],
+    "right_rate": 0.4955,
+    "net_excess_bps": 30.0,
+    "net_excess_ci95_bps": [
+     2.6,
+     60.3
+    ],
+    "years_positive": "6/8"
+   },
+   "held_out": {
+    "trades": 2762,
+    "per_week": 10.2,
+    "weeks_with_a_signal": 271,
+    "share_closing_up": 0.5369,
+    "gross_excess_bps": 25.8,
+    "gross_excess_ci95_bps": [
+     0.4,
+     52.2
+    ],
+    "right_rate": 0.4584,
+    "net_excess_bps": -10.2,
+    "net_excess_ci95_bps": [
+     -35.5,
+     16.1
+    ],
+    "years_positive": "1/6"
+   }
+  },
+  "B9 best 2% + cheapest third to trade": {
+   "selection": {
+    "trades": 8,
+    "per_week": 1.0,
+    "weeks_with_a_signal": 8,
+    "share_closing_up": 0.5,
+    "gross_excess_bps": -328.0,
+    "gross_excess_ci95_bps": [
+     -1053.9,
+     318.8
+    ],
+    "right_rate": 0.375,
+    "net_excess_bps": -412.4,
+    "net_excess_ci95_bps": [
+     -1135.0,
+     238.7
+    ],
+    "years_positive": "1/4"
+   },
+   "held_out": {
+    "trades": 5,
+    "per_week": 1.0,
+    "weeks_with_a_signal": 5,
+    "share_closing_up": 0.8,
+    "gross_excess_bps": -61.4,
+    "gross_excess_ci95_bps": [
+     -395.1,
+     347.0
+    ],
+    "right_rate": 0.2,
+    "net_excess_bps": -129.8,
+    "net_excess_ci95_bps": [
+     -466.4,
+     278.6
+    ],
+    "years_positive": "1/4"
+   }
+  },
+  "B10 best 2% + above 200-day + breadth above 50%": {
+   "selection": {
+    "trades": 1341,
+    "per_week": 5.1,
+    "weeks_with_a_signal": 261,
+    "share_closing_up": 0.5682,
+    "gross_excess_bps": 74.6,
+    "gross_excess_ci95_bps": [
+     42.6,
+     107.4
+    ],
+    "right_rate": 0.4929,
+    "net_excess_bps": 38.3,
+    "net_excess_ci95_bps": [
+     6.4,
+     71.2
+    ],
+    "years_positive": "6/8"
+   },
+   "held_out": {
+    "trades": 2816,
+    "per_week": 13.3,
+    "weeks_with_a_signal": 212,
+    "share_closing_up": 0.5458,
+    "gross_excess_bps": 45.4,
+    "gross_excess_ci95_bps": [
+     20.3,
+     71.5
+    ],
+    "right_rate": 0.4609,
+    "net_excess_bps": 9.0,
+    "net_excess_ci95_bps": [
+     -16.1,
+     34.9
+    ],
+    "years_positive": "4/6"
+   }
+  }
+ },
+ "sell": {
+  "S0 current: worst 5%": {
+   "selection": {
+    "trades": 5334,
+    "per_week": 13.9,
+    "weeks_with_a_signal": 384,
+    "share_closing_up": 0.419,
+    "gross_excess_bps": -91.1,
+    "gross_excess_ci95_bps": [
+     -114.1,
+     -67.7
+    ],
+    "right_rate": 0.6314,
+    "years_below_market": "8/8"
+   },
+   "held_out": {
+    "trades": 9891,
+    "per_week": 36.5,
+    "weeks_with_a_signal": 271,
+    "share_closing_up": 0.4142,
+    "gross_excess_bps": -61.5,
+    "gross_excess_ci95_bps": [
+     -81.6,
+     -41.6
+    ],
+    "right_rate": 0.6305,
+    "years_below_market": "6/6"
+   }
+  },
+  "S1 worst 2%": {
+   "selection": {
+    "trades": 2018,
+    "per_week": 5.3,
+    "weeks_with_a_signal": 384,
+    "share_closing_up": 0.4029,
+    "gross_excess_bps": -114.3,
+    "gross_excess_ci95_bps": [
+     -154.3,
+     -74.7
+    ],
+    "right_rate": 0.6541,
+    "years_below_market": "8/8"
+   },
+   "held_out": {
+    "trades": 3873,
+    "per_week": 14.3,
+    "weeks_with_a_signal": 271,
+    "share_closing_up": 0.3958,
+    "gross_excess_bps": -88.7,
+    "gross_excess_ci95_bps": [
+     -120.3,
+     -59.6
+    ],
+    "right_rate": 0.646,
+    "years_below_market": "6/6"
+   }
+  },
+  "S2 worst 5% + stock below its 200-day average": {
+   "selection": {
+    "trades": 2420,
+    "per_week": 6.6,
+    "weeks_with_a_signal": 366,
+    "share_closing_up": 0.4326,
+    "gross_excess_bps": -89.1,
+    "gross_excess_ci95_bps": [
+     -124.3,
+     -52.6
+    ],
+    "right_rate": 0.6198,
+    "years_below_market": "7/8"
+   },
+   "held_out": {
+    "trades": 3547,
+    "per_week": 14.0,
+    "weeks_with_a_signal": 254,
+    "share_closing_up": 0.395,
+    "gross_excess_bps": -81.4,
+    "gross_excess_ci95_bps": [
+     -103.9,
+     -58.2
+    ],
+    "right_rate": 0.6434,
+    "years_below_market": "6/6"
+   }
+  },
+  "S3 worst 5% + 50-day average falling": {
+   "selection": {
+    "trades": 2421,
+    "per_week": 6.7,
+    "weeks_with_a_signal": 363,
+    "share_closing_up": 0.4242,
+    "gross_excess_bps": -107.8,
+    "gross_excess_ci95_bps": [
+     -141.7,
+     -70.3
+    ],
+    "right_rate": 0.6241,
+    "years_below_market": "8/8"
+   },
+   "held_out": {
+    "trades": 3641,
+    "per_week": 13.7,
+    "weeks_with_a_signal": 265,
+    "share_closing_up": 0.4057,
+    "gross_excess_bps": -77.5,
+    "gross_excess_ci95_bps": [
+     -102.6,
+     -52.2
+    ],
+    "right_rate": 0.6386,
+    "years_below_market": "6/6"
+   }
+  },
+  "S4 worst 5% + market breadth below 50%": {
+   "selection": {
+    "trades": 1568,
+    "per_week": 13.0,
+    "weeks_with_a_signal": 121,
+    "share_closing_up": 0.4241,
+    "gross_excess_bps": -89.8,
+    "gross_excess_ci95_bps": [
+     -134.7,
+     -41.8
+    ],
+    "right_rate": 0.6084,
+    "years_below_market": "5/7"
+   },
+   "held_out": {
+    "trades": 2037,
+    "per_week": 34.5,
+    "weeks_with_a_signal": 59,
+    "share_closing_up": 0.4394,
+    "gross_excess_bps": -50.0,
+    "gross_excess_ci95_bps": [
+     -101.6,
+     -2.0
+    ],
+    "right_rate": 0.5974,
+    "years_below_market": "4/4"
+   }
+  },
+  "S5 worst 10% + below 200-day + 50-day average falling": {
+   "selection": {
+    "trades": 3426,
+    "per_week": 9.3,
+    "weeks_with_a_signal": 368,
+    "share_closing_up": 0.4463,
+    "gross_excess_bps": -79.2,
+    "gross_excess_ci95_bps": [
+     -111.1,
+     -45.3
+    ],
+    "right_rate": 0.5972,
+    "years_below_market": "8/8"
+   },
+   "held_out": {
+    "trades": 5352,
+    "per_week": 20.7,
+    "weeks_with_a_signal": 259,
+    "share_closing_up": 0.4099,
+    "gross_excess_bps": -66.8,
+    "gross_excess_ci95_bps": [
+     -88.3,
+     -44.6
+    ],
+    "right_rate": 0.6315,
+    "years_below_market": "6/6"
+   }
+  },
+  "S6 worst 5% + 3-month momentum in the bottom 30%": {
+   "selection": {
+    "trades": 1737,
+    "per_week": 4.9,
+    "weeks_with_a_signal": 353,
+    "share_closing_up": 0.4093,
+    "gross_excess_bps": -89.4,
+    "gross_excess_ci95_bps": [
+     -128.5,
+     -51.5
+    ],
+    "right_rate": 0.6298,
+    "years_below_market": "8/8"
+   },
+   "held_out": {
+    "trades": 2273,
+    "per_week": 8.7,
+    "weeks_with_a_signal": 260,
+    "share_closing_up": 0.4034,
+    "gross_excess_bps": -84.0,
+    "gross_excess_ci95_bps": [
+     -114.2,
+     -56.2
+    ],
+    "right_rate": 0.659,
+    "years_below_market": "6/6"
+   }
+  },
+  "S7 worst 5% + more volatile than the week's median stock": {
+   "selection": {
+    "trades": 4649,
+    "per_week": 12.1,
+    "weeks_with_a_signal": 384,
+    "share_closing_up": 0.4164,
+    "gross_excess_bps": -88.3,
+    "gross_excess_ci95_bps": [
+     -115.4,
+     -61.4
+    ],
+    "right_rate": 0.6307,
+    "years_below_market": "8/8"
+   },
+   "held_out": {
+    "trades": 8771,
+    "per_week": 32.4,
+    "weeks_with_a_signal": 271,
+    "share_closing_up": 0.4143,
+    "gross_excess_bps": -58.2,
+    "gross_excess_ci95_bps": [
+     -81.0,
+     -35.2
+    ],
+    "right_rate": 0.628,
+    "years_below_market": "6/6"
+   }
+  }
+ },
+ "buy_pick": {
+  "rule": "B0 current: best 1%",
+  "chosen_on": "selection years only",
+  "held_out": {
+   "trades": 2145,
+   "per_week": 7.9,
+   "weeks_with_a_signal": 271,
+   "share_closing_up": 0.5427,
+   "gross_excess_bps": 49.7,
+   "gross_excess_ci95_bps": [
+    22.5,
+    74.9
+   ],
+   "right_rate": 0.4741,
+   "net_excess_bps": 13.1,
+   "net_excess_ci95_bps": [
+    -14.0,
+    38.2
+   ],
+   "years_positive": "3/6"
+  },
+  "current_rule_held_out": {
+   "trades": 2145,
+   "per_week": 7.9,
+   "weeks_with_a_signal": 271,
+   "share_closing_up": 0.5427,
+   "gross_excess_bps": 49.7,
+   "gross_excess_ci95_bps": [
+    22.5,
+    74.9
+   ],
+   "right_rate": 0.4741,
+   "net_excess_bps": 13.1,
+   "net_excess_ci95_bps": [
+    -14.0,
+    38.2
+   ],
+   "years_positive": "3/6"
+  }
+ },
+ "sell_pick": {
+  "rule": "S1 worst 2%",
+  "chosen_on": "selection years only",
+  "held_out": {
+   "trades": 3873,
+   "per_week": 14.3,
+   "weeks_with_a_signal": 271,
+   "share_closing_up": 0.3958,
+   "gross_excess_bps": -88.7,
+   "gross_excess_ci95_bps": [
+    -120.3,
+    -59.6
+   ],
+   "right_rate": 0.646,
+   "years_below_market": "6/6"
+  },
+  "current_rule_held_out": {
+   "trades": 9891,
+   "per_week": 36.5,
+   "weeks_with_a_signal": 271,
+   "share_closing_up": 0.4142,
+   "gross_excess_bps": -61.5,
+   "gross_excess_ci95_bps": [
+    -81.6,
+    -41.6
+   ],
+   "right_rate": 0.6305,
+   "years_below_market": "6/6"
+  }
+ }
+}

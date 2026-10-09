@@ -190,7 +190,7 @@
   "forward_clock_start": "2026-10-06",
   "weekly": {
     "buy_top_pct": 0.99,
-    "sell_bottom_pct": 0.05,
+    "sell_bottom_pct": 0.02,
     "weekly_sd": 0.06
   }
 }
