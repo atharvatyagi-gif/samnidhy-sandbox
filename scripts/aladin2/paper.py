@@ -51,7 +51,7 @@ def entry_index(cal, as_of):
     return int(cal.searchsorted(pd.Timestamp(as_of), side="right"))
 
 
-def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), max_open=10, hold=5, mu=0.0027, sd=0.06, sector_cap_pct=30.0, end=None):
+def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), max_open=10, hold=5, mu=0.0027, sd=0.06, sector_cap_pct=30.0, end=None, risk_pct=None, max_pos_pct=None):
     """Event loop over trading days. books: [{"as_of", "picks": [{sym, rank, stop, goal (or None), adv_shares, decile, sector}]}] (picks best first); prices: {sym: DataFrame o,h,l,c,v};
     cal: DatetimeIndex of trading days. Returns {equity: [[date, equity, cash, n_open]], trades: [...], open: [...], skipped: [...]}."""
     cal = pd.DatetimeIndex(cal); bars = {}
@@ -93,7 +93,7 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
                     else:
                         eq = equity_now(); sec = pk.get("sector") or "?"
                         sec_val = sum(q["qty"] * lastc.get(s, q["entry"]) for s, q in pos.items() if q["sector"] == sec)
-                        size = SG.position_size(eq, o, stop, pk.get("adv_shares") or 0, mu, sd, cfg); qty = int(size["qty"])
+                        size = SG.position_size(eq, o, stop, pk.get("adv_shares") or 0, mu, sd, cfg, risk_pct=risk_pct, max_pos_pct=max_pos_pct); qty = int(size["qty"])
                         qty = min(qty, int(max(0.0, eq * sector_cap_pct / 100 - sec_val) // o))
                         while qty > 0:
                             cost_in = float(C.leg_cost("buy", qty * o, "delivery", pk["decile"], cfg)["total"])
@@ -294,6 +294,32 @@ def trading_calendar(prices, since=None):
     return cal[cal >= pd.Timestamp(since)] if since else cal
 
 
+def timeline(lines, trades, openp, start, today=None, n_target=100):
+    """The continuous front test, week by week from the forward clock: for every Friday, was a book written, was it in time (before the next open), how many names, what became of its trades.
+    lines: ledger records; trades / openp: the live simulation's closed and open positions. Pure (tests/aladin2/test_paper.py). -> dict for the page."""
+    today = pd.Timestamp(today or pd.Timestamp.utcnow().tz_localize(None)).normalize(); wk = {}
+    for r in lines:
+        if r.get("t") == "wk" and r["d"] >= start:
+            wk.setdefault(r["d"], r)
+    fridays = [d for d in pd.date_range(pd.Timestamp(start), today, freq="W-FRI")]
+    rows = []
+    for f in fridays:
+        d = str(f.date()); r = wk.get(d); tr = [t for t in trades if t["as_of"] == d]; op = [o for o in openp if o["as_of"] == d]
+        if r is None:
+            status = "waiting" if f.normalize() >= today - pd.Timedelta(days=3) else "missed"
+        else:
+            status = "in time" if W.made_in_time(r) else "late"
+        rows.append({"friday": d, "entry_day": str(W.W_next_weekday(d).date()), "status": status, "created": r.get("created") if r else None, "names": len(r.get("buy", [])) if r else None,
+                     "entered": len(tr) + len(op), "closed": len(tr), "open": len(op), "net": round(sum(t["net"] for t in tr), 2) if tr else None, "wins": sum(1 for t in tr if t["net"] > 0)})
+    nxt = pd.Timestamp(today)
+    while nxt.weekday() != 4:
+        nxt += pd.Timedelta(days=1)
+    closed = len(trades)
+    return {"start": start, "today": str(today.date()), "days_running": int((today - pd.Timestamp(start)).days), "weeks": rows, "next_book": str(nxt.date()), "next_entry": str(W.W_next_weekday(str(nxt.date())).date()),
+            "closed_trades": closed, "judge_after_trades": n_target, "progress": round(min(1.0, closed / n_target), 4),
+            "expect_from_history": {"win_rate": 0.51, "profit_factor": 1.2, "note": "what the 13-year history did; the live record is judged against these after about 100 closed trades"}}
+
+
 def run_live(ledger_dir=None, out=None):
     cfg = C.load_cfg(); books = live_books(ledger_dir, cfg); start = cfg["forward_clock_start"]
     syms = sorted({p["sym"] for b in books for p in b["picks"]}); prices = {}
@@ -309,6 +335,7 @@ def run_live(ledger_dir=None, out=None):
         doc.update({"stats": {"started": False}, "equity": [], "open": [], "trades": [], "skipped": [], "note": "No live Friday book has been written in time yet. The first one is the Friday book; the bot enters at the next trading day's open."})
     else:
         r = simulate(books, prices, idx, cfg); doc.update({"stats": stats(r), "equity": r["equity"], "open": r["open"], "trades": r["trades"][-200:], "skipped": r["skipped"][-100:], "note": None})
+    doc["timeline"] = timeline(LG.read_all(ledger_dir), doc["trades"], doc["open"], start)
     f = Path(out or OUT / "live.json"); f.parent.mkdir(parents=True, exist_ok=True); f.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
     print(f"live paper account: {len(books)} book(s) {[b['as_of'] for b in books]}; stats {doc['stats'].get('end_equity', 'not started')}; wrote {f}")
     return doc
