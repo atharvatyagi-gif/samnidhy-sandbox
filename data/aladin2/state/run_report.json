@@ -3,26 +3,86 @@
  "weekday": "Friday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 0,
+ "total_s": 1020,
  "steps": [
   {
+   "step": "ingest",
+   "seconds": 19.3,
+   "note": "latest price bar 2026-10-09; delivery / F&O / macro refreshed"
+  },
+  {
+   "step": "resolve",
+   "seconds": 4.7,
+   "note": "1 outcome lines"
+  },
+  {
+   "step": "learn",
+   "seconds": 193.9,
+   "note": "1446 stocks, 35 strategies; 48 lifecycle events (22 new in the journal); states {'Retired': 6}"
+  },
+  {
+   "step": "drift",
+   "seconds": 0.0,
+   "note": "no Probation/Active strategy to check"
+  },
+  {
+   "step": "discover",
+   "seconds": 676.1,
+   "note": "50 generations, 1200 new rules, 14 passed, 1200 tested in total"
+  },
+  {
+   "step": "forecast",
+   "seconds": 113.5,
+   "note": "as of 2026-10-09, 1358 stocks, states {'Learning': 1358}, ledger written"
+  },
+  {
+   "step": "weekly",
+   "seconds": 12.2,
+   "note": "as of 2026-10-09: bull 13, bear 25, hold 1212; ledger written; 0 outcome lines"
+  },
+  {
    "step": "paper",
-   "seconds": 0.1,
-   "note": "FAILED: IndexError('index -1 is out of bounds for axis 0 with size 0')"
+   "seconds": 0.4,
+   "note": "live paper account: 1 book(s); no live trade yet (the first Friday book enters at the next open)"
+  },
+  {
+   "step": "bot",
+   "seconds": 0.0,
+   "note": "ALADIN_BOT_CODE is not set: the locked console is not rebuilt (the last encrypted file, if any, stays)"
   },
   {
    "step": "publish",
    "seconds": 0.0,
-   "note": "journal.json with 49 events"
+   "note": "journal.json with 86 events"
   }
  ],
- "errors": [
-  {
-   "step": "paper",
-   "error": "IndexError('index -1 is out of bounds for axis 0 with size 0')",
-   "trace": "und(time.time() - t, 1), note or \"ok\")); done.add(name); self.mark(day, done)\n           ^^^^\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/run_nightly.py\", line 195, in s_paper\n    d = PP.run_live(str(self.ledger), str(self.base / \"paper\" / \"live.json\")); st = d[\"stats\"]\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/samnidhy-sandbox/samnidhy-sandbox/scripts/aladin2/paper.py\", line 305, in run_live\n    last_bar = str(idx[-1].date()); doc = {\"kind\": \"LIVE FRONT TEST (paper)\", \"label\": \"LIVE FRONT TEST: simulated trades on real prices from the forward clock. Simulated money, no broker.\", \"created_utc\": pd.Timestamp.utcnow().isoformat(), \"rules\": RULES,\n                   ~~~^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 5401, in __getitem__\n    return getitem(key)\n           ^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/pandas/core/arrays/datetimelike.py\", line 398, in __getitem__\n    result = cast(\"Union[Self, DTScalarOrNaT]\", super().__getitem__(key))\n                                                ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/pandas/core/arrays/_mixins.py\", line 284, in __getitem__\n    result = self._ndarray[key]\n             ~~~~~~~~~~~~~^^^^^\nIndexError: index -1 is out of bounds for axis 0 with size 0\n"
+ "errors": [],
+ "counts": {
+  "outcomes_written": 1,
+  "lifecycle_events": 48,
+  "journal_new": 22,
+  "strategy_states": {
+   "Retired": 6
+  },
+  "discovery": {
+   "generations": 50,
+   "new_rules": 1200,
+   "passed": 14,
+   "total_tested": 1200
+  },
+  "forecast": {
+   "as_of": "2026-10-09",
+   "stocks_forecast": 1358,
+   "product_state_counts": {
+    "Learning": 1358
+   },
+   "ledger_status": "written"
+  },
+  "weekly": {
+   "bull": 13,
+   "bear": 25,
+   "hold": 1212
   }
- ],
- "counts": {},
+ },
  "within_budget": true
 }

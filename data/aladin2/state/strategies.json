@@ -1,5 +1,5 @@
 {
- "as_of": "2026-10-06",
+ "as_of": "2026-10-09",
  "universe": "pit",
  "strategies": {
   "ma_cross_50_200": {
@@ -11,14 +11,14 @@
      "date": "2024-07-31 00:00:00",
      "sym": "*POOL*",
      "strategy": "ma_cross_50_200",
-     "from": "Demoted",
-     "to": "Active",
-     "why": "recovered: passes the evaluation protocol again",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 3570,
-      "mean_bps": 655.0,
-      "p": 0.002,
-      "lb_bps": 261.7,
+      "n": 3572,
+      "mean_bps": 652.1,
+      "p": 0.00267,
+      "lb_bps": 240.4,
       "years_positive": "7/8"
      }
     },
@@ -26,46 +26,6 @@
      "date": "2025-05-07 00:00:00",
      "sym": "*POOL*",
      "strategy": "ma_cross_50_200",
-     "from": "Active",
-     "to": "Demoted",
-     "why": "no longer passes the evaluation protocol",
-     "evidence": {}
-    },
-    {
-     "date": "2025-08-04 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "ma_cross_50_200",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    }
-   ]
-  },
-  "tsmom_250_skip21": {
-   "state": "Retired",
-   "since": "2025-08-04 00:00:00",
-   "retired_on": "2025-08-04 00:00:00",
-   "last_events": [
-    {
-     "date": "2024-07-31 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "tsmom_250_skip21",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 12075,
-      "mean_bps": 143.8,
-      "p": 0.00367,
-      "lb_bps": 49.4,
-      "years_positive": "7/9"
-     }
-    },
-    {
-     "date": "2025-05-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "tsmom_250_skip21",
      "from": "Probation",
      "to": "Demoted",
      "why": "no longer passes the evaluation protocol",
@@ -74,7 +34,7 @@
     {
      "date": "2025-08-04 00:00:00",
      "sym": "*POOL*",
-     "strategy": "tsmom_250_skip21",
+     "strategy": "ma_cross_50_200",
      "from": "Demoted",
      "to": "Retired",
      "why": "did not recover within 40 days",
@@ -84,26 +44,26 @@
   },
   "donchian_55": {
    "state": "Retired",
-   "since": "2019-09-24 00:00:00",
-   "retired_on": "2019-09-24 00:00:00",
+   "since": "2022-04-11 00:00:00",
+   "retired_on": "2022-04-11 00:00:00",
    "last_events": [
     {
-     "date": "2018-12-12 00:00:00",
+     "date": "2021-10-07 00:00:00",
      "sym": "*POOL*",
      "strategy": "donchian_55",
      "from": "Retired",
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 5157,
-      "mean_bps": 248.1,
-      "p": 0.002,
-      "lb_bps": 85.2,
-      "years_positive": "6/9"
+      "n": 5535,
+      "mean_bps": 263.0,
+      "p": 0.01133,
+      "lb_bps": 21.3,
+      "years_positive": "7/9"
      }
     },
     {
-     "date": "2019-06-21 00:00:00",
+     "date": "2022-01-07 00:00:00",
      "sym": "*POOL*",
      "strategy": "donchian_55",
      "from": "Probation",
@@ -112,7 +72,7 @@
      "evidence": {}
     },
     {
-     "date": "2019-09-24 00:00:00",
+     "date": "2022-04-11 00:00:00",
      "sym": "*POOL*",
      "strategy": "donchian_55",
      "from": "Demoted",
@@ -135,10 +95,10 @@
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 3431,
-      "mean_bps": 485.1,
+      "n": 3432,
+      "mean_bps": 484.8,
       "p": 0.00766,
-      "lb_bps": 101.8,
+      "lb_bps": 86.1,
       "years_positive": "7/9"
      }
     },
@@ -162,28 +122,116 @@
     }
    ]
   },
-  "ma_cross_20_100": {
+  "tsmom_250_skip21": {
    "state": "Retired",
-   "since": "2019-09-24 00:00:00",
-   "retired_on": "2019-09-24 00:00:00",
+   "since": "2025-08-04 00:00:00",
+   "retired_on": "2025-08-04 00:00:00",
    "last_events": [
     {
-     "date": "2019-03-15 00:00:00",
+     "date": "2024-04-29 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "tsmom_250_skip21",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 12280,
+      "mean_bps": 129.2,
+      "p": 0.00167,
+      "lb_bps": 40.1,
+      "years_positive": "6/9"
+     }
+    },
+    {
+     "date": "2025-05-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "tsmom_250_skip21",
+     "from": "Probation",
+     "to": "Demoted",
+     "why": "live alarm",
+     "evidence": {
+      "live_trades": 1630,
+      "live_mean_bps": -129.5,
+      "reason": "live trades significantly negative"
+     }
+    },
+    {
+     "date": "2025-08-04 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "tsmom_250_skip21",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    }
+   ]
+  },
+  "tsmom_120_skip21": {
+   "state": "Retired",
+   "since": "2016-11-29 00:00:00",
+   "retired_on": "2016-11-29 00:00:00",
+   "last_events": [
+    {
+     "date": "2016-05-24 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "tsmom_120_skip21",
+     "from": "Candidate",
+     "to": "Probation",
+     "why": "passed the evaluation protocol on past data",
+     "evidence": {
+      "n": 16660,
+      "mean_bps": 127.7,
+      "p": 0.01799,
+      "lb_bps": 31.1,
+      "years_positive": "7/9"
+     }
+    },
+    {
+     "date": "2016-08-24 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "tsmom_120_skip21",
+     "from": "Probation",
+     "to": "Demoted",
+     "why": "live alarm",
+     "evidence": {
+      "live_trades": 212,
+      "live_mean_bps": -76.7,
+      "reason": "live trades significantly negative"
+     }
+    },
+    {
+     "date": "2016-11-29 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "tsmom_120_skip21",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    }
+   ]
+  },
+  "ma_cross_20_100": {
+   "state": "Retired",
+   "since": "2022-04-11 00:00:00",
+   "retired_on": "2022-04-11 00:00:00",
+   "last_events": [
+    {
+     "date": "2021-10-07 00:00:00",
      "sym": "*POOL*",
      "strategy": "ma_cross_20_100",
      "from": "Retired",
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 6386,
-      "mean_bps": 359.4,
-      "p": 0.00866,
-      "lb_bps": 139.0,
-      "years_positive": "7/8"
+      "n": 6381,
+      "mean_bps": 419.6,
+      "p": 0.01533,
+      "lb_bps": 79.8,
+      "years_positive": "8/9"
      }
     },
     {
-     "date": "2019-06-21 00:00:00",
+     "date": "2022-01-07 00:00:00",
      "sym": "*POOL*",
      "strategy": "ma_cross_20_100",
      "from": "Probation",
@@ -192,7 +240,7 @@
      "evidence": {}
     },
     {
-     "date": "2019-09-24 00:00:00",
+     "date": "2022-04-11 00:00:00",
      "sym": "*POOL*",
      "strategy": "ma_cross_20_100",
      "from": "Demoted",
