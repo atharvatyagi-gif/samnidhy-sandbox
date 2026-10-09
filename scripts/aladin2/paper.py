@@ -37,9 +37,59 @@ DATA = ROOT / "data" / "aladin2"
 OUT = DATA / "paper"
 START_CASH = 1_000_000
 RULE_HISTORY = [{"v": 1, "declared": "2026-10-09", "exits": "stop + goal + time", "backtest_return_pct": -6.87, "why_dropped": "a take-profit at the 50% range edge cut the winners (average win +2.3%) and left the losers (average loss -3.8%)"},
-                {"v": 2, "declared": "2026-10-09", "exits": "stop + time (the price goal is information only)", "why": "no live trade existed yet, so the live record is untouched"}]
-RULES = {"budget_inr": START_CASH, "books": "Friday book, positive-signal names only (long-only cash equity)", "entry": "open of the next trading day", "hold_trading_days": 5, "exit_order": "the stop, or the open of the 5th trading day after entry (the price goal is information, not an order)", "risk_per_trade_pct": 1.0, "max_position_pct": 10, "adv_participation_max": 0.05, "max_open": 10, "max_sector_pct": 30, "costs": "full delivery cost model at the stock's liquidity decile",
-         "edge_for_kelly_bps": 27.0, "sd_for_kelly": 0.06}
+                {"v": 2, "declared": "2026-10-09", "exits": "stop + time (the price goal is information only)", "backtest_return_pct": 224.3, "why_dropped": "replaced by v3 the same day, before any live trade (the first live entry is 2026-10-12)"},
+                {"v": 3, "declared": "2026-10-09", "exits": "time only (5th trading day); 2% risk, at most 20% a stock; idle cash in a liquid fund", "why": "the owner's choice (option O7) from paper_options.py, before any live trade. O7 was added AFTER the first option results were seen, so its history is the weaker claim; the live record decides"}]
+BOT = {"exits": ("time",), "risk_pct": 2.0, "max_pos_pct": 20.0}             # v3 (option O7); the stop level is still computed: it sizes the trade and is shown, but it is not an order
+RULES = {"budget_inr": START_CASH, "books": "Friday book, positive-signal names only (long-only cash equity)", "entry": "open of the next trading day", "hold_trading_days": 5, "exit_order": "the open of the 5th trading day after entry (the stop level sizes the trade and is shown, but is not an order; the price goal is information)", "risk_per_trade_pct": 2.0, "max_position_pct": 20, "adv_participation_max": 0.05, "max_open": 10, "max_sector_pct": 30, "costs": "full delivery cost model at the stock's liquidity decile",
+         "edge_for_kelly_bps": 27.0, "sd_for_kelly": 0.06, "idle_cash": "cash not in stocks earns a liquid fund's return: India call-money rate (FRED IRSTCI01INM156N) minus 0.30% a year for fund costs, kept in its own pot (not fed back into position sizes)"}
+RATE_FILE = OUT / "india_call_rate.json"
+FUND_FEE = 0.003
+
+
+def india_rate(refresh=False):
+    """Monthly India call-money rate in % a year (FRED IRSTCI01INM156N), cached in the repository so tests and runs without the key still work. refresh: try FRED (needs FRED_API_KEY), keep the cache on any failure."""
+    import os
+    if refresh:
+        key = os.environ.get("FRED_API_KEY", "")
+        for f in (ROOT / ".env", ROOT.parent / "SAMNIDHY_EDUCATIONAL_DASHBOARD" / ".env"):
+            if not key and f.exists():
+                for line in f.read_text(encoding="utf-8").splitlines():
+                    if line.startswith("FRED_API_KEY="):
+                        key = line.split("=", 1)[1].strip().strip('"').strip("'")
+        if key:
+            try:
+                import requests
+                r = requests.get("https://api.stlouisfed.org/fred/series/observations", params={"series_id": "IRSTCI01INM156N", "file_type": "json", "api_key": key}, timeout=40); r.raise_for_status()
+                d = {"src": "FRED IRSTCI01INM156N (India, immediate rates: call money / interbank, % a year, monthly)", "d": [[o["date"], float(o["value"])] for o in r.json()["observations"] if o["value"] not in (".", "")]}
+                RATE_FILE.parent.mkdir(parents=True, exist_ok=True); RATE_FILE.write_text(json.dumps(d, separators=(",", ":")), encoding="utf-8")
+            except Exception as e:                                       # noqa: BLE001
+                print("india rate refresh failed (", type(e).__name__, "); the cached file is used")          # never print the request: it carries the key
+    d = json.loads(RATE_FILE.read_text(encoding="utf-8"))
+    return pd.Series({pd.Timestamp(a): b for a, b in d["d"]}).sort_index()
+
+
+def fund_daily(cal, rate=None):
+    """Daily liquid-fund return on each trading day of cal: the latest known monthly call rate minus the fund fee, over 252 days."""
+    rate = india_rate() if rate is None else rate
+    return ((rate - FUND_FEE * 100).clip(lower=0) / 100 / 252).reindex(pd.DatetimeIndex(cal).union(rate.index)).ffill().reindex(pd.DatetimeIndex(cal)).fillna(0.0)
+
+
+def overlay(equity, daily_ret, switch_cost=0.0):
+    """equity rows [date, equity, cash, n_open] of the bot; daily_ret: Series of the idle-cash asset's daily return on the same dates. The cash held at the previous close earns that day's return;
+    the gains sit in their own pot that compounds. switch_cost: fraction paid on every change of the cash amount (money moved into or out of the fund). -> new equity rows."""
+    out, pot, prev_cash = [], 0.0, None
+    for d, e, cash, n in equity:
+        r = float(daily_ret.get(pd.Timestamp(d), 0.0))
+        if prev_cash is not None:
+            pot = pot * (1 + r) + prev_cash * r - abs(cash - prev_cash) * switch_cost
+        out.append([d, round(e + pot, 2), round(cash + pot, 2), n]); prev_cash = cash
+    return out
+
+
+def run_bot(books, prices, cal, cfg, rate=None):
+    """The bot's current rules (BOT, v3): the one simulator, then idle cash in the liquid fund."""
+    r = simulate(books, prices, cal, cfg, exits=BOT["exits"], risk_pct=BOT["risk_pct"], max_pos_pct=BOT["max_pos_pct"])
+    r["equity"] = overlay(r["equity"], fund_daily(cal, rate)); return r
 
 
 def _f(x):
@@ -235,14 +285,16 @@ def run_backtest(workers=12, oos=None, out=None, sample=None):
     syms = sorted({p["sym"] for b in books for p in b["picks"]}); prices = {s: prep(s)["px"] for s in syms if prep(s) is not None}
     cal = L.load_index().index; cal = cal[cal >= pd.Timestamp(books[0]["as_of"]) - pd.Timedelta(days=5)]
     runs = {}
-    for name, ex in (("stop + time (the bot)", ("stop", "time")), ("stop + goal + time (first design, dropped)", ("stop", "goal", "time")), ("time only", ("time",))):
-        r = simulate(books, prices, cal, cfg, exits=ex); runs[name] = {"stats": stats(r), "equity": r["equity"], "trades": r["trades"], "skipped": r["skipped"]}
+    MAIN = "v3: time exit, 2% risk, 20% a stock, idle cash in a liquid fund (the bot)"
+    variants = ((MAIN, None), ("v2: stop + time (dropped before any live trade)", ("stop", "time")), ("v1: stop + goal + time (first design, dropped)", ("stop", "goal", "time")), ("time only, 1% risk, idle cash earns nothing", ("time",)))
+    for name, ex in variants:
+        r = run_bot(books, prices, cal, cfg) if ex is None else simulate(books, prices, cal, cfg, exits=ex); runs[name] = {"stats": stats(r), "equity": r["equity"], "trades": r["trades"], "skipped": r["skipped"]}
         print(f"  {name}: end {runs[name]['stats']['end_equity']:,.0f}  return {runs[name]['stats']['return_pct']}%  max dd {runs[name]['stats']['max_drawdown_pct']}%  trades {runs[name]['stats']['trades']}  ({time.time() - t0:.0f}s)", flush=True)
     bench = _benchmark(O, prep)
-    main = runs["stop + time (the bot)"]; skip_why = {}
+    main = runs[MAIN]; skip_why = {}
     for s in main["skipped"]:
         skip_why[s["why"].split(" (")[0]] = skip_why.get(s["why"].split(" (")[0], 0) + 1
-    doc = {"kind": "HISTORICAL SIMULATION", "label": "HISTORICAL SIMULATION 2013-2026: ALADIN 1's walk-forward (out-of-sample) scores, stocks listed today (flatters the positive signals), the price goal is a volatility proxy. Not live trading, not real money.",
+    doc = {"kind": "HISTORICAL SIMULATION", "label": "HISTORICAL SIMULATION 2013-2026: ALADIN 1's walk-forward (out-of-sample) scores, stocks listed today (flatters the positive signals), the price goal is a volatility proxy, idle cash earns the India call-money rate minus fund costs. Not live trading, not real money.",
            "created_utc": pd.Timestamp.utcnow().isoformat(), "rules": RULES, "rule_history": RULE_HISTORY, "books": len(books), "picks": sum(len(b["picks"]) for b in books), "stats": main["stats"], "equity": main["equity"][::1],
            "benchmark": {"label": "equal-weight average of the liquid stocks each signal week, compounded, before costs (the same weeks, the same holding period)", "mean_weekly_pct": round(float(bench.mean()) * 100, 3), "weekly": [[str(d.date()), round(float(r), 5)] for d, r in bench.items()]},
            "ablation": {k: v["stats"] for k, v in runs.items()}, "skipped_reasons": skip_why, "recent_trades": main["trades"][-120:], "all_trades_n": len(main["trades"]), "runtime_s": round(time.time() - t0)}
@@ -294,7 +346,7 @@ def trading_calendar(prices, since=None):
     return cal[cal >= pd.Timestamp(since)] if since else cal
 
 
-def timeline(lines, trades, openp, start, today=None, n_target=100):
+def timeline(lines, trades, openp, start, today=None, n_target=100, expect=None):
     """The continuous front test, week by week from the forward clock: for every Friday, was a book written, was it in time (before the next open), how many names, what became of its trades.
     lines: ledger records; trades / openp: the live simulation's closed and open positions. Pure (tests/aladin2/test_paper.py). -> dict for the page."""
     today = pd.Timestamp(today or pd.Timestamp.utcnow().tz_localize(None)).normalize(); wk = {}
@@ -317,7 +369,7 @@ def timeline(lines, trades, openp, start, today=None, n_target=100):
     closed = len(trades)
     return {"start": start, "today": str(today.date()), "days_running": int((today - pd.Timestamp(start)).days), "weeks": rows, "next_book": str(nxt.date()), "next_entry": str(W.W_next_weekday(str(nxt.date())).date()),
             "closed_trades": closed, "judge_after_trades": n_target, "progress": round(min(1.0, closed / n_target), 4),
-            "expect_from_history": {"win_rate": 0.51, "profit_factor": 1.2, "note": "what the 13-year history did; the live record is judged against these after about 100 closed trades"}}
+            "expect_from_history": {**(expect or {"win_rate": 0.51, "profit_factor": 1.2}), "note": "what the 13-year history did; the live record is judged against these after about 100 closed trades"}}
 
 
 def run_live(ledger_dir=None, out=None):
@@ -334,8 +386,9 @@ def run_live(ledger_dir=None, out=None):
         nxt = pd.Timestamp(start)
         doc.update({"stats": {"started": False}, "equity": [], "open": [], "trades": [], "skipped": [], "note": "No live Friday book has been written in time yet. The first one is the Friday book; the bot enters at the next trading day's open."})
     else:
-        r = simulate(books, prices, idx, cfg); doc.update({"stats": stats(r), "equity": r["equity"], "open": r["open"], "trades": r["trades"][-200:], "skipped": r["skipped"][-100:], "note": None})
-    doc["timeline"] = timeline(LG.read_all(ledger_dir), doc["trades"], doc["open"], start)
+        r = run_bot(books, prices, idx, cfg, india_rate(refresh=True)); doc.update({"stats": stats(r), "equity": r["equity"], "open": r["open"], "trades": r["trades"][-200:], "skipped": r["skipped"][-100:], "note": None})
+    bt = OUT / "backtest.json"; hs = json.loads(bt.read_text(encoding="utf-8")).get("stats", {}) if bt.exists() else {}          # what the current rules did in the history
+    doc["timeline"] = timeline(LG.read_all(ledger_dir), doc["trades"], doc["open"], start, expect={"win_rate": hs["win_rate"], "profit_factor": hs["profit_factor"]} if hs.get("win_rate") else None)
     f = Path(out or OUT / "live.json"); f.parent.mkdir(parents=True, exist_ok=True); f.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
     print(f"live paper account: {len(books)} book(s) {[b['as_of'] for b in books]}; stats {doc['stats'].get('end_equity', 'not started')}; wrote {f}")
     return doc
