@@ -1,6 +1,6 @@
 {
  "as_of": "2026-10-09",
- "created_utc": "2026-10-09T12:01:32.152306+00:00",
+ "created_utc": "2026-10-09T12:31:30.617068+00:00",
  "stocks_forecast": 1357,
  "horizons": [
   1,
@@ -14,21 +14,34 @@
   "Learning": 1357
  },
  "active_strategies": [
-  "disc_f3a0927e",
-  "disc_c57140f1",
-  "disc_de46d8da",
-  "disc_c2ca1f6e",
   "disc_d2734315",
+  "disc_f1303479",
+  "disc_c2ca1f6e",
+  "disc_de46d8da",
+  "disc_9206642a",
+  "disc_4d9bd6ed",
+  "disc_f3a0927e",
+  "disc_e56ce610",
+  "disc_dc449b4b",
+  "disc_59aad73b",
+  "disc_cec157da",
+  "disc_c57140f1",
+  "disc_1d36382a",
+  "disc_116ec236",
   "disc_fc511ddb",
+  "disc_85c76631",
   "disc_280912c0",
-  "disc_b9d63934",
-  "disc_7c0b5a66",
+  "disc_f2958149",
+  "disc_5dd07bc9",
   "disc_f166572b",
+  "disc_7c0b5a66",
+  "disc_b9d63934",
   "disc_146a0748",
   "ma_cross_50_200",
   "disc_bd1271ac",
   "disc_c50d4fbc",
-  "disc_c16d1e13"
+  "disc_c16d1e13",
+  "disc_297cd4fe"
  ],
  "probation_strategies": [],
  "bullish_signals": 0,
@@ -43,7 +56,7 @@
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   65.4,
+   68.2,
    955561
   ],
   [
@@ -53,27 +66,27 @@
   ],
   [
    "fit + predict H=1",
-   20.2,
+   20.1,
    1357
   ],
   [
    "fit + predict H=5",
-   20.1,
+   20.0,
    1357
   ],
   [
    "fit + predict H=10",
-   20.2,
+   20.0,
    1357
   ],
   [
    "fit + predict H=20",
-   20.2,
+   20.0,
    1357
   ],
   [
    "fit + predict H=60",
-   20.1,
+   20.3,
    1357
   ],
   [
@@ -92,5 +105,5 @@
    1357
   ]
  ],
- "total_s": 166
+ "total_s": 169
 }

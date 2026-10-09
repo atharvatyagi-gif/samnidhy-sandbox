@@ -3,11 +3,11 @@
  "weekday": "Friday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 1613,
+ "total_s": 1749,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 4.5,
+   "seconds": 5.6,
    "note": "latest price bar 2026-10-09; delivery / F&O / macro refreshed"
   },
   {
@@ -17,32 +17,32 @@
   },
   {
    "step": "learn",
-   "seconds": 409.2,
-   "note": "1446 stocks, 49 strategies; 204 lifecycle events (194 new in the journal); states {'Active': 15, 'Retired': 6, 'Demoted': 1}"
+   "seconds": 500.5,
+   "note": "1446 stocks, 64 strategies; 300 lifecycle events (171 new in the journal); states {'Active': 28, 'Retired': 7, 'Demoted': 2}"
   },
   {
    "step": "drift",
-   "seconds": 5.0,
-   "note": "15 strategies checked, 0 alarms"
+   "seconds": 5.6,
+   "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 1011.0,
-   "note": "50 generations, 1200 new rules, 15 passed, 2400 tested in total"
+   "seconds": 1050.7,
+   "note": "50 generations, 1200 new rules, 0 passed, 3600 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 166.5,
+   "seconds": 168.8,
    "note": "as of 2026-10-09, 1357 stocks, states {'Learning': 1357}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 16.2,
+   "seconds": 17.5,
    "note": "as of 2026-10-09: bull 13, bear 25, hold 1212; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 0.5,
+   "seconds": 0.6,
    "note": "live paper account: 1 book(s); no live trade yet (the first Friday book enters at the next open)"
   },
   {
@@ -53,25 +53,25 @@
   {
    "step": "publish",
    "seconds": 0.0,
-   "note": "journal.json with 295 events"
+   "note": "journal.json with 466 events"
   }
  ],
  "errors": [],
  "counts": {
   "outcomes_written": 0,
-  "lifecycle_events": 204,
-  "journal_new": 194,
+  "lifecycle_events": 300,
+  "journal_new": 171,
   "strategy_states": {
-   "Active": 15,
-   "Retired": 6,
-   "Demoted": 1
+   "Active": 28,
+   "Retired": 7,
+   "Demoted": 2
   },
   "drift_alarms": 0,
   "discovery": {
    "generations": 50,
    "new_rules": 1200,
-   "passed": 15,
-   "total_tested": 2400
+   "passed": 0,
+   "total_tested": 3600
   },
   "forecast": {
    "as_of": "2026-10-09",
