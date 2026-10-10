@@ -3,11 +3,11 @@
  "weekday": "Saturday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 577,
+ "total_s": 1140,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 2.1,
+   "seconds": 2.7,
    "note": "latest price bar 2026-10-09; delivery / F&O / macro refreshed"
   },
   {
@@ -22,27 +22,27 @@
   },
   {
    "step": "drift",
-   "seconds": 3.2,
+   "seconds": 5.9,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 459.2,
-   "note": "50 generations, 1200 new rules, 0 passed, 8400 tested in total"
+   "seconds": 950.3,
+   "note": "50 generations, 1194 new rules, 0 passed, 9594 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 101.5,
-   "note": "as of 2026-10-09, 1378 stocks, states {'Learning': 1378}, ledger already in the ledger, not rewritten"
+   "seconds": 164.9,
+   "note": "as of 2026-10-09, 1421 stocks, states {'Learning': 1421}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 10.7,
+   "seconds": 16.1,
    "note": "as of 2026-10-09: bull 13, bear 25, hold 1237; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 0.3,
+   "seconds": 0.5,
    "note": "live paper account: 1 book(s); no live trade yet (the first Friday book enters at the next open)"
   },
   {
@@ -63,15 +63,15 @@
   "drift_alarms": 0,
   "discovery": {
    "generations": 50,
-   "new_rules": 1200,
+   "new_rules": 1194,
    "passed": 0,
-   "total_tested": 8400
+   "total_tested": 9594
   },
   "forecast": {
    "as_of": "2026-10-09",
-   "stocks_forecast": 1378,
+   "stocks_forecast": 1421,
    "product_state_counts": {
-    "Learning": 1378
+    "Learning": 1421
    },
    "ledger_status": "already in the ledger, not rewritten"
   },
