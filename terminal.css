@@ -1100,3 +1100,11 @@ html.sg-lock, html.sg-lock body { overflow: hidden; }
 .sg-wk b { font: 600 12px var(--mono); color: var(--ink); } .sg-wk small { color: var(--ink-3); } .sg-wk i { font-style: normal; white-space: nowrap; } .sg-wk i.up { color: var(--up); } .sg-wk i.down { color: var(--down); }
 .sg-wk.in-time { border-color: var(--up); } .sg-wk.late, .sg-wk.missed { border-style: dashed; } .sg-wk.missed span, .sg-wk.late span { color: var(--down); } .sg-wk.waiting { border-style: dotted; }
 .sg-by { color: var(--ink-3); font-weight: 400; letter-spacing: 0; text-transform: none; white-space: nowrap; }
+/* Indices tab (desk-indices.js) */
+.ix-table td.ix-rg { min-width: 130px; } .ix-rg small { display: block; color: var(--ink-3); font: 500 10.5px var(--mono); margin-top: 3px; }
+.ix-bar { position: relative; display: block; height: 4px; border-radius: 999px; background: var(--rule-2); } .ix-bar i { position: absolute; top: -3px; width: 2px; height: 10px; background: var(--ink); transform: translateX(-1px); }
+.ix-na td { color: var(--ink-3); } .ix-card { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.ix-top { display: flex; align-items: flex-start; gap: 12px; } .ix-top > div:first-child { flex: 1; min-width: 0; } .ix-top h4 { margin: 0; }
+.ix-now { text-align: right; display: flex; flex-direction: column; } .ix-now b { font: 600 18px var(--mono); color: var(--ink); } .ix-now small { font: 500 11px var(--mono); }
+.ix-now small.up { color: var(--up); } .ix-now small.down { color: var(--down); }
+#ix-q { min-width: 220px; }
