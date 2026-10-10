@@ -36,7 +36,7 @@ const DESC = { flow_momentum: "Buys when aggressive buyers have dominated the la
 /* ---------- loading ---------- */
 async function load() {
   try { L = await ctx.getJSON("t/c/live.json", true); } catch (e) { L = null; }
-  for (const [k, f] of [["BTCUSDT", "study.json"], ["ETHUSDT", "study_eth.json"]]) if (!STUDY[k]) { try { STUDY[k] = await ctx.getJSON("t/c/" + f, false); } catch (e) { STUDY[k] = null; } }
+  for (const [k, f] of [["BTCUSDT", "study.json"], ["ETHUSDT", "study_eth.json"], ["extra", "study_extra.json"]]) if (!STUDY[k]) { try { STUDY[k] = await ctx.getJSON("t/c/" + f, false); } catch (e) { STUDY[k] = null; } }
 }
 const prices = () => { const p = {}; for (const a of Object.keys(ASSETS)) p[a] = feed.price[a] || (L && L.assets && L.assets[a] && L.assets[a].bid) || null; return p; };
 
@@ -79,7 +79,7 @@ function sleeveHtml(k, s, px) {
   const inp = s.qty > 0, n = s.now || {}, un = inp && px ? s.qty * (px - s.entry) : null, name = short(s.asset);
   const read = s.strategy === "flow_momentum" ? `<li>Buyer dominance (flow z): <b>${n.flow24 ?? "--"}</b> <span class="mut">needs above 1.0</span></li><li>Price vs 50-bar average: <b>${n.c != null && n.sma50 ? sgn((n.c / n.sma50 - 1) * 100) : "--"}</b> <span class="mut">needs above 0%</span></li>`
     : `<li>Last close vs 24-bar high: <b>${n.c != null && n.hi24 ? sgn((n.c / n.hi24 - 1) * 100) : "--"}</b> <span class="mut">needs above 0%</span></li><li>Delta z: <b>${n.delta_z ?? "--"}</b> <span class="mut">needs above 1</span></li><li>Volume z: <b>${n.vol_z ?? "--"}</b> <span class="mut">needs above 1</span></li>`;
-  return `<div class="sg-card"><h4>${esc(s.label)} · ${esc(s.timeframe)} bars · ${Math.round(s.share * 100)}% of the budget</h4><p class="note">${esc(DESC[s.strategy] || "")}</p>
+  return `<div class="sg-card"><h4>${esc(s.label)} · ${esc(s.timeframe)} bars · ${Math.round(s.share * 100)}% of the budget</h4><p class="note">${esc(DESC[s.strategy] || "")}${s.trail ? " Its stop also moves up to 3 average bar ranges under each new closed bar, and never down, so gains are locked in." : ""}</p>
     <p class="cx-state ${inp ? "in" : ""}"><b>${inp ? "IN " + name : "FLAT (cash)"}</b>${inp ? ` · ${s.qty.toFixed(5)} ${name} bought at ${usd(s.entry)} · stop ${usd(s.stop)} · open P/L <i class="${cls(un)}">${un == null ? "--" : (un >= 0 ? "+" : "-") + usd(Math.abs(un))}</i>` : " · waiting for the entry conditions on the next closed bar"}</p>
     <ul class="cx-read">${read}</ul><p class="note">${s.trades} closed trades, ${s.wins} profitable, net ${s.net >= 0 ? "+" : "-"}${usd(Math.abs(s.net))} · sleeve value ${usd(s.equity)}</p></div>`;
 }
@@ -107,6 +107,15 @@ function studyHtml() {
   return `<div class="sg-card"><h4>The research behind it</h4>${one("BTCUSDT", STUDY.BTCUSDT)}${one("ETHUSDT", STUDY.ETHUSDT)}
     <p class="note">Return on each strategy's own account, after costs of ${(any.cost_per_fill * 100).toFixed(2)}% per fill. Selection years chose the strategies; the held-out years were looked at once. <b>Heikin-Ashi alone loses money after costs</b> (it trades constantly), and every 1-hour variant is eaten by fees. The same two 4-hour order-flow strategies made money in both periods on both coins, and kept earning at double the costs, so those are traded. Ten variants were tried per coin, so the best looks better than it will be. Bitcoin and Ethereum move together, so two coins are not two independent proofs. Buy and hold beat the strategies on Bitcoin in raw return, with a far deeper worst fall; on Ethereum the strategies beat it.</p></div>`;
 }
+function extraHtml() {
+  const X = STUDY.extra; if (!X) return ""; const V = X.variants, names = { momentum: "Order-flow momentum", breakout: "Order-flow breakout", momentum_trend: "Momentum + price above 200-bar average", cvd_trend: "Heikin-Ashi + cumulative delta high", union: "Momentum or breakout (either)", momentum_trail: "Momentum + trailing stop", breakout_trail: "Breakout + trailing stop" };
+  const elig = new Set(X.eligible_ranked_on_selection), live = new Set(["momentum_trail_4h", "breakout_4h"]);
+  const rows = Object.entries(V).sort((a, b) => (b[1].selection.sharpe ?? -9) - (a[1].selection.sharpe ?? -9)).map(([k, v]) => `<tr class="${live.has(k) ? "on" : ""}"><td>${esc(names[v.strategy] || v.strategy)} <small>${esc(v.timeframe)}${live.has(k) ? " · traded live on Bitcoin" : v.baseline ? " · was traded" : ""}</small></td>
+    <td class="r">${v.selection.sharpe ?? "--"}<small>${v.selection.trades} trades</small></td><td class="r ${cls(v.half_2020_21.return_pct)}">${sgn(v.half_2020_21.return_pct, 0)}</td><td class="r ${cls(v.half_2022_23.return_pct)}">${sgn(v.half_2022_23.return_pct, 0)}</td>
+    <td class="r ${cls(v.held_out.return_pct)}">${sgn(v.held_out.return_pct, 0)}<small>sharpe ${v.held_out.sharpe ?? "--"}</small></td><td class="r">${sgn(v["held_out_cost_0.25pct"].return_pct, 0)}</td><td>${elig.has(k) ? "eligible" : "not eligible"}</td></tr>`).join("");
+  return `<div class="sg-card"><h4>Round two · are there better Bitcoin strategies?</h4><div class="sg-tablewrap"><table class="sg-table"><thead><tr><th>Candidate</th><th class="r">Sharpe 2020-23</th><th class="r">2020-21</th><th class="r">2022-23</th><th class="r">Held out 2024-26</th><th class="r">Double costs</th><th>Gate</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="note">Fourteen candidates, written down before any result. Eligible = at least 30 trades and profitable in both halves of 2020-23; ranked on 2020-23 only. The 2024-26 years had already been seen once for the original two, so they are no longer untouched: a strategy replaced one only if it also won on 2020-23, made money in 2024-26 and at double costs, and kept at least the same 2024-26 Sharpe. Result: <b>one change</b>. Momentum now carries a trailing stop (Sharpe 0.51 → 0.86 on 2020-23, 0.79 → 0.92 on 2024-26). Breakout stays. Slower 8-hour and 12-hour versions earn more per trade but trade too rarely to trust, and the 12-hour momentum lost money in 2022-23. No candidate is a big step up; this is a modest refinement, and the live record decides.</p></div>`;
+}
 function logsHtml() {
   if (!L) return "";
   const tr = (L.trades || []).slice().reverse().slice(0, 40), dc = (L.decisions || []).slice().reverse().slice(0, 40);
@@ -116,7 +125,7 @@ function logsHtml() {
 }
 function shell() {
   return `<div class="page-head"><p class="kick">— Crypto · Bitcoin · Ethereum · order flow · paper trading</p><h2>Every trade, <span class="acc">as it happens.</span></h2><p class="asof" id="cx-asof"></p></div>
-    ${stageHtml()}<div id="cx-acct"></div><div id="cx-depth"></div><div id="cx-study"></div><div id="cx-logs"></div>
+    ${stageHtml()}<div id="cx-acct"></div><div id="cx-depth"></div><div id="cx-study"></div><div id="cx-extra"></div><div id="cx-logs"></div>
     <p class="note">Simulated money on real prices from the day the account started. No exchange account, no real order. Fills pay Binance's taker fee and slippage (0.12% each way); India's 30% tax on gains and 1% TDS are not modelled. Educational analysis only, not investment advice.</p>`;
 }
 function hud(h) {
@@ -139,7 +148,7 @@ export async function mount() {
   root = document.getElementById("crypto"); if (!root) return;
   if (ctl) { ctl.destroy(); ctl = null; }
   root.innerHTML = '<p class="note">Loading…</p>'; await load(); root.innerHTML = shell(); bindStage();
-  root.querySelector("#cx-acct").innerHTML = accountHtml(); root.querySelector("#cx-depth").innerHTML = depthHtml(); root.querySelector("#cx-study").innerHTML = studyHtml(); root.querySelector("#cx-logs").innerHTML = logsHtml();
+  root.querySelector("#cx-acct").innerHTML = accountHtml(); root.querySelector("#cx-depth").innerHTML = depthHtml(); root.querySelector("#cx-study").innerHTML = studyHtml(); root.querySelector("#cx-extra").innerHTML = extraHtml(); root.querySelector("#cx-logs").innerHTML = logsHtml();
   connect(() => !!(root && root.isConnected)); prevQty = null; syncAccount();
   const reduced = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   mount3d(root.querySelector("#cx3-host"), { reduced, onHud: hud, onToast: () => {} }).then(c => { if (!c) { const o = root && root.querySelector("#cx3-off"); if (o) o.hidden = false; return; } if (!root || !root.isConnected) { c.destroy(); return; } ctl = c; ctl.setAsset(feed.sel); if (L) ctl.setPositions(L.sleeves, prices()); }).catch(() => { const o = root && root.querySelector("#cx3-off"); if (o) o.hidden = false; });

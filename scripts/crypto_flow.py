@@ -99,9 +99,9 @@ def size_value(equity, price, stop, cost=COST, risk=RISK, cap=1.0):
     return max(0.0, min(equity * cap / (1 + cost), equity * risk / (dist / price))) if dist > 0 and price > 0 else 0.0
 
 
-def simulate(f, strat, cash0=1.0, cost=COST, risk=RISK, cap=1.0, enter=None, exit_=None):
+def simulate(f, strat, cash0=1.0, cost=COST, risk=RISK, cap=1.0, enter=None, exit_=None, trail=False):
     """One sleeve over the bars. Returns {equity: Series (marked at each bar close), trades: [...]}. State machine mirrors the live engine."""
-    en, ex = signals(f, strat) if enter is None else (enter, exit_); o, h, l, c, atr = (f[k].values for k in ("o", "h", "l", "c", "atr")); idx = f.index; n = len(f); k_atr = STOP_ATR[strat]; hold_max = MAX_HOLD.get(strat)
+    en, ex = signals(f, strat) if enter is None else (enter, exit_); o, h, l, c, atr = (f[k].values for k in ("o", "h", "l", "c", "atr")); idx = f.index; n = len(f); k_atr = STOP_ATR.get(strat, 3.0); hold_max = MAX_HOLD.get(strat)
     cash, qty, entry, stop, held, eq, trades, pend_en, pend_ex, pend_stop = cash0, 0.0, 0.0, 0.0, 0, np.full(n, np.nan), [], False, False, 0.0
     ecost = 0.0
     def close(i, px, why):
@@ -126,6 +126,8 @@ def simulate(f, strat, cash0=1.0, cost=COST, risk=RISK, cap=1.0, enter=None, exi
             elif hold_max and held >= hold_max:
                 close(i, c[i], "time"); pend_ex = False
         eq[i] = cash + qty * c[i]
+        if qty > 0 and trail and not math.isnan(atr[i]):
+            stop = max(stop, c[i] - k_atr * atr[i])                                       # a trailing stop only ever moves up, from the next bar on
         if qty > 0 and ex[i]:
             pend_ex = True
         if qty == 0 and en[i] and not (math.isnan(atr[i])):
