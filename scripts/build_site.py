@@ -118,7 +118,7 @@ def main() -> None:
             shutil.copytree(TERMINAL / sub, SITE / "t" / dst, ignore=shutil.ignore_patterns("_meta.json"))
     if (DATA / "crypto" / "live.json").exists():          # Bitcoin order-flow paper account (scripts/crypto_live.py, workflow Crypto live) and its research
         (SITE / "t" / "c").mkdir(exist_ok=True)
-        for name in ("live.json", "study.json", "study_eth.json"):
+        for name in ("live.json", "study.json", "study_eth.json", "study_extra.json"):
             if (DATA / "crypto" / name).exists():
                 shutil.copyfile(DATA / "crypto" / name, SITE / "t" / "c" / name)
     if (DATA / "institutional" / "fii_dii.json").exists():   # the Advanced page refreshes FII/DII from this

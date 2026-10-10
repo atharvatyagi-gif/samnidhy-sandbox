@@ -91,3 +91,25 @@ def test_depth_stats_wait_for_enough_samples_then_report_a_rank_correlation_per_
     st = CL.depth_stats(rows); b = st["BTCUSDT"]
     assert b["n"] == 80 and b["next_1h"]["n"] == 79 and b["next_1h"]["rho"] is not None and b["next_1h"]["needs_abs_rho_above"] == pytest.approx(2 / 79 ** 0.5, abs=1e-3) and st["ETHUSDT"] == {"n": 0}
     assert CL.depth_stats(rows[:10])["BTCUSDT"]["next_1h"]["rho"] is None                                        # too few samples: no number
+
+
+def test_a_trailing_stop_is_tested_against_the_level_in_force_at_each_candle():
+    idx = pd.date_range("2026-10-10 00:00", periods=6, freq="15min"); lows = [99, 95, 95, 99, 98, 99]
+    bars = pd.DataFrame({"o": [100.0] * 6, "h": [101.0] * 6, "l": [float(x) for x in lows], "c": [100.0] * 6}, index=idx)
+    hist = [("2026-10-10T00:05:00+00:00", 90.0), ("2026-10-10T00:45:00+00:00", 98.5)]                         # stop 90 until 00:45, then raised to 98.5
+    assert CL.stop_hit(bars, "2026-10-10T00:05:00+00:00", hist, 100.0) == (98.5, str(idx[4]))              # the 95 lows before 00:45 were above the old stop; the 98 low at 01:00 is under the raised one
+    assert CL.stop_hit(bars, "2026-10-10T00:05:00+00:00", hist[:1], 100.0) is None
+    assert CL.stop_hit(bars, "2026-10-10T00:05:00+00:00", 94.0, 100.0) is None and CL.stop_hit(bars, "2026-10-10T00:05:00+00:00", 96.0, 100.0)[0] == 96.0
+
+
+@needs
+def test_the_bitcoin_momentum_stop_ratchets_up_with_price_and_never_down(tmp_path, monkeypatch):
+    bb, be, bars, q = _world(); led, out = _paths(tmp_path, monkeypatch); now = datetime(2026, 6, 30, 12, 20, tzinfo=timezone.utc)
+    monkeypatch.setattr(CF, "signals", lambda f, s: (pd.Series([False] * (len(f) - 1) + [s == "flow_momentum"]).values, pd.Series([False] * len(f)).values)); CL.live_step(now, bars, q, 96.0, led, out, depth=FLAT)
+    _, S = CL.replay(CL.read_ledger(led)); s0 = S["btc_flow_momentum"]["stop"]; assert s0 is not None and S["eth_flow_momentum"]["stop"] is not None
+    e = pd.Timestamp("2026-06-30 16:00"); b2 = bb[bb.index < e].copy(); b2.loc[b2.index[-16:], ["o", "h", "l", "c"]] *= 1.03; bars2 = {"BTCUSDT": b2, "ETHUSDT": be[be.index < e]}
+    q2 = {a: {"bid": float(b["c"].iloc[-1]), "ask": float(b["c"].iloc[-1]) + 1, "mid": float(b["c"].iloc[-1])} for a, b in bars2.items()}; monkeypatch.setattr(CF, "signals", lambda f, s: (pd.Series([False] * len(f)).values, pd.Series([False] * len(f)).values))
+    CL.live_step(datetime(2026, 6, 30, 16, 10, tzinfo=timezone.utc), bars2, q2, 96.0, led, out, depth=FLAT); lines = CL.read_ledger(led); _, S2 = CL.replay(lines)
+    ups = [r for r in lines if r["t"] == "stop"]; assert len(ups) == 1 and ups[0]["sleeve"] == "btc_flow_momentum" and ups[0]["stop"] > s0 and S2["btc_flow_momentum"]["stop"] == ups[0]["stop"]
+    assert S2["eth_flow_momentum"]["stop"] == S["eth_flow_momentum"]["stop"] and any(r["t"] == "rule_change" for r in lines)                  # only the Bitcoin momentum sleeve trails
+    n = len(lines); CL.live_step(datetime(2026, 6, 30, 16, 20, tzinfo=timezone.utc), bars2, q2, 96.0, led, out, depth=FLAT); assert len(CL.read_ledger(led)) == n               # the same bar never raises it twice
