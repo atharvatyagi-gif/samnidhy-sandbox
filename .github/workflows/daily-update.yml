@@ -84,6 +84,10 @@ jobs:
         continue-on-error: true
         run: python scripts/terminal_hist.py
 
+      - name: Every Indian index (NSE's end-of-day file; BSE and Bitcoin from Yahoo) for the Indices tab
+        continue-on-error: true
+        run: python scripts/indices_eod.py
+
       - name: Fundamentals for the terminal (NIFTY 500 daily, rest of the main board 1/5 per run, business-house members always)
         continue-on-error: true
         run: python scripts/terminal_fund.py
