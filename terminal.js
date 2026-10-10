@@ -20,6 +20,7 @@ import * as A2V from "./desk-a2views.js";
 import * as A2B from "./desk-a2bot.js";
 import * as SG from "./desk-signals.js";
 import * as IX from "./desk-indices.js";
+import * as CX from "./desk-crypto.js";
 import { withOfficialClose } from "./intraday-close.js";
 import * as Ticks from "./desk-ticks.js";
 import * as Nexus from "./desk-nexus.js";
@@ -231,7 +232,7 @@ const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json
 const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "telemetry", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
 function deskCtx() { return { serverNow: Ticks.serverNow, renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
-function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2V.init(c); A2B.init(c); SG.init(c); IX.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); if (view === "terminal" && sec && (sym === sec || sym === "*") && !isIntra(iv)) drawChart(true); }); }
+function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2V.init(c); A2B.init(c); SG.init(c); IX.init(c); CX.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); if (view === "terminal" && sec && (sym === sec || sym === "*") && !isIntra(iv)) drawChart(true); }); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
@@ -266,6 +267,7 @@ function go(v, quiet) {
   if (v === "lab") Aladin.renderAladin();
   if (v === "signals") SG.mount();
   if (v === "indices") IX.mount();
+  if (v === "crypto") CX.mount();
   if (v === "a2") A2V.mount();
   if (v === "a2bot") A2B.mount();
   if (!quiet) $("#v-" + v).scrollTop = 0;
@@ -1493,7 +1495,7 @@ async function openSec(sym) {
 }
 
 /* ================= search ================= */
-const FUNCS = { BRIEF: "Brief", TERMINAL: "Terminal", MOVERS: "Movers", SECTORS: "Sectors", WORLD: "World", INDICES: "Indices and Bitcoin", OUTLOOK: "Outlook", NEWS: "News", WATCHLIST: "Watchlist", HOUSES: "Business houses", TOOLS: "Tools (ALADIN)", ALADIN: "ALADIN probabilities", SETUP: "Set up desk", BACK: "Back to B-Lab", LOGOFF: "Log off" };
+const FUNCS = { BRIEF: "Brief", TERMINAL: "Terminal", MOVERS: "Movers", SECTORS: "Sectors", WORLD: "World", INDICES: "Indices and Bitcoin", CRYPTO: "Crypto: Bitcoin order-flow paper account", OUTLOOK: "Outlook", NEWS: "News", WATCHLIST: "Watchlist", HOUSES: "Business houses", TOOLS: "Tools (ALADIN)", ALADIN: "ALADIN probabilities", SETUP: "Set up desk", BACK: "Back to B-Lab", LOGOFF: "Log off" };
 // shared fuzzy symbol/company scorer (lower = better) used by both the "+ Add to watchlist" picker (modal,
 // below) and the command line's autocomplete (further down) - one matching algorithm, not two to keep in sync.
 function scoreStocks(Q, filter) { return scoreStocksRaw(Q, filter).map(r => r[2]); }

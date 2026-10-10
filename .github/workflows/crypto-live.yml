@@ -1,0 +1,51 @@
+# Bitcoin order-flow paper account (scripts/crypto_live.py): every 15 minutes it reads Binance's public market data, checks stops, acts once per closed 4-hour bar and marks the account to market.
+# Simulated money only (hard budget Rs 10,00,000, no leverage). Fills and decisions go to data/crypto/ledger.jsonl (append-only, committed at once); the page data and an hourly equity point are committed hourly.
+# GitHub's scheduler can be late or skip a run: the engine logs a decision made more than 60 minutes after a bar closed as skipped, and the page warns when the last run is older than 45 minutes.
+name: Crypto live
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crypto-live
+  cancel-in-progress: false
+
+jobs:
+  step:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ALADIN_GIT_PUSH: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        run: pip install pandas==2.3.3 numpy==2.3.4 requests==2.34.2
+
+      - name: One engine step
+        run: python scripts/crypto_live.py
+
+      - name: Save the ledger at once, the page data and the hourly point when they changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/crypto/ledger.jsonl data/crypto/marks.jsonl; then git checkout -- data/crypto/live.json 2>/dev/null || true; fi
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, "scripts")
+          from gitops import commit_and_push
+          ok = commit_and_push(["data/crypto/ledger.jsonl", "data/crypto/marks.jsonl", "data/crypto/live.json"], "Crypto paper account: ledger and marks [skip ci]", min_interval_s=0, state_file="data/crypto_gitops_state.json")
+          print("committed and pushed" if ok else "nothing new to save (or push not allowed)")
+          PY

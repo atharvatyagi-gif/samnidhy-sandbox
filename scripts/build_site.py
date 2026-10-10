@@ -29,7 +29,7 @@ SITE = ROOT / "site"
 STATIC = ["index.html", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "terminal-guide.js", "terminal-guide.css", "glossary.js", "site-guide.js", "site-guide.css", "site-footer.js", "404.html", "manifest.webmanifest", "favicon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "og.png", "styleguide.html", "auth.html", "auth-check.js", "config.js",
           "expert-terminal.html", "terminal.css", "terminal.js", "intraday-close.js", "reload-home.js",
           "chart-engine.js", "chart-indicators.js", "mode-dock.js", "globe-map.js",
-          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-aladin2.js", "desk-a2views.js", "intraday-close.js", "desk-a2live.js", "desk-a2bot.js", "desk-signals.js", "desk-indices.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe-layers.js", "desk-globe3d.js"]
+          "desk-houses.js", "desk-map.js", "desk-aladin.js", "desk-aladin2.js", "desk-a2views.js", "intraday-close.js", "desk-a2live.js", "desk-a2bot.js", "desk-signals.js", "desk-indices.js", "desk-crypto.js", "desk-ticks.js", "desk-nexus.js", "desk-cmd.js", "desk-lanes.js", "desk-globe.js", "desk-deps.js", "desk-movers.js", "desk-sectors.js", "desk-kin.js", "desk-kin-live.js", "desk-globe-layers.js", "desk-globe3d.js"]
 TERMINAL = ROOT / "data" / "terminal"
 # Scripts/styles that pages load. Browsers keep these for a while (GitHub Pages: 10 min, some longer), so an
 # update could mix a new page with an old script. Every reference gets ?v=<hash of the file>, which changes
@@ -37,7 +37,7 @@ TERMINAL = ROOT / "data" / "terminal"
 # ORDER MATTERS: a file must come AFTER every file it imports (desk-map imports desk-aladin, which imports desk-ticks), because each file is stamped with
 # the hashes of the files before it. Out of order, an import keeps its plain address while the page loads the hashed one, and the browser runs the file
 # twice as two separate modules (one of them never initialised). tests/test_build_assets.py checks this.
-ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "glossary.js", "terminal-guide.js", "terminal-guide.css", "site-guide.js", "site-guide.css", "site-footer.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-kin.js", "desk-kin-live.js", "desk-ticks.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-aladin2.js", "desk-a2views.js", "intraday-close.js", "desk-a2live.js", "desk-a2bot.js", "desk-signals.js", "desk-indices.js", "desk-movers.js", "desk-sectors.js", "desk-globe-layers.js", "desk-globe3d.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
+ASSETS = ["config.js", "reload-home.js", "mode-dock.js", "landing.css", "landing.js", "site.css", "fx.js", "transitions.js", "site-nav.js", "landing-fx.js", "session-scrubber.js", "advanced-fx.js", "auth-fx.js", "terminal-fx.js", "terminal-fx.css", "glossary.js", "terminal-guide.js", "terminal-guide.css", "site-guide.js", "site-guide.css", "site-footer.js", "terminal.css", "chart-indicators.js", "chart-engine.js", "globe-map.js", "desk-kin.js", "desk-kin-live.js", "desk-ticks.js", "desk-lanes.js", "desk-deps.js", "desk-nexus.js", "desk-cmd.js", "desk-aladin.js", "desk-aladin2.js", "desk-a2views.js", "intraday-close.js", "desk-a2live.js", "desk-a2bot.js", "desk-signals.js", "desk-indices.js", "desk-crypto.js", "desk-movers.js", "desk-sectors.js", "desk-globe-layers.js", "desk-globe3d.js", "desk-globe.js", "desk-map.js", "desk-houses.js", "terminal.js", "auth-check.js"]
 
 
 def geo_summary(g: dict) -> dict:
@@ -116,6 +116,11 @@ def main() -> None:
     for sub, dst in (("hist", "h"), ("intra", "i"), ("daily", "d"), ("replay", "r"), ("idx/out", "x")):          # x: every Indian index + Bitcoin (scripts/indices_eod.py)
         if (TERMINAL / sub).exists():
             shutil.copytree(TERMINAL / sub, SITE / "t" / dst, ignore=shutil.ignore_patterns("_meta.json"))
+    if (DATA / "crypto" / "live.json").exists():          # Bitcoin order-flow paper account (scripts/crypto_live.py, workflow Crypto live) and its research
+        (SITE / "t" / "c").mkdir(exist_ok=True)
+        for name in ("live.json", "study.json"):
+            if (DATA / "crypto" / name).exists():
+                shutil.copyfile(DATA / "crypto" / name, SITE / "t" / "c" / name)
     if (DATA / "institutional" / "fii_dii.json").exists():   # the Advanced page refreshes FII/DII from this
         (SITE / "institutional.json").write_text(json.dumps(analyst_fields.flow_doc(json.loads((DATA / "institutional" / "fii_dii.json").read_text(encoding="utf-8"))), ensure_ascii=False), encoding="utf-8")
     if (DATA / "predict" / "latest.json").exists():   # the terminal's Outlook tab (scripts/predict_model.py)
