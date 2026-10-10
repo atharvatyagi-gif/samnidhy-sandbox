@@ -37,8 +37,12 @@ TFS = {"1h": "1h", "4h": "4h"}
 STRATS = ["ha_trend", "ha_flow", "flow_momentum", "flow_absorb", "flow_breakout"]
 
 
-def load_bars(path=None):
-    b = pd.read_csv(path or BARS, index_col=0, parse_dates=True); return b
+def bars_path(symbol="BTCUSDT"):
+    return BARS if symbol == "BTCUSDT" else OUT / f"bars_15m_{symbol[:-4].lower()}.csv.gz"
+
+
+def load_bars(path=None, symbol="BTCUSDT"):
+    return pd.read_csv(path or bars_path(symbol), index_col=0, parse_dates=True)
 
 
 def resample(b, tf):
@@ -149,8 +153,8 @@ def boot_mean(tr, n=2000, seed=0):
     i = rng.integers(0, len(s), size=(n, len(s))); b = s["sum"].values[i].sum(1) / s["count"].values[i].sum(1); return [round(float(np.percentile(b, 2.5)), 3), round(float(np.percentile(b, 97.5)), 3)]
 
 
-def study(bars=None):
-    bars = load_bars() if bars is None else bars; res, curves = {}, {}
+def study(bars=None, symbol="BTCUSDT"):
+    bars = load_bars(symbol=symbol) if bars is None else bars; res, curves = {}, {}
     for tf in TFS:
         f = features(resample(bars, tf)); f = f[f.index >= "2020-01-15"]
         bh = (f["c"] / f["c"].iloc[0]).rename("bh")
@@ -168,13 +172,13 @@ def study(bars=None):
     elig = {k: v["selection"] for k, v in res.items() if not k.startswith("buy_hold") and v["selection"].get("trades", 0) >= MIN_TRADES and v["selection"].get("sharpe") is not None}
     rank = sorted(elig, key=lambda k: -elig[k]["sharpe"])
     return {"protocol": __doc__.strip(), "cost_per_fill": COST, "risk_per_trade": RISK, "selection_years": "2020-2023", "held_out_years": "2024-2026-09", "bars": f"{bars.index[0].date()} to {bars.index[-1].date()}",
-            "variants": res, "ranked_on_selection": rank, "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds")}, curves
+            "symbol": symbol, "variants": res, "ranked_on_selection": rank, "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds")}, curves
 
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--study", action="store_true"); a = ap.parse_args()
+    ap = argparse.ArgumentParser(); ap.add_argument("--study", action="store_true"); ap.add_argument("--symbol", default="BTCUSDT"); a = ap.parse_args()
     if a.study:
-        s, curves = study(); (OUT / "study.json").write_text(json.dumps(s, separators=(",", ":")), encoding="utf-8")
+        s, curves = study(symbol=a.symbol); (OUT / ("study.json" if a.symbol == "BTCUSDT" else f"study_{a.symbol[:-4].lower()}.json")).write_text(json.dumps(s, separators=(",", ":")), encoding="utf-8")
         P = lambda d: f"n={d.get('trades', 0):4d} ret {d.get('return_pct')!s:>7}% dd {d.get('max_drawdown_pct')!s:>6}% sharpe {d.get('sharpe')!s:>5} win {d.get('win_rate')!s:>5} avg {d.get('avg_net_pct')!s:>6}% pf {d.get('profit_factor')!s:>5}"
         for k, v in s["variants"].items():
             print(f"{k:22s} SEL {P(v['selection'])} || HELD {P(v['held_out'])}" + (f" || @0.25%: ret {v['held_out_cost_0.25pct'].get('return_pct')}% avg {v['held_out_cost_0.25pct'].get('avg_net_pct')}%" if "held_out_cost_0.25pct" in v else ""))
