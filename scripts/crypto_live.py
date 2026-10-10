@@ -122,7 +122,7 @@ def live_step(now=None, bars=None, q=None, fx=None, ledger=None, out=None):
             raise RuntimeError("the start rate (USD/INR) is not available: not starting the account")
         append({"t": "start", "ts": ts, "budget_inr": BUDGET_INR, "fx0": fx, "budget_usd": round(BUDGET_INR / fx, 2), "price0": q["mid"], "sleeves": {k: {"share": v["share"], "tf": v["tf"]} for k, v in SLEEVES.items()},
                 "note": "forward clock starts: only decisions from here on count. Hard budget: no leverage, no top-ups."}, led); lines = read_ledger(led)
-    start, S = replay(lines); feats, status = {}, {}
+    start, S = replay(lines); feats, status = {}, {}; fresh_start = not any(r["t"] == "decision" for r in lines)          # this run is the very first one
     for name, cfg in SLEEVES.items():
         a = S[name]; f = CF.features(CF.resample(bars, cfg["tf"])); feats[name] = f; bar = str(f.index[-1]); close_t = f.index[-1] + pd.Timedelta(cfg["tf"]); late = (now.replace(tzinfo=None) - close_t.to_pydatetime()).total_seconds() / 60
         if a["qty"] > 0:                                                                     # 1. stops first
@@ -133,8 +133,7 @@ def live_step(now=None, bars=None, q=None, fx=None, ledger=None, out=None):
         if bar not in a["decided"]:                                                          # 2. one decision per closed 4-hour bar
             en, ex = CF.signals(f, name); act, why, row = "hold", None, f.iloc[-1]
             if late > LATE_MIN:
-                act, why = "skipped", (f"the account started {late:.0f} min after this bar closed: it only acts on bars it saw close" if not a["decided"] and not a["trades"] and a["qty"] == 0 and len([1 for r in lines if r["t"] == "decision"]) == 0
-                                       else f"decision {late:.0f} min after the bar closed (limit {LATE_MIN}): the engine was not running")
+                act, why = "skipped", (f"the account started {late:.0f} min after this bar closed: it only acts on bars it saw close" if fresh_start else f"decision {late:.0f} min after the bar closed (limit {LATE_MIN}): the engine was not running")
             elif a["qty"] > 0 and ex[-1]:
                 price = q["bid"]; fee = a["qty"] * price * CF.COST; act = "sell"; append({"t": "fill", "ts": ts, "sleeve": name, "side": "sell", "why": "signal", "price": round(price, 2), "qty": round(a["qty"], 8), "cost": round(fee, 2), "bid": q["bid"], "ask": q["ask"], "bar": bar}, led)
             elif a["qty"] == 0 and en[-1] and not math.isnan(row["atr"]):
