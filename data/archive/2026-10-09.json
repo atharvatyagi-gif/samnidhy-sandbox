@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-10T08:02:45+00:00",
+  "generated_on": "2026-10-10T10:05:36+00:00",
   "session_date": "2026-10-09",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -153,7 +153,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.745653,
-      "total_return": 13.6522,
+      "total_return": 13.652202,
       "annualised_volatility": 0.291883,
       "max_drawdown": -0.26899,
       "beta": 0.436
@@ -179,7 +179,7 @@
         "first_date": "2021-10-04",
         "trading_days": 1239,
         "years": 5.01,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.302943,
       "total_return": 2.579164,
@@ -202,13 +202,13 @@
         "turnover_crore": 34.43
       },
       "latest_close": 460.15,
-      "trailing_pe": 30.31291,
+      "trailing_pe": 31.495552,
       "market_cap": 166915440640,
       "history": {
         "first_date": "2021-10-04",
         "trading_days": 1239,
         "years": 5.01,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.144257,
       "total_return": -0.52795,
@@ -301,7 +301,7 @@
       "KEC.NS": 0.028281,
       "ANANDRATHI.NS": 0.01478,
       "PFOCUS.NS": 0.023444,
-      "AARTIIND.NS": 0.03064
+      "AARTIIND.NS": 0.030639
     },
     "INOXWIND.NS": {
       "CYIENT.NS": 0.042652,
@@ -314,7 +314,7 @@
     "KEC.NS": {
       "CYIENT.NS": 0.028281,
       "INOXWIND.NS": 0.051539,
-      "KEC.NS": 0.151263,
+      "KEC.NS": 0.151262,
       "ANANDRATHI.NS": 0.013288,
       "PFOCUS.NS": 0.025218,
       "AARTIIND.NS": 0.035524
@@ -336,7 +336,7 @@
       "AARTIIND.NS": 0.040023
     },
     "AARTIIND.NS": {
-      "CYIENT.NS": 0.03064,
+      "CYIENT.NS": 0.030639,
       "INOXWIND.NS": 0.058219,
       "KEC.NS": 0.035524,
       "ANANDRATHI.NS": 0.017053,
@@ -706,7 +706,7 @@
         1373.42,
         1407.21,
         1394.68,
-        1488.81,
+        1488.82,
         1470.89,
         1469.89,
         1515.08,
@@ -1158,7 +1158,7 @@
         481.86,
         505.44,
         481.52,
-        449.28,
+        449.27,
         440.76,
         429.54,
         387.96,
@@ -2048,7 +2048,7 @@
         587.61,
         594.91,
         645.65,
-        625.48,
+        625.47,
         612.8,
         674.77,
         630.25,
