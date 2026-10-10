@@ -1108,3 +1108,10 @@ html.sg-lock, html.sg-lock body { overflow: hidden; }
 .ix-now { text-align: right; display: flex; flex-direction: column; } .ix-now b { font: 600 18px var(--mono); color: var(--ink); } .ix-now small { font: 500 11px var(--mono); }
 .ix-now small.up { color: var(--up); } .ix-now small.down { color: var(--down); }
 #ix-q { min-width: 220px; }
+/* Crypto tab (desk-crypto.js) */
+.cx-price { display: flex; align-items: baseline; gap: 12px; margin: 4px 0 14px; } .cx-price span { font: 600 11px var(--mono); letter-spacing: 0.07em; color: var(--ink-3); } .cx-price b { font: 600 30px var(--mono); color: var(--ink); } .cx-price em { font: 500 13px var(--mono); color: var(--ink-3); font-style: normal; }
+.sg-dot.off { background: var(--ink-3); animation: none; } .cx-flow { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--sunken); border: 1px solid var(--rule); }
+.cx-flow i { display: block; height: 100%; } .cx-flow i.up { background: var(--up); } .cx-flow i.down { background: var(--down); } .cx-cvd { color: var(--ink-3); } .cx-cvd.up { color: var(--up); } .cx-cvd.down { color: var(--down); } .cx-spark { width: 100%; height: 60px; }
+.cx-sleeves { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 14px; } .cx-state { margin: 6px 0; font-size: 13px; color: var(--ink-2); } .cx-state.in b { color: var(--up); } .cx-state i { font-style: normal; font-weight: 600; } .cx-state i.up { color: var(--up); } .cx-state i.down { color: var(--down); }
+.cx-read { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--ink-2); } .cx-read .mut { color: var(--ink-3); font-size: 11.5px; }
+#cx-study, #cx-logs, #cx-flow, #cx-acct { margin-bottom: 14px; } #cx-acct .sg-card, #cx-study .sg-card { margin-bottom: 14px; } #cx-study tr.on td { background: var(--sunken); }
