@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-10T04:58:56+00:00",
+  "generated_on": "2026-10-10T08:02:45+00:00",
   "session_date": "2026-10-09",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -115,7 +115,7 @@
         "turnover_crore": 613.03
       },
       "latest_close": 369.85,
-      "trailing_pe": 16.811363,
+      "trailing_pe": 17.78125,
       "market_cap": 98454069248,
       "history": {
         "first_date": "2021-10-04",
@@ -144,7 +144,7 @@
         "turnover_crore": 223.98
       },
       "latest_close": 2038.7,
-      "trailing_pe": 76.816124,
+      "trailing_pe": 73.229164,
       "market_cap": 338508316672,
       "history": {
         "first_date": "2021-12-14",
@@ -153,7 +153,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.745653,
-      "total_return": 13.652202,
+      "total_return": 13.6522,
       "annualised_volatility": 0.291883,
       "max_drawdown": -0.26899,
       "beta": 0.436
@@ -301,7 +301,7 @@
       "KEC.NS": 0.028281,
       "ANANDRATHI.NS": 0.01478,
       "PFOCUS.NS": 0.023444,
-      "AARTIIND.NS": 0.030639
+      "AARTIIND.NS": 0.03064
     },
     "INOXWIND.NS": {
       "CYIENT.NS": 0.042652,
@@ -336,7 +336,7 @@
       "AARTIIND.NS": 0.040023
     },
     "AARTIIND.NS": {
-      "CYIENT.NS": 0.030639,
+      "CYIENT.NS": 0.03064,
       "INOXWIND.NS": 0.058219,
       "KEC.NS": 0.035524,
       "ANANDRATHI.NS": 0.017053,
@@ -706,7 +706,7 @@
         1373.42,
         1407.21,
         1394.68,
-        1488.82,
+        1488.81,
         1470.89,
         1469.89,
         1515.08,
@@ -1239,7 +1239,7 @@
         610.47,
         636.42,
         655.0,
-        661.74,
+        661.75,
         645.52,
         641.26,
         647.72,
@@ -1931,7 +1931,7 @@
         261.1
       ],
       "AARTIIND.NS": [
-        1092.82,
+        1092.83,
         1091.0,
         995.1,
         949.78,
