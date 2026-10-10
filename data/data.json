@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-10T04:04:07+00:00",
+  "generated_on": "2026-10-10T04:58:56+00:00",
   "session_date": "2026-10-09",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -86,7 +86,7 @@
         "turnover_crore": 246.02
       },
       "latest_close": 66.65,
-      "trailing_pe": 25.933853,
+      "trailing_pe": 27.655602,
       "market_cap": 115187056640,
       "history": {
         "first_date": "2021-10-04",
@@ -173,7 +173,7 @@
         "turnover_crore": 115.86
       },
       "latest_close": 261.1,
-      "trailing_pe": 146.6854,
+      "trailing_pe": 141.13513,
       "market_cap": 203337859072,
       "history": {
         "first_date": "2021-10-04",
@@ -202,7 +202,7 @@
         "turnover_crore": 34.43
       },
       "latest_close": 460.15,
-      "trailing_pe": 31.495552,
+      "trailing_pe": 30.31291,
       "market_cap": 166915440640,
       "history": {
         "first_date": "2021-10-04",
@@ -314,7 +314,7 @@
     "KEC.NS": {
       "CYIENT.NS": 0.028281,
       "INOXWIND.NS": 0.051539,
-      "KEC.NS": 0.151262,
+      "KEC.NS": 0.151263,
       "ANANDRATHI.NS": 0.013288,
       "PFOCUS.NS": 0.025218,
       "AARTIIND.NS": 0.035524
@@ -1931,7 +1931,7 @@
         261.1
       ],
       "AARTIIND.NS": [
-        1092.83,
+        1092.82,
         1091.0,
         995.1,
         949.78,
@@ -2048,7 +2048,7 @@
         587.61,
         594.91,
         645.65,
-        625.47,
+        625.48,
         612.8,
         674.77,
         630.25,
