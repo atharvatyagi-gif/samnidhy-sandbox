@@ -1115,3 +1115,27 @@ html.sg-lock, html.sg-lock body { overflow: hidden; }
 .cx-sleeves { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 14px; } .cx-state { margin: 6px 0; font-size: 13px; color: var(--ink-2); } .cx-state.in b { color: var(--up); } .cx-state i { font-style: normal; font-weight: 600; } .cx-state i.up { color: var(--up); } .cx-state i.down { color: var(--down); }
 .cx-read { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--ink-2); } .cx-read .mut { color: var(--ink-3); font-size: 11.5px; }
 #cx-study, #cx-logs, #cx-flow, #cx-acct { margin-bottom: 14px; } #cx-acct .sg-card, #cx-study .sg-card { margin-bottom: 14px; } #cx-study tr.on td { background: var(--sunken); }
+/* Crypto tab, 3D view (desk-crypto3d.js) */
+.cx3 { position: relative; margin: 0 0 14px; border: 1px solid var(--rule-2); border-radius: var(--r-card); background: var(--sunken); overflow: hidden; }
+.cx3-host { position: relative; height: min(62vh, 560px); min-height: 360px; } .cx3-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; } .cx3-canvas:active { cursor: grabbing; }
+.cx3-hud { position: absolute; left: 14px; top: 12px; right: 14px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; max-width: 520px; } .cx3-hud .sg-chips, .cx3-hud button { pointer-events: auto; }
+.cx3-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; } .cx3-px { display: flex; align-items: baseline; gap: 10px; } .cx3-px b { font: 600 26px var(--mono); color: var(--ink); } .cx3-px em { font: 500 12px var(--mono); color: var(--ink-3); font-style: normal; }
+.cx3-stats { display: flex; flex-wrap: wrap; gap: 4px 16px; font: 500 11px var(--mono); color: var(--ink-3); } .cx3-stats b { color: var(--ink); font-weight: 600; } .cx3-stats .up b { color: var(--up); } .cx3-stats .down b { color: var(--down); }
+.cx3 .cx-flow { height: 8px; max-width: 360px; }
+.cx3-ctl { position: absolute; right: 14px; bottom: 44px; display: flex; gap: 6px; } .cx3-ctl .btn-line.on { border-color: var(--acc-edge); color: var(--ink); }
+.cx3-leg { margin: 0; padding: 8px 14px; font: 500 11px var(--mono); color: var(--ink-3); border-top: 1px solid var(--rule); background: var(--sunken); } .cx3-leg .up { color: var(--up); } .cx3-leg .down { color: var(--down); }
+.cx3-toast { position: absolute; left: 50%; bottom: 56px; transform: translateX(-50%); padding: 8px 14px; border: 1px solid var(--acc-edge); border-radius: var(--r); background: var(--sunken); color: var(--ink); font: 600 12px var(--mono); opacity: 0; transition: opacity 0.4s; pointer-events: none; text-align: center; max-width: 92%; } .cx3-toast.on { opacity: 1; }
+.cx3-off { margin: 0; padding: 10px 14px; font-size: 12.5px; color: var(--ink-2); }
+@media (max-width: 640px) { .cx3-host { min-height: 320px; } .cx3-ctl { bottom: 70px; } .cx3-px b { font-size: 20px; } .cx3-leg { font-size: 10px; } }
+/* Crypto tab, 3D view (desk-crypto3d.js) */
+.cx3 { position: relative; margin: 0 0 14px; border: 1px solid var(--rule-2); border-radius: var(--r-card); background: var(--sunken); overflow: hidden; }
+.cx3-host { position: relative; height: min(62vh, 560px); min-height: 360px; } .cx3-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; } .cx3-canvas:active { cursor: grabbing; }
+.cx3-hud { position: absolute; left: 14px; top: 12px; right: 14px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; max-width: 520px; } .cx3-hud .sg-chips, .cx3-hud button { pointer-events: auto; }
+.cx3-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; } .cx3-px { display: flex; align-items: baseline; gap: 10px; } .cx3-px b { font: 600 26px var(--mono); color: var(--ink); } .cx3-px em { font: 500 12px var(--mono); color: var(--ink-3); font-style: normal; }
+.cx3-stats { display: flex; flex-wrap: wrap; gap: 4px 16px; font: 500 11px var(--mono); color: var(--ink-3); } .cx3-stats b { color: var(--ink); font-weight: 600; } .cx3-stats .up b { color: var(--up); } .cx3-stats .down b { color: var(--down); }
+.cx3 .cx-flow { height: 8px; max-width: 360px; }
+.cx3-ctl { position: absolute; right: 14px; bottom: 44px; display: flex; gap: 6px; } .cx3-ctl .btn-line.on { border-color: var(--acc-edge); color: var(--ink); }
+.cx3-leg { margin: 0; padding: 8px 14px; font: 500 11px var(--mono); color: var(--ink-3); border-top: 1px solid var(--rule); background: var(--sunken); } .cx3-leg .up { color: var(--up); } .cx3-leg .down { color: var(--down); }
+.cx3-toast { position: absolute; left: 50%; bottom: 56px; transform: translateX(-50%); padding: 8px 14px; border: 1px solid var(--acc-edge); border-radius: var(--r); background: var(--sunken); color: var(--ink); font: 600 12px var(--mono); opacity: 0; transition: opacity 0.4s; pointer-events: none; text-align: center; max-width: 92%; } .cx3-toast.on { opacity: 1; }
+.cx3-off { margin: 0; padding: 10px 14px; font-size: 12.5px; color: var(--ink-2); }
+@media (max-width: 640px) { .cx3-host { min-height: 320px; } .cx3-ctl { bottom: 70px; } .cx3-px b { font-size: 20px; } .cx3-leg { font-size: 10px; } }

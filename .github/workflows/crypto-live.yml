@@ -1,5 +1,5 @@
-# Bitcoin order-flow paper account (scripts/crypto_live.py): every 15 minutes it reads Binance's public market data, checks stops, acts once per closed 4-hour bar and marks the account to market.
-# Simulated money only (hard budget Rs 10,00,000, no leverage). Fills and decisions go to data/crypto/ledger.jsonl (append-only, committed at once); the page data and an hourly equity point are committed hourly.
+# Bitcoin and Ethereum order-flow paper account (scripts/crypto_live.py): every 15 minutes it reads Binance's public market data, checks stops, acts once per closed 4-hour bar and marks the account to market.
+# Simulated money only (hard budget Rs 10,00,000, no leverage). Fills and decisions go to data/crypto/ledger.jsonl (append-only, committed at once); the page data, an hourly equity point and an hourly order-book sample are committed hourly.
 # GitHub's scheduler can be late or skip a run: the engine logs a decision made more than 60 minutes after a bar closed as skipped, and the page warns when the last run is older than 45 minutes.
 name: Crypto live
 
@@ -46,6 +46,6 @@ jobs:
           import sys
           sys.path.insert(0, "scripts")
           from gitops import commit_and_push
-          ok = commit_and_push(["data/crypto/ledger.jsonl", "data/crypto/marks.jsonl", "data/crypto/live.json"], "Crypto paper account: ledger and marks [skip ci]", min_interval_s=0, state_file="data/crypto_gitops_state.json")
+          ok = commit_and_push(["data/crypto/ledger.jsonl", "data/crypto/marks.jsonl", "data/crypto/depth.jsonl", "data/crypto/live.json"], "Crypto paper account: ledger and marks [skip ci]", min_interval_s=0, state_file="data/crypto_gitops_state.json")
           print("committed and pushed" if ok else "nothing new to save (or push not allowed)")
           PY

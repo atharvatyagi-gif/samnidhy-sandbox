@@ -14,13 +14,23 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-OUT = Path(__file__).resolve().parent.parent / "data" / "crypto" / "bars_15m.csv.gz"
-URL = "https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/1m/BTCUSDT-1m-{m}.zip"
+DIR = Path(__file__).resolve().parent.parent / "data" / "crypto"
+URL = "https://data.binance.vision/data/spot/monthly/klines/{s}/1m/{s}-1m-{m}.zip"
+
+
+def out_path(symbol="BTCUSDT"):
+    return DIR / ("bars_15m.csv.gz" if symbol == "BTCUSDT" else f"bars_15m_{symbol[:-4].lower()}.csv.gz")
 COLS = ["open_time", "o", "h", "l", "c", "v", "close_time", "qv", "n", "tbv", "tbqv", "x"]
 
 
-def month_file(m):
-    r = requests.get(URL.format(m=m), timeout=120)
+def month_file(m, symbol="BTCUSDT"):
+    r = None
+    for attempt in range(4):
+        try:
+            r = requests.get(URL.format(m=m, s=symbol), timeout=180); break
+        except requests.RequestException:
+            if attempt == 3:
+                raise
     if r.status_code != 200:
         return None
     z = zipfile.ZipFile(io.BytesIO(r.content)); df = pd.read_csv(z.open(z.namelist()[0]), header=None, names=COLS)
@@ -36,13 +46,13 @@ def to_bars(m1, rule="15min"):
 
 
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--from", dest="a", default="2020-01"); ap.add_argument("--to", dest="b", default="2026-09"); x = ap.parse_args()
+    ap = argparse.ArgumentParser(); ap.add_argument("--from", dest="a", default="2020-01"); ap.add_argument("--to", dest="b", default="2026-09"); ap.add_argument("--symbol", default="BTCUSDT"); x = ap.parse_args()
     months = [p.strftime("%Y-%m") for p in pd.period_range(x.a, x.b, freq="M")]
     with ThreadPoolExecutor(6) as ex:
-        parts = list(ex.map(month_file, months))
+        parts = list(ex.map(lambda m: month_file(m, x.symbol), months))
     miss = [m for m, p in zip(months, parts) if p is None]; print("missing months:", miss)
     m1 = pd.concat([p for p in parts if p is not None]); bars = pd.concat([to_bars(p) for p in parts if p is not None]).sort_index()
-    OUT.parent.mkdir(parents=True, exist_ok=True); bars.to_csv(OUT, compression="gzip", float_format="%.8g")
+    OUT = out_path(x.symbol); OUT.parent.mkdir(parents=True, exist_ok=True); bars.to_csv(OUT, compression="gzip", float_format="%.8g")
     print(f"{len(m1):,} one-minute candles -> {len(bars):,} 15-minute bars, {bars.index[0]} to {bars.index[-1]}; {OUT.stat().st_size / 1e6:.1f} MB")
 
 
