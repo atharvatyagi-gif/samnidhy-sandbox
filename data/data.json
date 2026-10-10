@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-09T13:30:42+00:00",
+  "generated_on": "2026-10-10T02:01:11+00:00",
   "session_date": "2026-10-09",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -86,7 +86,7 @@
         "turnover_crore": 246.02
       },
       "latest_close": 66.65,
-      "trailing_pe": 27.655602,
+      "trailing_pe": 25.933853,
       "market_cap": 115187056640,
       "history": {
         "first_date": "2021-10-04",
@@ -144,7 +144,7 @@
         "turnover_crore": 223.98
       },
       "latest_close": 2038.7,
-      "trailing_pe": 73.229164,
+      "trailing_pe": 76.816124,
       "market_cap": 338508316672,
       "history": {
         "first_date": "2021-12-14",
@@ -153,7 +153,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.745653,
-      "total_return": 13.652198,
+      "total_return": 13.652202,
       "annualised_volatility": 0.291883,
       "max_drawdown": -0.26899,
       "beta": 0.436
@@ -179,7 +179,7 @@
         "first_date": "2021-10-04",
         "trading_days": 1239,
         "years": 5.01,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": 0.302943,
       "total_return": 2.579164,
@@ -208,7 +208,7 @@
         "first_date": "2021-10-04",
         "trading_days": 1239,
         "years": 5.01,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": -0.144257,
       "total_return": -0.52795,
@@ -301,7 +301,7 @@
       "KEC.NS": 0.028281,
       "ANANDRATHI.NS": 0.01478,
       "PFOCUS.NS": 0.023444,
-      "AARTIIND.NS": 0.03064
+      "AARTIIND.NS": 0.030639
     },
     "INOXWIND.NS": {
       "CYIENT.NS": 0.042652,
@@ -314,7 +314,7 @@
     "KEC.NS": {
       "CYIENT.NS": 0.028281,
       "INOXWIND.NS": 0.051539,
-      "KEC.NS": 0.151263,
+      "KEC.NS": 0.151262,
       "ANANDRATHI.NS": 0.013288,
       "PFOCUS.NS": 0.025218,
       "AARTIIND.NS": 0.035524
@@ -336,7 +336,7 @@
       "AARTIIND.NS": 0.040023
     },
     "AARTIIND.NS": {
-      "CYIENT.NS": 0.03064,
+      "CYIENT.NS": 0.030639,
       "INOXWIND.NS": 0.058219,
       "KEC.NS": 0.035524,
       "ANANDRATHI.NS": 0.017053,
@@ -1931,7 +1931,7 @@
         261.1
       ],
       "AARTIIND.NS": [
-        1092.82,
+        1092.83,
         1091.0,
         995.1,
         949.78,
