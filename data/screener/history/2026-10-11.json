@@ -566,7 +566,7 @@
    0.65526,
    0.6553,
    0.65552,
-   0.65589,
+   0.65588,
    0.65808,
    0.66035,
    0.66125,
@@ -1437,9 +1437,9 @@
    1.11039
   ]
  },
- "generated_utc": "2026-10-11T03:33:55+00:00",
- "generated_ist": "11 Oct 2026, 09:03 AM IST",
- "screened_ist": "11 Oct 2026, 09:03 AM IST",
+ "generated_utc": "2026-10-11T08:16:58+00:00",
+ "generated_ist": "11 Oct 2026, 01:46 PM IST",
+ "screened_ist": "11 Oct 2026, 01:46 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1469,7 +1469,7 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 278
+   "count": 275
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
@@ -1486,7 +1486,7 @@
   "2": 3,
   "3": 18,
   "4": 34,
-  "5": 64,
+  "5": 61,
   "6": 71,
   "7": 45,
   "8": 28,
@@ -1507,6 +1507,9 @@
    "INFY"
   ],
   "download failed (YFRateLimitError)": [
+   "SUMICHEM",
+   "SUNPHARMA",
+   "SUNTV",
    "SUPREMEIND",
    "SWANCORP",
    "SWIGGY",
