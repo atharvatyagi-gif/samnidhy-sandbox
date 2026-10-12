@@ -80,3 +80,5 @@
 {"ts":"2026-10-11T23:12:02+00:00","sym":"ETHUSDT","mid":2537.215,"imb_near":-0.6552,"imb_wide":-0.2744,"spread_bps":0.039}
 {"ts":"2026-10-12T00:27:40+00:00","sym":"BTCUSDT","mid":83812.005,"imb_near":0.8508,"imb_wide":0.374,"spread_bps":0.001}
 {"ts":"2026-10-12T00:27:40+00:00","sym":"ETHUSDT","mid":2540.385,"imb_near":0.6257,"imb_wide":0.3274,"spread_bps":0.039}
+{"ts":"2026-10-12T01:43:16+00:00","sym":"BTCUSDT","mid":83701.705,"imb_near":0.2654,"imb_wide":0.1059,"spread_bps":0.001}
+{"ts":"2026-10-12T01:43:16+00:00","sym":"ETHUSDT","mid":2539.995,"imb_near":0.4072,"imb_wide":0.2913,"spread_bps":0.039}
