@@ -71,6 +71,7 @@ function onReady(user) {
   S.user = user; if (S.uni) liveConnect();
   $("#sys-user").textContent = user.email;
   $("#av").textContent = (user.email || "?")[0].toUpperCase();
+  if (user.guest) { const b = $("#logout"); b.textContent = "Search"; b.title = "Back to the stock search"; b.onclick = () => { location.href = "index.html?home"; }; }
 }
 $("#logout").onclick = async () => { try { await window.__expertSignOut?.(); } finally { location.replace("auth.html"); } };
 document.addEventListener("expert-ready", e => { window.__expertSignOut = e.detail.signOut; onReady(e.detail.user); });
@@ -114,7 +115,10 @@ async function boot() {
   go(hp.get("v") || (hp.get("s") ? "terminal" : "brief"), true);
   openSec(sec);
   getJSON("t/fund.json", false).then(f => { S.fund = f.stocks || {}; renderDetails(); }).catch(() => { S.fund = {}; renderDetails(); });
-  if (!LS.get("blab-onboarded", false)) openOnboard();
+  if (!LS.get("blab-onboarded", false)) {
+    if (hp.get("s") && S.map.has(hp.get("s"))) LS.set("blab-onboarded", true);   // arrived from the stock search with a stock chosen: show that stock, not the setup questions
+    else openOnboard();
+  }
   setInterval(poll, POLL_MS);
   liveConnect();
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });

@@ -1,327 +1,103 @@
 <!DOCTYPE html>
-<html lang="en" class="dark font-sans antialiased" data-ui-mode="simple">
+<html lang="en" class="dark font-sans antialiased">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The B-Lab Cohort · Learn the Indian stock market</title>
-<meta name="description" content="A TAPMI student lab for markets. Learn how the Indian stock market works with real, live data: a daily lesson, a NIFTY 500 screen and an expert terminal. Educational analysis only.">
+<title>B-Lab Terminal · Search any NSE stock</title>
+<meta name="description" content="Search any of 3,500+ NSE stocks and see its whole story: five years of prices, how it compares with the market, fundamentals, what the models see and who it does business with. Then open the full terminal.">
 <meta name="theme-color" content="#09090b">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="canonical" href="https://atharvatyagi-gif.github.io/samnidhy-sandbox/index.html">
-<meta property="og:title" content="The B-Lab Cohort · Learn the Indian stock market">
+<meta property="og:title" content="B-Lab Terminal · Search any NSE stock">
 <meta property="og:type" content="website">
-<meta property="og:description" content="Learn how the Indian stock market works with real, live data. A TAPMI student lab. Educational analysis only.">
-<meta property="og:site_name" content="The B-Lab Cohort">
+<meta property="og:description" content="Search any NSE stock and see its whole story, then open the full terminal. A TAPMI student markets lab. Educational analysis only.">
+<meta property="og:site_name" content="B-Lab Terminal">
 <meta property="og:url" content="https://atharvatyagi-gif.github.io/samnidhy-sandbox/index.html">
 <meta property="og:image" content="https://atharvatyagi-gif.github.io/samnidhy-sandbox/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="The B-Lab Cohort · Learn the Indian stock market">
-<meta name="twitter:description" content="Learn how the Indian stock market works with real, live data. A TAPMI student lab. Educational analysis only.">
-<meta name="twitter:image" content="https://atharvatyagi-gif.github.io/samnidhy-sandbox/og.png">
+<script>
+  /* First visit: this search page. Every visit after that: straight into the full terminal (index.html?home keeps the search page). */
+  try {
+    var seen = localStorage.getItem("blab-seen-home");
+    if (seen && !/[?&]home\b/.test(location.search)) location.replace("expert-terminal.html" + location.hash);
+    else localStorage.setItem("blab-seen-home", new Date().toISOString());
+  } catch (e) { /* storage blocked: always show the search page */ }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="ui.css">
-<script>try { if (localStorage.getItem("samnidhy-ui-mode") === "pro") document.documentElement.setAttribute("data-ui-mode", "pro"); } catch (e) {}</script>
 </head>
-<!-- Components: HyperUI (https://hyperui.dev), MIT licence, (c) Mark Mead (ui/HYPERUI-LICENSE): announcements/1, headers/1, banners/1, stats/2,
-     feature-grids/1 and 3, faqs/1, toggles/1, footers/8 (dark variants). Text, links and data hooks are the site's own. -->
-<body class="bg-gray-900 text-white">
-<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-gray-900">Skip to content</a>
+<!-- Search field skeleton: HyperUI application/inputs/3 (https://hyperui.dev, MIT licence, (c) Mark Mead; ui/HYPERUI-LICENSE).
+     The glow, the light beam, the results list and the stock story are the site's own (ui/input.css, ui-home.js). -->
+<body class="hx-body min-h-dvh bg-zinc-950 text-zinc-100">
+<div class="hx-bg" aria-hidden="true"><div class="hx-grid"></div><div class="hx-spot"></div></div>
 
-<!-- HyperUI marketing/announcements/1 -->
-<aside aria-label="Disclaimer">
-<div class="border-b border-gray-200 bg-gray-100 px-4 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-  <p class="text-center font-medium">
-    Educational analysis by students, built on real market data. Not investment advice.
-    <a href="#faq-advice" class="inline-block underline"> What this means </a>
-  </p>
-</div>
-</aside>
-
-<!-- HyperUI marketing/headers/1 -->
-<header class="bg-white dark:bg-gray-900">
-  <div class="mx-auto flex h-16 max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-8">
-    <a class="block text-teal-600 dark:text-teal-300" href="index.html">
-      <span class="sr-only">Home</span>
-      <svg class="h-8" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="17" width="6" height="12" rx="1.5" fill="currentColor"/><rect x="13" y="9" width="6" height="20" rx="1.5" fill="currentColor"/><rect x="23" y="3" width="6" height="26" rx="1.5" fill="currentColor"/></svg>
-    </a>
-    <span class="-ml-5 text-base font-semibold tracking-tight whitespace-nowrap">B-Lab Cohort</span>
-
-    <div class="flex flex-1 items-center justify-end md:justify-between">
-      <nav aria-label="Global" class="hidden md:block">
-        <ul class="flex items-center gap-6 text-sm">
-          <li><a class="text-gray-500 transition hover:text-gray-500/75 dark:text-white dark:hover:text-white/75" href="sandbox.html"> Learn </a></li>
-          <li><a class="text-gray-500 transition hover:text-gray-500/75 dark:text-white dark:hover:text-white/75" href="advanced.html"> Screen </a></li>
-          <li><a class="text-gray-500 transition hover:text-gray-500/75 dark:text-white dark:hover:text-white/75" href="auth.html"> Terminal </a></li>
-          <li><a class="text-gray-500 transition hover:text-gray-500/75 dark:text-white dark:hover:text-white/75" href="#faq"> FAQ </a></li>
-        </ul>
-      </nav>
-
-      <div class="flex items-center gap-4">
-        <!-- HyperUI application/toggles/1 -->
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-400 sm:hidden" aria-hidden="true">Pro</span><span class="hidden text-sm text-gray-400 sm:inline" data-ui-label>Simple view</span>
-          <label for="ModeSwitch" class="relative block h-8 w-14 rounded-full bg-gray-300 transition-colors [-webkit-tap-highlight-color:transparent] has-checked:bg-green-500 dark:bg-gray-600 dark:has-checked:bg-green-600">
-            <input type="checkbox" id="ModeSwitch" class="peer sr-only" data-ui-switch role="switch" aria-label="Pro view: show every detail" />
-            <span class="absolute inset-y-0 start-0 m-1 size-6 rounded-full bg-white transition-[inset-inline-start] peer-checked:start-6 dark:bg-gray-900"></span>
-          </label>
-        </div>
-
-        <div class="sm:flex sm:gap-4">
-          <a class="block rounded-md bg-teal-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700 dark:hover:bg-teal-500" href="sandbox.html"> Start </a>
-          <a class="hidden rounded-md bg-gray-100 px-5 py-2.5 text-sm font-medium text-teal-600 transition hover:text-teal-600/75 sm:block dark:bg-gray-800 dark:text-white dark:hover:text-white/75" href="auth.html"> Member sign-in </a>
-        </div>
-
-        <button id="MenuButton" aria-controls="MobileMenu" aria-expanded="false" class="block rounded-sm bg-gray-100 p-2.5 text-gray-600 transition hover:text-gray-600/75 md:hidden dark:bg-gray-800 dark:text-white dark:hover:text-white/75">
-          <span class="sr-only">Toggle menu</span>
-          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-  <nav id="MobileMenu" aria-label="Mobile" class="hidden border-t border-gray-800 px-4 py-3 md:hidden">
-    <ul class="grid gap-1 text-base">
-      <li><a class="block rounded px-2 py-2 hover:bg-gray-800" href="sandbox.html">Learn · today's lesson</a></li>
-      <li><a class="block rounded px-2 py-2 hover:bg-gray-800" href="advanced.html">Screen · today's top 10</a></li>
-      <li><a class="block rounded px-2 py-2 hover:bg-gray-800" href="auth.html">Terminal · members</a></li>
-      <li><a class="block rounded px-2 py-2 hover:bg-gray-800" href="#faq">FAQ</a></li>
-    </ul>
+<header class="relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+  <a href="index.html?home" class="flex items-center gap-2.5 text-zinc-100">
+    <svg class="h-7 text-emerald-400" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="17" width="6" height="12" rx="1.5" fill="currentColor"/><rect x="13" y="9" width="6" height="20" rx="1.5" fill="currentColor"/><rect x="23" y="3" width="6" height="26" rx="1.5" fill="currentColor"/></svg>
+    <span class="font-semibold tracking-tight">B-Lab <span class="text-zinc-400">Terminal</span></span>
+  </a>
+  <nav aria-label="Site" class="flex items-center gap-2 text-sm">
+    <a class="hidden rounded-lg px-3 py-2 text-zinc-400 transition hover:text-zinc-100 sm:block" href="advanced.html">Daily screen</a>
+    <a class="hidden rounded-lg px-3 py-2 text-zinc-400 transition hover:text-zinc-100 sm:block" href="sandbox.html">Lessons</a>
+    <a class="rounded-lg border border-zinc-800 bg-zinc-900/70 px-3.5 py-2 font-medium text-zinc-100 transition hover:border-zinc-600" href="expert-terminal.html">Open the terminal <span aria-hidden="true">→</span></a>
   </nav>
 </header>
 
-<main id="main">
+<main id="main" class="relative z-10">
+  <section class="relative z-20 mx-auto flex max-w-3xl flex-col items-center px-4 pt-[12vh] pb-16 text-center sm:px-6">
+    <p class="hx-pill"><span class="hx-live" aria-hidden="true"></span><span><span id="hx-count">3,500+</span> NSE stocks · live through the day</span></p>
+    <h1 class="hx-title mt-6 text-5xl font-extrabold tracking-tight sm:text-7xl">Search a stock.</h1>
+    <p class="mt-5 max-w-xl text-lg text-pretty text-zinc-400 sm:text-xl">Its whole story in one place: five years of prices, how it did against the market, the numbers behind the business, and what our models see.</p>
 
-<!-- HyperUI marketing/banners/1 -->
-<section class="bg-white lg:grid lg:place-content-center dark:bg-gray-900">
-  <div class="mx-auto w-screen max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
-    <div class="mx-auto max-w-prose text-center">
-      <h1 class="text-4xl font-bold text-gray-900 sm:text-5xl dark:text-white">
-        Learn the stock market with
-        <strong class="text-indigo-600"> real </strong>
-        data, one day at a time
-      </h1>
-
-      <p class="mt-4 text-base text-pretty text-gray-700 sm:text-lg/relaxed dark:text-gray-200">
-        Every evening we take the day's biggest movers from India's top 500 companies and turn them into short lessons.
-        When you are ready for more, the same data goes as deep as a professional terminal.
-      </p>
-
-      <div class="mt-4 flex justify-center gap-4 sm:mt-6">
-        <a class="inline-block rounded border border-indigo-600 bg-indigo-600 px-5 py-3 font-medium text-white shadow-sm transition-colors hover:bg-indigo-700" href="sandbox.html">
-          Start today's lesson
-        </a>
-
-        <a class="inline-block rounded border border-gray-200 px-5 py-3 font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-900 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-white" href="#paths">
-          See what's inside
-        </a>
-      </div>
+    <!-- HyperUI application/inputs/3 (label, relative wrapper, input, icon), dressed in the light beam -->
+    <div class="hx-beam mt-10 w-full" id="hx-beam">
+      <label for="Search" class="hx-field">
+        <span class="sr-only"> Search a stock by name or symbol </span>
+        <div class="relative">
+          <span class="pointer-events-none absolute inset-y-0 left-5 grid place-content-center text-zinc-500" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+          </span>
+          <input type="text" id="Search" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="hx-results" aria-autocomplete="list"
+                 class="mt-0.5 w-full rounded border-gray-300 shadow-sm sm:text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-white hx-input" placeholder="Search Reliance, HDFC Bank, Tata Motors…" />
+          <span class="absolute inset-y-0 right-3 grid place-content-center">
+            <kbd class="hx-kbd" aria-hidden="true">/</kbd>
+          </span>
+        </div>
+      </label>
+      <ul id="hx-results" role="listbox" aria-label="Matching stocks" class="hx-results" hidden></ul>
     </div>
-  </div>
-</section>
 
-<!-- HyperUI marketing/stats/2: the market right now (filled from live.json and status.json by ui-home.js; "--" until then) -->
-<section aria-labelledby="mkt-title" class="border-y border-gray-800">
-<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-  <div class="mx-auto max-w-3xl text-center">
-    <h2 id="mkt-title" class="text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">The market right now</h2>
-    <p class="mt-4 text-gray-500 sm:text-xl dark:text-gray-400">
-      <span class="simple-only">Four numbers that tell you what kind of day it is. Green means up since yesterday's close, red means down.</span>
-      <span class="pro-only">Last price and change from the previous close. Indian quotes are delayed about 15 minutes.</span>
-    </p>
-  </div>
-
-  <dl class="mg-6 grid grid-cols-1 gap-4 divide-y divide-gray-100 sm:mt-8 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4 dark:divide-gray-900" id="mkt">
-    <div class="flex flex-col px-4 py-8 text-center" data-mkt="^NSEI">
-      <dt class="order-last text-lg font-medium text-gray-500 dark:text-gray-400">Nifty 50 <span class="block text-sm simple-only">India's 50 biggest companies</span></dt>
-      <dd class="text-4xl font-extrabold text-blue-600 md:text-5xl"><span data-v>--</span> <span class="block text-base font-semibold" data-c></span></dd>
+    <div class="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm" id="hx-trending" aria-label="Most traded today">
+      <span class="text-zinc-500">Most traded today:</span>
     </div>
-    <div class="flex flex-col px-4 py-8 text-center" data-mkt="^NSEBANK">
-      <dt class="order-last text-lg font-medium text-gray-500 dark:text-gray-400">Bank Nifty <span class="block text-sm simple-only">the biggest banks</span></dt>
-      <dd class="text-4xl font-extrabold text-blue-600 md:text-5xl"><span data-v>--</span> <span class="block text-base font-semibold" data-c></span></dd>
-    </div>
-    <div class="flex flex-col px-4 py-8 text-center" data-mkt="^INDIAVIX">
-      <dt class="order-last text-lg font-medium text-gray-500 dark:text-gray-400">India VIX <span class="block text-sm simple-only">how nervous traders are: higher means more nervous</span></dt>
-      <dd class="text-4xl font-extrabold text-blue-600 md:text-5xl"><span data-v>--</span> <span class="block text-base font-semibold" data-c></span></dd>
-    </div>
-    <div class="flex flex-col px-4 py-8 text-center" data-mkt="INR=X">
-      <dt class="order-last text-lg font-medium text-gray-500 dark:text-gray-400">Dollar in rupees <span class="block text-sm simple-only">what one US dollar costs</span></dt>
-      <dd class="text-4xl font-extrabold text-blue-600 md:text-5xl"><span data-v>--</span> <span class="block text-base font-semibold" data-c></span></dd>
-    </div>
-  </dl>
-  <p class="mt-6 text-center text-sm text-gray-500" id="mkt-asof" aria-live="polite">Loading the latest prices…</p>
-</div>
-</section>
+  </section>
 
-<!-- HyperUI marketing/feature-grids/1: three ways in -->
-<section id="paths" class="py-12 sm:py-16">
-<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-  <div class="mx-auto max-w-lg text-center">
-    <h2 class="text-3xl/tight font-bold text-gray-900 sm:text-4xl dark:text-white">Pick where to start</h2>
-    <p class="mt-4 text-lg text-pretty text-gray-700 dark:text-gray-200">
-      Three doors into the same data. Start with the first one if markets are new to you; move right as you get comfortable.
-    </p>
-  </div>
-
-  <div class="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3">
-    <a href="sandbox.html" class="group rounded-lg border border-gray-200 p-6 transition hover:border-gray-500 dark:border-gray-700">
-      <div class="inline-flex rounded-lg bg-gray-100 p-3 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
-      </div>
-      <p class="mt-4 text-xs font-semibold tracking-wide text-teal-300 uppercase">New to markets</p>
-      <h3 class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">Learn · today's lesson</h3>
-      <p class="mt-2 text-pretty text-gray-700 dark:text-gray-200">
-        Six short lessons built from yesterday's biggest movers: how a price is set, what a company is worth, risk, compounding, and a quiz.
-      </p>
-      <p class="mt-4 text-sm font-medium text-white group-hover:underline">Open the lesson →</p>
-    </a>
-
-    <a href="advanced.html" class="group rounded-lg border border-gray-200 p-6 transition hover:border-gray-500 dark:border-gray-700">
-      <div class="inline-flex rounded-lg bg-gray-100 p-3 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" /></svg>
-      </div>
-      <p class="mt-4 text-xs font-semibold tracking-wide text-teal-300 uppercase">Building a watchlist</p>
-      <h3 class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">Screen · today's top 10</h3>
-      <p class="mt-2 text-pretty text-gray-700 dark:text-gray-200">
-        The whole NIFTY 500 run through two published, back-tested rules. See the ten companies that come out on top and why.
-      </p>
-      <p class="mt-4 text-sm text-gray-400 pro-only" id="screen-asof"></p>
-      <p class="mt-4 text-sm font-medium text-white group-hover:underline">See the screen →</p>
-    </a>
-
-    <a href="auth.html" class="group rounded-lg border border-gray-200 p-6 transition hover:border-gray-500 dark:border-gray-700">
-      <div class="inline-flex rounded-lg bg-gray-100 p-3 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m6.75 7.5 3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0 0 21 18V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v12a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
-      </div>
-      <p class="mt-4 text-xs font-semibold tracking-wide text-teal-300 uppercase">Experienced · TAPMI members</p>
-      <h3 class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">Terminal · the full desk</h3>
-      <p class="mt-2 text-pretty text-gray-700 dark:text-gray-200">
-        Every NSE stock with charts, model probabilities, paper trading, supply-chain links, world markets and news. Sign-in needed.
-      </p>
-      <p class="mt-4 text-sm font-medium text-white group-hover:underline">Sign in →</p>
-    </a>
-  </div>
-</div>
-</section>
-
-<!-- HyperUI marketing/feature-grids/3: what refreshes, and when -->
-<section aria-labelledby="day-title" class="border-t border-gray-800 py-12 sm:py-16">
-<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-  <h2 id="day-title" class="text-center text-3xl/tight font-bold text-white sm:text-4xl">What updates, and when</h2>
-  <p class="mx-auto mt-4 max-w-2xl text-center text-lg text-gray-300">Everything runs on its own, every day. You never need to refresh the page.</p>
-  <div class="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-    <div class="text-center">
-      <div class="inline-flex rounded-lg bg-gray-100 p-3 text-gray-700 dark:bg-gray-800 dark:text-gray-200"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /></svg></div>
-      <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">07:30 · Morning</h3>
-      <p class="mt-2 text-pretty text-gray-700 dark:text-gray-200">The day's data is ready before the market opens.</p>
-    </div>
-    <div class="text-center">
-      <div class="inline-flex rounded-lg bg-gray-100 p-3 text-gray-700 dark:bg-gray-800 dark:text-gray-200"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" /></svg></div>
-      <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">09:15 to 15:30 · Market hours</h3>
-      <p class="mt-2 text-pretty text-gray-700 dark:text-gray-200">Prices refresh every few minutes, about 15 minutes behind the exchange.</p>
-    </div>
-    <div class="text-center">
-      <div class="inline-flex rounded-lg bg-gray-100 p-3 text-gray-700 dark:bg-gray-800 dark:text-gray-200"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" /></svg></div>
-      <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">19:00 · After the close</h3>
-      <p class="mt-2 text-pretty text-gray-700 dark:text-gray-200">The official closing prices arrive and tomorrow's lesson is written.</p>
-    </div>
-    <div class="text-center">
-      <div class="inline-flex rounded-lg bg-gray-100 p-3 text-gray-700 dark:bg-gray-800 dark:text-gray-200"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 15.75c-3.183 0-6.22-.62-8.716-1.747m0 0A8.959 8.959 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" /></svg></div>
-      <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">Overnight · The world</h3>
-      <p class="mt-2 text-pretty text-gray-700 dark:text-gray-200">World markets and news keep refreshing every hour.</p>
-    </div>
-  </div>
-  <p class="mt-8 text-center text-sm text-gray-500" id="data-fresh"></p>
-</div>
-</section>
-
-<!-- HyperUI marketing/faqs/1 -->
-<section id="faq" aria-labelledby="faq-title" class="border-t border-gray-800 py-12 sm:py-16">
-<div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-  <h2 id="faq-title" class="mb-8 text-center text-3xl/tight font-bold text-white sm:text-4xl">Questions people ask first</h2>
-  <div class="space-y-4">
-    <details class="group [&_summary::-webkit-details-marker]:hidden" open>
-      <summary class="flex cursor-pointer items-center justify-between gap-1.5 rounded-md border border-gray-100 bg-gray-50 p-4 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-        <h3 class="text-lg font-medium">What is this site?</h3>
-        <svg aria-hidden="true" class="size-5 shrink-0 transition-transform duration-300 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-      </summary>
-      <p class="px-4 pt-4 text-gray-900 dark:text-white">
-        A free learning lab run by students at TAPMI. It turns real data from the National Stock Exchange of India into lessons, a daily stock screen and a research terminal, so you can see how markets behave instead of reading about them.
-      </p>
-    </details>
-
-    <details id="faq-advice" class="group [&_summary::-webkit-details-marker]:hidden">
-      <summary class="flex cursor-pointer items-center justify-between gap-1.5 rounded-md border border-gray-100 bg-gray-50 p-4 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-        <h3 class="text-lg font-medium">Should I invest based on what I see here?</h3>
-        <svg aria-hidden="true" class="size-5 shrink-0 transition-transform duration-300 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-      </summary>
-      <p class="px-4 pt-4 text-gray-900 dark:text-white">
-        No. Everything here is educational analysis by students, not investment advice, and the models are often wrong. Past performance does not predict future results. Talk to a SEBI-registered adviser before investing real money.
-      </p>
-    </details>
-
-    <details class="group [&_summary::-webkit-details-marker]:hidden">
-      <summary class="flex cursor-pointer items-center justify-between gap-1.5 rounded-md border border-gray-100 bg-gray-50 p-4 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-        <h3 class="text-lg font-medium">Where does the data come from, and how fresh is it?</h3>
-        <svg aria-hidden="true" class="size-5 shrink-0 transition-transform duration-300 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-      </summary>
-      <p class="px-4 pt-4 text-gray-900 dark:text-white">
-        Closing prices come from NSE's official end-of-day files. Prices during the day come from free public sources and run about 15 minutes behind the exchange. Every page shows when its data was last updated, and says so when something is late or missing instead of guessing.
-      </p>
-    </details>
-
-    <details class="group [&_summary::-webkit-details-marker]:hidden">
-      <summary class="flex cursor-pointer items-center justify-between gap-1.5 rounded-md border border-gray-100 bg-gray-50 p-4 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-        <h3 class="text-lg font-medium">What do "Simple view" and "Pro view" change?</h3>
-        <svg aria-hidden="true" class="size-5 shrink-0 transition-transform duration-300 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-      </summary>
-      <p class="px-4 pt-4 text-gray-900 dark:text-white">
-        Simple view explains each number in plain words and keeps the detail behind "Show details". Pro view drops the explanations and opens every detail at once. The data is identical; flip the switch at the top whenever you like, and the site remembers your choice on this device.
-      </p>
-    </details>
-
-    <details class="group [&_summary::-webkit-details-marker]:hidden">
-      <summary class="flex cursor-pointer items-center justify-between gap-1.5 rounded-md border border-gray-100 bg-gray-50 p-4 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-        <h3 class="text-lg font-medium">Who can use the terminal?</h3>
-        <svg aria-hidden="true" class="size-5 shrink-0 transition-transform duration-300 group-open:-rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-      </summary>
-      <p class="px-4 pt-4 text-gray-900 dark:text-white">
-        TAPMI members, with their institute email. The lesson and the screen are open to everyone.
-      </p>
-    </details>
-  </div>
-</div>
-</section>
-
+  <section aria-label="The market right now" class="relative z-0 mx-auto max-w-5xl px-4 pb-16 sm:px-6">
+    <dl class="hx-tape" id="hx-tape">
+      <div data-mkt="^NSEI"><dt>Nifty 50</dt><dd data-v>--</dd><dd data-c></dd></div>
+      <div data-mkt="^NSEBANK"><dt>Bank Nifty</dt><dd data-v>--</dd><dd data-c></dd></div>
+      <div data-mkt="^INDIAVIX"><dt>India VIX</dt><dd data-v>--</dd><dd data-c></dd></div>
+      <div data-mkt="INR=X"><dt>USD / INR</dt><dd data-v>--</dd><dd data-c></dd></div>
+      <div data-mkt="BZ=F"><dt>Brent crude</dt><dd data-v>--</dd><dd data-c></dd></div>
+    </dl>
+    <p class="mt-3 text-center text-xs text-zinc-500" id="hx-asof"></p>
+  </section>
 </main>
 
-<!-- HyperUI marketing/footers/8 -->
-<footer class="bg-gray-100 dark:bg-gray-900 border-t border-gray-800">
-  <div class="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-    <div class="flex justify-center text-teal-600 dark:text-teal-300">
-      <svg class="h-8" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="17" width="6" height="12" rx="1.5" fill="currentColor"/><rect x="13" y="9" width="6" height="20" rx="1.5" fill="currentColor"/><rect x="23" y="3" width="6" height="26" rx="1.5" fill="currentColor"/></svg>
-    </div>
+<!-- The stock story: opens over the page when a stock is picked -->
+<div id="story" class="hx-story" role="dialog" aria-modal="true" aria-labelledby="st-name" hidden>
+  <div class="hx-story-in" id="story-in"></div>
+</div>
 
-    <p class="mx-auto mt-6 max-w-md text-center leading-relaxed text-gray-500 dark:text-gray-400">
-      The B-Lab Cohort · a TAPMI student markets lab. Educational analysis only, not investment advice.
-    </p>
-
-    <ul class="mt-12 flex flex-wrap justify-center gap-6 md:gap-8 lg:gap-12">
-      <li><a class="text-gray-700 transition hover:text-gray-700/75 dark:text-white dark:hover:text-white/75" href="sandbox.html"> Learn </a></li>
-      <li><a class="text-gray-700 transition hover:text-gray-700/75 dark:text-white dark:hover:text-white/75" href="advanced.html"> Screen </a></li>
-      <li><a class="text-gray-700 transition hover:text-gray-700/75 dark:text-white dark:hover:text-white/75" href="auth.html"> Terminal </a></li>
-      <li><a class="text-gray-700 transition hover:text-gray-700/75 dark:text-white dark:hover:text-white/75" href="#faq"> FAQ </a></li>
-    </ul>
-    <p class="mt-10 text-center text-xs text-gray-500">Interface components from <a class="underline" href="https://hyperui.dev" rel="noopener">HyperUI</a> (MIT licence).</p>
-  </div>
+<footer class="relative z-10 border-t border-zinc-900 py-8 text-center text-xs text-zinc-500">
+  <p>B-Lab Terminal · a TAPMI student markets lab · educational analysis only, not investment advice.</p>
+  <p class="mt-1">Prices from NSE's end-of-day files and public sources (about 15 minutes delayed in market hours). Search field from <a class="underline" href="https://hyperui.dev" rel="noopener">HyperUI</a> (MIT).</p>
 </footer>
 
-<script src="ui-mode.js"></script>
-<script src="ui-home.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.js" defer></script>
+<script type="module" src="ui-home.js"></script>
 </body>
 </html>

@@ -6,9 +6,9 @@
      teal -> emerald, blue -> near-white (the stats numbers)
    Nothing else in the copied code is changed. */
 @import "tailwindcss";
+@import "./home.css";
 
 @source "../index.html";
-@source "../ui-mode.js";
 @source "../ui-home.js";
 
 @custom-variant dark (&:where(.dark, .dark *));

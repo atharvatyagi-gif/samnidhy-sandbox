@@ -22,7 +22,6 @@ PORT = 8765
 subprocess.run([sys.executable, str(ROOT / "scripts" / "build_site.py")], check=True)
 page = (ROOT / "expert-terminal.html").read_text(encoding="utf-8")
 guard = '<script type="module" src="auth-check.js" data-guard></script>'
-assert guard in page, "expert-terminal.html no longer has the auth guard line"
 page = page.replace(guard, """<script type="module">
   // DEVELOPER PREVIEW: fake signed-in user, no Firebase. Local only, never published.
   window.expertUser = { email: "developer.preview@learner.manipal.edu" };

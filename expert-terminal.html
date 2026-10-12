@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="locked">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,9 +10,8 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <style>.locked { visibility: hidden; }</style>
-<!-- Auth guard first: no signed-in, registered @learner.manipal.edu user -> auth.html (page stays hidden until confirmed). -->
-<script type="module" src="auth-check.js" data-guard></script>
-<script src="reload-home.js"></script>
+<!-- Public terminal (owner's decision 2026-10-12): no sign-in wall. Members can still sign in on auth.html; the ALADIN BOT console keeps its own access code. -->
+<script>window.expertUser = window.expertUser || { email: "Public desk", guest: true };</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
