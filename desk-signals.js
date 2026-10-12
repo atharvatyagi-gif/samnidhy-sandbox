@@ -148,6 +148,27 @@ export function frontTestHtml(doc) {
       <tr><td>Profit factor (wins ÷ losses)</td><td>${live(S.profit_factor, v => v.toFixed(2))}</td><td>${E.profit_factor ?? "--"}</td></tr></tbody></table>
     <p class="note">Only lists written before the next open count. Every night the job replays the whole live record from the ledger, so nothing can be edited afterwards.</p></div>`;
 }
+/* Today, during market hours: what the live account holds right now, from the delayed prices the desk already loads (t/quotes.json, about 15 minutes late).
+   Before tonight's run records the fills, the Friday list is shown as PROVISIONAL entries at today's open; afterwards the recorded open positions are marked to the live price.
+   Pure: doc = paper/live.json, book = weekly.json's book, quotes = {SYM: {p, o, d}}, today = "YYYY-MM-DD" (IST). Nothing here is saved or counted. */
+export function liveTodayHtml(doc, book, quotes, today) {
+  const q = s => { const x = quotes && quotes[s]; return x && x.d === today ? x : null; };
+  const open = (doc && doc.open) || [];
+  if (open.length) {
+    let tot = 0, n = 0;
+    const rows = open.map(o => { const x = q(o.sym), last = x ? x.p : null, pl = last != null ? o.qty * (last - o.entry) : null; if (pl != null) { tot += pl; n++; }
+      return `<tr><td><b>${esc(o.sym)}</b></td><td class="r">₹${inr(o.entry, 2)}</td><td class="r">${last != null ? "₹" + inr(last, 2) : '<span class="sg-nm">no live price</span>'}</td><td class="r ${cls(pl)}">${pl != null ? rupee(pl) + " · " + sgn((last / o.entry - 1) * 100, 2) : "--"}</td></tr>`; }).join("");
+    return `<div class="sg-card sg-today"><h4>Right now · open positions marked to the live price</h4><div class="sg-tablewrap sg-short"><table class="sg-table"><thead><tr><th>Stock</th><th class="r">Bought at</th><th class="r">Live price</th><th class="r">P/L so far</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="note">${n ? `Together ${rupee(tot)} on ${n} of ${open.length} positions. ` : ""}Delayed prices (about 15 minutes). This is a live mark only; the account's official numbers are written after the close each night.</p></div>`;
+  }
+  const wk = book && doc && doc.timeline && (doc.timeline.weeks || []).find(w => w.friday === book.as_of);
+  if (!wk || wk.entry_day !== today || wk.status !== "in time" || !(book.bull || []).length) return "";
+  let sum = 0, n = 0;
+  const rows = book.bull.map(b => { const x = q(b.sym), ch = x && x.o ? (x.p / x.o - 1) * 100 : null; if (ch != null) { sum += ch; n++; }
+    return `<tr><td><b>${esc(b.sym)}</b></td><td class="r">${x && x.o ? "₹" + inr(x.o, 2) : '<span class="sg-nm">no live price</span>'}</td><td class="r">${x ? "₹" + inr(x.p, 2) : "--"}</td><td class="r ${cls(ch)}">${sgn(ch, 2)}</td></tr>`; }).join("");
+  return `<div class="sg-card sg-today"><h4>Today · the bot enters ${book.bull.length} stocks at the open (provisional)</h4><div class="sg-tablewrap sg-short"><table class="sg-table"><thead><tr><th>Stock</th><th class="r">Today's open (entry)</th><th class="r">Live price</th><th class="r">Since entry</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="note">${n ? `Average since the open ${sgn(sum / n, 2)} across ${n} names. ` : ""}PROVISIONAL: the list was written before today's open, so these entries count. Quantities and the official fills are recorded after today's close by the nightly run; until then this is a live view from delayed prices (about 15 minutes), not the account's record.</p></div>`;
+}
 function paperHtml() {
   if (!paper) return '<p class="note">Loading the paper account…</p>';
   const doc = st.pmode === "live" ? paper.live : paper.hist, seg = `<div class="sg-chips" role="group" aria-label="Paper account view"><button type="button" class="sg-chip ${st.pmode === "live" ? "on" : ""}" data-pm="live" aria-pressed="${st.pmode === "live"}">Live front test</button><button type="button" class="sg-chip ${st.pmode === "hist" ? "on" : ""}" data-pm="hist" aria-pressed="${st.pmode === "hist"}">History 2013 to 2026</button></div>`;
@@ -155,7 +176,7 @@ function paperHtml() {
   const S = doc.stats || {}, R = doc.rules || {}, hist = st.pmode === "hist";
   const rulesCard = `<div class="sg-card"><h4>The bot's written rules</h4><dl class="sg-dl"><div><dt>Budget</dt><dd>${rupee(R.budget_inr)}, simulated</dd></div><div><dt>Which signals</dt><dd>${esc(R.books || "")}</dd></div><div><dt>Entry</dt><dd>${esc(R.entry || "")}</dd></div><div><dt>Exit</dt><dd>${esc(R.exit_order || "")}</dd></div><div><dt>Size</dt><dd>${R.risk_per_trade_pct}% of the account at risk to the stop, at most ${R.max_position_pct}% in one stock, at most ${(R.adv_participation_max * 100).toFixed(0)}% of its daily volume, at most ${R.max_open} stocks at once</dd></div><div><dt>Costs</dt><dd>${esc(R.costs || "")}</dd></div>${R.idle_cash ? `<div><dt>Idle cash</dt><dd>${esc(R.idle_cash)}</dd></div>` : ""}</dl>
     ${(doc.rule_history || []).length ? `<h4 style="margin-top:12px">Rule history (kept in the open)</h4><ul class="sg-hist">${doc.rule_history.map(x => `<li><b>v${x.v}</b> · ${esc(x.exits)} · ${esc(x.why_dropped || x.why || "")}${x.backtest_return_pct != null ? ` (history result ${sgn(x.backtest_return_pct)})` : ""}</li>`).join("")}</ul>` : ""}</div>`;
-  const ft = hist ? "" : frontTestHtml(doc);
+  const ft = hist ? "" : liveTodayHtml(doc, W && W.book, ctx.S.quotes, new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })) + frontTestHtml(doc);
   if (!S.started) return `<div class="sg-bar">${seg}</div><div class="sg-banner">${esc(doc.label || "")}</div><div class="sg-empty"><b>No live trade yet.</b><span>${esc(doc.note || "")} Budget ${rupee(R.budget_inr)}.</span></div>${ft}${rulesCard}`;
   const bench = hist && doc.benchmark ? compound(doc.benchmark.weekly, S.start_equity) : null, ex = (S.avg_invested_pct || 0) / 100, matched = bench && ex > 0 && ex < 1 ? compound(doc.benchmark.weekly.map(([d, r]) => [d, r * ex]), S.start_equity) : null;
   const chart = lineChart([{ name: "Paper account (after all costs)", pts: doc.equity.map(r => [r[0], r[1]]), cls: "a" }].concat(matched ? [{ name: `Market with the same ${(ex * 100).toFixed(0)}% in stocks, rest cash (the fair comparison)`, pts: matched, cls: "c" }] : []).concat(bench ? [{ name: "Market, all money in the liquid stocks every week, before costs", pts: bench, cls: "b" }] : []), { base: S.start_equity, label: "Paper account value over time", fmt: v => rupee(v) });

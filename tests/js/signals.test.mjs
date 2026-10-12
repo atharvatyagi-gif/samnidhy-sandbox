@@ -63,3 +63,17 @@ test("the target cell carries its time limit; a missing stop reads not measured"
   const w = { book: { as_of: "2026-10-09", bull: [{ sym: "AAA", name: "A", signal: "bull", close: 100, goal: 104, goal_by: "2026-10-16", stop: null, stop_basis: "not measured: price history ends 2021-10-12", rank_pct: 0.995 }], bear: [], ranks: {}, counts: { bull: 1, bear: 0, hold: 0 } } };
   const r = buildRows(w, [{ s: "AAA", n: "A", c: 100 }]).rows[0]; assert.equal(Math.round(r.goalPct * 10) / 10, 4); assert.equal(r.stop, null); assert.equal(r.book.goal_by, "2026-10-16");
 });
+
+test("liveTodayHtml: provisional entries at today's open on entry day, live marks once positions are recorded, nothing otherwise", async () => {
+  const { liveTodayHtml } = await import("../../desk-signals.js");
+  const book = { as_of: "2026-10-09", bull: [{ sym: "AAA" }, { sym: "BBB" }] };
+  const doc = { open: [], timeline: { weeks: [{ friday: "2026-10-09", entry_day: "2026-10-12", status: "in time" }] } };
+  const quotes = { AAA: { o: 100, p: 102, d: "2026-10-12" }, BBB: { o: 50, p: 49, d: "2026-10-09" } };
+  const h = liveTodayHtml(doc, book, quotes, "2026-10-12");
+  assert.match(h, /PROVISIONAL/); assert.match(h, /\+2\.00%/); assert.match(h, /no live price/);          // BBB's quote is from an older day: not used
+  assert.equal(liveTodayHtml(doc, book, quotes, "2026-10-13"), "");                                          // not the entry day
+  assert.equal(liveTodayHtml({ ...doc, timeline: { weeks: [{ friday: "2026-10-09", entry_day: "2026-10-12", status: "late" }] } }, book, quotes, "2026-10-12"), "");
+  const rec = { open: [{ sym: "AAA", qty: 10, entry: 100 }], timeline: doc.timeline };
+  const m = liveTodayHtml(rec, book, { AAA: { p: 105, d: "2026-10-13" } }, "2026-10-13");
+  assert.match(m, /open positions marked to the live price/); assert.match(m, /₹50/); assert.match(m, /\+5\.00%/);
+});
