@@ -1,1 +1,1 @@
-{"generated_utc":"2026-10-12T14:27:31Z","as_of":"2026-10-12","min_abs_dr_pct":3.0,"shocks":[]}
+{"generated_utc":"2026-10-12T22:38:37Z","as_of":"2026-10-09","min_abs_dr_pct":3.0,"shocks":[{"focal":"CYIENTDLM","cp":"CYIENT","rel":"supplies","w":0.0042,"conf":0.9,"dr":4.6,"edge":"e165","cp_ret":0.0683,"focal_ret":-0.0295}]}
