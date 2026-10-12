@@ -70,6 +70,19 @@ jobs:
         timeout-minutes: 170
         run: python scripts/revenue_graph_builder.py --limit "$LIMIT" --max-calls 420    # about 8 model calls and 20 s a call per company: ~50 companies a day, ~2.5 hours
 
+      - name: Revenue profile from the segment note (Ind AS 108 major customers and revenue by geography; resumes, about 2 model calls a company)
+        continue-on-error: true
+        timeout-minutes: 60
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/revenue_profile.py --limit 250 --max-calls 200
+
       - name: Derived revenue shares from the related-party notes (companies already read, 40 a week, marked derived)
         continue-on-error: true
         timeout-minutes: 60
@@ -108,7 +121,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/supply_graph.json
+          python scripts/dependency_profile.py || true
+          git add data/supply_graph.json data/revenue_profile.json data/dependencies.json 2>/dev/null || git add data/supply_graph.json
           if git diff --cached --quiet; then
             echo "Nothing new to save."
           else
