@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-12T03:31:36+00:00",
+  "generated_on": "2026-10-12T04:28:11+00:00",
   "session_date": "2026-10-09",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -57,8 +57,8 @@
         "turnover_crore": 488.09
       },
       "latest_close": 1158.8,
-      "trailing_pe": 33.974735,
-      "market_cap": 120393547776,
+      "trailing_pe": 33.957108,
+      "market_cap": 120331091968,
       "history": {
         "first_date": "2021-10-04",
         "trading_days": 1239,
@@ -86,8 +86,8 @@
         "turnover_crore": 246.02
       },
       "latest_close": 66.65,
-      "trailing_pe": 27.655602,
-      "market_cap": 115187056640,
+      "trailing_pe": 28.120329,
+      "market_cap": 117122670592,
       "history": {
         "first_date": "2021-10-04",
         "trading_days": 1239,
@@ -115,8 +115,8 @@
         "turnover_crore": 613.03
       },
       "latest_close": 369.85,
-      "trailing_pe": 17.584135,
-      "market_cap": 97362649088,
+      "trailing_pe": 17.831732,
+      "market_cap": 98733580288,
       "history": {
         "first_date": "2021-10-04",
         "trading_days": 1239,
@@ -144,8 +144,8 @@
         "turnover_crore": 223.98
       },
       "latest_close": 2038.7,
-      "trailing_pe": 73.229164,
-      "market_cap": 338508316672,
+      "trailing_pe": 74.22414,
+      "market_cap": 343107665920,
       "history": {
         "first_date": "2021-12-14",
         "trading_days": 1190,
@@ -153,7 +153,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.745653,
-      "total_return": 13.6522,
+      "total_return": 13.652202,
       "annualised_volatility": 0.291883,
       "max_drawdown": -0.26899,
       "beta": 0.436
@@ -173,8 +173,8 @@
         "turnover_crore": 115.86
       },
       "latest_close": 261.1,
-      "trailing_pe": 146.51685,
-      "market_cap": 203104223232,
+      "trailing_pe": 156.62921,
+      "market_cap": 217122144256,
       "history": {
         "first_date": "2021-10-04",
         "trading_days": 1239,
@@ -202,8 +202,8 @@
         "turnover_crore": 34.43
       },
       "latest_close": 460.15,
-      "trailing_pe": 31.615332,
-      "market_cap": 167550238720,
+      "trailing_pe": 32.238194,
+      "market_cap": 170851188736,
       "history": {
         "first_date": "2021-10-04",
         "trading_days": 1239,
@@ -611,7 +611,7 @@
     ],
     "close": {
       "CYIENT.NS": [
-        1010.74,
+        1010.75,
         1049.43,
         1014.09,
         975.6,
@@ -706,7 +706,7 @@
         1373.42,
         1407.21,
         1394.68,
-        1488.81,
+        1488.82,
         1470.89,
         1469.89,
         1515.08,
@@ -756,7 +756,7 @@
         1781.69,
         1738.57,
         1782.66,
-        1776.25,
+        1776.26,
         1736.0,
         1716.7,
         1629.07,
@@ -1239,7 +1239,7 @@
         610.47,
         636.42,
         655.0,
-        661.75,
+        661.74,
         645.52,
         641.26,
         647.72,
@@ -1557,7 +1557,7 @@
         944.17,
         970.31,
         970.21,
-        965.38,
+        965.39,
         959.32,
         968.1,
         1000.63,
@@ -1931,7 +1931,7 @@
         261.1
       ],
       "AARTIIND.NS": [
-        1092.83,
+        1092.82,
         1091.0,
         995.1,
         949.78,
