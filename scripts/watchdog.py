@@ -5,7 +5,10 @@ What it repairs, and only this (every action is printed and written to the job s
      bug forever would only hide it.
   2. The nightly chain. "ALADIN nightly" must follow every Daily update whose data job succeeded, and "ALADIN2 nightly" must follow
      ALADIN nightly. If the next link has not started within 45 minutes, it is started by hand (workflow_dispatch).
-  3. Jobs that must run at least once a day (NEXUS graph): started if no run began in the last 26 hours. GitHub's own cron is unreliable.
+  3. A run that is still "in progress" or "waiting" long after its own time limit is cancelled (force-cancelled if a plain cancel does
+     not take). On 10 Oct a Live prices publish job sat "waiting" for GitHub Pages for 34 hours and every later deploy failed behind it,
+     so the public site froze for two days.
+  4. Jobs that must run at least once a day (NEXUS graph): started if no run began in the last 26 hours. GitHub's own cron is unreliable.
 
 It never touches data, never cancels anything and never re-runs a cancelled run (cancellations here are expected: the 5-minute Live
 prices publishes replace each other). Uses only the GitHub REST API with the job's own token.
@@ -22,6 +25,8 @@ WATCHED = ["crypto-live.yml", "daily-update.yml", "aladin.yml", "aladin2.yml", "
 CHAIN = [("daily-update.yml", "update", "aladin.yml"), ("aladin.yml", "aladin", "aladin2.yml")]     # (upstream, its data job, what must follow it)
 DAILY = {"nexus.yml": 26}                                                                          # workflow -> hours allowed without a run
 CHAIN_GRACE_MIN = 45
+STUCK_MIN = {"live-prices.yml": 60, "crypto-live.yml": 40, "globe-data.yml": 60, "aladin-sentiment.yml": 60, "daily-update.yml": 180,
+             "aladin.yml": 200, "aladin2.yml": 200, "nexus.yml": 330}                                     # well past each workflow's own timeout
 LOOKBACK_H = 24
 
 
@@ -55,6 +60,10 @@ def plan(runs, jobs_of, now):
         if any(ts(r["created_at"]) >= ts(u["created_at"]) for r in runs.get(nxt, [])):
             continue
         acts.append(("dispatch", nxt, None, f"{up} data job succeeded (run {u['id']}) but {nxt} has not started since"))
+    for wf, limit in STUCK_MIN.items():
+        for r in runs.get(wf, []):
+            if r["status"] in ("in_progress", "queued", "waiting", "pending", "requested") and now - ts(r["created_at"]) > timedelta(minutes=limit):
+                acts.append(("cancel", wf, r["id"], f"still {r['status']} after {int((now - ts(r['created_at'])).total_seconds() // 60)} min (limit {limit})"))
     for wf, hours in DAILY.items():
         rs = runs.get(wf, [])
         if not rs or now - ts(rs[0]["created_at"]) > timedelta(hours=hours):
@@ -85,6 +94,10 @@ def main():
                 pass
             elif act == "rerun":
                 s.post(f"{API}/repos/{repo}/actions/runs/{rid}/rerun-failed-jobs", timeout=30).raise_for_status()
+            elif act == "cancel":
+                c = s.post(f"{API}/repos/{repo}/actions/runs/{rid}/cancel", timeout=30)
+                if c.status_code >= 400:
+                    s.post(f"{API}/repos/{repo}/actions/runs/{rid}/force-cancel", timeout=30).raise_for_status()
             elif act == "dispatch":
                 s.post(f"{API}/repos/{repo}/actions/workflows/{wf}/dispatches", json={"ref": "main"}, timeout=30).raise_for_status()
             done = "dry run, not done" if dry else "done"

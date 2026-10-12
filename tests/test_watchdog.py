@@ -49,3 +49,9 @@ def test_no_dispatch_when_the_next_link_already_started_or_the_data_job_failed_o
 def test_nexus_is_started_when_it_has_not_run_for_a_day():
     assert ("dispatch", "nexus.yml") in [a[:2] for a in W.plan({"nexus.yml": [run(1, 60 * 30)]}, lambda i: [], NOW)]
     assert W.plan({"nexus.yml": [run(1, 60 * 3)]}, lambda i: [], NOW) == []
+
+
+def test_a_run_stuck_far_past_its_time_limit_is_cancelled():
+    runs = {**fresh_nexus(), "live-prices.yml": [run(5, 60 * 34, status="in_progress", conclusion=None), run(6, 3, status="in_progress", conclusion=None)]}
+    acts = W.plan(runs, lambda i: [], NOW)
+    assert [a[:3] for a in acts] == [("cancel", "live-prices.yml", 5)]
