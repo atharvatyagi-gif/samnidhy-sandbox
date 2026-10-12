@@ -10,7 +10,6 @@
 
 @source "../index.html";
 @source "../ui-home.js";
-@source "../ui-field.js";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

@@ -3,13 +3,16 @@
 
 @layer components {
   .hx-body { overflow-x: hidden; }
-  .hx-fieldwrap { position: fixed; inset: 0; z-index: 1; }
-  .hx-fieldc { width: 100%; height: 100%; display: block; mask-image: radial-gradient(ellipse 34% 30% at 50% 44%, transparent 55%, black 100%); }
-  .hx-pass { pointer-events: none; }
-  .hx-pass :is(a, button, input, label, ul, kbd, dl, .hx-beam) { pointer-events: auto; }
-  .hx-tip { position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; padding: .4rem .6rem; border-radius: .5rem; border: 1px solid var(--color-zinc-700);
-    background: color-mix(in oklab, var(--color-zinc-950) 92%, transparent); font: 600 .75rem var(--font-mono); color: var(--color-zinc-100); white-space: nowrap; }
-  .hx-tip small { display: block; font: 400 .7rem var(--font-sans); color: var(--color-zinc-400); max-width: 16rem; overflow: hidden; text-overflow: ellipsis; }
+  .hx-help { display: inline-grid; place-content: center; width: 1.1rem; height: 1.1rem; margin-left: .25rem; border-radius: 9999px; border: 1px solid var(--color-zinc-600);
+    font: 600 .7rem/1 var(--font-sans); color: var(--color-zinc-400); vertical-align: middle; cursor: help; text-transform: none; letter-spacing: 0; }
+  .hx-help:hover, .hx-help:focus-visible { border-color: var(--color-emerald-400); color: var(--color-emerald-300); }
+  .hx-pop { margin: auto; max-width: min(24rem, 90vw); padding: 1rem 1.125rem; border-radius: .75rem; border: 1px solid var(--color-zinc-700);
+    background: var(--color-zinc-900); color: var(--color-zinc-100); font-size: .9375rem; line-height: 1.55; box-shadow: 0 20px 50px -10px black; }
+  .hx-pop::backdrop { background: color-mix(in oklab, var(--color-zinc-950) 50%, transparent); }
+  .hx-dialog { margin: auto; width: min(44rem, 94vw); max-height: 86vh; padding: 1.25rem; border-radius: 1rem; border: 1px solid var(--color-zinc-800);
+    background: var(--color-zinc-950); color: var(--color-zinc-100); }
+  .hx-dialog::backdrop { background: color-mix(in oklab, black 60%, transparent); }
+  .hx-toasts { position: fixed; right: 1rem; bottom: 5.5rem; z-index: 90; display: grid; gap: .5rem; width: min(24rem, calc(100vw - 2rem)); }
   .hx-leave::after { content: ""; position: fixed; inset: 0; z-index: 100; background: var(--color-zinc-950); animation: hx-fade .35s ease forwards; }
   @keyframes hx-fade { from { opacity: 0; } to { opacity: 1; } }
   .hx-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
@@ -68,7 +71,7 @@
   .up { color: var(--color-emerald-400); } .down { color: var(--color-red-400); } .flat { color: var(--color-zinc-400); }
 
   /* the stock story */
-  .hx-story { position: fixed; inset: 0; z-index: 50; overflow: auto; background: color-mix(in oklab, var(--color-zinc-950) 97%, transparent); }   /* no backdrop-filter: it would pin the fixed bar and button to the scrolling box */
+  .hx-story { position: fixed; inset: 0; z-index: 50; overflow: auto; background: var(--color-zinc-950); }   /* no backdrop-filter: it would pin the fixed bar and button to the scrolling box */
   .hx-story:not([hidden]) .hx-story-in { animation: hx-rise .45s cubic-bezier(.2,.8,.2,1); }
   @keyframes hx-rise { from { opacity: 0; transform: translateY(24px) scale(.985); } to { opacity: 1; transform: none; } }
   .hx-story-in { max-width: 72rem; margin: 0 auto; padding: 1.5rem 1rem 7rem; }
