@@ -287,8 +287,7 @@
   <div class="wrap">
     <a class="brand" href="index.html" aria-label="Samnidhy Sandbox Advanced, The B-Lab Cohort: home">
       <span class="brand-mark" aria-hidden="true"><i style="height:6px"></i><i style="height:10px"></i><i style="height:14px"></i></span>
-      <span class="full">Samnidhy Sandbox</span>
-      <span class="adv-badge">ADVANCED</span>
+      <span class="full">Daily screen</span>
     </a>
     <nav class="topnav" aria-label="Sections">
       <a href="#weather">Market weather</a>
@@ -299,8 +298,7 @@
     </nav>
     <span class="spacer"></span>
     <span class="status-pill" id="status-pill"><span class="dot"></span><span id="status-text">Loading…</span></span>
-    <a class="expert-btn" id="expert-btn" href="auth.html" title="TAPMI members: open the B-Lab expert terminal">&#9608; <span class="full">Expert Mode</span></a>
-    <a class="back-link main-link" id="back-link" href="sandbox.html">&larr; <span class="full">Main page</span></a>
+    <a class="expert-btn" id="expert-btn" href="expert-terminal.html" title="Open the full terminal">&#9608; <span class="full">Terminal</span></a>
   </div>
 </header>
 
@@ -3940,7 +3938,7 @@
 
   if (location.protocol === "file:") {
     const home = /\/site\//.test(location.pathname) ? "sandbox.html" : "dashboard.html";
-    $("#back-link").href = home; $("#foot-home").href = home;
+    if ($("#back-link")) $("#back-link").href = home; $("#foot-home").href = home;
   }
   funnel();
   renderAll();

@@ -2,6 +2,7 @@
    disclosed business links, trading activity), then the full terminal. Every number is a published file of this site; a missing one says so.
    Files: t/universe.json + t/quotes.json (search list and prices), live.json (market strip), t/d/<key>.json (5 years daily), t/x/d/Nifty_2050.json,
    t/fund.json, aladin.json, supply_graph.json (loaded only when a story opens). */
+import { marketField } from "./ui-field.js";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const num = (v, d = 2) => v == null || isNaN(v) ? "--" : Number(v).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -46,6 +47,7 @@ Promise.all([get("t/universe.json"), get("t/quotes.json", true).catch(() => ({})
   const top = S.list.filter(e => e.board === "Main" && !e.etf && e.val_cr).sort((a, b) => b.val_cr - a.val_cr).slice(0, 6);
   $("#hx-trending").insertAdjacentHTML("beforeend", top.map(e => { const qq = quoteOf(e); return `<button type="button" class="hx-chip" data-sym="${esc(e.s)}">${esc(e.s)}<b class="${cls(qq.pct)}">${pct(qq.pct, 1)}</b></button>`; }).join(""));
   $("#hx-trending").addEventListener("click", ev => { const b = ev.target.closest("[data-sym]"); if (b) openStory(b.dataset.sym); });
+  try { S.field = marketField($("#hx-field"), S.list, quoteOf, sym => openStory(sym)); } catch (err) { $("#hx-fieldnote").hidden = true; }
   if (input.value) render();
   const hp = new URLSearchParams(location.hash.slice(1)); if (hp.get("s") && S.map.has(hp.get("s"))) openStory(hp.get("s"));
 }).catch(() => { box.hidden = false; box.innerHTML = '<li class="empty">The stock list could not be loaded. Please try again in a minute.</li>'; });
@@ -106,6 +108,9 @@ async function openStory(sym) {
   history.replaceState(null, "", "#s=" + encodeURIComponent(sym));
   const st = $("#story"), host = $("#story-in"); st.hidden = false; document.body.style.overflow = "hidden"; last = document.activeElement;
   const qq = quoteOf(e);
+  $("#st-sticky").innerHTML = `<span class="font-mono font-bold text-emerald-400">${esc(e.s)}</span><span class="truncate text-sm text-zinc-300">${esc(e.n || "")}</span><span class="ml-auto font-mono font-semibold">₹${num(qq.p)}</span><span class="font-mono text-sm ${cls(qq.pct)}">${pct(qq.pct)}</span>`;
+  $("#st-sticky").classList.remove("on");
+  $("#st-cta").innerHTML = `<a href="expert-terminal.html#v=terminal&s=${encodeURIComponent(e.s)}" class="hx-open rounded-xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-zinc-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400">Open ${esc(e.s)} in the full terminal →</a>`;
   host.innerHTML = `
     <div class="flex items-center justify-between gap-4">
       <button type="button" id="st-back" class="rounded-lg border border-zinc-800 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-600">← Search</button>
@@ -139,8 +144,14 @@ async function openStory(sym) {
     </div>
     <div class="st-card mt-4" id="st-links"><h3>Disclosed business links</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div>
     <p class="mt-6 text-center text-xs text-zinc-500">Educational analysis, not investment advice. Models are statistical and often wrong.</p>
-    <div class="st-cta"><a href="expert-terminal.html#v=terminal&s=${encodeURIComponent(e.s)}" class="hx-open rounded-xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-zinc-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400">Open ${esc(e.s)} in the full terminal →</a></div>`;
+`;
   $("#st-back").onclick = closeStory; $("#st-back").focus();
+  if (S.field) S.field.pause();
+  st.scrollTop = 0; st.onscroll = () => $("#st-sticky")?.classList.toggle("on", st.scrollTop > 170);
+  host.querySelectorAll(".st-card").forEach(c => c.classList.add("st-reveal"));
+  const io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }), { root: st, threshold: 0.08 });
+  host.querySelectorAll(".st-reveal").forEach(c => io.observe(c));
+  $("#st-cta .hx-open").addEventListener("click", ev => { if (ev.metaKey || ev.ctrlKey) return; ev.preventDefault(); const href = ev.currentTarget.href; document.body.classList.add("hx-leave"); setTimeout(() => { location.href = href; }, 330); });
   tradeCard(e);
   const [d, nf] = await Promise.all([get(`t/d/${dkey(sym)}.json`).then(j => j.d).catch(() => null), once("nifty", () => get("t/x/d/Nifty_2050.json").then(j => j.d)).catch(() => null)]);
   if (d && d.length && qq.d && qq.d > d[d.length - 1][0] && qq.p) d.push([qq.d, qq.p, qq.p, qq.p, qq.p, 0]);   // the published history can lag a day or two: end it at today's price
@@ -150,6 +161,7 @@ async function openStory(sym) {
   once("graph", () => get("supply_graph.json")).then(g => linksCard(g, sym)).catch(() => linksCard(null, sym));
 }
 function closeStory() {
+  if (S.field) S.field.resume();
   $("#story").hidden = true; document.body.style.overflow = ""; if (chart) { chart.remove(); chart = null; }
   history.replaceState(null, "", location.pathname + location.search); (last && last.focus ? last : input).focus();
 }
@@ -185,8 +197,15 @@ function returnsCard(d, nf) {
   const el = $("#st-ret");
   el.innerHTML = RANGES.map(([k, n]) => {
     const r = retOver(d, n), i = d ? Math.max(0, d.length - 1 - n) : 0, nr = d && r != null ? niftyOver(nf, d[i][0]) : null;
-    return `<div><span>${k === "5Y" ? "Max" : k}</span><b class="${cls(r)}">${pct(r, 1)}</b><small>${nr != null ? "Nifty " + pct(nr, 1) : "&nbsp;"}</small></div>`;
+    return `<div><span>${k === "5Y" ? "Max" : k}</span><b class="${cls(r)}" data-count="${r == null ? "" : r.toFixed(1)}">${pct(r, 1)}</b><small>${nr != null ? "Nifty " + pct(nr, 1) : "&nbsp;"}</small></div>`;
   }).join("");
+  countUp(el.querySelectorAll("[data-count]"));
+}
+function countUp(nodes) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const t0 = performance.now(), list = [...nodes].filter(n => n.dataset.count !== "").map(n => [n, +n.dataset.count]);
+  const step = now => { const k = Math.min(1, (now - t0) / 700), f = 1 - Math.pow(1 - k, 3); list.forEach(([n, v]) => { n.textContent = pct(v * f, 1); }); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
 }
 function rangeCard(e, d) {
   const el = $("#st-range"), lo = e.lo52, hi = e.hi52, p = quoteOf(e).p;

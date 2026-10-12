@@ -7,7 +7,8 @@
   var base = src.replace(/[?#].*$/, "").replace(/[^/]*$/, "");
   var here = location.pathname.split("/").pop() || "index.html";
   var inDays = /\/days\//.test(location.pathname);
-  var links = [["Main", "sandbox.html"], ["Advanced", "advanced.html"], ["Expert access", "auth.html"]];
+  var BRAND = "B-Lab Terminal";                                      // the product name, in one place (to be decided)
+  var links = [["Search", "index.html?home"], ["Terminal", "expert-terminal.html"], ["Screen", "advanced.html"], ["Lessons", "sandbox.html"]];
   function el(tag, attrs, text) { var n = document.createElement(tag); for (var k in attrs) n.setAttribute(k, attrs[k]); if (text) n.textContent = text; return n; }
 
   function build() {
@@ -16,13 +17,12 @@
     var prog = el("div", { "class": "fx-progress", "data-fx": "progress", "aria-hidden": "true" });
     var nav = el("div", { "class": "fx-nav" + (keepOwn ? " fx-static" : "") });          // a <div> so it never adds a second banner landmark
     var bar = el("nav", { "aria-label": "Site", style: "display:contents" });
-    bar.appendChild(el("a", { "class": "fx-brand", href: base + "index.html" }, "B-Lab Cohort"));
-    links.slice(0, 1).forEach(function (l) { bar.appendChild(el("a", Object.assign({ href: base + l[1] }, here === l[1] ? { "aria-current": "page" } : {}), l[0])); });
+    bar.appendChild(el("a", { "class": "fx-brand", href: base + "index.html?home" }, BRAND));
+    links.forEach(function (l) { bar.appendChild(el("a", Object.assign({ href: base + l[1] }, here === l[1].split("?")[0] ? { "aria-current": "page" } : {}), l[0])); });
     var wrap = el("span", { "class": "fx-has-days" });
     var btn = el("button", { type: "button", "aria-haspopup": "true", "aria-expanded": "false" }, "Archive");
     var menu = el("div", { "class": "fx-days", role: "menu", hidden: "" });
     wrap.appendChild(btn); wrap.appendChild(menu); bar.appendChild(wrap);
-    links.slice(1).forEach(function (l) { bar.appendChild(el("a", Object.assign({ href: base + l[1] }, here === l[1] ? { "aria-current": "page" } : {}), l[0])); });
     nav.appendChild(bar);
     document.body.insertBefore(nav, document.body.firstChild); if (!keepOwn) document.body.insertBefore(prog, document.body.firstChild);
     if (window.FX) window.FX.init(document.body);

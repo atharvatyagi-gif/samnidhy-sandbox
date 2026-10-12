@@ -33,8 +33,9 @@
      The glow, the light beam, the results list and the stock story are the site's own (ui/input.css, ui-home.js). -->
 <body class="hx-body min-h-dvh bg-zinc-950 text-zinc-100">
 <div class="hx-bg" aria-hidden="true"><div class="hx-grid"></div><div class="hx-spot"></div></div>
+<div class="hx-fieldwrap"><canvas id="hx-field" class="hx-fieldc" role="img" aria-label="Every NIFTY 500 stock as a dot: size is value traded, colour is the move. Hover to see a stock, click to open its story."></canvas></div>
 
-<header class="relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+<header class="hx-pass relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
   <a href="index.html?home" class="flex items-center gap-2.5 text-zinc-100">
     <svg class="h-7 text-emerald-400" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="17" width="6" height="12" rx="1.5" fill="currentColor"/><rect x="13" y="9" width="6" height="20" rx="1.5" fill="currentColor"/><rect x="23" y="3" width="6" height="26" rx="1.5" fill="currentColor"/></svg>
     <span class="font-semibold tracking-tight">B-Lab <span class="text-zinc-400">Terminal</span></span>
@@ -46,7 +47,7 @@
   </nav>
 </header>
 
-<main id="main" class="relative z-10">
+<main id="main" class="hx-pass relative z-10">
   <section class="relative z-20 mx-auto flex max-w-3xl flex-col items-center px-4 pt-[12vh] pb-16 text-center sm:px-6">
     <p class="hx-pill"><span class="hx-live" aria-hidden="true"></span><span><span id="hx-count">3,500+</span> NSE stocks · live through the day</span></p>
     <h1 class="hx-title mt-6 text-5xl font-extrabold tracking-tight sm:text-7xl">Search a stock.</h1>
@@ -70,6 +71,7 @@
       <ul id="hx-results" role="listbox" aria-label="Matching stocks" class="hx-results" hidden></ul>
     </div>
 
+    <p class="mt-4 text-xs text-zinc-500" id="hx-fieldnote">Around you: every NIFTY 500 stock, sized by trading and coloured by its move. Hover a dot, click to open it.</p>
     <div class="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm" id="hx-trending" aria-label="Most traded today">
       <span class="text-zinc-500">Most traded today:</span>
     </div>
@@ -89,7 +91,9 @@
 
 <!-- The stock story: opens over the page when a stock is picked -->
 <div id="story" class="hx-story" role="dialog" aria-modal="true" aria-labelledby="st-name" hidden>
+  <div class="st-sticky" id="st-sticky" aria-hidden="true"></div>
   <div class="hx-story-in" id="story-in"></div>
+  <div class="st-cta" id="st-cta"></div>
 </div>
 
 <footer class="relative z-10 border-t border-zinc-900 py-8 text-center text-xs text-zinc-500">
