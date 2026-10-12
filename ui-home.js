@@ -3,6 +3,7 @@
    Components: HyperUI (MIT) tabs/1, toasts/1, button-groups/1, range-inputs/1, empty-states/1; help bubbles use the browser's popover API.
    Files: t/universe.json + t/quotes.json (search, prices), live.json (market strip), t/d/<key>.json (5 years daily), t/x/d/Nifty_2050.json,
    t/fund.json, aladin.json, supply_graph.json (only when a story opens). */
+import * as RD from "./desk-revdeps.js";
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const num = (v, d = 2) => v == null || isNaN(v) ? "--" : Number(v).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -32,6 +33,8 @@ const HELP = {
   dd: "Biggest fall from a high: the worst drop from a peak to a later low in the period shown. A feel for how bumpy holding it has been.",
   nifty: "Nifty 50: an index of India's 50 biggest companies, used here as 'the market' to compare with.",
   links: "Customers and suppliers named in the company's own filings and earnings calls, each with the sentence it came from.",
+  dep: "Revenue dependency: how much of the company's sales rest on a single customer. Indian accounting rules (Ind AS 108) make listed companies disclose every customer worth 10% or more of revenue, usually without the name. High = one customer is 25% or more; Moderate = 10 to 25%; Low = the company states that none reaches 10%.",
+  geo: "Where the revenue comes from: the split by region that the company reports in its segment note. A large share from outside India means exposure to other economies and to the rupee.",
 };
 let helpN = 0;
 const help = k => { const id = "h" + (++helpN); return `<button type="button" class="hx-help" popovertarget="${id}" aria-label="What does this mean?">i</button><div id="${id}" popover class="hx-pop">${esc(HELP[k])}</div>`; };
@@ -79,6 +82,7 @@ Promise.all([get("t/universe.json"), get("t/quotes.json", true).catch(() => ({})
   if (input.value) render();
   const hp = new URLSearchParams(location.hash.slice(1)); if (hp.get("s") && S.map.has(hp.get("s"))) openStory(hp.get("s"), hp.get("tab"));
 }).catch(() => { box.hidden = false; box.innerHTML = '<li class="empty">The stock list could not be loaded. Please try again in a minute.</li>'; });
+addEventListener("hashchange", () => { const hp = new URLSearchParams(location.hash.slice(1)), s = hp.get("s"); if (s && S.map.has(s) && (!S.cur || S.cur.e.s !== s)) openStory(s, hp.get("tab")); else if (!s && S.cur) closeStory(); });
 document.addEventListener("click", ev => { const b = ev.target.closest("#hx-trending [data-sym], #hx-mine [data-sym], #hx-movers [data-sym]"); if (b) { closeMovers(); openStory(b.dataset.sym, S.intent); } });
 
 get("live.json", true).then(L => {
@@ -96,6 +100,7 @@ const INTENT_HINT = { whatif: "Pick a stock for the what-if calculator…", char
 document.querySelectorAll("[data-task]").forEach(b => b.addEventListener("click", () => {
   const t = b.dataset.task;
   if (t === "movers") return openMovers();
+  if (t === "deps") return openDeps();
   S.intent = t; input.placeholder = INTENT_HINT[t]; input.focus();
   $("#hx-intent").hidden = false; $("#hx-intent-t").textContent = t === "whatif" ? "What if I had invested: choose a stock" : "Compare: choose the first stock, then add the second on its chart";
 }));
@@ -109,7 +114,21 @@ function openMovers() {
     <p class="mt-4 text-xs text-zinc-500">Among the NIFTY 500, change since the previous close. Tap any stock to see its story.</p>`;
   $("#hx-movers").showModal();
 }
-function closeMovers() { const d = $("#hx-movers"); if (d.open) d.close(); }
+function closeMovers() { ["#hx-movers", "#hx-deps"].forEach(k => { const d = $(k); if (d && d.open) d.close(); }); }
+async function openDeps() {
+  const body = $("#hx-deps-body"); body.innerHTML = '<p class="text-sm text-zinc-400">Loading…</p>'; $("#hx-deps").showModal();
+  const doc = await once("deps", () => get("dependencies.json")).catch(() => null);
+  if (!doc) { body.innerHTML = '<p class="text-sm text-zinc-400">The dependency profiles could not be loaded.</p>'; return; }
+  const rows = RD.mostDependent(doc, 40).filter(r => S.map.has(r.sym));
+  const lv = r => RD.LEVELS[r.lvl];
+  body.innerHTML = rows.length ? `<ul class="divide-y divide-zinc-800">${rows.map(r => { const u = S.map.get(r.sym), q = quoteOf(u);
+      return `<li><button type="button" data-sym="${esc(r.sym)}" data-tab="revenue" class="flex w-full items-center justify-between gap-3 px-2 py-3 text-left hover:bg-zinc-900"><span class="min-w-0"><b class="font-mono text-sm">${esc(r.sym)}</b> <span class="text-xs text-zinc-400">${esc(u.n || "")}</span><span class="block text-sm text-zinc-300">${esc(r.why)}${r.abroad != null && r.abroad >= 0.05 ? ` · ${(r.abroad * 100).toFixed(0)}% from outside India` : ""}</span></span>
+        <span class="shrink-0 text-right"><span class="block font-mono text-lg font-bold ${lv(r).tone === "down" ? "text-red-300" : "text-amber-200"}">${r.share != null ? (r.share * 100).toFixed(0) + "%" : "≥10%"}</span><span class="font-mono text-xs ${cls(q.pct)}">${pct(q.pct)} today</span></span></button></li>`; }).join("")}</ul>
+      <p class="mt-4 text-xs text-zinc-500">${doc.counts.high} high, ${doc.counts.moderate} moderate, ${doc.counts.low} low and ${doc.counts.unknown} not yet disclosed among ${Object.keys(doc.cos).length} companies read. From each company's own filings; nothing is estimated.</p>`
+    : '<p class="text-sm text-zinc-400">No company has disclosed a customer worth 10% or more of revenue in the filings read so far.</p>';
+  body.querySelectorAll("[data-sym]").forEach(b => b.onclick = () => { closeMovers(); openStory(b.dataset.sym, "revenue"); });
+}
+$("#hx-deps-x").addEventListener("click", closeMovers);
 $("#hx-movers-x").addEventListener("click", closeMovers);
 
 /* ---------------- search ---------------- */
@@ -148,7 +167,7 @@ addEventListener("keydown", e => {
 document.addEventListener("click", e => { if (!e.target.closest("#hx-beam")) box.hidden = true; if (!e.target.closest("#cmp-wrap")) { const c = $("#cmp-results"); if (c) c.hidden = true; } });
 
 /* ---------------- the stock story: tabs ---------------- */
-const TABS = [["overview", "Overview"], ["chart", "Chart"], ["business", "Business"], ["whatif", "What if I had invested?"], ["links", "Connections"]];
+const TABS = [["overview", "Overview"], ["chart", "Chart"], ["business", "Business"], ["revenue", "Revenue & customers"], ["whatif", "What if I had invested?"]];
 const RANGES = [["1M", 21], ["3M", 63], ["6M", 126], ["1Y", 252], ["3Y", 756], ["5Y", 99999]];
 let chart = null, last = null;
 const tabBtn = (k, label, on) => on
@@ -198,6 +217,7 @@ async function openStory(sym, tab) {
     <section data-panel="overview" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" class="mt-5 space-y-4">
       <div class="st-card"><h3>In plain words</h3><ul class="mt-3 space-y-2 text-[15px] leading-relaxed text-zinc-200" id="st-plain"><li class="text-zinc-500">Reading the numbers…</li></ul></div>
       <div class="grid gap-4 md:grid-cols-2"><div class="st-card" id="st-range"><h3>Where the price sits</h3></div><div class="st-card" id="st-model"><h3>What our models see</h3></div></div>
+      <div class="st-card" id="st-depmini" hidden></div>
       <div class="st-card" id="st-peers"><h3>Similar companies</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div>
     </section>
     <section data-panel="chart" id="panel-chart" role="tabpanel" aria-labelledby="tab-chart" class="mt-5 space-y-4" hidden>
@@ -219,7 +239,10 @@ async function openStory(sym, tab) {
     </section>
     <section data-panel="business" id="panel-business" role="tabpanel" aria-labelledby="tab-business" class="mt-5" hidden><div class="st-card" id="st-biz"><h3>The business</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div></section>
     <section data-panel="whatif" id="panel-whatif" role="tabpanel" aria-labelledby="tab-whatif" class="mt-5" hidden><div class="st-card" id="st-whatif"><h3>What if I had invested?</h3><p class="mt-3 text-sm text-zinc-400">Loading the price history…</p></div></section>
-    <section data-panel="links" id="panel-links" role="tabpanel" aria-labelledby="tab-links" class="mt-5" hidden><div class="st-card" id="st-links"><h3>Disclosed business links ${help("links")}</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div></section>
+    <section data-panel="revenue" id="panel-revenue" role="tabpanel" aria-labelledby="tab-revenue" class="mt-5 space-y-4" hidden>
+      <div class="st-card" id="st-dep"><h3>Revenue dependency ${help("dep")}</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div>
+      <div class="st-card" id="st-links"><h3>Named customers and suppliers ${help("links")}</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div>
+    </section>
     <p class="mt-6 text-center text-xs text-zinc-500">Educational analysis, not investment advice. Models are statistical and often wrong.</p>`;
   $("#st-back").onclick = closeStory; $("#st-back").focus();
   $("#st-watch").onclick = () => toggleWatch(e.s); paintWatchBtn(e.s);
@@ -238,9 +261,11 @@ async function openStory(sym, tab) {
   if (d && d.length && qq.d && qq.d > d[d.length - 1][0] && qq.p) d.push([qq.d, qq.p, qq.p, qq.p, qq.p, 0]);   // the published history can lag a day or two: end it at today's price
   S.cur.d = d; S.cur.nf = nf;
   storyChart(); returnsCard(d, nf); rangeCard(e, d); whatIf();
-  const [f, a, g] = await Promise.all([once("fund", () => get("t/fund.json").then(j => j.stocks || {})).catch(() => null), once("aladin", () => get("aladin.json")).catch(() => null), once("graph", () => get("supply_graph.json")).catch(() => null)]);
+  const [f, a, g, dp] = await Promise.all([once("fund", () => get("t/fund.json").then(j => j.stocks || {})).catch(() => null), once("aladin", () => get("aladin.json")).catch(() => null),
+    once("graph", () => get("supply_graph.json")).catch(() => null), once("deps", () => get("dependencies.json")).catch(() => null)]);
   if (S.cur?.e !== e) return;
-  bizCard(e, f, sym); modelCard(a, sym); linksCard(g, sym); peersCard(e, f, sym); plainWords(e, d, nf, f, a, sym);
+  const pd = dp && dp.cos && dp.cos[sym];
+  bizCard(e, f, sym); modelCard(a, sym); linksCard(g, sym, pd); peersCard(e, f, sym); plainWords(e, d, nf, f, a, sym, pd); depCard(e, pd); depMini(e, pd);
 }
 function paintWatchBtn(sym) { const b = $("#st-watch"); if (!b) return; const on = watch().includes(sym); b.textContent = on ? "★ Watching" : "☆ Watch"; b.setAttribute("aria-pressed", String(on)); }
 function closeStory() {
@@ -252,7 +277,7 @@ function closeStory() {
 function retOver(d, n) { if (!d || d.length < 2) return null; const i = Math.max(0, d.length - 1 - n); return d.length - 1 - i < Math.min(n, 5) ? null : (d[d.length - 1][4] / d[i][4] - 1) * 100; }
 function niftyFrom(nf, from) { if (!nf) return null; const a = nf.find(r => r[0] >= from); return a ? (nf[nf.length - 1][4] / a[4] - 1) * 100 : null; }
 function industryOf(f, sym, e) { return (f && f[sym] && f[sym].industry) || e.ind || null; }
-function plainWords(e, d, nf, f, a, sym) {
+function plainWords(e, d, nf, f, a, sym, pd) {
   const out = [], name = (e.n || e.s).replace(/ Limited$| Ltd\.?$/i, ""), fs = f && f[sym], ind = industryOf(f, sym, e);
   if (d && d.length > 200) {
     const r = retOver(d, 252), i = Math.max(0, d.length - 1 - 252), m = niftyFrom(nf, d[i][0]);
@@ -263,9 +288,12 @@ function plainWords(e, d, nf, f, a, sym) {
     const peers = Object.values(f).filter(x => x && x.industry === ind && x.pe != null && x.pe > 0), med = peers.length >= 4 ? median(peers.map(x => x.pe)) : null;
     out.push(`Investors pay <b>₹${num(fs.pe, 1)}</b> for every ₹1 of its yearly profit (P/E)${med ? `, ${fs.pe > med * 1.15 ? "more than" : fs.pe < med * 0.85 ? "less than" : "similar to"} the typical ${esc(ind)} company (${num(med, 1)})` : ""}.`);
   }
+  const ds = RD.plainSentence(pd, name);
+  if (ds) out.push(`${esc(ds)} <button type="button" class="text-emerald-400 underline" data-go-tab="revenue">See customers</button>`);
   const p10 = a && a.stocks && a.stocks[sym] && a.stocks[sym].t && a.stocks[sym].t.p && a.stocks[sym].t.p["10"];
   if (p10 != null) out.push(`Our model gives a <b>${(p10 * 100).toFixed(0)}%</b> chance it is higher in 10 trading days: ${Math.abs(p10 - 0.5) < 0.04 ? "no clear edge either way" : p10 > 0.5 ? "a slight lean up, nothing certain" : "a slight lean down, nothing certain"}.`);
   $("#st-plain").innerHTML = out.map(s => `<li class="flex gap-2"><span class="text-emerald-400" aria-hidden="true">•</span><span>${s}</span></li>`).join("");
+  $("#st-plain").querySelectorAll("[data-go-tab]").forEach(b => b.onclick = () => selectTab(b.dataset.goTab));
 }
 
 /* ---------------- Chart with compare ---------------- */
@@ -416,9 +444,37 @@ function whatIf() {
   $("#wi-amt").oninput = paint; $("#wi-back").oninput = paint; paint();
 }
 
-/* ---------------- Connections ---------------- */
-function linksCard(g, sym) {
-  const el = $("#st-links"), h = `<h3>Disclosed business links ${help("links")}</h3>`;
+/* ---------------- Revenue & customers ---------------- */
+const BADGE = { down: "border-red-500 text-red-300", warn: "border-amber-400 text-amber-200", up: "border-emerald-500 text-emerald-300", mut: "border-zinc-600 text-zinc-400" };
+const badge = d => `<span class="rounded-full border ${BADGE[d.tone]} px-2.5 py-0.5 text-sm font-semibold whitespace-nowrap">${esc(d.label)}</span>`;   /* HyperUI application/badges/1 (outlined) */
+function geoBar(segs) {
+  if (!segs.length) return "";
+  return `<div class="mt-3 flex h-3 overflow-hidden rounded-full bg-zinc-800" role="img" aria-label="${esc(segs.map(g => g.region + " " + (g.share * 100).toFixed(0) + "%").join(", "))}">${segs.map((g, i) => `<span class="${g.home ? "bg-emerald-500" : ["bg-sky-400", "bg-violet-400", "bg-amber-400", "bg-zinc-400", "bg-pink-400"][i % 5]}" style="width:${(g.share * 100).toFixed(1)}%" title="${esc(g.region)} ${(g.share * 100).toFixed(1)}%"></span>`).join("")}</div>
+    <ul class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-zinc-300">${segs.map((g, i) => `<li class="flex items-center gap-1.5"><span class="inline-block size-2.5 rounded-full ${g.home ? "bg-emerald-500" : ["bg-sky-400", "bg-violet-400", "bg-amber-400", "bg-zinc-400", "bg-pink-400"][i % 5]}"></span>${esc(g.region)} <b class="font-mono">${(g.share * 100).toFixed(1)}%</b></li>`).join("")}</ul>`;
+}
+function depCard(e, p) {
+  const el = $("#st-dep"), d = RD.summary(p), name = (e.n || e.s).replace(/ Limited$| Ltd\.?$/i, "");
+  if (!p) { el.innerHTML = `<h3>Revenue dependency ${help("dep")}</h3><p class="mt-3 text-sm text-zinc-400">This company's filings have not been read yet. The map grows every day.</p>`; return; }
+  const top = d.top, big = top && top.share != null ? `<p class="mt-4 font-mono text-4xl font-bold">${(top.share * 100).toFixed(top.share < 0.1 ? 1 : 0)}%</p><p class="text-sm text-zinc-400">of revenue from ${esc(top.name || "one customer (not named in the filing)")}${top.src === "derived" ? ", worked out from its related-party sales ÷ revenue" : ""}</p>` : "";
+  const majors = d.major.customers.filter(c => !(top && c.share === top.share)).map(c => `<li class="border-t border-zinc-800 py-2.5 first:border-0"><span class="font-semibold">${c.share != null ? (c.share * 100).toFixed(1) + "%" : "10% or more"}</span> <span class="text-zinc-400">· ${esc(c.name || "one customer")}${c.where ? " · " + esc(c.where) : ""}${c.amount_cr != null ? " · ₹" + num(c.amount_cr, 0) + " Cr" : ""}</span><span class="block text-xs text-zinc-500">“${esc((c.q || "").slice(0, 200))}”</span></li>`).join("");
+  el.innerHTML = `<h3>Revenue dependency ${help("dep")}</h3>
+    <div class="mt-3 flex flex-wrap items-center gap-3">${badge(d)}<span class="text-[15px] text-zinc-200">${esc(RD.plainSentence(p, name) || p.why)}</span></div>
+    ${big}${top && top.q ? `<p class="mt-3 text-sm text-zinc-500">From the filing: “${esc(top.q.slice(0, 240))}${top.q.length > 240 ? "…" : ""}”${top.url ? ` <a class="underline" href="${esc(top.url)}" target="_blank" rel="noopener">source</a>` : ""}</p>` : ""}
+    ${majors ? `<h4 class="mt-5 text-sm font-semibold text-zinc-300">Other customers worth 10% or more of revenue</h4><ul class="mt-1">${majors}</ul>` : ""}
+    ${d.major.status === "none_over_10" ? `<p class="mt-3 text-sm text-zinc-400">The annual report says: “${esc((d.major.q || "").slice(0, 200))}”</p>` : ""}
+    ${d.geo.length ? `<h4 class="mt-6 text-sm font-semibold text-zinc-300">Where the revenue comes from ${help("geo")}</h4>${geoBar(RD.geoSegments(d.geo))}` : ""}
+    <p class="mt-5 text-xs text-zinc-500">Read from the company's own filings${p.read.segment_note ? ` (segment note ${esc(p.read.segment_note.slice(0, 10))})` : ""}. Nothing is estimated: a company that does not say stays "Not disclosed".</p>`;
+}
+function depMini(e, p) {
+  const el = $("#st-depmini"), d = RD.summary(p);
+  if (!p || p.lvl === "unknown" && !d.geo.length) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<div class="flex flex-wrap items-center justify-between gap-3"><h3>Revenue dependency ${help("dep")}</h3><button type="button" class="text-sm text-emerald-400 underline" data-go-tab="revenue">Customers and regions →</button></div>
+    <div class="mt-3 flex flex-wrap items-center gap-3">${badge(d)}<span class="text-sm text-zinc-300">${esc(p.why)}</span></div>${d.geo.length ? geoBar(RD.geoSegments(d.geo)) : ""}`;
+  el.querySelector("[data-go-tab]").onclick = () => selectTab("revenue");
+}
+function linksCard(g, sym, pd) {
+  const el = $("#st-links"), h = `<h3>Named customers and suppliers ${help("links")}</h3>`;
   if (!g) { el.innerHTML = h + `<p class="mt-3 text-sm text-zinc-400">The supply-chain map could not be loaded.</p>`; return; }
   const nodes = new Map((g.nodes || []).map(n => [n.id, n])), es = (g.edges || []).filter(x => x.s === sym || x.d === sym).slice(0, 10), read = (g.cos || {})[sym];
   if (!es.length) {

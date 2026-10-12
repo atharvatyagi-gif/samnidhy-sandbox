@@ -8,6 +8,7 @@
    news.json        financial news wire
    Nothing is simulated: values change only when fresh data arrives. */
 
+import * as RD from "./desk-revdeps.js";
 import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
 import { technicals, suggest } from "./chart-indicators.js";
 import { LIVE_RELAY_URL } from "./config.js";
@@ -232,14 +233,15 @@ setInterval(() => {
 // Each module gets the same ctx and renders only after its tab is first opened. Optional data files are listed in
 // desk_data.json (written by build_site.py) so the page only ever requests files that exist: no console 404s
 // while a file hasn't been produced yet.
-const DESK_FILES = { geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json", lanes: "trade_lanes.json", telemetry: "telemetry.json", moves: "aladin_moves.json" };
-const DESK_LAZY = new Set(["houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "telemetry", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
+const DESK_FILES = { deps: "dependencies.json", geo_summary: "geo_summary.json", sentiment: "sentiment.json", aladin: "aladin.json", geo: "geo.json", houses: "houses.json", paper: "paper.json", method: "aladin_method.json", graph: "supply_graph.json", shocks: "shocks.json", lanes: "trade_lanes.json", telemetry: "telemetry.json", moves: "aladin_moves.json" };
+const DESK_LAZY = new Set(["deps", "houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "telemetry", "moves"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
 function deskCtx() { return { serverNow: Ticks.serverNow, renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
 function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2V.init(c); A2B.init(c); SG.init(c); IX.init(c); CX.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); if (view === "terminal" && sec && (sym === sec || sym === "*") && !isIntra(iv)) drawChart(true); }); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
+  if (man.deps && depsDoc === undefined && side === "details" && sec) renderDetails();   // the revenue-dependency section was waiting for the file list
   let changed = false;
   if (S.geo) GeoDesk.refresh();
   Globe.refresh();                                  // lazy file, but once it has been opened keep it current
@@ -1067,6 +1069,7 @@ function renderDetails() {
       ${stat("Value", x.v != null ? cr(x.v * x.p / 1e7) : "--")}${stat("Delivery", s.deliv == null ? "--" : s.deliv.toFixed(1) + "%")}
       ${f ? stat("Market cap", f.mcap ? cr(f.mcap / 1e7) : "--") + stat("P/E", f.pe ? f.pe.toFixed(1) : "--") + stat("EPS", f.eps != null ? "₹" + inr(f.eps) : "--") + stat("Div yield", f.dy != null ? f.dy.toFixed(2) + "%" : "--")
         + stat("P/B", f.pb ? f.pb.toFixed(2) : "--") + stat("Beta", f.beta != null ? f.beta.toFixed(2) : "--") + stat("ROE", pctF(f.roe)) + stat("Debt/eq", f.de != null ? (f.de / 100).toFixed(2) : "--") : ""}</div>`;
+  html += revDepsHtml(sec);
   if (perf) html += `<div class="sec-t">Performance</div><div class="perf">${perf.map(([k, v]) => `<div class="${v == null ? "" : v >= 0 ? "pu" : "pd"}"><span>${k}</span><b class="${ud(v)}">${v == null ? "--" : sg(v, 1) + "%"}</b></div>`).join("")}</div>`;
   if (f && (f.rec || f.est)) {
     const pos = { strongly_positive: 95, positive: 75, neutral: 50, negative: 25, strongly_negative: 5 }[f.rec] ?? 50, up = f.est ? (f.est / x.p - 1) * 100 : null;
@@ -1085,6 +1088,22 @@ function renderDetails() {
   { const nw = $("#a2-brief"); if (nw) { if (a2old && a2old.dataset.sig === nw.dataset.sig && a2old.dataset.sym === nw.dataset.sym) nw.replaceWith(a2old); else A2.bind(nw, sec); } }
   const more = $("#more"); if (more) more.onclick = () => { descOpen = !descOpen; renderDetails(); };
   $$("#details [data-rec]").forEach(bt => bt.onclick = () => { const r = eng.suggested[+bt.dataset.rec]; if (!r) return; r.add.forEach(([id, p]) => eng.addIndicator(id, p)); go("terminal"); });
+}
+/* Revenue dependency (dependencies.json, scripts/dependency_profile.py): how much of the company's revenue rests on single customers, and on exports */
+let depsDoc, depsLoading = null;
+function revDepsHtml(sym) {
+  if (depsDoc === undefined) {
+    if (!depsLoading && (S.deskMan || {}).deps) depsLoading = getJSON("dependencies.json", false).then(j => { depsDoc = j; }).catch(() => { depsDoc = null; }).finally(() => { depsLoading = null; if (side === "details") renderDetails(); });
+    if (S.deskMan && !S.deskMan.deps) depsDoc = null;                       // the file list says there is no profile file (before it loads: keep waiting)
+    return depsDoc === undefined ? `<div class="sec-t">Revenue dependency</div><p class="note">Loading…</p>` : "";
+  }
+  const p = depsDoc && depsDoc.cos && depsDoc.cos[sym], d = RD.summary(p), segs = RD.geoSegments(d.geo);
+  const geo = segs.length ? `<div class="rd-geo" role="img" aria-label="Revenue by region: ${segs.map(g => esc(g.region) + " " + (g.share * 100).toFixed(0) + "%").join(", ")}">${segs.map(g => `<i class="${g.home ? "home" : ""}" style="width:${(g.share * 100).toFixed(1)}%" title="${esc(g.region)} ${(g.share * 100).toFixed(1)}%"></i>`).join("")}</div>
+    <div class="rd-geo-l">${segs.slice(0, 4).map(g => `<span>${esc(g.region)} <b>${(g.share * 100).toFixed(0)}%</b></span>`).join("")}</div>` : "";
+  return `<div class="sec-t">Revenue dependency</div>
+    <p class="rd-line"><span class="rd-lv ${d.tone}">${esc(d.label)}</span> ${esc(p ? p.why : d.why)}</p>
+    ${d.top && d.top.q ? `<p class="note rd-q">“${esc(d.top.q.slice(0, 180))}${d.top.q.length > 180 ? "…" : ""}”${d.top.src === "derived" ? " (share worked out from related-party sales ÷ revenue)" : ""}</p>` : ""}
+    ${geo}${p ? `<p><button class="lnk" data-nexus="company:${esc(sym)}" data-nexus-tab="deps">Customers, suppliers and the evidence →</button></p>` : `<p class="note">${esc(d.why)}</p>`}`;
 }
 function renderPrints() {
   const it = intraOf(sec), rows = it ? (it.d || []) : [];

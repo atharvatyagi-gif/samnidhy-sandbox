@@ -7,6 +7,7 @@
 
 import { lanesAt, carrierOf, ageMin, ageText, isStale, shipTypeLabel, countIn } from "./desk-lanes.js";
 import { coverageState, shareText, derivedNote } from "./desk-deps.js";
+import * as RD from "./desk-revdeps.js";
 import { ageLabel } from "./desk-kin.js";
 
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice.";
@@ -16,6 +17,7 @@ const COMPANY_TABS = [["overview", "Overview"], ["chain", "Supply chain"], ["dep
 const GEO_PREC = { exact: "Exact location", locality: "Approximate (locality)", district: "Approximate (district)", city: "Approximate (city)" };
 
 let ctx = null, root = null, graph = null, shocks = null, loading = null, loadFailed = false, lastFocus = null;
+let deps = null;
 const extra = { lanes: null };                                         // trade_lanes.json, fetched for the flight / vessel / hotspot / chokepoint panels
 const MOVING = new Set(["flight", "vessel", "hotspot", "chokepoint"]);
 const cur = { type: null, id: null, tab: "overview" };
@@ -39,6 +41,7 @@ async function load() {
   loading = loading || Promise.all([
     files().graph ? ctx.getJSON("supply_graph.json", false).then(j => { graph = j; }) : 0,
     files().shocks ? ctx.getJSON("shocks.json").then(j => { shocks = j; }).catch(() => { shocks = null; }) : 0,
+    files().deps ? ctx.getJSON("dependencies.json", false).then(j => { deps = j; }).catch(() => { deps = null; }) : 0,
     ctx.S.aladin || !files().aladin ? 0 : ctx.getJSON("aladin.json").then(j => { ctx.S.aladin = j; }).catch(() => 0),
     ctx.S.sentiment || !files().sentiment ? 0 : ctx.getJSON("sentiment.json").then(j => { ctx.S.sentiment = j; }).catch(() => 0),
   ]).catch(() => { loadFailed = true; }).finally(() => { loading = null; });
@@ -276,16 +279,29 @@ function overviewTab() {
       <p>Fundamental ${a.f && a.f.sc != null ? Math.round(a.f.sc) : "—"} · Technical ${Math.round(a.t.sc)} · Supply-chain impact ${a.x ? (a.x.i > 0 ? "+" : "") + a.x.i.toFixed(1) + " (positive = adverse)" : '<span class="mut">not measured</span>'}</p>
       <p class="mut">Nightly model data as of ${esc(A.as_of)}. The ALADIN tab updates P(up) during the day with live sentiment and sweeps.</p>`;
   }
-  return `<div class="ol-grid"><div class="ol-stat"><b>${price}</b><span>last price</span></div><div class="ol-stat"><b>${edgesOf(sym).length}</b><span>disclosed links<br><small>${esc(covLine(sym))}</small></span></div></div>
+  const dp = deps && deps.cos && deps.cos[sym], dd = RD.summary(dp);
+  return `<div class="ol-grid"><div class="ol-stat"><b>${price}</b><span>last price</span></div><div class="ol-stat"><b>${edgesOf(sym).length}</b><span>disclosed links<br><small>${esc(covLine(sym))}</small></span></div>
+      <div class="ol-stat"><b><span class="rd-lv ${dd.tone}">${esc(dd.label)}</span></b><span>revenue dependency<br><small>${esc(dp ? dp.why : dd.why)}</small></span></div></div>
+    ${dp && RD.plainSentence(dp, sym) ? `<p>${esc(RD.plainSentence(dp, sym))} <button class="lnk" data-nx-tab="deps">Details</button></p>` : ""}
     <div class="sec-t">ALADIN</div>${al}
     <div class="al-act"><button class="btn-line sm" data-nx-tab="chain">Supply chain</button> <button class="btn-line sm" data-open="${esc(sym)}">Open chart</button> <button class="btn-line sm" data-aladin="${esc(sym)}">Open in ALADIN</button></div>`;
 }
 
 /* dependencies: every edge that touches the company, with the counterparty's move today */
+function profileBlock(sym) {
+  const { esc } = ctx, p = deps && deps.cos && deps.cos[sym], d = RD.summary(p), segs = RD.geoSegments(d.geo);
+  if (!p) return `<div class="sec-t">Revenue dependency</div><p class="note">${esc(d.why)}</p>`;
+  const major = d.major.customers.map(c => `<tr><td>${esc(c.name || "One customer (not named)")}</td><td>${c.share != null ? (c.share * 100).toFixed(1) + "%" : "10% or more"}</td><td>${c.amount_cr != null ? "₹" + ctx.inr(c.amount_cr) + " Cr" : "—"}</td><td>${esc(c.where || "—")}</td><td><details class="nx-q"><summary>quote</summary><p>“${esc(c.q)}”</p><p class="mut">annual report · page ${c.pg}${p.read.annual_report ? ` · <a href="${esc(p.read.annual_report)}" target="_blank" rel="noopener noreferrer">source</a>` : ""}</p></details></td></tr>`).join("");
+  return `<div class="sec-t">Revenue dependency</div>
+    <p class="rd-line"><span class="rd-lv ${d.tone}">${esc(d.label)}</span> ${esc(p.why)}.${RD.plainSentence(p, sym) ? " " + esc(RD.plainSentence(p, sym)) : ""}</p>
+    ${major ? `<div class="tablecard"><table class="tbl sm"><thead><tr><th>Major customer (Ind AS 108: 10% or more of revenue)</th><th>Share</th><th>Amount</th><th>Where</th><th>Evidence</th></tr></thead><tbody>${major}</tbody></table></div>` : d.major.status === "none_over_10" ? `<p class="note">The annual report states that no single customer reaches 10% of revenue: “${esc((d.major.q || "").slice(0, 200))}”</p>` : ""}
+    ${segs.length ? `<p class="mut" style="margin-top:10px">Revenue by region (current year, from the segment note)</p><div class="rd-geo">${segs.map(g => `<i class="${g.home ? "home" : ""}" style="width:${(g.share * 100).toFixed(1)}%" title="${esc(g.region)} ${(g.share * 100).toFixed(1)}%"></i>`).join("")}</div><div class="rd-geo-l">${segs.map(g => `<span>${esc(g.region)} <b>${(g.share * 100).toFixed(1)}%</b></span>`).join("")}</div>` : ""}
+    <p class="mut">Read: supply-chain filings ${esc((p.read.graph || "—").slice(0, 10))}, segment note ${esc((p.read.segment_note || "not yet").slice(0, 10))}. Nothing is estimated: a company that does not disclose stays "Not disclosed".</p>`;
+}
 function depsTab() {
   const { esc } = ctx, sym = cur.id, es = edgesOf(sym).filter(e => gst.low || e.conf >= minConf());
   const sh = new Map(((shocks || {}).shocks || []).map(s => [s.edge, s]));
-  if (!es.length) return `<p class="note">Not measured: no dependency of ${esc(sym)} is disclosed in the filings read so far. ${esc(covLine(sym))}</p>`;
+  if (!es.length) return profileBlock(sym) + `<div class="sec-t">Named customers and suppliers</div><p class="note">Not measured: no named customer or supplier of ${esc(sym)} is disclosed in the filings read so far. ${esc(covLine(sym))}</p>`;
   const rows = es.slice().sort((p, q) => (q.w || 0) - (p.w || 0) || q.conf - p.conf).map(e => {
     const up = e.d === sym, cp = up ? e.s : e.d, cn = nodeOf(cp), listed = cn && cn.k === "co";
     const s = sh.get(e.id);
@@ -293,7 +309,7 @@ function depsTab() {
       <td>${esc(REL[e.rel] || e.rel)}${e.comp ? ` · ${esc(e.comp)}` : ""}</td><td>${shareTxt(e)}</td><td>${esc(e.per || "—")}</td><td class="r">${e.conf.toFixed(2)}</td><td class="r">${listed ? move(cp) : '<span class="mut">—</span>'}${s ? ` <span class="mut" title="Counterparty's 5-day residual move">z ${s.z > 0 ? "+" : ""}${s.z}</span>` : ""}</td>
       <td><details class="nx-q"><summary>quote</summary><p>“${esc(e.q)}”</p><p class="mut">${esc(e.doc)} · page ${e.pg} · <a href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">source</a> · <button class="lnk" data-nexus="edge:${esc(e.id)}">details</button></p></details></td></tr>`;
   }).join("");
-  return `<label class="nx-chk"><input type="checkbox" id="nx-low" ${gst.low ? "checked" : ""}> Include low-confidence links (below ${minConf()})</label>
+  return profileBlock(sym) + `<div class="sec-t">Named customers and suppliers</div><label class="nx-chk"><input type="checkbox" id="nx-low" ${gst.low ? "checked" : ""}> Include low-confidence links (below ${minConf()})</label>
     <div class="tablecard"><table class="tbl sm"><thead><tr><th>Role</th><th>Counterparty</th><th>Link</th><th>Share</th><th>Period</th><th class="r">Conf</th><th class="r">Move today</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table></div>
     <p class="mut">A share is the supplier's revenue share for customers and the customer's purchase share for suppliers; the two are never mixed. Association, not proof of cause.</p>`;
 }

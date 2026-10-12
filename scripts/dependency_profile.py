@@ -52,7 +52,7 @@ def level(top_share, top_min10, none_over_10):
 
 def build(graph, profile, now=None):
     nodes = {n["id"]: n for n in graph.get("nodes", [])}
-    label = lambda nid, e: (nodes.get(nid) or {}).get("n") or e.get("cpn") or nid
+    label = lambda nid, e: (e.get("cpn") if nid.startswith("ANON_") else None) or (nodes.get(nid) or {}).get("n") or e.get("cpn") or nid   # an unnamed counterparty: the filing's own words ("Indian Defence Services")
     sym_of = lambda nid: (nodes.get(nid) or {}).get("sym")
     out = {}
     companies = set(graph.get("cos", {})) | set((profile or {}).get("cos", {}))

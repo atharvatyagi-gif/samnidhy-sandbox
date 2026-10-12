@@ -1139,3 +1139,17 @@ html.sg-lock, html.sg-lock body { overflow: hidden; }
 .cx3-toast { position: absolute; left: 50%; bottom: 56px; transform: translateX(-50%); padding: 8px 14px; border: 1px solid var(--acc-edge); border-radius: var(--r); background: var(--sunken); color: var(--ink); font: 600 12px var(--mono); opacity: 0; transition: opacity 0.4s; pointer-events: none; text-align: center; max-width: 92%; } .cx3-toast.on { opacity: 1; }
 .cx3-off { margin: 0; padding: 10px 14px; font-size: 12.5px; color: var(--ink-2); }
 @media (max-width: 640px) { .cx3-host { min-height: 320px; } .cx3-ctl { bottom: 70px; } .cx3-px b { font-size: 20px; } .cx3-leg { font-size: 10px; } }
+
+/* ---------- REVENUE DEPENDENCY (desk-revdeps.js) ---------- */
+.rd-lv { display: inline-block; padding: 1px 8px; border-radius: var(--r); border: 1px solid var(--rule-2); font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .04em; }
+.rd-lv.down { color: var(--down); border-color: var(--down); }
+.rd-lv.warn { color: var(--ink); border-color: var(--acc-edge); }
+.rd-lv.up { color: var(--up); border-color: var(--up); }
+.rd-lv.mut { color: var(--ink-3); }
+.rd-line { line-height: 1.6; }
+.rd-q { font-style: italic; }
+.rd-geo { display: flex; height: 10px; border-radius: var(--r); overflow: hidden; background: var(--rule); margin-top: 8px; }
+.rd-geo i { display: block; height: 100%; background: var(--ink-3); border-right: 1px solid var(--paper); }
+.rd-geo i.home { background: var(--up); }
+.rd-geo-l { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 12px; color: var(--ink-2); }
+.rd-geo-l b { color: var(--ink); font-family: var(--mono); }
