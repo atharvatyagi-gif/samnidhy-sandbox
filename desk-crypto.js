@@ -6,7 +6,7 @@ import { lineChart } from "./desk-signals.js";
 import { feed, connect, flowWindow, ASSETS } from "./desk-cryptofeed.js";
 import { mount3d } from "./desk-crypto3d.js";
 
-let ctx = null, root = null, L = null, STUDY = {}, timer = null, beat = null, ctl = null, prevQty = null;
+let ctx = null, root = null, L = null, SHD = null, STUDY = {}, timer = null, beat = null, ctl = null, prevQty = null;
 const st = { acctAt: null, hudAt: 0 };
 export function init(c) { ctx = c; }
 
@@ -36,6 +36,7 @@ const DESC = { flow_momentum: "Buys when aggressive buyers have dominated the la
 /* ---------- loading ---------- */
 async function load() {
   try { L = await ctx.getJSON("t/c/live.json", true); } catch (e) { L = null; }
+  try { SHD = await ctx.getJSON("t/c/shadow.json", true); } catch (e) { SHD = null; }
   for (const [k, f] of [["BTCUSDT", "study.json"], ["ETHUSDT", "study_eth.json"], ["extra", "study_extra.json"]]) if (!STUDY[k]) { try { STUDY[k] = await ctx.getJSON("t/c/" + f, false); } catch (e) { STUDY[k] = null; } }
 }
 const prices = () => { const p = {}; for (const a of Object.keys(ASSETS)) p[a] = feed.price[a] || (L && L.assets && L.assets[a] && L.assets[a].bid) || null; return p; };
@@ -73,7 +74,24 @@ function accountHtml() {
       <div class="sg-stat"><span>Profit or loss</span><b class="${cls(pnl)}">${pnl >= 0 ? "+" : "-"}${usd(Math.abs(pnl))}</b><small class="${cls(ret)}">${sgn(ret, 2)}</small></div>
       <div class="sg-stat"><span>In crypto</span><b>${L.invested_pct}%</b><small>the rest is cash earning nothing</small></div></div>
     <div class="sg-card"><h4>Account value since the start (hourly)</h4>${chart}<p class="note">For comparison, the same budget put half into Bitcoin and half into Ethereum on day one and left there is worth ${usd(L.buy_hold_usd)} now. These strategies trade rarely and are often in cash, so in a rising market they will usually lag that.</p></div>
-    <div class="cx-sleeves">${Object.entries(L.sleeves).map(([k, s]) => sleeveHtml(k, s, px[s.asset])).join("")}</div>`;
+    <div class="cx-sleeves">${Object.entries(L.sleeves).map(([k, s]) => sleeveHtml(k, s, px[s.asset])).join("")}</div>${shadowHtml(SHD, px.BTCUSDT)}`;
+}
+/* The shadow quant account (scripts/crypto_shadow.py): an all-weather Bitcoin model (long, flat or short) run beside the live account on the same budget as its
+   Bitcoin half; it takes that half over only if it does better over at least 182 days. Pure: d = t/c/shadow.json, px = live Bitcoin price or null. */
+export function shadowHtml(d, px) {
+  if (!d) return "";
+  const eq = px && d.price ? d.equity_usd + d.units * (px - d.price) : d.equity_usd, ret = (eq / d.budget_usd - 1) * 100, side = { long: "long (holds Bitcoin)", short: "short (bets on a fall)", flat: "flat (in cash)" }[d.side] || d.side;
+  const dec = (d.decisions || []).slice(-1)[0], left = Math.max(0, d.promote_after_days - d.days);
+  const verdict = d.promoted ? `<b class="up">Promoted ${esc(String(d.promoted.ts || "").slice(0, 10))}:</b> it beat the live Bitcoin sleeves (${sgn(d.promoted.shadow_return_pct, 2)} vs ${sgn(d.promoted.live_btc_return_pct, 2)}) and now runs the Bitcoin half.`
+    : `Day ${d.days} of ${d.promote_after_days}. ${left ? `In ${left} days it takes over the Bitcoin half automatically if its return is higher than the live Bitcoin sleeves' over the same days.` : "Checked once a day from now on."}`;
+  return `<div class="sg-card cx-shadow"><h4>Shadow · Bitcoin all-weather quant model (long, flat or short)</h4><p class="note">${esc(d.label)}</p>
+    <div class="sg-stats sg-kp"><div class="sg-stat"><span>Shadow value</span><b>${usd(eq)}</b><small>of ${usd(d.budget_usd)}</small></div>
+      <div class="sg-stat"><span>Shadow return</span><b class="${cls(ret)}">${sgn(ret, 2)}</b><small>live Bitcoin sleeves: ${d.live_btc_return_pct != null ? sgn(d.live_btc_return_pct, 2) : "--"}</small></div>
+      <div class="sg-stat"><span>Position</span><b>${(d.position * 100).toFixed(0)}%</b><small>${esc(side)}</small></div>
+      <div class="sg-stat"><span>Costs · funding</span><b>${usd(d.costs_usd)}</b><small>funding ${d.funding_usd >= 0 ? "received" : "paid"} ${usd(Math.abs(d.funding_usd))}</small></div></div>
+    <p class="note">${verdict}</p>
+    <p class="note">How it decides, once a day after the 00:00 UTC four-hour bar: a ridge regression and a LightGBM model (refitted on the first day of every month on the previous three years: last fit ${esc(d.model && d.model.month || "--")}, ${d.model ? d.model.rows : "--"} rows) read 25 inputs (trend over 4 hours to 60 days, distance from averages, range position, volatility, buy/sell flow, futures funding); their forecast is averaged with multi-horizon momentum, smoothed over 3 days and sized so the position's risk stays near 40% a year, from -100% to +100%; it trades only when that target moves by 25 points or more.${dec ? ` Latest: score ${dec.score}, target ${(dec.target * 100).toFixed(0)}% (${esc(dec.action)}).` : ""}</p>
+    <p class="note">Why it is a shadow and not the account: in the 2021-2026 test it made +40% in 2024-26 against +25% for the live rules, but with a lower risk-adjusted score (0.74 vs 0.85) and a deeper worst fall (-20% vs -15%), and it was picked after seeing those years. The live record decides.</p></div>`;
 }
 function sleeveHtml(k, s, px) {
   const inp = s.qty > 0, n = s.now || {}, un = inp && px ? s.qty * (px - s.entry) : null, name = short(s.asset);

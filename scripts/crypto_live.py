@@ -33,6 +33,15 @@ ASSETS = {"BTCUSDT": "Bitcoin", "ETHUSDT": "Ethereum"}
 SLEEVES = {f"{a[:3].lower()}_{st}": {"asset": a, "strategy": st, "tf": "4h", "share": 0.25, "label": f"{ASSETS[a]} · {lab}"} for a in ASSETS for st, lab in (("flow_momentum", "order-flow momentum"), ("flow_breakout", "order-flow breakout"))}
 SLEEVES["btc_flow_momentum"].update({"trail": True, "label": "Bitcoin · order-flow momentum + trailing stop"})          # rule change 2026-10-10 (before any trade): scripts/crypto_extra.py, momentum_trail_4h
 DEPTH = OUT / "depth.jsonl"
+SHADOW_LEDGER, SHADOW_PAGE = OUT / "shadow_ledger.jsonl", OUT / "shadow.json"
+
+
+def shadow_state(ledger=None, page=None):
+    """The shadow quant account (scripts/crypto_shadow.py): its promote line if it has earned the Bitcoin half, and its equity now. (None, None) without it."""
+    lp, pp = Path(ledger or SHADOW_LEDGER), Path(page or SHADOW_PAGE)
+    prom = next((json.loads(x) for x in (lp.read_text(encoding="utf-8").splitlines() if lp.exists() else []) if x.strip() and json.loads(x)["t"] == "promote"), None)
+    eq = json.loads(pp.read_text(encoding="utf-8")).get("equity_usd") if pp.exists() else None
+    return prom, eq
 LATE_MIN = 60
 STALE_MIN = 45
 N_BARS = 13000                                   # 15-minute bars fetched each run (about 135 days): enough for the 500-bar flow windows on 4-hour bars
@@ -178,7 +187,7 @@ def hourly_due(now, path):
     return not rows or (now - datetime.fromisoformat(json.loads(rows[-1])["ts"])).total_seconds() >= 3300
 
 
-def live_step(now=None, bars=None, q=None, fx=None, ledger=None, out=None, depth=None, marks=None, depth_file=None):
+def live_step(now=None, bars=None, q=None, fx=None, ledger=None, out=None, depth=None, marks=None, depth_file=None, shadow=None):
     """bars, q: dicts keyed by symbol (fetched when not given); depth: optional {symbol: sample} for tests."""
     now = now or datetime.now(timezone.utc); led = Path(ledger or LEDGER); ts = now.isoformat(timespec="seconds")
     bars = bars or {a: fetch_bars(now, symbol=a) for a in ASSETS}; q = q or {a: quote(a) for a in ASSETS}; fx = fx if fx is not None else usd_inr(); lines = read_ledger(led)
@@ -191,6 +200,19 @@ def live_step(now=None, bars=None, q=None, fx=None, ledger=None, out=None, depth
     if lines and not any(r["t"] == "rule_change" for r in lines) and not any(r["t"] == "fill" for r in lines):
         append({"t": "rule_change", "ts": ts, "sleeve": "btc_flow_momentum", "to": "order-flow momentum + trailing stop (stop ratchets up to 3 ATR under each closed 4-hour bar)", "why": "round two of the search (scripts/crypto_extra.py): beat the plain version on 2020-23 Sharpe (0.86 vs 0.51), on 2024-26 (0.92 vs 0.79) and at double costs; written before the sleeve had traded"}, led); lines = read_ledger(led)
     start, S = replay(lines); feats = {}; fresh_start = not any(r["t"] == "decision" for r in lines)
+    prom, sh_eq = shadow if shadow is not None else shadow_state()
+    hand = next((r for r in lines if r["t"] == "handover"), None)
+    if prom and not hand and sh_eq:                                                          # 0. the shadow quant model earned the Bitcoin half: sell the Bitcoin sleeves once, hand the cash over
+        for name, cfg in SLEEVES.items():
+            a = S[name]
+            if cfg["asset"] == "BTCUSDT" and a["qty"] > 0:
+                qq = q["BTCUSDT"]; fee = a["qty"] * qq["bid"] * CF.COST
+                append({"t": "fill", "ts": ts, "sleeve": name, "side": "sell", "why": "handed over to the quant model", "price": round(qq["bid"], 2), "qty": round(a["qty"], 8), "cost": round(fee, 2), "bid": qq["bid"], "ask": qq["ask"]}, led)
+        lines = read_ledger(led); start, S = replay(lines)
+        cash = {k: round(S[k]["cash"], 2) for k, v in SLEEVES.items() if v["asset"] == "BTCUSDT"}
+        append({"t": "handover", "ts": ts, "sleeves": cash, "shadow_equity_at": sh_eq, "promote": prom,
+                "rule": "from here the Bitcoin half follows the shadow quant account: its value is the handed-over cash x (shadow equity now / shadow equity at the handover)"}, led)
+        lines = read_ledger(led); hand = lines[-1]
     for name, cfg in SLEEVES.items():
         a = S[name]; sym, strat = cfg["asset"], cfg["strategy"]; qq = q[sym]; f = CF.features(CF.resample(bars[sym], cfg["tf"])); feats[name] = f; bar = str(f.index[-1]); close_t = f.index[-1] + pd.Timedelta(cfg["tf"])
         late = (now.replace(tzinfo=None) - close_t.to_pydatetime()).total_seconds() / 60
@@ -200,6 +222,8 @@ def live_step(now=None, bars=None, q=None, fx=None, ledger=None, out=None, depth
                 price, when = h; fee = a["qty"] * price * CF.COST
                 append({"t": "fill", "ts": when or ts, "engine_ts": ts, "sleeve": name, "side": "sell", "why": "stop", "price": round(price, 2), "qty": round(a["qty"], 8), "cost": round(fee, 2), "bid": qq["bid"], "ask": qq["ask"]}, led)
                 lines = read_ledger(led); _, S = replay(lines); a = S[name]
+        if hand and cfg["asset"] == "BTCUSDT":                                              # handed over: these sleeves no longer trade
+            continue
         if bar not in a["decided"]:                                                          # 2. one decision per closed 4-hour bar
             en, ex = CF.signals(f, strat); act, why, row = "hold", None, f.iloc[-1]
             if late > LATE_MIN:
@@ -227,7 +251,10 @@ def live_step(now=None, bars=None, q=None, fx=None, ledger=None, out=None, depth
     # 3. mark to market, each sleeve at its own coin's bid
     sl, tot = {}, 0.0
     for name, a in S.items():
-        cfg = SLEEVES[name]; mark = q[cfg["asset"]]["bid"]; f = feats[name]; row = f.iloc[-1]; eq = a["cash"] + a["qty"] * mark; tot += eq
+        cfg = SLEEVES[name]; mark = q[cfg["asset"]]["bid"]; f = feats[name]; row = f.iloc[-1]; eq = a["cash"] + a["qty"] * mark
+        if hand and cfg["asset"] == "BTCUSDT" and sh_eq:
+            eq = hand["sleeves"][name] * sh_eq / hand["shadow_equity_at"]                          # the quant model's result on the handed-over cash
+        tot += eq
         sl[name] = {"label": cfg["label"], "asset": cfg["asset"], "strategy": cfg["strategy"], "timeframe": cfg["tf"], "share": cfg["share"], "trail": bool(cfg.get("trail")), "cash": round(a["cash"], 2), "qty": round(a["qty"], 8), "equity": round(eq, 2), "entry": a["entry"], "stop": a["stop"], "since": a["since"],
                     "unrealised": round(a["qty"] * (mark - a["entry"]) - a["ecost"], 2) if a["qty"] > 0 else None, "trades": len(a["trades"]), "wins": sum(1 for t in a["trades"] if t["net"] > 0), "net": round(sum(t["net"] for t in a["trades"]), 2),
                     "now": {k: (None if pd.isna(row[k]) else round(float(row[k]), 3)) for k in ("flow24", "delta_z", "vol_z", "c", "hi24", "sma50")}, "last_bar": str(f.index[-1])}

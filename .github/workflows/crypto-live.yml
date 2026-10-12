@@ -32,7 +32,12 @@ jobs:
           cache: pip
 
       - name: Install Python packages
-        run: pip install pandas==2.3.3 numpy==2.3.4 requests==2.34.2
+        run: pip install pandas==2.3.3 numpy==2.3.4 requests==2.34.2 lightgbm==4.7.0
+
+      - name: Shadow quant account (Bitcoin all-weather model; may fail without touching the live account)
+        continue-on-error: true
+        timeout-minutes: 4
+        run: python scripts/crypto_shadow.py
 
       - name: One engine step
         run: python scripts/crypto_live.py
@@ -41,11 +46,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- data/crypto/ledger.jsonl data/crypto/marks.jsonl; then git checkout -- data/crypto/live.json 2>/dev/null || true; fi
+          if git diff --quiet -- data/crypto/ledger.jsonl data/crypto/marks.jsonl data/crypto/shadow_ledger.jsonl; then git checkout -- data/crypto/live.json data/crypto/shadow.json 2>/dev/null || true; fi
+          # the model, the recent bars and the funding history only with the monthly refit (they are re-fetched every run anyway)
+          if git diff --quiet -- data/crypto/quant_model.json 2>/dev/null && git ls-files --error-unmatch data/crypto/quant_model.json >/dev/null 2>&1; then git checkout -- data/crypto/bars_15m_recent.csv.gz data/crypto/funding_btc.csv 2>/dev/null || true; fi
           python - <<'PY'
           import sys
           sys.path.insert(0, "scripts")
           from gitops import commit_and_push
-          ok = commit_and_push(["data/crypto/ledger.jsonl", "data/crypto/marks.jsonl", "data/crypto/depth.jsonl", "data/crypto/live.json"], "Crypto paper account: ledger and marks [skip ci]", min_interval_s=0, state_file="data/crypto_gitops_state.json")
+          import os
+          ok = commit_and_push([p for p in ["data/crypto/ledger.jsonl", "data/crypto/marks.jsonl", "data/crypto/depth.jsonl", "data/crypto/live.json", "data/crypto/shadow_ledger.jsonl", "data/crypto/shadow.json", "data/crypto/quant_model.json", "data/crypto/bars_15m_recent.csv.gz", "data/crypto/funding_btc.csv"] if os.path.exists(p)], "Crypto paper account: ledger and marks [skip ci]", min_interval_s=0, state_file="data/crypto_gitops_state.json")
           print("committed and pushed" if ok else "nothing new to save (or push not allowed)")
           PY

@@ -46,6 +46,7 @@ def _world(end="2026-06-30 12:00"):
 
 def _paths(tmp_path, monkeypatch):
     monkeypatch.setattr(CL, "MARKS", tmp_path / "m.jsonl"); monkeypatch.setattr(CL, "DEPTH", tmp_path / "d.jsonl")
+    monkeypatch.setattr(CL, "SHADOW_LEDGER", tmp_path / "sl.jsonl"); monkeypatch.setattr(CL, "SHADOW_PAGE", tmp_path / "sh.json")
     return tmp_path / "l.jsonl", tmp_path / "live.json"
 
 
@@ -140,3 +141,19 @@ def test_depth_stats_with_enough_samples_needs_no_scipy(monkeypatch):
 def test_a_broken_experiment_never_stops_the_account(monkeypatch):
     monkeypatch.setattr(CL, "depth_stats", lambda rows: 1 / 0)
     assert "error" in CL._safe_depth_stats([])
+
+
+@needs
+def test_a_promoted_shadow_takes_over_the_bitcoin_half_once_and_ethereum_is_untouched(tmp_path, monkeypatch):
+    bb, be, bars, q = _world(); led, out = _paths(tmp_path, monkeypatch); now = datetime(2026, 6, 30, 12, 20, tzinfo=timezone.utc)
+    monkeypatch.setattr(CF, "signals", lambda f, s: (pd.Series([False] * (len(f) - 1) + [s == "flow_momentum"]).values, pd.Series([False] * len(f)).values))
+    CL.live_step(now, bars, q, 96.0, led, out, depth=FLAT, shadow=(None, None))
+    prom = {"t": "promote", "ts": "2027-04-12T04:15:00+00:00", "shadow_equity": 6000.0}
+    d = CL.live_step(now, bars, q, 96.0, led, out, depth=FLAT, shadow=(prom, 6000.0)); lines = CL.read_ledger(led)
+    sells = [r for r in lines if r["t"] == "fill" and r["side"] == "sell"]; hand = [r for r in lines if r["t"] == "handover"]
+    assert [r["sleeve"] for r in sells] == ["btc_flow_momentum"] and sells[0]["why"] == "handed over to the quant model" and len(hand) == 1
+    assert d["sleeves"]["eth_flow_momentum"]["qty"] > 0                                       # Ethereum keeps its own rules and its position
+    btc_cash = sum(hand[0]["sleeves"].values())
+    d2 = CL.live_step(now, bars, q, 96.0, led, out, depth=FLAT, shadow=(prom, 6600.0))
+    assert len([r for r in CL.read_ledger(led) if r["t"] == "handover"]) == 1                 # handed over once
+    assert abs(sum(v["equity"] for k, v in d2["sleeves"].items() if v["asset"] == "BTCUSDT") - btc_cash * 1.1) < 0.05

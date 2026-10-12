@@ -38,3 +38,12 @@ test("price height and particle size", () => {
   assert.equal(priceToY(100, 100), 0); assert.ok(Math.abs(priceToY(100.01, 100) - 1 * K) < 1e-9); assert.ok(priceToY(99, 100) < 0);
   assert.ok(tradeLook(50).size < tradeLook(50_000).size); assert.equal(tradeLook(100_000).big, false); assert.equal(tradeLook(300_000).big, true); assert.ok(tradeLook(1e9).glow <= 1);
 });
+
+test("shadowHtml: marks the shadow to the live price, shows the side, the countdown and the promotion", async () => {
+  const { shadowHtml } = await import("../../desk-crypto.js");
+  const d = { label: "SHADOW", budget_usd: 5000, equity_usd: 5100, units: 0.05, price: 80000, position: 0.8, side: "long", costs_usd: 5, funding_usd: 0, live_btc_return_pct: 1.5, days: 10, promote_after_days: 182, promoted: null, model: { month: "2026-10-01", rows: 6534 }, decisions: [{ score: 0.6, target: 0.8, action: "trade" }] };
+  const h = shadowHtml(d, 81000);
+  assert.match(h, /\$5,150/); assert.match(h, /\+3\.00%/); assert.match(h, /long \(holds Bitcoin\)/); assert.match(h, /In 172 days/);
+  assert.match(shadowHtml({ ...d, promoted: { ts: "2027-04-12T04:15", shadow_return_pct: 9, live_btc_return_pct: 4 } }, null), /Promoted 2027-04-12/);
+  assert.equal(shadowHtml(null, 1), "");
+});
