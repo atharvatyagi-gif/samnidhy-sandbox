@@ -1,0 +1,59 @@
+/* Source of ui.css (compiled by `npm run ui`; the site serves only the compiled file).
+   Components on the new pages are copied as-is from HyperUI (https://hyperui.dev, MIT licence, (c) Mark Mead; see ui/HYPERUI-LICENSE),
+   listed in the designeer.xyz component directory. To keep their markup exact AND on-brand, two of Tailwind's palettes are remapped here:
+     gray   -> zinc, the site's "Midnight Slate" neutrals (#09090b canvas, #18181b cards, #27272a lines)
+     indigo -> emerald, one step darker, so white button text keeps at least 4.5:1 contrast (accessibility AA)
+     teal -> emerald, blue -> near-white (the stats numbers)
+   Nothing else in the copied code is changed. */
+@import "tailwindcss";
+
+@source "../index.html";
+@source "../ui-mode.js";
+@source "../ui-home.js";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter Variable", "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+  --color-gray-50: var(--color-zinc-50);
+  --color-gray-100: var(--color-zinc-100);
+  --color-gray-200: var(--color-zinc-200);
+  --color-gray-300: var(--color-zinc-300);
+  --color-gray-400: var(--color-zinc-400);
+  --color-gray-500: var(--color-zinc-500);
+  --color-gray-600: var(--color-zinc-600);
+  --color-gray-700: var(--color-zinc-700);
+  --color-gray-800: var(--color-zinc-800);
+  --color-gray-900: var(--color-zinc-900);
+  --color-gray-950: var(--color-zinc-950);
+
+  --color-indigo-50: var(--color-emerald-50);
+  --color-indigo-100: var(--color-emerald-100);
+  --color-indigo-200: var(--color-emerald-200);
+  --color-indigo-300: var(--color-emerald-300);
+  --color-indigo-400: var(--color-emerald-400);
+  --color-indigo-500: var(--color-emerald-600);
+  --color-indigo-600: var(--color-emerald-700);
+  --color-indigo-700: var(--color-emerald-800);
+  --color-indigo-800: var(--color-emerald-900);
+  --color-indigo-900: var(--color-emerald-950);
+
+  /* HyperUI's other accent colours, folded into the same two: teal (headers, footers) -> emerald, blue (stats numbers) -> the near-white ink */
+  --color-teal-300: var(--color-emerald-300);
+  --color-teal-500: var(--color-emerald-600);
+  --color-teal-600: var(--color-emerald-700);
+  --color-teal-700: var(--color-emerald-800);
+  --color-blue-500: var(--color-zinc-100);
+  --color-blue-600: var(--color-zinc-50);
+}
+
+/* The site's own additions (not from HyperUI): the Simple / Pro switch hides what a mode does not need. */
+@layer base {
+  html.dark { color-scheme: dark; background: var(--color-zinc-950); }
+  [data-ui-mode="simple"] .pro-only { display: none !important; }
+  [data-ui-mode="pro"] .simple-only { display: none !important; }
+  :focus-visible { outline: 2px solid var(--color-emerald-400); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+}

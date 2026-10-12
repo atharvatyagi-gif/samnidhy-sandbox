@@ -1,0 +1,12 @@
+{
+  "name": "samnidhy-ui",
+  "private": true,
+  "description": "Build tool only: compiles the Tailwind classes used by the HyperUI components (MIT) into the static ui.css the site serves. Nothing here is published.",
+  "scripts": {
+    "ui": "tailwindcss -i ui/input.css -o ui.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "tailwindcss": "4.3.3"
+  }
+}
