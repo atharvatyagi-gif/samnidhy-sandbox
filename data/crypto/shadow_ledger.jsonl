@@ -1,0 +1,1 @@
+{"t":"start","ts":"2026-10-12T09:54:54+00:00","budget_usd":5174.9,"fx0":96.620262,"btc_sleeves_equity0":5160.26,"model":"ML+TREND long/short (crypto_quant.py round 2)","rule":"promote after 182 days if the shadow's return beats the live Bitcoin sleeves' return over the same days"}
