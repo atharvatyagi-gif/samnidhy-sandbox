@@ -23,12 +23,13 @@ def steps(d):
 def test_aladin_nightly_triggers_limits_and_order():
     d = load("aladin.yml")
     on = d["on"]
-    assert on["workflow_run"]["workflows"] == ["Daily update"] and on["workflow_run"]["types"] == ["completed"] and "workflow_dispatch" in on
+    assert "workflow_dispatch" in on and "workflow_run" not in on     # started explicitly by Daily update: run-after triggers never fire for heartbeat-started runs
     job = main_job(d)
-    gate = " ".join(st.get("run", "") for st in d["jobs"]["gate"]["steps"])
-    assert job["needs"] == "gate" and "needs.gate.outputs.ok" in job["if"] and job["timeout-minutes"] == 150
-    assert '"$CONCLUSION" = "success"' in gate and '.name == "update"' in gate and '.conclusion == "success"' in gate   # a run cancelled only in its publish job still counts
-    assert d["permissions"] == {"contents": "write", "actions": "read"} and d["concurrency"] == {"group": "aladin", "cancel-in-progress": False}
+    assert job["timeout-minutes"] == 150
+    assert d["permissions"] == {"contents": "write", "actions": "write"} and d["concurrency"] == {"group": "aladin", "cancel-in-progress": False}
+    daily = " ".join(st.get("run", "") for st in load("daily-update.yml")["jobs"]["update"]["steps"])
+    assert "gh workflow run aladin.yml" in daily
+    assert any("gh workflow run aladin2.yml" in st.get("run", "") for st in steps(d))
     runs = [s.get("run", "") for s in steps(d)]
     order = [next(i for i, r in enumerate(runs) if k in r) for k in ("aladin_fund.py", "aladin_filings.py", "aladin_model.py", "paper_trader.py")]
     assert order == sorted(order)

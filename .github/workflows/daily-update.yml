@@ -26,6 +26,7 @@ on:
 
 permissions:
   contents: write   # save the day's data in the repository
+  actions: write    # start ALADIN nightly when the data is saved
   pages: write      # publish the website
   id-token: write   # required by GitHub Pages publishing
 
@@ -159,6 +160,13 @@ jobs:
             git pull --rebase origin main
             git push origin HEAD:main
           fi
+
+      - name: "Start ALADIN nightly (explicit, because GitHub does not fire run-after triggers for runs the heartbeat started)"
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run aladin.yml --ref main
 
       - uses: actions/configure-pages@v5
 

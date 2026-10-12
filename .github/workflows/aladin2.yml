@@ -6,9 +6,6 @@
 name: ALADIN2 nightly
 
 on:
-  workflow_run:
-    workflows: ["Daily update", "ALADIN nightly"]     # also after ALADIN 1: its scores feed the weekly book, and without this the Friday book waited for the next day's run
-    types: [completed]
   workflow_dispatch:
     inputs:
       symbols:
@@ -26,38 +23,14 @@ on:
 
 permissions:
   contents: write
-  actions: read
+  actions: write               # read this run's step list for the report, and start the next link of the chain
 
 concurrency:
   group: aladin2
   cancel-in-progress: false
 
 jobs:
-  gate:                         # did the run that triggered this one actually produce data? Its publish job is often cancelled by the next
-                                # 5-minute Live prices publish (GitHub keeps one waiting run per group), which marks the WHOLE run "cancelled"
-                                # although its data job succeeded; requiring conclusion == success left the nightly chain idle for days.
-    runs-on: ubuntu-latest
-    outputs:
-      ok: ${{ steps.check.outputs.ok }}
-    steps:
-      - id: check
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EVENT: ${{ github.event_name }}
-          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
-          RUN_ID: ${{ github.event.workflow_run.id }}
-        run: |
-          ok=false
-          if [ "$EVENT" = "workflow_dispatch" ] || [ "$CONCLUSION" = "success" ]; then ok=true
-          elif [ "$CONCLUSION" = "cancelled" ]; then
-            n=$(gh api "repos/${{ github.repository }}/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select((.name == "update" or .name == "aladin") and .conclusion == "success")] | length' || echo 0)
-            [ "${n:-0}" -ge 1 ] && ok=true
-          fi
-          echo "trigger: $EVENT / $CONCLUSION -> run: $ok"; echo "ok=$ok" >> "$GITHUB_OUTPUT"
-
   aladin2:
-    needs: gate
-    if: ${{ needs.gate.outputs.ok == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 150
     env:
