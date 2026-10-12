@@ -446,7 +446,7 @@ def test_the_default_order_reads_the_priority_companies_first(tmp_path, monkeypa
 
 
 def test_a_second_key_adds_its_own_models_after_the_first_keys_and_is_used_for_them(monkeypatch):
-    for k in ("GROQ_API_KEY", "GEMINI_API_KEY", "GROQ_API_KEY_1", "GEMINI_API_KEY_1", "GROQ_MODEL", "GEMINI_MODEL", "GROQ_FALLBACK_MODELS", "LLM_PROVIDER"):
+    for k in ("GROQ_API_KEY", "GEMINI_API_KEY", "GROQ_API_KEY_1", "GEMINI_API_KEY_1", "GROQ_API_KEY_2", "GEMINI_API_KEY_2", "GROQ_MODEL", "GEMINI_MODEL", "GROQ_FALLBACK_MODELS", "LLM_PROVIDER"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("GROQ_API_KEY", "g0")
     monkeypatch.setenv("GROQ_API_KEY_1", "g1")

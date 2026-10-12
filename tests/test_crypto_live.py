@@ -113,3 +113,30 @@ def test_the_bitcoin_momentum_stop_ratchets_up_with_price_and_never_down(tmp_pat
     ups = [r for r in lines if r["t"] == "stop"]; assert len(ups) == 1 and ups[0]["sleeve"] == "btc_flow_momentum" and ups[0]["stop"] > s0 and S2["btc_flow_momentum"]["stop"] == ups[0]["stop"]
     assert S2["eth_flow_momentum"]["stop"] == S["eth_flow_momentum"]["stop"] and any(r["t"] == "rule_change" for r in lines)                  # only the Bitcoin momentum sleeve trails
     n = len(lines); CL.live_step(datetime(2026, 6, 30, 16, 20, tzinfo=timezone.utc), bars2, q2, 96.0, led, out, depth=FLAT); assert len(CL.read_ledger(led)) == n               # the same bar never raises it twice
+
+
+def test_depth_stats_with_enough_samples_needs_no_scipy(monkeypatch):
+    """GitHub's crypto job installs only pandas, numpy and requests: at 30+ samples the rank correlation must still work (it crashed the whole account step)."""
+    import builtins
+    import random
+    real = builtins.__import__
+
+    def no_scipy(name, *a, **k):
+        if name.startswith("scipy"):
+            raise ModuleNotFoundError("No module named 'scipy'")
+        return real(name, *a, **k)
+    monkeypatch.setattr(builtins, "__import__", no_scipy)
+    rnd = random.Random(3)
+    rows, px = [], 100.0
+    for i in range(60):
+        px *= 1 + rnd.uniform(-0.01, 0.01)
+        for sym in CL.ASSETS:
+            rows.append({"ts": f"2026-10-{10 + i // 24:02d}T{i % 24:02d}:00:00+00:00", "sym": sym, "mid": px, "imb_near": rnd.uniform(-1, 1), "imb_wide": 0.0, "spread_bps": 0.1})
+    out = CL.depth_stats(rows)
+    for sym in CL.ASSETS:
+        assert out[sym]["next_1h"]["n"] >= 30 and -1 <= out[sym]["next_1h"]["rho"] <= 1
+
+
+def test_a_broken_experiment_never_stops_the_account(monkeypatch):
+    monkeypatch.setattr(CL, "depth_stats", lambda rows: 1 / 0)
+    assert "error" in CL._safe_depth_stats([])

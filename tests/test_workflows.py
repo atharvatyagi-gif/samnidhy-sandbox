@@ -12,16 +12,22 @@ def load(name):
     return d
 
 
+def main_job(d):
+    return [j for k, j in d["jobs"].items() if k != "gate"][0]                  # "gate" only decides whether the real job runs
+
+
 def steps(d):
-    return list(d["jobs"].values())[0]["steps"]
+    return main_job(d)["steps"]
 
 
 def test_aladin_nightly_triggers_limits_and_order():
     d = load("aladin.yml")
     on = d["on"]
     assert on["workflow_run"]["workflows"] == ["Daily update"] and on["workflow_run"]["types"] == ["completed"] and "workflow_dispatch" in on
-    job = list(d["jobs"].values())[0]
-    assert "conclusion == 'success'" in job["if"] and job["timeout-minutes"] == 150
+    job = main_job(d)
+    gate = " ".join(st.get("run", "") for st in d["jobs"]["gate"]["steps"])
+    assert job["needs"] == "gate" and "needs.gate.outputs.ok" in job["if"] and job["timeout-minutes"] == 150
+    assert '"$CONCLUSION" = "success"' in gate and '.name == "update"' in gate and '.conclusion == "success"' in gate   # a run cancelled only in its publish job still counts
     assert d["permissions"] == {"contents": "write", "actions": "read"} and d["concurrency"] == {"group": "aladin", "cancel-in-progress": False}
     runs = [s.get("run", "") for s in steps(d)]
     order = [next(i for i, r in enumerate(runs) if k in r) for k in ("aladin_fund.py", "aladin_filings.py", "aladin_model.py", "paper_trader.py")]

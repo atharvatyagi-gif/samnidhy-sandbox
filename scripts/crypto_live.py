@@ -140,6 +140,12 @@ def depth_sample(symbol, mid):
     return {"imb_near": imb(0.0002), "imb_wide": imb(0.0005), "spread_bps": round((asks[0][0] - bids[0][0]) / mid * 1e4, 3)}
 
 
+def _spearman(a, b):
+    """Spearman rank correlation without scipy (the GitHub job installs only pandas, numpy and requests): Pearson on the ranks."""
+    v = float(a.rank().corr(b.rank()))
+    return None if v != v else round(v, 3)
+
+
 def depth_stats(rows):
     """Does the hourly order-book imbalance say anything about the NEXT hour or the next four hours? Spearman rank correlation per asset, from the recorded samples only. No trade uses it."""
     out = {}
@@ -151,9 +157,17 @@ def depth_stats(rows):
 
         def corr(k, lo, hi):
             gap = (r["t"].shift(-k) - r["t"]).dt.total_seconds() / 3600; ret = r["mid"].shift(-k) / r["mid"] - 1; ok = gap.between(lo, hi) & r["imb_near"].notna() & ret.notna()
-            n = int(ok.sum()); return {"n": n, "rho": round(float(r.loc[ok, "imb_near"].corr(ret[ok], method="spearman")), 3) if n >= 30 else None, "needs_abs_rho_above": round(2 / n ** 0.5, 3) if n >= 30 else None}
+            n = int(ok.sum()); return {"n": n, "rho": _spearman(r.loc[ok, "imb_near"], ret[ok]) if n >= 30 else None, "needs_abs_rho_above": round(2 / n ** 0.5, 3) if n >= 30 else None}
         out[sym] = {"n": len(r), "next_1h": corr(1, 0.8, 1.2), "next_4h": corr(4, 3.5, 4.5), "latest": {k: (None if pd.isna(r.iloc[-1][k]) else float(r.iloc[-1][k])) for k in ("imb_near", "imb_wide", "spread_bps")}}
     return out
+
+
+def _safe_depth_stats(rows):
+    """The experiment's statistics must never stop the paper account: a failure is reported in the page, the trading step carries on."""
+    try:
+        return depth_stats(rows)
+    except Exception as e:                                                                   # noqa: BLE001
+        return {"error": f"{type(e).__name__}: {str(e)[:120]}"}
 
 
 def hourly_due(now, path):
@@ -234,7 +248,7 @@ def live_step(now=None, bars=None, q=None, fx=None, ledger=None, out=None, depth
            "pnl_usd": round(tot - start["budget_usd"], 2), "return_pct": round((tot / start["budget_usd"] - 1) * 100, 3), "equity_inr_at_start_rate": round(tot * start["fx0"], 0), "equity_inr_now": round(tot * fx, 0) if fx else None,
            "invested_pct": round(invested / tot * 100, 1) if tot else 0.0, "buy_hold_usd": round(bh, 2), "sleeves": sl, "trades": trades, "decisions": decisions, "curve": curve, "stale_after_min": STALE_MIN,
            "depth_experiment": {"label": "EXPERIMENT, NOT TRADED: does the hourly order-book imbalance (resting buy size minus resting sell size within 0.02% of the price) say anything about the next hour or the next four hours? Nothing trades on it until it proves itself on live samples.",
-                                "stats": depth_stats(drows)},
+                                "stats": _safe_depth_stats(drows)},
            "study": {"BTCUSDT": "t/c/study.json", "ETHUSDT": "t/c/study_eth.json", "extra": "t/c/study_extra.json"}}
     p = Path(out or LIVE); p.parent.mkdir(parents=True, exist_ok=True); p.write_text(json.dumps(doc, separators=(",", ":"), allow_nan=False, default=lambda v: None), encoding="utf-8"); return doc
 
