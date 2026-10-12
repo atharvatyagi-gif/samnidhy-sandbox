@@ -32,7 +32,7 @@ jobs:
           cache: pip
 
       - name: Install Python packages
-        run: pip install pandas==2.3.3 numpy==2.3.4 requests==2.34.2 lightgbm==4.7.0
+        run: pip install pandas==2.3.3 numpy==2.3.4 requests==2.34.2 lightgbm==4.7.0 scikit-learn==1.9.1
 
       - name: Shadow quant account (Bitcoin all-weather model; may fail without touching the live account)
         continue-on-error: true
