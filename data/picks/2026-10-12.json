@@ -1,0 +1,149 @@
+{
+  "session_date": "2026-10-12",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_12102026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 494,
+  "eligible_count": 427,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "GALLANTT",
+      "yahoo_ticker": "GALLANTT.NS",
+      "name": "Gallantt Ispat Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 503.75,
+      "open": 524.95,
+      "high": 604.5,
+      "low": 520.2,
+      "close": 595.6,
+      "pct_change": 18.2333,
+      "volume": 23263167,
+      "turnover_crore": 1339.47
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "NIACL",
+      "yahoo_ticker": "NIACL.NS",
+      "name": "The New India Assurance Company Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 162.23,
+      "open": 162.98,
+      "high": 194.0,
+      "low": 162.6,
+      "close": 187.02,
+      "pct_change": 15.2808,
+      "volume": 91136023,
+      "turnover_crore": 1661.76
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "CARTRADE",
+      "yahoo_ticker": "CARTRADE.NS",
+      "name": "Cartrade Tech Ltd.",
+      "industry": "Consumer Services",
+      "prev_close": 2951.0,
+      "open": 2970.0,
+      "high": 3253.2,
+      "low": 2961.1,
+      "close": 3191.3,
+      "pct_change": 8.143,
+      "volume": 1395231,
+      "turnover_crore": 439.46
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "BSOFT",
+      "yahoo_ticker": "BSOFT.NS",
+      "name": "Birlasoft Ltd.",
+      "industry": "Information Technology",
+      "prev_close": 285.3,
+      "open": 285.5,
+      "high": 288.0,
+      "low": 269.2,
+      "close": 272.85,
+      "pct_change": -4.3638,
+      "volume": 1662803,
+      "turnover_crore": 46.04
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "DMART",
+      "yahoo_ticker": "DMART.NS",
+      "name": "Avenue Supermarts Ltd.",
+      "industry": "Consumer Services",
+      "prev_close": 3516.8,
+      "open": 3407.0,
+      "high": 3448.0,
+      "low": 3350.6,
+      "close": 3364.9,
+      "pct_change": -4.3193,
+      "volume": 3131384,
+      "turnover_crore": 1061.91
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "USHAMART",
+      "yahoo_ticker": "USHAMART.NS",
+      "name": "Usha Martin Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 502.05,
+      "open": 507.0,
+      "high": 509.6,
+      "low": 481.6,
+      "close": 483.15,
+      "pct_change": -3.7646,
+      "volume": 731681,
+      "turnover_crore": 35.86
+    }
+  ],
+  "skipped": [
+    {
+      "symbol": "LENSKART",
+      "group": "loser",
+      "pct_change": -4.3311,
+      "history_years": 0.92,
+      "would_have_been": "Top Loser #2",
+      "reason": "only 0.9 years of price history (minimum 1)"
+    }
+  ],
+  "fetched_at_utc": "2026-10-12T13:31:33+00:00",
+  "fetched_at_ist": "12 Oct 2026, 07:01 PM IST"
+}

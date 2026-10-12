@@ -149,6 +149,16 @@ def main() -> None:
         present[key] = src.exists()
         if src.exists():
             shutil.copyfile(src, SITE / {"aladin": "aladin.json", "sentiment": "sentiment.json", "geo": "geo.json", "houses": "houses.json", "paper": "paper.json", "method": "aladin_method.json", "graph": "supply_graph.json", "shocks": "shocks.json", "lanes": "trade_lanes.json", "telemetry": "telemetry.json", "moves": "aladin_moves.json"}[key])
+    # Revenue dependency profiles (scripts/dependency_profile.py): rebuilt from the graph and the segment-note profiles on every build, so they never lag them.
+    present["deps"] = False
+    try:
+        import dependency_profile
+        dp = dependency_profile.build(dependency_profile._load(DATA / "supply_graph.json", {"cos": {}, "edges": [], "nodes": []}), dependency_profile._load(DATA / "revenue_profile.json", {"cos": {}}))
+        if dp["cos"]:
+            (SITE / "dependencies.json").write_text(json.dumps(dp, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+            present["deps"] = True
+    except Exception as e:  # noqa: BLE001  the site still builds without it
+        print("dependencies.json not built:", e)
     # geo.json itself loads only when the Globe tab is opened; this tiny summary (a few hundred bytes) is what the regime strip and the Brief read.
     present["geo_summary"] = False
     if present.get("geo"):
