@@ -1,1 +1,1 @@
-{"generated_utc":"2026-10-13T09:43:54Z","as_of":"2026-10-13","min_abs_dr_pct":3.0,"shocks":[{"focal":"CYIENTDLM","cp":"CYIENT","rel":"supplies","w":0.0042,"conf":0.9,"dr":4.87,"edge":"e165","cp_ret":0.0034,"focal_ret":0.0547}]}
+{"generated_utc":"2026-10-13T14:18:51Z","as_of":"2026-10-13","min_abs_dr_pct":3.0,"shocks":[{"focal":"CYIENTDLM","cp":"CYIENT","rel":"supplies","w":0.0042,"conf":0.9,"dr":5.36,"edge":"e172","cp_ret":0.0142,"focal_ret":0.0618}]}
