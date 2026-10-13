@@ -143,12 +143,12 @@ def main() -> None:
             "houses": DATA / "config" / "business_houses.json", "paper": DATA / "paper_trades" / "portfolio.json", "method": DATA / "config" / "aladin_method.json",
             "graph": DATA / "supply_graph.json", "shocks": DATA / "aladin" / "shocks.json",
             "lanes": DATA / "config" / "trade_lanes.json", "moves": DATA / "aladin" / "moves.json",
-            "telemetry": DATA / "live_extra" / "aladin_telemetry.json"}             # the ONE file from live_extra that is published: positions from OpenSky / AISstream, never the tick feed
+            "telemetry": DATA / "live_extra" / "aladin_telemetry.json", "movers": DATA / "aladin_movers" / "latest.json"}             # the ONE file from live_extra that is published: positions from OpenSky / AISstream, never the tick feed
     present = {}
     for key, src in desk.items():
         present[key] = src.exists()
         if src.exists():
-            shutil.copyfile(src, SITE / {"aladin": "aladin.json", "sentiment": "sentiment.json", "geo": "geo.json", "houses": "houses.json", "paper": "paper.json", "method": "aladin_method.json", "graph": "supply_graph.json", "shocks": "shocks.json", "lanes": "trade_lanes.json", "telemetry": "telemetry.json", "moves": "aladin_moves.json"}[key])
+            shutil.copyfile(src, SITE / {"aladin": "aladin.json", "sentiment": "sentiment.json", "geo": "geo.json", "houses": "houses.json", "paper": "paper.json", "method": "aladin_method.json", "graph": "supply_graph.json", "shocks": "shocks.json", "lanes": "trade_lanes.json", "telemetry": "telemetry.json", "moves": "aladin_moves.json", "movers": "aladin_movers.json"}[key])
     # Revenue dependency profiles (scripts/dependency_profile.py): rebuilt from the graph and the segment-note profiles on every build, so they never lag them.
     present["deps"] = False
     try:
