@@ -404,7 +404,8 @@ def live(now=None, workers=None):
     fw = evaluate_forward(lines)
     bot_doc = json.loads(BOT_LIVE.read_text(encoding="utf-8")) if BOT_LIVE.exists() else None
     sh = shadow(fw, read_ledger(), bot_doc, now)
-    st = json.loads((OUT / "study_r2.json").read_text(encoding="utf-8")) if (OUT / "study_r2.json").exists() else {}
+    study = OUT / "study_r2b.json"                                # the stocks-only round 2 verdict (DATA CORRECTION in the docstring) replaces study_r2.json
+    st = json.loads(study.read_text(encoding="utf-8")) if study.exists() else {}
     names = {}
     try:
         names = {x["s"]: x.get("n") for x in json.loads((L.TERM / "universe.json").read_text(encoding="utf-8"))["stocks"]}
@@ -416,7 +417,7 @@ def live(now=None, workers=None):
            "book": {"friday": cur["friday"], "created_utc": cur["created_utc"], "counted": cur["counted"], "n": cur["n"], "k": cur["k"], "trained_to": cur["trained_to"],
                     "top": view(cur["rows"][:cur["k"]]), "bottom": view(cur["rows"][-cur["k"]:][::-1])} if cur else None,
            "forward": fw, "shadow": sh,
-           "backtest": {k: st.get(k) for k in ("auc_big", "auc_big_recent_volatility", "auc_up", "ranking_top_minus_bottom_weekly_pct_after_costs", "years_top_beats_bottom", "years_positive_after_costs", "gates", "base_rate_big", "top_tenth_big_rate")},
+           "backtest": {k: st.get(k) for k in ("auc_big", "auc_big_recent_volatility", "auc_up", "ranking_top_minus_bottom_weekly_pct_after_costs", "years_top_beats_bottom", "years_positive_after_costs", "gates", "base_rate_big", "top_tenth_big_rate", "deciles_expected_move", "rows", "weeks", "stocks")},
            "method": "Three LightGBM models on 66 price, volume, results-calendar and F&O inputs; retrained every Friday on all finished weeks since 2012. Expected move = (2 x chance up - 1) x expected size. Entry Monday open, exit Friday close, 0.30% round-trip cost."}
     LATEST.write_text(json.dumps(doc, separators=(",", ":"), default=float), encoding="utf-8")
     print(f"forward test: {fw['done']} finished weeks, paper top tenth Rs {fw['equity']:,} vs all stocks Rs {fw['equity_all_stocks']:,}")
