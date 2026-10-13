@@ -32,7 +32,7 @@ concurrency:
 jobs:
   aladin2:
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 220
     env:
       ALADIN_GIT_PUSH: "1"
     steps:
@@ -91,6 +91,20 @@ jobs:
           STEPS="${{ inputs.phase }}"; if [ -z "$STEPS" ]; then STEPS="ingest,resolve,learn,drift,discover,forecast,weekly,paper,bot,publish"; fi
           python -m scripts.aladin2.run_nightly --budget-min 110 --workers 2 --steps "$STEPS" $LIM | tee run_summary.txt
           { echo '## ALADIN2 nightly'; echo '```'; cat run_summary.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: ALADIN movers forward test (board meetings of the last two months, then the weekly ranking on Friday-evening and weekend runs, and the check of finished weeks)
+        timeout-minutes: 70
+        continue-on-error: true
+        run: |
+          python scripts/events_calendar.py --start "$(date -u -d '-2 months' +%Y-%m)" || true
+          python scripts/aladin_movers.py --live --workers 2
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, "scripts")
+          from gitops import commit_and_push
+          ok = commit_and_push(["data/aladin_movers/forward.jsonl", "data/aladin_movers/latest.json", "data/aladin_movers/board_meetings.csv.gz"], "ALADIN movers: forward test [skip ci]", min_interval_s=0, state_file="data/aladin_movers_gitops_state.json")
+          print("committed and pushed" if ok else "nothing new to save")
+          PY
 
       - name: Size and hygiene checks
         run: python scripts/aladin2/check_aladin2.py

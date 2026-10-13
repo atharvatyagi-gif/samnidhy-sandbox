@@ -34,6 +34,11 @@ that price charts do not contain, everything as known at the Friday close:
   F&O POSITIONING   NSE F&O bhavcopy (2020 on, F&O stocks only; missing elsewhere): futures open interest change over 5 days as a share of open interest,
                     put/call open-interest ratio and its 5-day change.
   Same models, same settings, same walk-forward, same gates.
+
+DATA CORRECTION (2026-10-13, found by the first live trial, before any further result): the universe had included exchange-traded funds (liquid funds,
+index ETFs) and non-equity series, which are not "stocks" as the method says; liquid funds topped the ranking with their steady drift, which can make
+"top tenth beats bottom tenth" look better than any stock-picking. From here the universe is ordinary equity on NSE's main board only (series EQ, not an
+ETF), and the sector comes from the company's fundamentals (industry) where published. Round 2 is re-run on that universe and its verdict replaces the earlier one.
 """
 import argparse
 import json
@@ -58,18 +63,35 @@ LGB = dict(n_estimators=300, num_leaves=31, learning_rate=0.03, min_child_sample
 DROP = {"o", "h", "l", "c", "v", "pc", "suspect_action", "post_break", "locked", "atr14", "adv_cr"}
 
 
+def equity_symbols():
+    """Ordinary shares on NSE's main board (series EQ, not an ETF), from NSE's own list."""
+    try:
+        u = json.loads((L.TERM / "universe.json").read_text(encoding="utf-8"))
+        return {s["s"] for s in u["stocks"] if s.get("series") == "EQ" and s.get("board") == "Main" and not s.get("etf")}
+    except (OSError, ValueError, KeyError):
+        return None
+
+
 def universe():
     term = L.TERM
     syms = sorted({p.stem for p in (term / "archive").glob("*.json")} | {p.stem for p in (term / "daily").glob("*.json")})
-    return [s for s in syms if not s.startswith("_")]
+    eq = equity_symbols()
+    return [s for s in syms if not s.startswith("_") and (eq is None or s in eq)]
 
 
 def sector_map():
+    out = {}
     try:
         u = json.loads((L.TERM / "universe.json").read_text(encoding="utf-8"))
-        return {s["s"]: s.get("ind") for s in u["stocks"]}
+        out = {s["s"]: s.get("ind") for s in u["stocks"] if s.get("ind")}
     except (OSError, ValueError, KeyError):
-        return {}
+        pass
+    try:
+        f = json.loads((L.TERM / "fund.json").read_text(encoding="utf-8")); f = f.get("stocks", f)
+        out.update({k: v.get("industry") for k, v in f.items() if isinstance(v, dict) and v.get("industry")})
+    except (OSError, ValueError, AttributeError):
+        pass
+    return out
 
 
 def nifty_frame():
@@ -244,8 +266,128 @@ def evaluate(T):
             "gates": gates, "per_year": per_year, "deciles_big": deciles.round(4).to_dict("records"), "deciles_expected_move": dec_em.round(4).to_dict("records")}
 
 
+
+# ------------------------------------------------------------------ the live forward test (owner's choice 2026-10-13: "forward test first")
+LEDGER, LATEST = OUT / "forward.jsonl", OUT / "latest.json"
+IST = timezone(pd.Timedelta(hours=5, minutes=30).to_pytimedelta())
+TOP = 0.10                         # the top and bottom tenth of the ranking
+BUDGET_INR = 1_000_000
+
+
+def read_ledger():
+    return [json.loads(x) for x in LEDGER.read_text(encoding="utf-8").splitlines() if x.strip()] if LEDGER.exists() else []
+
+
+def book_due(now_ist, last_bar):
+    """A weekly book is made after the week's last close: Friday from 16:00 IST, or Saturday/Sunday, from a bar of this same week."""
+    wd = now_ist.weekday()
+    if wd not in (4, 5, 6) or (wd == 4 and now_ist.hour < 16):
+        return False
+    monday = (now_ist - pd.Timedelta(days=wd)).date()
+    return last_bar.date() >= monday
+
+
+def entry_deadline(friday):
+    """The book counts only if written before the next trading week's open: Monday 09:15 IST (a later holiday Monday makes this stricter, never looser)."""
+    mon = pd.Timestamp(friday).normalize() + pd.Timedelta(days=(7 - pd.Timestamp(friday).weekday()) % 7 or 7)
+    return (mon + pd.Timedelta(hours=9, minutes=15)).tz_localize(IST)
+
+
+def make_book(P, now):
+    """Train the three models on every finished week, score the latest week's stocks, return the ranking."""
+    import lightgbm as lgb
+    X = feats(P); last = P["date"].max(); tr = P[P["y_r5"].notna()]; te = P[P["date"] == last].copy()
+    a = tr["y_r5"].abs()
+    m_big = lgb.LGBMClassifier(**LGB).fit(tr[X], (a > BIG).astype(int)); m_up = lgb.LGBMClassifier(**LGB).fit(tr[X], (tr["y_r5"] > 0).astype(int))
+    m_sz = lgb.LGBMRegressor(**LGB).fit(tr[X], a.clip(upper=0.5))
+    te["p_big"] = m_big.predict_proba(te[X])[:, 1]; te["p_up"] = m_up.predict_proba(te[X])[:, 1]; te["size"] = m_sz.predict(te[X]).clip(min=0)
+    te["exp_move"] = (2 * te["p_up"] - 1) * te["size"]; te = te.sort_values("exp_move", ascending=False)
+    k = max(1, int(round(len(te) * TOP)))
+    rows = [[r.sym, round(float(r.p_big), 4), round(float(r.p_up), 4), round(float(r.size), 4), round(float(r.exp_move), 5), r.sector, int(r.res_next7) if "res_next7" in te and not pd.isna(r.res_next7) else 0] for r in te.itertuples()]
+    return {"friday": str(last.date()), "n": len(te), "k": k, "trained_rows": len(tr), "trained_to": str(tr["date"].max().date()), "rows": rows}
+
+
+def realised(sym, friday):
+    """Monday's open (the first trading day after the Friday) to the close 5 trading days after the Friday; None until that close exists."""
+    px = L.load_prices(sym)
+    if px is None:
+        return None
+    after = px[px.index > pd.Timestamp(friday)]
+    if len(after) < H:
+        return None
+    o, c = float(after["o"].iloc[0]), float(after["c"].iloc[H - 1])
+    return (c / o - 1) if o > 0 else None
+
+
+def evaluate_forward(lines):
+    """Every counted book whose week has finished: the top tenth (equal weight, long only), the bottom tenth, and all ranked stocks; costs 0.30% round trip."""
+    books = [r for r in lines if r["t"] == "book" and r.get("counted")]
+    done_lines = {r["friday"]: r for r in lines if r["t"] == "week"}
+    weeks, eq, eq_mkt, new = [], BUDGET_INR, BUDGET_INR, []
+    for b in books:
+        if b["friday"] in done_lines:
+            w = done_lines[b["friday"]]; eq *= 1 + w["top"] / 100; eq_mkt *= 1 + w["all"] / 100
+            weeks.append({**{k: v for k, v in w.items() if k != "t"}, "equity": round(eq), "equity_all": round(eq_mkt)}); continue
+        rets = {}
+        for row in b["rows"]:
+            r = realised(row[0], b["friday"])
+            if r is not None:
+                rets[row[0]] = r
+        if len(rets) < 0.8 * len(b["rows"]):
+            weeks.append({"friday": b["friday"], "status": "waiting"}); continue
+        syms = [r[0] for r in b["rows"]]; k = b["k"]
+        top = [rets[s] for s in syms[:k] if s in rets]; bot = [rets[s] for s in syms[-k:] if s in rets]; allr = list(rets.values())
+        t, m, bt = float(np.mean(top)) - COST_RT, float(np.mean(allr)), float(np.mean(bot))
+        eq *= 1 + t; eq_mkt *= 1 + m
+        w = {"friday": b["friday"], "status": "done", "top": round(t * 100, 3), "bottom": round(bt * 100, 3), "all": round(m * 100, 3), "spread_after_costs": round((float(np.mean(top)) - bt - 2 * COST_RT) * 100, 3),
+             "top_beat_all": bool(t > m), "stocks_priced": len(rets)}
+        new.append({"t": "week", **w}); weeks.append({**w, "equity": round(eq), "equity_all": round(eq_mkt)})
+    if new:
+        with open(LEDGER, "a", encoding="utf-8") as f:
+            for w in new:
+                f.write(json.dumps(w, separators=(",", ":")) + "\n")
+    done = [w for w in weeks if w["status"] == "done"]
+    return {"weeks": weeks, "done": len(done), "judge_after": 26, "equity": round(eq), "equity_all_stocks": round(eq_mkt),
+            "top_beat_all_weeks": sum(1 for w in done if w["top_beat_all"]), "avg_spread_after_costs": round(float(np.mean([w["spread_after_costs"] for w in done])), 3) if done else None}
+
+
+def live(now=None, workers=None):
+    now = now or datetime.now(timezone.utc); now_ist = pd.Timestamp(now).tz_convert(IST); OUT.mkdir(parents=True, exist_ok=True); lines = read_ledger()
+    nf = nifty_frame(); last_bar = nf.index.max() if nf is not None else None
+    have = {r["friday"] for r in lines if r["t"] == "book"}
+    if last_bar is not None and book_due(now_ist, last_bar) and str(last_bar.date()) not in have:
+        P = build_panel(workers); bk = make_book(P, now)
+        if bk["friday"] not in have:
+            counted = now_ist < entry_deadline(bk["friday"])
+            rec = {"t": "book", "created_utc": now.isoformat(timespec="seconds"), "counted": bool(counted), **({} if counted else {"why": "written after the next week's open: not counted"}), **bk}
+            with open(LEDGER, "a", encoding="utf-8") as f:
+                f.write(json.dumps(rec, separators=(",", ":")) + "\n")
+            lines = read_ledger(); print(f"book for week ending {bk['friday']}: {bk['n']} stocks ranked, counted={counted}")
+    books = [r for r in lines if r["t"] == "book"]; cur = books[-1] if books else None
+    fw = evaluate_forward(lines)
+    st = json.loads((OUT / "study_r2.json").read_text(encoding="utf-8")) if (OUT / "study_r2.json").exists() else {}
+    names = {}
+    try:
+        names = {x["s"]: x.get("n") for x in json.loads((L.TERM / "universe.json").read_text(encoding="utf-8"))["stocks"]}
+    except (OSError, ValueError, KeyError):
+        pass
+    view = lambda rows: [{"sym": r[0], "name": names.get(r[0]), "p_big": r[1], "p_up": r[2], "size": r[3], "exp_move": r[4], "sector": r[5], "results_this_week": bool(r[6])} for r in rows]
+    doc = {"kind": "ALADIN movers, forward test", "label": "FORWARD TEST: each Friday's ranking is recorded before Monday's open and checked against real prices. Not proven yet.",
+           "updated_utc": now.isoformat(timespec="seconds"),
+           "book": {"friday": cur["friday"], "created_utc": cur["created_utc"], "counted": cur["counted"], "n": cur["n"], "k": cur["k"], "trained_to": cur["trained_to"],
+                    "top": view(cur["rows"][:cur["k"]]), "bottom": view(cur["rows"][-cur["k"]:][::-1])} if cur else None,
+           "forward": fw,
+           "backtest": {k: st.get(k) for k in ("auc_big", "auc_big_recent_volatility", "auc_up", "ranking_top_minus_bottom_weekly_pct_after_costs", "years_top_beats_bottom", "years_positive_after_costs", "gates", "base_rate_big", "top_tenth_big_rate")},
+           "method": "Three LightGBM models on 66 price, volume, results-calendar and F&O inputs; retrained every Friday on all finished weeks since 2012. Expected move = (2 x chance up - 1) x expected size. Entry Monday open, exit Friday close, 0.30% round-trip cost."}
+    LATEST.write_text(json.dumps(doc, separators=(",", ":"), default=float), encoding="utf-8")
+    print(f"forward test: {fw['done']} finished weeks, paper top tenth Rs {fw['equity']:,} vs all stocks Rs {fw['equity_all_stocks']:,}")
+    return doc
+
+
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument("--study", action="store_true"); ap.add_argument("--workers", type=int, default=None); a = ap.parse_args()
+    ap = argparse.ArgumentParser(); ap.add_argument("--study", action="store_true"); ap.add_argument("--live", action="store_true"); ap.add_argument("--workers", type=int, default=None); a = ap.parse_args()
+    if a.live:
+        live(workers=a.workers); return
     if a.study:
         OUT.mkdir(parents=True, exist_ok=True); t0 = datetime.now()
         P = build_panel(a.workers); print(f"panel: {len(P):,} stock-weeks, {P['sym'].nunique()} stocks, {len(feats(P))} inputs, {P['date'].min().date()} to {P['date'].max().date()}", flush=True)
