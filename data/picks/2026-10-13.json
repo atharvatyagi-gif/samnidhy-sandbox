@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-10-13",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_13102026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 494,
+  "eligible_count": 423,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "BANDHANBNK",
+      "yahoo_ticker": "BANDHANBNK.NS",
+      "name": "Bandhan Bank Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 157.5,
+      "open": 162.0,
+      "high": 173.0,
+      "low": 161.51,
+      "close": 172.0,
+      "pct_change": 9.2063,
+      "volume": 51599380,
+      "turnover_crore": 871.78
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "BSOFT",
+      "yahoo_ticker": "BSOFT.NS",
+      "name": "Birlasoft Ltd.",
+      "industry": "Information Technology",
+      "prev_close": 272.85,
+      "open": 277.15,
+      "high": 299.0,
+      "low": 277.15,
+      "close": 296.75,
+      "pct_change": 8.7594,
+      "volume": 16349578,
+      "turnover_crore": 477.15
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "HCLTECH",
+      "yahoo_ticker": "HCLTECH.NS",
+      "name": "HCL Technologies Ltd.",
+      "industry": "Information Technology",
+      "prev_close": 1223.0,
+      "open": 1245.4,
+      "high": 1326.0,
+      "low": 1238.2,
+      "close": 1326.0,
+      "pct_change": 8.4219,
+      "volume": 21744525,
+      "turnover_crore": 2818.02
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "RBLBANK",
+      "yahoo_ticker": "RBLBANK.NS",
+      "name": "RBL Bank Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 417.7,
+      "open": 400.0,
+      "high": 401.85,
+      "low": 381.4,
+      "close": 388.05,
+      "pct_change": -7.0984,
+      "volume": 39165831,
+      "turnover_crore": 1529.74
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "AEGISLOG",
+      "yahoo_ticker": "AEGISLOG.NS",
+      "name": "Aegis Logistics Ltd.",
+      "industry": "Oil Gas & Consumable Fuels",
+      "prev_close": 1450.0,
+      "open": 1445.0,
+      "high": 1445.1,
+      "low": 1364.8,
+      "close": 1392.0,
+      "pct_change": -4.0,
+      "volume": 804735,
+      "turnover_crore": 111.9
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "RRKABEL",
+      "yahoo_ticker": "RRKABEL.NS",
+      "name": "R R Kabel Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 2721.5,
+      "open": 2720.0,
+      "high": 2725.2,
+      "low": 2586.1,
+      "close": 2614.2,
+      "pct_change": -3.9427,
+      "volume": 297581,
+      "turnover_crore": 78.36
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-10-13T13:30:39+00:00",
+  "fetched_at_ist": "13 Oct 2026, 07:00 PM IST"
+}
