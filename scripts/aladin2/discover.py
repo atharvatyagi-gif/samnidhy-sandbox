@@ -139,12 +139,22 @@ def propose(n, parents, rng, tested):
 # ------------------------------------------------------------------ state
 
 def load_tested(folder=None):
-    f = Path(folder or STATE) / "discovery_tested.json"
+    """The registry of every rule ever tested (it keeps the multiple-testing count honest). Stored gzip-compressed since 2026-10-13: the plain file passed the
+    5 MB shard limit at 15,594 rules and the hygiene check stopped the nightly from saving; the old plain file is read once and replaced."""
+    import gzip
+    g, f = Path(folder or STATE) / "discovery_tested.json.gz", Path(folder or STATE) / "discovery_tested.json"
+    if g.exists():
+        return json.loads(gzip.decompress(g.read_bytes()).decode("utf-8"))
     return json.loads(f.read_text()) if f.exists() else {}
 
 
 def save_tested(d, folder=None):
-    f = Path(folder or STATE) / "discovery_tested.json"; f.parent.mkdir(parents=True, exist_ok=True); f.write_text(json.dumps(d, indent=0, default=str))
+    import gzip
+    folder = Path(folder or STATE); folder.mkdir(parents=True, exist_ok=True)
+    (folder / "discovery_tested.json.gz").write_bytes(gzip.compress(json.dumps(d, separators=(",", ":"), default=str).encode("utf-8"), mtime=0))
+    old = folder / "discovery_tested.json"
+    if old.exists():
+        old.unlink()
 
 
 def load_discovered(folder=None):
