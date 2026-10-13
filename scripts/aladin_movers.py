@@ -23,6 +23,17 @@ Method, written down BEFORE any result was seen (2026-10-13, owner: "size + dire
      direction AUC of P(up) >= 0.53 AND in at least 7 of the 11 years the top tenth by expected move beats the bottom tenth on r5
      ranking  the top tenth by expected move minus the bottom tenth, after 0.30% round-trip costs on each side, is positive on average and in at least 7 of 11 years
   A head that fails is published as "not shown: did not pass" instead of a number. Survivorship: stocks listed today with their past; flattered, disclosed.
+
+ROUND 1 RESULT (2026-10-13): size FAIL (AUC 0.642 vs recent volatility 0.635; top tenth 1.65x the base rate), direction FAIL (AUC 0.511), ranking +0.005%/week.
+
+ROUND 2 (written after round 1 failed, BEFORE any round-2 result; the same years are looked at a second time, so a pass is flattered more). Adds information
+that price charts do not contain, everything as known at the Friday close:
+  RESULTS CALENDAR  NSE board meetings (scripts/events_calendar.py) counted only if the company had INTIMATED the meeting by the Friday:
+                    results meeting in the next 7 days (1/0), days to the next intimated results meeting (cap 90), days since the last results meeting (cap 120),
+                    any other intimated meeting in the next 7 days (dividend, fund raising, bonus, split, buyback), results meetings in the last year.
+  F&O POSITIONING   NSE F&O bhavcopy (2020 on, F&O stocks only; missing elsewhere): futures open interest change over 5 days as a share of open interest,
+                    put/call open-interest ratio and its 5-day change.
+  Same models, same settings, same walk-forward, same gates.
 """
 import argparse
 import json
@@ -69,7 +80,59 @@ def nifty_frame():
     return pd.DataFrame({"nifty_r20": lr.rolling(20).sum(), "nifty_vol20": lr.rolling(20).std(), "nifty_d200": n / n.rolling(200).mean() - 1, "nifty_lr": lr, "nifty_c": n})
 
 
-def stock_rows(sym, nf=None, fridays=None):
+def load_events():
+    f = OUT / "board_meetings.csv.gz"
+    if not f.exists():
+        return {}
+    E = pd.read_csv(f); E["meeting"] = pd.to_datetime(E["meeting"]); E["intimated"] = pd.to_datetime(E["intimated"], errors="coerce").fillna(E["meeting"] - pd.Timedelta(days=7))
+    return {sym: g[["meeting", "intimated", "results"]].sort_values("meeting").values for sym, g in E.groupby("sym")}
+
+
+def event_features(dates, ev):
+    """dates: Friday timestamps; ev: array rows (meeting, intimated, results). Only meetings intimated by the Friday 23:59 count."""
+    out = np.full((len(dates), 5), np.nan)
+    if ev is None or not len(ev):
+        out[:, [0, 3]] = 0; out[:, 4] = 0
+        return out
+    mt, it, rs = pd.to_datetime(ev[:, 0]).values, pd.to_datetime(ev[:, 1]).values, ev[:, 2].astype(int)
+    for i, d in enumerate(dates):
+        cut = np.datetime64(d + pd.Timedelta(hours=23, minutes=59)); dd = np.datetime64(d)
+        known = it <= cut
+        fut = known & (mt > dd); past = mt <= dd
+        nxt_r = mt[fut & (rs == 1)]; lst_r = mt[past & (rs == 1)]
+        out[i, 0] = float(((nxt_r - dd) <= np.timedelta64(7, "D")).any()) if len(nxt_r) else 0.0
+        out[i, 1] = min(90.0, (nxt_r.min() - dd) / np.timedelta64(1, "D")) if len(nxt_r) else 90.0
+        out[i, 2] = min(120.0, (dd - lst_r.max()) / np.timedelta64(1, "D")) if len(lst_r) else 120.0
+        oth = mt[fut & (rs == 0)]; out[i, 3] = float(((oth - dd) <= np.timedelta64(7, "D")).any()) if len(oth) else 0.0
+        out[i, 4] = float((past & (rs == 1) & (mt > dd - np.timedelta64(365, "D"))).sum())
+    return out
+
+
+def load_fno():
+    folder = L.TERM / "aladin2" / "fno"
+    if not folder.exists():
+        return None
+    rows = []
+    for f in sorted(folder.glob("20*.json")):
+        try:
+            j = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        d = pd.Timestamp(f.stem)
+        rows += [(d, k, *v[:4]) for k, v in j.get("d", {}).items()]
+    if not rows:
+        return None
+    F = pd.DataFrame(rows, columns=["date", "sym", "fut_oi", "fut_oi_chg", "call_oi", "put_oi"]).sort_values(["sym", "date"])
+    g = F.groupby("sym")
+    F["oi_chg5"] = g["fut_oi_chg"].transform(lambda x: x.rolling(5, min_periods=3).sum()) / F["fut_oi"].replace(0, np.nan)
+    F["pcr"] = F["put_oi"] / F["call_oi"].replace(0, np.nan); F["pcr_chg5"] = F["pcr"] - g["pcr"].shift(5) if False else F["pcr"] - F.groupby("sym")["pcr"].shift(5)
+    return F[["date", "sym", "oi_chg5", "pcr", "pcr_chg5"]]
+
+
+EVENTS = None
+
+
+def stock_rows(sym, nf=None, fridays=None, ev=None):
     """Friday rows for one stock: features + targets. Runs in a worker process."""
     try:
         F = L.build_frame(sym)
@@ -94,6 +157,10 @@ def stock_rows(sym, nf=None, fridays=None):
     R = R.dropna(subset=["r250", "vol20"])
     if not len(R):
         return None
+    if ev is not False:
+        E = event_features(list(R.index), ev)
+        for j, k in enumerate(("res_next7", "res_days_to", "res_days_since", "other_next7", "res_last_year")):
+            R[k] = E[:, j]
     R = R.drop(columns=[k for k in DROP if k in R.columns]); R.insert(0, "sym", sym)
     return R.reset_index().rename(columns={"index": "date"})
 
@@ -103,10 +170,13 @@ def build_panel(workers=None):
     cal = nf.index if nf is not None else None
     fr = pd.Series(cal, index=cal).groupby(cal.to_period("W-FRI")).max() if cal is not None else None     # the last trading day of each week
     fridays = pd.DatetimeIndex(fr.values) if fr is not None else None
-    syms = universe()
+    syms = universe(); evs = load_events()
     with ProcessPoolExecutor(max_workers=workers or max(2, (os.cpu_count() or 4) - 2)) as ex:
-        parts = [p for p in ex.map(stock_rows, syms, [nf] * len(syms), [fridays] * len(syms), chunksize=8) if p is not None]
+        parts = [p for p in ex.map(stock_rows, syms, [nf] * len(syms), [fridays] * len(syms), [evs.get(s) if evs else False for s in syms], chunksize=8) if p is not None]
     P = pd.concat(parts, ignore_index=True)
+    fo = load_fno()
+    if fo is not None:
+        P = P.merge(fo, on=["sym", "date"], how="left")
     sec = sector_map(); P["sector"] = P["sym"].map(sec).fillna("Unknown")
     P["sector_r20"] = P.groupby(["date", "sector"])["r20"].transform("mean")
     rank_cols = ["r5", "r20", "r60", "mom12_1", "vol20", "vol_ratio", "vz20", "rsi14", "hi52", "bb_w", "atr_pct", "idio120", "big_freq250"]
