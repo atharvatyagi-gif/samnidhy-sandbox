@@ -76,4 +76,7 @@ test("liveTodayHtml: provisional entries at today's open on entry day, live mark
   const rec = { open: [{ sym: "AAA", qty: 10, entry: 100 }], timeline: doc.timeline };
   const m = liveTodayHtml(rec, book, { AAA: { p: 105, d: "2026-10-13" } }, "2026-10-13");
   assert.match(m, /open positions marked to the live price/); assert.match(m, /₹50/); assert.match(m, /\+5\.00%/);
+  const c = liveTodayHtml(rec, book, { AAA: { p: 105, d: "2026-10-13" } }, "2026-10-14");                    // after the close: the last close, said plainly
+  assert.match(c, /Market closed · open positions marked to the last close \(13 Oct\)/); assert.match(c, /\+5\.00%/); assert.doesNotMatch(c, /no live price/);
+  assert.match(liveTodayHtml({ ...rec, open: [{ sym: "ZZZ", qty: 1, entry: 10, last: 11 }], last_price_date: "2026-10-13" }, book, {}, "2026-10-14"), /\+10\.00%/);   // no quote: the account's own last close
 });

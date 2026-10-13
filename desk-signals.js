@@ -236,12 +236,17 @@ export function frontTestHtml(doc) {
 export function liveTodayHtml(doc, book, quotes, today) {
   const q = s => { const x = quotes && quotes[s]; return x && x.d === today ? x : null; };
   const open = (doc && doc.open) || [];
-  if (open.length) {
-    let tot = 0, n = 0;
-    const rows = open.map(o => { const x = q(o.sym), last = x ? x.p : null, pl = last != null ? o.qty * (last - o.entry) : null; if (pl != null) { tot += pl; n++; }
-      return `<tr><td><b>${esc(o.sym)}</b></td><td class="r">₹${inr(o.entry, 2)}</td><td class="r">${last != null ? "₹" + inr(last, 2) : '<span class="sg-nm">no live price</span>'}</td><td class="r ${cls(pl)}">${pl != null ? rupee(pl) + " · " + sgn((last / o.entry - 1) * 100, 2) : "--"}</td></tr>`; }).join("");
-    return `<div class="sg-card sg-today"><h4>Right now · open positions marked to the live price</h4><div class="sg-tablewrap sg-short"><table class="sg-table"><thead><tr><th>Stock</th><th class="r">Bought at</th><th class="r">Live price</th><th class="r">P/L so far</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="note">${n ? `Together ${rupee(tot)} on ${n} of ${open.length} positions. ` : ""}Delayed prices (about 15 minutes). This is a live mark only; the account's official numbers are written after the close each night.</p></div>`;
+  if (open.length) {                                                      // today's delayed price while the market is open; otherwise the latest close, labelled as such
+    let tot = 0, n = 0, live = 0, asOf = null;
+    const mark = o => { const x = quotes && quotes[o.sym];
+      if (x && x.p != null && (!x.d || !o.entry_date || x.d >= o.entry_date)) return { p: x.p, d: x.d || null, live: x.d === today };
+      return o.last != null ? { p: o.last, d: doc.last_price_date || null, live: false } : null; };
+    const rows = open.map(o => { const m = mark(o), last = m ? m.p : null, pl = last != null ? o.qty * (last - o.entry) : null;
+      if (pl != null) { tot += pl; n++; } if (m && m.live) live++; else if (m && m.d && (!asOf || m.d > asOf)) asOf = m.d;
+      return `<tr><td><b>${esc(o.sym)}</b></td><td class="r">₹${inr(o.entry, 2)}</td><td class="r">${last != null ? "₹" + inr(last, 2) + (m.live ? "" : `<small class="sg-sub">close ${dmy(m.d)}</small>`) : '<span class="sg-nm">no price yet</span>'}</td><td class="r ${cls(pl)}">${pl != null ? rupee(pl) + " · " + sgn((last / o.entry - 1) * 100, 2) : "--"}</td></tr>`; }).join("");
+    const isLive = live === open.length;
+    return `<div class="sg-card sg-today"><h4>${isLive ? "Right now · open positions marked to the live price" : `Market closed · open positions marked to the last close${asOf ? " (" + dmy(asOf) + ")" : ""}`}</h4><div class="sg-tablewrap sg-short"><table class="sg-table sg-ledger"><thead><tr><th>Stock</th><th class="r">Bought at</th><th class="r">${isLive ? "Live price" : "Last price"}</th><th class="r">P/L so far</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="note">${n ? `Together ${rupee(tot)} on ${n} of ${open.length} positions, before exit costs. ` : ""}${isLive ? "Delayed prices (about 15 minutes). This is a live mark only; the account's official numbers are written after the close each night." : "Between the close and the next open this shows the last closing prices; it switches to live prices when the market opens."}</p></div>`;
   }
   const wk = book && doc && doc.timeline && (doc.timeline.weeks || []).find(w => w.friday === book.as_of);
   if (!wk || wk.entry_day !== today || wk.status !== "in time" || !(book.bull || []).length) return "";
