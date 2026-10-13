@@ -24,3 +24,8 @@ test("the real live file renders, and a field the bot has not recorded yet is sh
   for (const r of rows) assert.ok(Math.abs(r.capital - r.qty * r.entry) < 0.02);
   if (!doc.open[0].pct_of_account) assert.match(tradeBookHtml(doc), /of today's account/);
 });
+
+test("the small account explains whole shares and the depository charge", () => {
+  const h = tradeBookHtml({ ...base, rules: { ...base.rules, budget_inr: 10000, first_list: "2026-10-16", dp_charge_per_sale_inr: 15.93 } });
+  assert.match(h, /Small account \(₹10,000\)/); assert.match(h, /₹2,000/); assert.match(h, /₹15\.93 depository charge/);
+});

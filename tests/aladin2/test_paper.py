@@ -125,3 +125,22 @@ def test_every_trade_and_open_position_says_how_much_money_it_used_and_what_limi
     assert t["risk_to_stop"] == pytest.approx(t["qty"] * (101.0 - 95.0)) and t["sized_by"] in ("risk per trade", "max position size", "liquidity", "fractional Kelly (edge too small)")
     o = P.simulate([book()], {"AAA": px({})}, CAL, CFG, end=str(CAL[4].date()))["open"][0]
     assert o["capital"] == pytest.approx(o["qty"] * o["entry"]) and o["value_now"] == pytest.approx(o["qty"] * o["last"]) and o["exit_due"] == str(CAL[7].date())
+
+
+def test_the_small_account_uses_the_same_rules_with_its_own_budget_whole_shares_and_the_dp_charge():
+    prices = px({2: (101.0, 102.0, 100.0, 101.5), 7: (104.0, 105.0, 103.0, 104.5)})
+    big = P.simulate([book()], {"AAA": prices}, CAL, CFG, exits=("time",), risk_pct=2.0, max_pos_pct=20.0)["trades"][0]
+    sm = P.simulate([book()], {"AAA": prices}, CAL, CFG, cash0=10_000, exits=("time",), risk_pct=2.0, max_pos_pct=20.0, sell_fee=15.93)["trades"][0]
+    assert 0 < sm["qty"] <= 19 and sm["capital"] <= 10_000 * 0.20 and big["qty"] > 100 * sm["qty"]                     # at most 19 whole shares (20% of Rs 10,000 at Rs 101); the smallest cap wins
+    assert sm["cost_out"] == pytest.approx(float(C.leg_cost("sell", sm["qty"] * 104.0, "delivery", 2, CFG)["total"]) + 15.93, abs=0.01)
+    dear = P.simulate([book()], {"AAA": px({2: (2500.0, 2510.0, 2490.0, 2500.0)})}, CAL, CFG, cash0=10_000, exits=("time",), risk_pct=2.0, max_pos_pct=20.0)
+    assert not dear["trades"] and not dear["open"] and "size 0" in dear["skipped"][0]["why"]                                # one share costs more than the per-stock cap
+
+
+def test_the_small_account_only_counts_lists_from_its_own_first_friday(monkeypatch, tmp_path):
+    early = {"as_of": "2026-10-09", "picks": []}; late = {"as_of": "2026-10-16", "picks": []}
+    monkeypatch.setattr(P, "live_books", lambda *a, **k: [early, late]); monkeypatch.setattr(P, "trading_calendar", lambda *a, **k: pd.bdate_range("2026-10-05", "2026-10-13"))
+    monkeypatch.setattr(P, "run_bot", lambda books, *a, **k: (_ for _ in ()).throw(AssertionError(books)) if any(b["as_of"] < "2026-10-16" for b in books) else {"equity": [["2026-10-13", 10_000, 10_000, 0]], "trades": [], "open": [], "skipped": []})
+    monkeypatch.setattr(P, "india_rate", lambda refresh=False: pd.Series(dtype=float)); monkeypatch.setattr(P.LG, "read_all", lambda *a: [])
+    d = P.run_live(str(tmp_path), str(tmp_path / "s.json"), small=True)
+    assert d["books_used"] == ["2026-10-16"] and d["rules"]["budget_inr"] == 10_000 and d["rules"]["dp_charge_per_sale_inr"] == 15.93

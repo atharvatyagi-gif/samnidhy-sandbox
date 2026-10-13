@@ -118,7 +118,7 @@ def build(out, ledger_dir=None, state_dir=None, journal_dir=None, term=None, mod
     cf = state_dir / "learning_curve.jsonl"; curve = [json.loads(x) for x in cf.read_text().splitlines() if x.strip()] if cf.exists() else []
     score["learning_curve"] = curve; score["barrier_check_20d"] = {k: v for k, v in (p3.get("barrier_check_20d") or {}).items() if k in ("touch_up_1sigma", "touch_down_1sigma", "paths_80pct_band_coverage_20d")}
     index = {"as_of": fc["d"], "created": fc["created"], "mode": cfg["signal_labels"], "labels": labels, "counts": states, "horizons": Hs, "cols": ["sym", "state", "signal", "lo80_5d", "hi80_5d", "lo80_20d", "hi80_20d", "sector"], "rows": rows, "disclaimer": cfg["disclaimer"]}
-    for name, src in (("paper_live.json", Path(paper_dir or DATA / "paper") / "live.json"), ("paper_backtest.json", Path(paper_dir or DATA / "paper") / "backtest.json")):          # the paper account: the live front test and the historical simulation
+    for name, src in (("paper_live.json", Path(paper_dir or DATA / "paper") / "live.json"), ("paper_live_small.json", Path(paper_dir or DATA / "paper") / "live_small.json"), ("paper_backtest.json", Path(paper_dir or DATA / "paper") / "backtest.json")):          # the paper account: the live front test and the historical simulation
         if src.exists():
             (out / name).write_bytes(src.read_bytes()); sizes[name] = src.stat().st_size
     index["weekly"] = {"as_of": wk["book"]["as_of"], "counts": wk["book"]["counts"]} if wk and wk.get("built") else None

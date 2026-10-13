@@ -10,7 +10,7 @@ import * as A2 from "./desk-aladin2.js";
 import { shareText } from "./desk-deps.js";
 
 let ctx = null, root = null, W = null, graph = null, loading = null, failed = false;
-const st = { q: "", filter: "all", sel: null, tab: "summary", page: "signals", pmode: "live", tb: "all" };
+const st = { q: "", filter: "all", sel: null, tab: "summary", page: "signals", pmode: "live", tb: "all", acct: "big" };
 let paper = null, paperLoading = false, movers;
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.";
 const REL = { supplies: "supplies", equipment_for: "supplies equipment to", raw_material_from: "sources raw material from", logistics_for: "provides logistics to", related_party: "is a related party of", customer_of: "is a customer of" };
@@ -118,7 +118,7 @@ function listHtml() {
 async function loadPaper() {
   if (paper || paperLoading) return; paperLoading = true;
   const get = f => ctx.getJSON("aladin2/" + f, false).catch(() => null);
-  const [live, hist, mv] = await Promise.all([get("paper_live.json"), get("paper_backtest.json"), ctx.getJSON("aladin_movers.json", false).catch(() => null)]); paper = { live, hist }; movers = mv; paperLoading = false;
+  const [live, hist, mv, small] = await Promise.all([get("paper_live.json"), get("paper_backtest.json"), ctx.getJSON("aladin_movers.json", false).catch(() => null), get("paper_live_small.json")]); paper = { live, hist, small }; movers = mv; paperLoading = false;
   if (root && st.page === "paper") paintPaper();
 }
 const rupee = v => v == null ? "--" : (v < 0 ? "-" : "") + "₹" + inr(Math.abs(v), 0);
@@ -199,7 +199,7 @@ export function tradeBookHtml(doc, view = "all") {
       ${kpi("Costs paid", costs == null ? "--" : rupee(costs), costs == null ? "entry costs are recorded from tonight's run" : "brokerage, STT, stamp duty, exchange and GST")}</div>
     <div class="sg-stats sg-kp">${kpi("Positions taken", String(all.length), `${open.length} open · ${closed.length} closed`)}${kpi("Realised P/L", closed.length ? rupee(realised) : "--", closed.length ? `${closed.filter(r => r.net > 0).length} of ${closed.length} in profit` : "nothing closed yet", cls(closed.length ? realised : null))}
       ${kpi("Open P/L (after entry costs)", rupee(unreal), "marked at the last close", cls(unreal))}${kpi("Names on the lists not taken", String((doc.skipped || []).length), "reasons below")}</div>
-    <p class="note">How each trade is sized: at most ${R.risk_per_trade_pct ?? "--"}% of the account lost if the price fell to the exit level, at most ${R.max_position_pct ?? "--"}% of the account in one stock, at most ${R.adv_participation_max != null ? (R.adv_participation_max * 100).toFixed(0) : "--"}% of the stock's daily volume, at most ${R.max_open ?? "--"} positions and ${R.max_sector_pct ?? "--"}% in one sector, and a cap from the size of the edge. The smallest of these wins; the "Sized by" column names it.</p>
+    <p class="note">How each trade is sized: at most ${R.risk_per_trade_pct ?? "--"}% of the account lost if the price fell to the exit level, at most ${R.max_position_pct ?? "--"}% of the account in one stock, at most ${R.adv_participation_max != null ? (R.adv_participation_max * 100).toFixed(0) : "--"}% of the stock's daily volume, at most ${R.max_open ?? "--"} positions and ${R.max_sector_pct ?? "--"}% in one sector, and a cap from the size of the edge. The smallest of these wins; the "Sized by" column names it.</p>${R.dp_charge_per_sale_inr != null ? `<p class="note"><b>Small account (₹${inr(R.budget_inr, 0)}):</b> the same rules on the same lists from the list of ${dmy(R.first_list)}. Whole shares only, so a stock whose one share costs more than ${R.max_position_pct ?? 20}% of the account (about ₹${inr((R.budget_inr || 0) * (R.max_position_pct ?? 20) / 100, 0)}) cannot be held, and every sale pays a ₹${R.dp_charge_per_sale_inr} depository charge. On small positions fixed charges weigh far more.</p>` : ""}
     <div class="sg-bar"><div class="sg-chips" role="group" aria-label="Trades shown">${chip("all", "All", all.length)}${chip("open", "Open", open.length)}${chip("closed", "Closed", closed.length)}</div><button type="button" class="sg-chip" id="tb-csv">Download CSV</button></div>
     <div class="sg-tablewrap"><table class="sg-table sg-ledger"><thead><tr><th>Stock</th><th class="r">Entered</th><th class="r">Shares</th><th class="r">Capital used</th><th>Sized by</th><th class="r">Exit / now</th><th class="r">Costs</th><th class="r">Net P/L</th><th>Status</th></tr></thead>
     <tbody>${rows.length ? rows.map(tr).join("") : `<tr><td colspan="9" class="note">No ${view} positions.</td></tr>`}</tbody></table></div>
@@ -252,7 +252,7 @@ export function liveTodayHtml(doc, book, quotes, today) {
 }
 function paperHtml() {
   if (!paper) return '<p class="note">Loading the paper account…</p>';
-  const doc = st.pmode === "live" ? paper.live : paper.hist, seg = `<div class="sg-chips" role="group" aria-label="Paper account view"><button type="button" class="sg-chip ${st.pmode === "live" ? "on" : ""}" data-pm="live" aria-pressed="${st.pmode === "live"}">Live front test</button><button type="button" class="sg-chip ${st.pmode === "hist" ? "on" : ""}" data-pm="hist" aria-pressed="${st.pmode === "hist"}">History 2013 to 2026</button><button type="button" class="sg-chip ${st.pmode === "movers" ? "on" : ""}" data-pm="movers" aria-pressed="${st.pmode === "movers"}">Weekly ranking (forward test)</button></div>`;
+  const doc = st.pmode === "live" ? (st.acct === "small" ? paper.small : paper.live) : paper.hist, seg = `<div class="sg-chips" role="group" aria-label="Paper account view"><button type="button" class="sg-chip ${st.pmode === "live" ? "on" : ""}" data-pm="live" aria-pressed="${st.pmode === "live"}">Live front test</button><button type="button" class="sg-chip ${st.pmode === "hist" ? "on" : ""}" data-pm="hist" aria-pressed="${st.pmode === "hist"}">History 2013 to 2026</button><button type="button" class="sg-chip ${st.pmode === "movers" ? "on" : ""}" data-pm="movers" aria-pressed="${st.pmode === "movers"}">Weekly ranking (forward test)</button></div>${st.pmode === "live" ? `<div class="sg-chips" role="group" aria-label="Account size"><button type="button" class="sg-chip ${st.acct === "big" ? "on" : ""}" data-acct="big" aria-pressed="${st.acct === "big"}">₹10 lakh account</button><button type="button" class="sg-chip ${st.acct === "small" ? "on" : ""}" data-acct="small" aria-pressed="${st.acct === "small"}">₹10,000 account</button></div>` : ""}`;
   if (st.pmode === "movers") return `<div class="sg-bar">${seg}</div>${moversHtml(movers)}`;
   if (!doc) return `<div class="sg-bar">${seg}</div><p class="note">This part of the paper account is not published yet.</p>`;
   const S = doc.stats || {}, R = doc.rules || {}, hist = st.pmode === "hist";
@@ -276,8 +276,9 @@ function paperHtml() {
 function paintPaper() {
   const el = root && root.querySelector("#sg-p2"); if (!el) return; el.innerHTML = paperHtml();
   el.querySelectorAll("[data-pm]").forEach(b => b.onclick = () => { st.pmode = b.dataset.pm; paintPaper(); });
+  el.querySelectorAll("[data-acct]").forEach(b => b.onclick = () => { st.acct = b.dataset.acct; st.tb = "all"; paintPaper(); });
   el.querySelectorAll("[data-tb]").forEach(b => b.onclick = () => { st.tb = b.dataset.tb; paintPaper(); });
-  const csv = el.querySelector("#tb-csv"); if (csv && paper && paper.live) csv.onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([tradeBookCsv(paper.live)], { type: "text/csv" })); a.download = `paper-trades-${paper.live.last_price_date || "live"}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+  const csv = el.querySelector("#tb-csv"); const cur = paper && (st.acct === "small" ? paper.small : paper.live); if (csv && cur) csv.onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([tradeBookCsv(cur)], { type: "text/csv" })); a.download = `paper-trades-${st.acct === "small" ? "10k" : "10L"}-${cur.last_price_date || "live"}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
   el.querySelectorAll("tr[data-sym]").forEach(tr => { const go = () => { ctx.openSec(tr.dataset.sym); ctx.go("terminal"); }; tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter") go(); }; });
 }
 function showPage(p) {

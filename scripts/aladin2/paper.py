@@ -3,6 +3,7 @@ ALADIN paper-trading bot: a VIRTUAL, long-only account with a small fixed budget
 
   python -m scripts.aladin2.paper --backtest [--workers 12]     replay 2013-2026 with the walk-forward scores (HISTORICAL SIMULATION)   -> data/aladin2/paper/backtest.json
   python -m scripts.aladin2.paper --live                         replay the live ledger books from the forward clock (FRONT TEST)       -> data/aladin2/paper/live.json
+                                                                 and the small account (Rs 10,000, same rules, same lists)             -> data/aladin2/paper/live_small.json
 
 ONE simulator (`simulate`) serves both, so the history and the live test cannot drift apart. The rules are declared before any result is looked at (RULES below, also written into the output):
   * Which books: the Friday book only (the weekly study was measured on Friday-close signals). BUY names only: cash shares cannot be shorted, a SELL name is simply never bought.
@@ -39,6 +40,11 @@ START_CASH = 1_000_000
 RULE_HISTORY = [{"v": 1, "declared": "2026-10-09", "exits": "stop + goal + time", "backtest_return_pct": -6.87, "why_dropped": "a take-profit at the 50% range edge cut the winners (average win +2.3%) and left the losers (average loss -3.8%)"},
                 {"v": 2, "declared": "2026-10-09", "exits": "stop + time (the price goal is information only)", "backtest_return_pct": 224.3, "why_dropped": "replaced by v3 the same day, before any live trade (the first live entry is 2026-10-12)"},
                 {"v": 3, "declared": "2026-10-09", "exits": "time only (5th trading day); 2% risk, at most 20% a stock; idle cash in a liquid fund", "why": "the owner's choice (option O7) from paper_options.py, before any live trade. O7 was added AFTER the first option results were seen, so its history is the weaker claim; the live record decides"}]
+# The small account (owner, 2026-10-13: "apart from the 10L budget, also a 10k budget"). Declared before its first list: the same rules on the same Friday lists, with
+# Rs 10,000, starting with the list of Friday 2026-10-16 (the lists before it had already been traded when it was declared). Whole shares only, so a stock whose one share
+# is more than the per-stock cap cannot be held. It also pays the depository (DP) charge on every stock sold, Rs 15.93 incl. GST (a typical discount broker's CDSL charge):
+# negligible on a Rs 10 lakh account, but a real cost on Rs 2,000 positions. The Rs 10 lakh account's cost model is unchanged mid-test.
+SMALL = {"budget_inr": 10_000, "from_book": "2026-10-16", "dp_charge_per_sale_inr": 15.93, "declared": "2026-10-13"}
 BOT = {"exits": ("time",), "risk_pct": 2.0, "max_pos_pct": 20.0}             # v3 (option O7); the stop level is still computed: it sizes the trade and is shown, but it is not an order
 RULES = {"budget_inr": START_CASH, "books": "Friday book, positive-signal names only (long-only cash equity)", "entry": "open of the next trading day", "hold_trading_days": 5, "exit_order": "the open of the 5th trading day after entry (the stop level sizes the trade and is shown, but is not an order; the price goal is information)", "risk_per_trade_pct": 2.0, "max_position_pct": 20, "adv_participation_max": 0.05, "max_open": 10, "max_sector_pct": 30, "costs": "full delivery cost model at the stock's liquidity decile",
          "edge_for_kelly_bps": 27.0, "sd_for_kelly": 0.06, "idle_cash": "cash not in stocks earns a liquid fund's return: India call-money rate (FRED IRSTCI01INM156N) minus 0.30% a year for fund costs, kept in its own pot (not fed back into position sizes)"}
@@ -86,9 +92,9 @@ def overlay(equity, daily_ret, switch_cost=0.0):
     return out
 
 
-def run_bot(books, prices, cal, cfg, rate=None):
+def run_bot(books, prices, cal, cfg, rate=None, cash0=START_CASH, sell_fee=0.0):
     """The bot's current rules (BOT, v3): the one simulator, then idle cash in the liquid fund."""
-    r = simulate(books, prices, cal, cfg, exits=BOT["exits"], risk_pct=BOT["risk_pct"], max_pos_pct=BOT["max_pos_pct"])
+    r = simulate(books, prices, cal, cfg, cash0=cash0, exits=BOT["exits"], risk_pct=BOT["risk_pct"], max_pos_pct=BOT["max_pos_pct"], sell_fee=sell_fee)
     r["equity"] = overlay(r["equity"], fund_daily(cal, rate)); return r
 
 
@@ -101,7 +107,7 @@ def entry_index(cal, as_of):
     return int(cal.searchsorted(pd.Timestamp(as_of), side="right"))
 
 
-def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), max_open=10, hold=5, mu=0.0027, sd=0.06, sector_cap_pct=30.0, end=None, risk_pct=None, max_pos_pct=None):
+def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), max_open=10, hold=5, mu=0.0027, sd=0.06, sector_cap_pct=30.0, end=None, risk_pct=None, max_pos_pct=None, sell_fee=0.0):
     """Event loop over trading days. books: [{"as_of", "picks": [{sym, rank, stop, goal (or None), adv_shares, decile, sector}]}] (picks best first); prices: {sym: DataFrame o,h,l,c,v};
     cal: DatetimeIndex of trading days. Returns {equity: [[date, equity, cash, n_open]], trades: [...], open: [...], skipped: [...]}."""
     cal = pd.DatetimeIndex(cal); bars = {}
@@ -127,7 +133,7 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
 
     def close_pos(sym, i, fill, reason):
         nonlocal cash
-        p = pos.pop(sym); value = p["qty"] * fill; cost_out = float(C.leg_cost("sell", value, "delivery", p["decile"], cfg)["total"]); cash += value - cost_out
+        p = pos.pop(sym); value = p["qty"] * fill; cost_out = float(C.leg_cost("sell", value, "delivery", p["decile"], cfg)["total"]) + sell_fee; cash += value - cost_out
         gross = p["qty"] * (fill - p["entry"]); costs = p["cost_in"] + cost_out; net = gross - costs
         trades.append({"sym": sym, "as_of": p["as_of"], "rank": p["rank"], "entry_date": str(cal[p["i"]].date()), "exit_date": str(cal[i].date()), "days": int(i - p["i"]), "qty": p["qty"], "entry": round(p["entry"], 2), "exit": round(float(fill), 2),
                        "stop": round(p["stop"], 2), "goal": round(p["goal"], 2) if p["goal"] else None, "reason": reason, "gross": round(gross, 2), "costs": round(costs, 2), "net": round(net, 2), "ret_pct": round(net / (p["qty"] * p["entry"]) * 100, 3),
@@ -382,25 +388,30 @@ def timeline(lines, trades, openp, start, today=None, n_target=100, expect=None)
             "expect_from_history": {**(expect or {"win_rate": 0.51, "profit_factor": 1.2}), "note": "what the 13-year history did; the live record is judged against these after about 100 closed trades"}}
 
 
-def run_live(ledger_dir=None, out=None):
-    cfg = C.load_cfg(); books = live_books(ledger_dir, cfg); start = cfg["forward_clock_start"]
+def run_live(ledger_dir=None, out=None, small=False):
+    """The live front test. small=True: the Rs 10,000 account (SMALL) on the same lists from its own first list, written to live_small.json."""
+    cfg = C.load_cfg(); start = cfg["forward_clock_start"]; books = live_books(ledger_dir, cfg)
+    cash0, fee = (SMALL["budget_inr"], SMALL["dp_charge_per_sale_inr"]) if small else (START_CASH, 0.0)
+    if small:
+        books = [b for b in books if b["as_of"] >= SMALL["from_book"]]
     syms = sorted({p["sym"] for b in books for p in b["picks"]}); prices = {}
     for s in syms:
         p = L.load_prices(s)
         if p is not None:
             prices[s] = L.clean_prices(p)
     idx = trading_calendar(prices, pd.Timestamp(start) - pd.Timedelta(days=10))
-    last_bar = str(idx[-1].date()); doc = {"kind": "LIVE FRONT TEST (paper)", "label": "LIVE FRONT TEST: simulated trades on real prices from the forward clock. Simulated money, no broker.", "created_utc": pd.Timestamp.utcnow().isoformat(), "rules": RULES,
+    rules = {**RULES, "budget_inr": cash0, **({"first_list": SMALL["from_book"], "dp_charge_per_sale_inr": fee, "declared": SMALL["declared"]} if small else {})}
+    last_bar = str(idx[-1].date()); doc = {"kind": "LIVE FRONT TEST (paper)" + (", small account" if small else ""), "label": "LIVE FRONT TEST: simulated trades on real prices from the forward clock. Simulated money, no broker." + (f" Small account: Rs {cash0:,}, the same rules and lists as the Rs 10 lakh account." if small else ""), "created_utc": pd.Timestamp.utcnow().isoformat(), "rules": rules,
            "rule_history": RULE_HISTORY, "forward_clock_start": start, "books_used": [b["as_of"] for b in books], "last_price_date": last_bar}
     if not books:
         nxt = pd.Timestamp(start)
-        doc.update({"stats": {"started": False}, "equity": [], "open": [], "trades": [], "skipped": [], "note": "No live Friday book has been written in time yet. The first one is the Friday book; the bot enters at the next trading day's open."})
+        doc.update({"stats": {"started": False}, "equity": [], "open": [], "trades": [], "skipped": [], "note": f"The small account starts with the list of Friday {SMALL['from_book']}; it enters at the next trading day's open." if small else "No live Friday book has been written in time yet. The first one is the Friday book; the bot enters at the next trading day's open."})
     else:
-        r = run_bot(books, prices, idx, cfg, india_rate(refresh=True)); doc.update({"stats": stats(r), "equity": r["equity"], "open": r["open"], "trades": r["trades"], "skipped": r["skipped"][-100:], "note": None})
+        r = run_bot(books, prices, idx, cfg, india_rate(refresh=True), cash0=cash0, sell_fee=fee); doc.update({"stats": stats(r, cash0), "equity": r["equity"], "open": r["open"], "trades": r["trades"], "skipped": r["skipped"][-100:], "note": None})
     bt = OUT / "backtest.json"; hs = json.loads(bt.read_text(encoding="utf-8")).get("stats", {}) if bt.exists() else {}          # what the current rules did in the history
-    doc["timeline"] = timeline(LG.read_all(ledger_dir), doc["trades"], doc["open"], start, expect={"win_rate": hs["win_rate"], "profit_factor": hs["profit_factor"]} if hs.get("win_rate") else None)
-    f = Path(out or OUT / "live.json"); f.parent.mkdir(parents=True, exist_ok=True); f.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
-    print(f"live paper account: {len(books)} book(s) {[b['as_of'] for b in books]}; stats {doc['stats'].get('end_equity', 'not started')}; wrote {f}")
+    doc["timeline"] = timeline([x for x in LG.read_all(ledger_dir) if not small or x.get("d", "") >= SMALL["from_book"]], doc["trades"], doc["open"], SMALL["from_book"] if small else start, expect={"win_rate": hs["win_rate"], "profit_factor": hs["profit_factor"]} if hs.get("win_rate") else None)
+    f = Path(out or OUT / ("live_small.json" if small else "live.json")); f.parent.mkdir(parents=True, exist_ok=True); f.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
+    print(f"live paper account{' (small)' if small else ''}: {len(books)} book(s) {[b['as_of'] for b in books]}; stats {doc['stats'].get('end_equity', 'not started')}; wrote {f}")
     return doc
 
 
@@ -410,7 +421,7 @@ def main():
     if a.backtest:
         run_backtest(a.workers, sample=a.sample)
     if a.live:
-        run_live()
+        run_live(); run_live(small=True)
 
 
 if __name__ == "__main__":

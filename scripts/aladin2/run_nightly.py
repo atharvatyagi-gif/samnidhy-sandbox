@@ -193,6 +193,10 @@ class Run:
     def s_paper(self):
         from . import paper as PP
         d = PP.run_live(str(self.ledger), str(self.base / "paper" / "live.json")); st = d["stats"]
+        try:
+            PP.run_live(str(self.ledger), str(self.base / "paper" / "live_small.json"), small=True)          # the Rs 10,000 account: same rules, same lists
+        except Exception as e:  # noqa: BLE001  (the main account's result must not depend on it)
+            print("small paper account failed:", type(e).__name__, e)
         return f"live paper account: {len(d['books_used'])} book(s); " + (f"equity {st['end_equity']:,.0f} ({st['return_pct']}%), {st['trades']} closed trades, {len(d['open'])} open" if st.get("started") else "no live trade yet (the first Friday book enters at the next open)")
 
     def s_bot(self):
