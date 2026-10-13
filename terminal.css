@@ -1145,6 +1145,10 @@ html.sg-lock, html.sg-lock body { overflow: hidden; }
 @media (max-width: 640px) { .cx3-host { min-height: 320px; } .cx3-ctl { bottom: 70px; } .cx3-px b { font-size: 20px; } .cx3-leg { font-size: 10px; } }
 
 /* ---------- REVENUE DEPENDENCY (desk-revdeps.js) ---------- */
+.tag.rd-t { margin-left: 4px; cursor: help; text-transform: none; letter-spacing: 0; } button.tag.rd-t { cursor: pointer; background: transparent; font: 600 10px var(--mono); }
+.tag.rd-t.down { color: var(--down); border-color: var(--down); } .tag.rd-t.warn { color: var(--ink); border-color: var(--acc-edge); } .tag.rd-t.up { color: var(--up); border-color: var(--up); }
+.rd-news { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; } .rd-c { border: 1px solid var(--rule-2); background: transparent; color: var(--ink-3); font: 600 10.5px var(--mono); padding: 1px 6px; border-radius: var(--r); cursor: pointer; }
+.rd-c.down { color: var(--down); border-color: var(--down); } .rd-c.warn { color: var(--ink); border-color: var(--acc-edge); } .rd-c.up { color: var(--up); border-color: var(--up); } .rd-c:hover { background: var(--card-hover); }
 .rd-lv { display: inline-block; padding: 1px 8px; border-radius: var(--r); border: 1px solid var(--rule-2); font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .04em; }
 .rd-lv.down { color: var(--down); border-color: var(--down); }
 .rd-lv.warn { color: var(--ink); border-color: var(--acc-edge); }

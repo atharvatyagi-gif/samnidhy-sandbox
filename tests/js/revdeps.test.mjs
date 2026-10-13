@@ -22,3 +22,23 @@ test("summary never invents a level and the most-dependent list ranks high first
   const doc = { cos: { HAL, LUPIN: LUP, PG: { lvl: "low" }, AAA: { lvl: "moderate", top: null } } };
   assert.deepEqual(mostDependent(doc).map(r => r.sym), ["HAL", "LUPIN", "AAA"]);
 });
+
+import { tag, newsIndex, newsLinks } from "../../desk-revdeps.js";
+const DOC = { cos: {
+  HAL: { lvl: "high", top: { share: 0.97, name: "Indian Defence Services" }, customers: [{ name: "Indian Defence Services", anon: true, w: 0.97, wb: "revenue", per: "FY26" }] },
+  SUP: { lvl: "moderate", top: { share: 0.18, name: "Maruti Suzuki India" }, customers: [{ name: "Maruti Suzuki India Limited", sym: "MARUTI", w: 0.18, wb: "revenue", per: "FY26" }, { name: "Others", w: 0.3, wb: "revenue" }] },
+  UNK: { lvl: "unknown", customers: [] } } };
+const NAMES = new Map([["HAL", "Hindustan Aeronautics Limited"], ["MARUTI", "Maruti Suzuki India Limited"], ["SUP", "Supplier Parts Ltd"], ["UNK", "Unknown Co Ltd"]]);
+
+test("tags appear only where a level was measured", () => {
+  assert.equal(tag(DOC.cos.UNK), null); assert.equal(tag(DOC.cos.HAL, "HAL").text, "97% one customer"); assert.equal(tag(DOC.cos.SUP).lvl, "moderate");
+});
+
+test("a headline about a big customer flags the supplier that depends on it; a company's own name flags its own dependency", () => {
+  const idx = newsIndex(DOC, NAMES);
+  const a = newsLinks("Maruti Suzuki cuts October output on chip shortage", [], idx, DOC); assert.equal(a[0].sym, "SUP"); assert.match(a[0].text, /18% of revenue from Maruti Suzuki India/);
+  const b = newsLinks("Hindustan Aeronautics wins Rs 62,000 crore order", [], idx, DOC); assert.equal(b[0].sym, "HAL"); assert.ok(b[0].self);
+  assert.deepEqual(newsLinks("Others report weak quarter", [], idx, DOC), []);                        // generic names never match
+  assert.deepEqual(newsLinks("Unknown Co results", ["UNK"], idx, DOC), []);                           // no measured level, no link
+  assert.equal(newsLinks("x", ["HAL"], idx, DOC)[0].sym, "HAL");
+});

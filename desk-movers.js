@@ -5,6 +5,7 @@
    The wording is "linked move" and "association, not proof of cause": a counterparty's move does not cause a stock's.
    ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. */
 import { lineage, rankShocks, shockSentence, shareText, docLabel, listedDependencyStocks } from "./desk-deps.js";
+import * as RD from "./desk-revdeps.js";
 import { preload as alPreload, sentHtml } from "./desk-aladin.js";
 
 let ctx = null, kind = "price", horizon = 10, graph = null, graphLoading = null, shocks = null, moves = null, movesTried = false;
@@ -137,6 +138,8 @@ function expansionHtml(sym) {
          <div class="sec-t">Suppliers</div>${L.suppliers.length ? `<ul class="nx-ul">${L.suppliers.map(e => edgeLine(e, e.s)).join("")}</ul>` : '<p class="mut">None disclosed</p>'}
          <div class="sec-t">Component bottlenecks</div>${L.bottlenecks.length ? `<ul class="nx-ul">${L.bottlenecks.map(b => `<li>${esc(b.comp)}: supplied only by ${nm(b.edge.s)} <span class="mut">in the filings read</span></li>`).join("")}</ul>` : '<p class="mut">Not disclosed</p>'}`;
   }
+  const rp = ctx.S.deps && ctx.S.deps.cos ? ctx.S.deps.cos[sym] : null, rt = RD.tag(rp, sym);                 // the revenue-dependency level, where the filings measured it
+  if (rt) lin = `<p class="rd-line"><span class="rd-lv ${rt.tone}">${esc(rt.label)}</span> ${esc(RD.plainSentence(rp, sym) || rp.why || "")}</p>` + lin;
   let quant;
   if (!a || !a.t) quant = `<p class="mut">${ctx.S.aladin ? "ALADIN has no probability for this stock (not enough price history, or not covered)." : (files().aladin ? "Loading…" : "ALADIN data has not been published yet.")}</p>`;
   else {

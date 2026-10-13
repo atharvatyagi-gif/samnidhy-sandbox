@@ -43,6 +43,7 @@ const LS = { get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); re
 
 const S = { uni: null, map: new Map(), quotes: {}, qmeta: {}, fund: null, live: {}, screen: {}, inst: {}, hist: {}, intra: {}, prevWei: {}, news: {} };
 let sec = null, iv = "D", rg = "1Y", ct = LS.get("blab-ct", "candle"), scaleMode = "auto", view = "brief", side = "details";
+let depsDoc, depsLoading = null, newsIdx = null;                 // revenue dependency (loadDeps), shared by every view
 let movMode = "gain", board = "All", sector = "", movSort = null, movLimit = 50, movQuery = "", heatSel = null, newsFilter = "all";
 /* ---------------- formatting ---------------- */
 const inr = (v, d = 2) => v == null || isNaN(v) ? "--" : Number(v).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -241,7 +242,7 @@ function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Ala
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
-  if (man.deps && depsDoc === undefined && side === "details" && sec) renderDetails();   // the revenue-dependency section was waiting for the file list
+  if (man.deps && depsDoc === undefined) loadDeps();                // revenue dependency is shown in the header, watchlist, movers, news and details: one load for all
   let changed = false;
   if (S.geo) GeoDesk.refresh();
   Globe.refresh();                                  // lazy file, but once it has been opened keep it current
@@ -280,7 +281,7 @@ function go(v, quiet) {
 }
 document.addEventListener("click", e => {
   const g = e.target.closest("[data-go]");
-  if (g) { e.preventDefault(); go(g.dataset.go); if (g.dataset.side) setSide(g.dataset.side); }
+  if (g) { e.preventDefault(); if (g.dataset.newsRd) { newsRdOnly = true; const b = $("#news-rd"); if (b) b.setAttribute("aria-pressed", "true"); } go(g.dataset.go); if (g.dataset.side) setSide(g.dataset.side); }
 });
 
 /* ================= masthead, tape, regime ================= */
@@ -373,6 +374,11 @@ function renderBrief() {
   if (pick) { const x = q(pick.symbol); cards.push(bcard("pos", "B-Lab screen · rank #1", `${esc(pick.symbol)} · F-Score ${pick.fscore}/9`, `Return on capital ${pctF(pick.roc, 0)}, earnings yield ${pctF(pick.earnings_yield)}${x ? ` · ₹${inr(x.p)} (${sg(x.pct)}%)` : ""}`, "Open chart", `data-open="${esc(pick.symbol)}"`)); }
   { const geo = GeoDesk.briefCard(bcard); if (geo) cards.push(geo); }
   { const al = Aladin.briefCard(bcard); if (al) cards.push(al); }
+  if (depsDoc) {                                                            // headlines that touch a company's revenue: the company itself, or a customer or supplier its filing names
+    const hits = newsSources().flatMap(g => g.sources.flatMap(x => x.items)).filter(i => i.mins == null || i.mins <= 24 * 60).map(i => ({ i, rd: newsRd(i) })).filter(h => h.rd.length);
+    const best = hits.find(h => h.rd[0].lvl !== "link") || hits[0];
+    if (best) cards.push(bcard("neutral", "Revenue links in today's news", `${hits.length} headline${hits.length === 1 ? "" : "s"} touch a listed company's revenue`, `${esc(best.i.t.slice(0, 110))}${best.i.t.length > 110 ? "…" : ""} → ${esc(best.rd[0].text)}`, "Open news", 'data-go="news" data-news-rd="1"'));
+  }
   if (wl.length) cards.push(bcard(wl[0].x.pct >= 0 ? "pos" : "neg", "Your watchlist", `Best ${esc(wl[0].sym)} ${sg(wl[0].x.pct)}% · worst ${esc(wl[wl.length - 1].sym)} ${sg(wl[wl.length - 1].x.pct)}%`, `${wl.filter(r => r.x.pct > 0).length} of ${wl.length} up today.`, "Open watchlist", 'data-go="terminal" data-side="watch"'));
   $("#brief-cards").innerHTML = cards.join("");
   $$("#brief-cards [data-open]").forEach(bt => bt.onclick = () => { openSec(bt.dataset.open); go("terminal"); });
@@ -637,7 +643,7 @@ function renderHead() {
   const when = x.replay ? `Replay · ${dayLbl(x.d)} ${x.t} IST · real 1-minute prices played back` : x.live ? (open ? `${x.rt ? "Real-time" : x.nse ? "NSE live (unofficial)" : "Delayed ~15 min"} · ${dayLbl(x.d)} ${x.t} IST · market open` : `Last session ${dt(x.d, { weekday: "short", day: "numeric", month: "short" })} · last price ${x.t} IST`) : `NSE official end-of-day · ${x.d}`;
   const d = S.dir[sec];
   $("#cc-head").innerHTML = `<span class="sym">${esc(sec)}</span><span class="name">${esc(s.n)}</span><span class="px ${ud(x.chg)}">${d ? `<i class="tick ${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"}</i>` : ""}₹${inr(x.p)}</span><span class="chg ${ud(x.chg)}">${sg(x.chg)} (${sg(x.pct)}%)</span>
-    <span class="when"><span class="tag">NSE</span><span class="tag">${esc(s.series)}</span>${s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${s.etf ? '<span class="tag">ETF</span>' : ""}${s.n500 ? '<span class="tag">NIFTY 500</span>' : ""}${pick ? `<span class="tag acc">B-Lab screen #${pick.magic_rank}</span>` : ""}${x.nse && !x.rt ? '<span class="tag acc" title="NSE\\u2019s own live number, from nseindia.com\\u2019s public site, unofficial and not a licensed feed">NSE live</span>' : ""}<span>${esc(when)}</span></span>`;
+    <span class="when"><span class="tag">NSE</span><span class="tag">${esc(s.series)}</span>${s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${s.etf ? '<span class="tag">ETF</span>' : ""}${s.n500 ? '<span class="tag">NIFTY 500</span>' : ""}${depTag(sec, true)}${pick ? `<span class="tag acc">B-Lab screen #${pick.magic_rank}</span>` : ""}${x.nse && !x.rt ? '<span class="tag acc" title="NSE\\u2019s own live number, from nseindia.com\\u2019s public site, unofficial and not a licensed feed">NSE live</span>' : ""}<span>${esc(when)}</span></span>`;
   const inW = loadWatch().includes(sec);
   $("#wl-toggle").innerHTML = inW ? '★ <span class="tx wide">On watchlist</span>' : '☆ <span class="tx wide">Watchlist</span>';
   $("#wl-toggle").title = inW ? "Remove from your watchlist" : "Add to your watchlist";
@@ -1011,7 +1017,7 @@ function renderWatch() {
   $("#wl-count").textContent = w.length;
   $("#watch").innerHTML = w.length ? w.map(sym => { const x = q(sym), s = S.map.get(sym);
     const out = RP.on && !RP.syms.has(sym);
-    return `<div class="wl-row ${sym === sec ? "sel" : ""}${out ? " off" : ""}" data-s="${esc(sym)}"><span class="s">${esc(sym)}<small>${esc(s.n)}</small></span><span class="p">${out ? '<small class="mut">not in replay</small>' : inr(x?.p)}</span>
+    return `<div class="wl-row ${sym === sec ? "sel" : ""}${out ? " off" : ""}" data-s="${esc(sym)}"><span class="s">${esc(sym)} ${depTag(sym)}<small>${esc(s.n)}</small></span><span class="p">${out ? '<small class="mut">not in replay</small>' : inr(x?.p)}</span>
       <span class="c ${ud(x?.pct)}">${out ? "" : sg(x?.pct) + "%"}</span><button class="x" data-rm="${esc(sym)}" title="Remove ${esc(sym)}">×</button></div>`; }).join("")
     : '<div class="empty">Your watchlist is empty. Open any stock and press + Watchlist, or use Set up desk.</div>';
   $$("#watch .wl-row").forEach(r => { flash(r.querySelector(".p"), "w:" + r.dataset.s, q(r.dataset.s)?.p); r.onclick = e => { if (e.target.dataset.rm) { toggleWatch(e.target.dataset.rm); return; } openSec(r.dataset.s); }; });
@@ -1090,11 +1096,29 @@ function renderDetails() {
   $$("#details [data-rec]").forEach(bt => bt.onclick = () => { const r = eng.suggested[+bt.dataset.rec]; if (!r) return; r.add.forEach(([id, p]) => eng.addIndicator(id, p)); go("terminal"); });
 }
 /* Revenue dependency (dependencies.json, scripts/dependency_profile.py): how much of the company's revenue rests on single customers, and on exports */
-let depsDoc, depsLoading = null;
+/* Revenue dependency (dependencies.json), loaded once and shared by every view; each view re-renders when it arrives. */
+function loadDeps() {
+  if (depsDoc !== undefined || depsLoading || !S.deskMan) return depsLoading;
+  if (!S.deskMan.deps) { depsDoc = null; return null; }
+  depsLoading = getJSON("dependencies.json", false).then(j => { depsDoc = j; S.deps = j; newsIdx = null; }).catch(() => { depsDoc = null; })
+    .finally(() => { depsLoading = null; renderHead(); renderWatch(); renderMovers(); renderNews(); if (view === "brief") renderBrief(); if (side === "details") renderDetails(); });
+  return depsLoading;
+}
+const depOf = sym => depsDoc && depsDoc.cos ? depsDoc.cos[sym] : null;
+/* A tag only where the filings measured a level; full = the header's longer form, which opens the evidence. */
+function depTag(sym, full) {
+  const t = RD.tag(depOf(sym), sym); if (!t) return "";
+  return full ? `<button class="tag rd-t ${t.tone}" title="${esc(t.title)} Click for the evidence." data-nexus="company:${esc(sym)}" data-nexus-tab="deps">Revenue dependence ${esc(t.label)} · ${esc(t.text)}</button>`
+    : `<span class="tag rd-t ${t.tone}" title="${esc(t.title)}">${esc(t.text)}</span>`;
+}
+function newsRd(i) {
+  if (!depsDoc) return [];
+  if (!newsIdx) newsIdx = RD.newsIndex(depsDoc, new Map([...S.map].map(([k, v]) => [k, v.n])));
+  return RD.newsLinks(i.t, i.tickers, newsIdx, depsDoc);
+}
 function revDepsHtml(sym) {
   if (depsDoc === undefined) {
-    if (!depsLoading && (S.deskMan || {}).deps) depsLoading = getJSON("dependencies.json", false).then(j => { depsDoc = j; }).catch(() => { depsDoc = null; }).finally(() => { depsLoading = null; if (side === "details") renderDetails(); });
-    if (S.deskMan && !S.deskMan.deps) depsDoc = null;                       // the file list says there is no profile file (before it loads: keep waiting)
+    loadDeps();                                                             // the file list says whether there is a profile file (before it loads: keep waiting)
     return depsDoc === undefined ? `<div class="sec-t">Revenue dependency</div><p class="note">Loading…</p>` : "";
   }
   const p = depsDoc && depsDoc.cos && depsDoc.cos[sym], d = RD.summary(p), segs = RD.geoSegments(d.geo);
@@ -1162,7 +1186,7 @@ function renderMovers() {
   mvSig = sig;
   $("#mov-table tbody").innerHTML = show.length ? show.map(r => {
     const lo = r.s.lo52, hi = r.s.hi52, pos = lo != null && hi > lo ? Math.max(0, Math.min(100, (r.x.p - lo) / (hi - lo) * 100)) : null, on = wl.includes(r.s.s), sw = mvSweep(r.s.s);
-    return `<tr data-s="${esc(r.s.s)}"><td class="sym"><button class="mv-tg" data-s="${esc(r.s.s)}" aria-expanded="false" aria-label="Show lineage, drivers and sentiment for ${esc(r.s.s)}">▸</button> ${esc(r.s.s)} ${r.s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${r.s.etf ? '<span class="tag">ETF</span>' : ""}</td><td class="co">${esc(r.s.n)}</td>
+    return `<tr data-s="${esc(r.s.s)}"><td class="sym"><button class="mv-tg" data-s="${esc(r.s.s)}" aria-expanded="false" aria-label="Show lineage, drivers and sentiment for ${esc(r.s.s)}">▸</button> ${esc(r.s.s)} ${r.s.board === "SME" ? '<span class="tag warn">SME</span>' : ""}${r.s.etf ? '<span class="tag">ETF</span>' : ""}${depTag(r.s.s)}</td><td class="co">${esc(r.s.n)}</td>
       <td class="num">${inr(r.x.p)}</td><td class="num ${ud(r.x.chg)}">${sg(r.x.chg)}</td><td class="num ${ud(r.x.pct)}">${sg(r.x.pct)}%</td><td class="num">${big(r.x.v)}</td><td class="num">₹${big(r.val)}</td>
       <td class="num">${mvRvTxt(mvRv(r, frac))}</td><td class="num ${sw.cls}" title="${esc(sw.title)}">${sw.txt}</td>
       <td class="num">${r.s.deliv == null ? "--" : r.s.deliv.toFixed(0) + "%"}</td><td>${pos == null ? "--" : `<div class="rng" title="₹${inr(lo)} – ₹${inr(hi)}"><i style="left:calc(${pos}% - 1px)"></i></div>`}</td>
@@ -1236,7 +1260,7 @@ function renderWorld() {
 /* ================= NEWS: brutalist.report-style financial wire ================= */
 // news.json (scripts/news_wire.py): India markets RSS (ET, Business Standard, Mint) + brutalist.report's
 // Business topic, WSJ, Quartz and Coindesk. live.json adds Yahoo headlines tagged with the screened stocks.
-let newsHours = 24, newsWatchOnly = false, newsQuery = "";
+let newsHours = 24, newsWatchOnly = false, newsQuery = "", newsRdOnly = false;
 const NEWS_STOP = new Set(["THE", "INDIA", "INDIAN", "BANK", "LIMITED", "LTD", "COMPANY", "CORPORATION", "INDUSTRIES", "FINANCE", "FINANCIAL", "NATIONAL", "GLOBAL", "INTERNATIONAL", "POWER", "CAPITAL", "SERVICES", "GROUP", "UNITED", "HOLDINGS", "NEW", "FIRST", "STATE", "GENERAL", "HOUSING", "MOTORS", "STEEL"]);
 function watchTerms() {                                   // symbol + distinctive first word of each watchlist company
   const t = new Set();
@@ -1261,34 +1285,35 @@ function newsSources() {
   return groups;
 }
 function renderNews() {
-  const groups = newsSources();
+  const groups = newsSources(); loadDeps();
   const terms = newsWatchOnly ? watchTerms() : [], Q = newsQuery.trim().toLowerCase();
   const reEsc = t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const re = terms.length ? new RegExp(`\\b(${terms.map(reEsc).join("|")})\\b`, "i") : null;
   const keep = i => (i.mins == null || i.mins <= newsHours * 60) && (!Q || i.t.toLowerCase().includes(Q))
-    && (!newsWatchOnly || (re && re.test(i.t)) || (i.tickers || []).some(t => loadWatch().includes(t)));
+    && (!newsWatchOnly || (re && re.test(i.t)) || (i.tickers || []).some(t => loadWatch().includes(t))) && (!newsRdOnly || i.rd.length);
   const mark = t => { let h = esc(t); if (Q) h = h.replace(new RegExp(reEsc(esc(Q)), "gi"), m => `<mark>${m}</mark>`); return h; };
-  let shown = 0, sources = 0, html = "";
+  let shown = 0, sources = 0, linked = 0, html = "";
   for (const g of groups) {
     if (newsFilter !== "all" && g.id !== newsFilter) continue;
     const cols = g.sources.map(s => {
-      const items = s.items.filter(keep); shown += items.length; if (s.items.length) sources++;
-      if (!items.length && (Q || newsWatchOnly)) return "";          // filtering: hide sources with no match
+      const items = s.items.map(i => ({ ...i, rd: newsRd(i) })).filter(keep); shown += items.length; linked += items.filter(i => i.rd.length).length; if (s.items.length) sources++;
+      if (!items.length && (Q || newsWatchOnly || newsRdOnly)) return "";          // filtering: hide sources with no match
       return `<div><h3><a href="${esc(s.home)}" target="_blank" rel="noopener noreferrer">${esc(s.name)}</a><small>via ${esc(s.via)}${s.stale ? " · last good copy" : ""}</small></h3><ul>${
         items.length ? items.map(i => `<li><a href="${esc(i.u)}" target="_blank" rel="noopener noreferrer">${mark(i.t)}</a> <span class="age">[${ageLabel(i.mins) || "–"}]</span>${
-          (i.tickers || []).map(t => `<button class="tk" data-open="${esc(t)}">${esc(t)}</button>`).join("")}</li>`).join("")
+          (i.tickers || []).map(t => `<button class="tk" data-open="${esc(t)}">${esc(t)}</button>`).join("")}${i.rd.length ? `<div class="rd-news">${i.rd.map(l => `<button class="rd-c ${l.tone}" data-nexus="company:${esc(l.sym)}" data-nexus-tab="deps" title="${esc(l.title)}">${esc(l.text)}</button>`).join("")}</div>` : ""}</li>`).join("")
         : `<li class="none">No new articles in the past ${newsHours}h.</li>`}</ul></div>`;
     }).join("");
     if (cols) html += (newsFilter === "all" ? `<div class="grp">${esc(g.name)}</div>` : "") + cols;
   }
   $("#news").innerHTML = html || `<div><ul><li class="none">${groups.length ? "No headlines match these filters." : "The news wire isn't available right now. Nothing is shown in its place."}</li></ul></div>`;
   $("#news-meta").textContent = S.news.generated_ist
-    ? `${shown.toLocaleString("en-IN")} headlines · ${sources} sources · wire updated ${S.news.generated_ist.replace(/^.*?, /, "")} · links open the original articles`
+    ? `${shown.toLocaleString("en-IN")} headlines · ${linked} touch a company's revenue · ${sources} sources · wire updated ${S.news.generated_ist.replace(/^.*?, /, "")} · links open the original articles`
     : "Wire not loaded yet.";
   $$("#news [data-open]").forEach(b => b.onclick = () => { openSec(b.dataset.open); go("terminal"); });
 }
 $$("#news-filter button").forEach(b => b.onclick = () => { newsFilter = b.dataset.nf; $$("#news-filter button").forEach(x => x.classList.toggle("on", x === b)); renderNews(); });
 $$("#news-time button").forEach(b => b.onclick = () => { newsHours = +b.dataset.h; $$("#news-time button").forEach(x => x.classList.toggle("on", x === b)); renderNews(); });
+$("#news-rd").onclick = () => { newsRdOnly = !newsRdOnly; $("#news-rd").setAttribute("aria-pressed", String(newsRdOnly)); renderNews(); };
 $("#news-watch").onclick = () => { newsWatchOnly = !newsWatchOnly; $("#news-watch").setAttribute("aria-pressed", String(newsWatchOnly)); renderNews(); };
 $("#news-q").oninput = e => { newsQuery = e.target.value; renderNews(); };
 

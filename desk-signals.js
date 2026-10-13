@@ -8,6 +8,7 @@
 import { esc, inr, pct } from "./desk-aladin2.js";
 import * as A2 from "./desk-aladin2.js";
 import { shareText } from "./desk-deps.js";
+import * as RD from "./desk-revdeps.js";
 
 let ctx = null, root = null, W = null, graph = null, loading = null, failed = false;
 const st = { q: "", filter: "all", sel: null, tab: "summary", page: "signals", pmode: "live", tb: "all", acct: "big" };
@@ -352,7 +353,8 @@ function depsHtml(r) {
       <small>${esc(x.period || "period not stated")} · confidence ${x.conf != null ? Math.round(x.conf * 100) + "%" : "n/a"}${pq ? ` · ${esc(o.sym)} ${pct(pq.pct, 1)} today${u && u.r1m != null ? `, ${pct(u.r1m, 1)} in a month` : ""}` : ""}</small>
       ${x.quote ? `<blockquote>“${esc(x.quote)}”</blockquote>` : ""}${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">Filing${x.page ? ", page " + x.page : ""} ↗</a>` : ""}</li>`;
   };
-  return `<div class="sg-card"><h4>Who ${esc(r.sym)} depends on, and who depends on it</h4>${d.rows.length ? `<ul class="sg-deps">${d.rows.slice(0, 8).map(row).join("")}</ul>${d.rows.length > 8 ? `<p class="note">${d.rows.length - 8} more in NEXUS.</p>` : ""}`
+  const rp = ctx.S.deps && ctx.S.deps.cos ? ctx.S.deps.cos[r.sym] : null, rt = RD.tag(rp, r.sym);
+  return `<div class="sg-card"><h4>Who ${esc(r.sym)} depends on, and who depends on it</h4>${rt ? `<p class="rd-line"><span class="rd-lv ${rt.tone}">${esc(rt.label)}</span> ${esc(RD.plainSentence(rp, r.sym) || rp.why || "")}</p>` : ""}${d.rows.length ? `<ul class="sg-deps">${d.rows.slice(0, 8).map(row).join("")}</ul>${d.rows.length > 8 ? `<p class="note">${d.rows.length - 8} more in NEXUS.</p>` : ""}`
       : `<p class="note">${d.read ? "The filings were read and no dependency was disclosed." : "Not measured: the filings for this company have not been read yet. NEXUS has read " + (d.done ?? "some") + " of " + (d.total ?? "all") + " listed companies so far."}</p>`}
     <div class="sg-actions"><button type="button" class="btn-ink" id="sg-nx">Open the full supply-chain view →</button></div>
     <p class="note">Every link carries its filing, page and a verbatim quote. A move in a linked stock is an association, not proof of cause. Dependencies are not part of the signal rule yet: see "How it was made".</p></div>`;
