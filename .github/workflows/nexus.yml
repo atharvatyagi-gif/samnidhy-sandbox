@@ -20,6 +20,7 @@ on:
 permissions:
   contents: write
   actions: read                 # lets the last step read this run's own step list for the run report
+  models: read                  # GitHub Models: a free model allowance through the workflow's own token (no extra key)
 
 concurrency:
   group: nexus
@@ -56,6 +57,25 @@ jobs:
           restore-keys: |
             nexus-
 
+      - name: BRSR export share, customer types and business mix (the companies' own XBRL filings with NSE; no model, only new filings are read)
+        continue-on-error: true
+        timeout-minutes: 45
+        run: python scripts/brsr_profile.py
+
+      - name: Revenue profile from the segment note FIRST (Ind AS 108 major customers and revenue by geography; code reading first, a model only for what it misses; goes on code-only when the quota is used up)
+        continue-on-error: true
+        timeout-minutes: 100
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          GITHUB_MODELS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PYTHONUNBUFFERED: "1"
+        run: python scripts/revenue_profile.py --limit 250 --max-calls 200
+
       - name: Read filings and build the graph
         continue-on-error: true
         env:
@@ -65,23 +85,11 @@ jobs:
           GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
           GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          GITHUB_MODELS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYTHONUNBUFFERED: "1"
           LIMIT: ${{ github.event.inputs.limit || '120' }}
         timeout-minutes: 170
         run: python scripts/revenue_graph_builder.py --limit "$LIMIT" --max-calls 420    # about 8 model calls and 20 s a call per company: ~50 companies a day, ~2.5 hours
-
-      - name: Revenue profile from the segment note (Ind AS 108 major customers and revenue by geography; resumes, about 2 model calls a company)
-        continue-on-error: true
-        timeout-minutes: 60
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GROQ_API_KEY_1: ${{ secrets.GROQ_API_KEY_1 }}
-          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
-          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
-          GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
-          PYTHONUNBUFFERED: "1"
-        run: python scripts/revenue_profile.py --limit 250 --max-calls 200
 
       - name: Derived revenue shares from the related-party notes (companies already read, 40 a week, marked derived)
         continue-on-error: true
@@ -93,6 +101,7 @@ jobs:
           GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
           GEMINI_API_KEY_2: ${{ secrets.GEMINI_API_KEY_2 }}
+          GITHUB_MODELS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYTHONUNBUFFERED: "1"
         run: python scripts/related_party_shares.py --limit 40 --max-calls 150
 
@@ -122,7 +131,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python scripts/dependency_profile.py || true
-          git add data/supply_graph.json data/revenue_profile.json data/dependencies.json 2>/dev/null || git add data/supply_graph.json
+          git add data/supply_graph.json data/revenue_profile.json data/brsr_profile.json data/dependencies.json 2>/dev/null || git add data/supply_graph.json
           if git diff --cached --quiet; then
             echo "Nothing new to save."
           else

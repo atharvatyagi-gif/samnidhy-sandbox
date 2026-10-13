@@ -463,14 +463,21 @@ function depCard(e, p) {
     ${majors ? `<h4 class="mt-5 text-sm font-semibold text-zinc-300">Other customers worth 10% or more of revenue</h4><ul class="mt-1">${majors}</ul>` : ""}
     ${d.major.status === "none_over_10" ? `<p class="mt-3 text-sm text-zinc-400">The annual report says: “${esc((d.major.q || "").slice(0, 200))}”</p>` : ""}
     ${d.geo.length ? `<h4 class="mt-6 text-sm font-semibold text-zinc-300">Where the revenue comes from ${help("geo")}</h4>${geoBar(RD.geoSegments(d.geo))}` : ""}
+    ${brsrBlock(p)}
     <p class="mt-5 text-xs text-zinc-500">Read from the company's own filings${p.read.segment_note ? ` (segment note ${esc(p.read.segment_note.slice(0, 10))})` : ""}. Nothing is estimated: a company that does not say stays "Not disclosed".</p>`;
+}
+function brsrBlock(p) {
+  const b = RD.brsrLines(p); if (!b || !(b.mix.length || b.cust)) return "";
+  return `<h4 class="mt-6 text-sm font-semibold text-zinc-300">What it sells and to whom${b.fy ? ` <span class="font-normal text-zinc-500">(sustainability report ${esc(b.fy)})</span>` : ""}</h4>
+    ${b.mix.length ? `<ul class="mt-2 space-y-1.5">${b.mix.map(m => `<li class="grid grid-cols-[1fr_auto] items-center gap-3 text-sm"><span class="min-w-0 truncate text-zinc-300" title="${esc(m.d)}">${esc(m.d)}</span><span class="font-mono text-zinc-200">${(m.share * 100).toFixed(m.share < 0.1 ? 1 : 0)}%</span><span class="col-span-2 h-1.5 overflow-hidden rounded-full bg-zinc-800"><span class="block h-full rounded-full bg-emerald-600" style="width:${(m.share * 100).toFixed(1)}%"></span></span></li>`).join("")}</ul>` : ""}
+    ${b.cust ? `<p class="mt-3 text-sm text-zinc-400"><span class="text-zinc-300">Customers:</span> ${esc(b.cust)}</p>` : ""}${b.exports != null ? `<p class="mt-2 text-sm text-zinc-400">Exports: ${(b.exports * 100).toFixed(1)}% of turnover.</p>` : ""}`;
 }
 function depMini(e, p) {
   const el = $("#st-depmini"), d = RD.summary(p);
-  if (!p || p.lvl === "unknown" && !d.geo.length) { el.hidden = true; return; }
+  if (!p || p.lvl === "unknown" && !d.geo.length && p.abroad == null) { el.hidden = true; return; }
   el.hidden = false;
   el.innerHTML = `<div class="flex flex-wrap items-center justify-between gap-3"><h3>Revenue dependency ${help("dep")}</h3><button type="button" class="text-sm text-emerald-400 underline" data-go-tab="revenue">Customers and regions →</button></div>
-    <div class="mt-3 flex flex-wrap items-center gap-3">${badge(d)}<span class="text-sm text-zinc-300">${esc(p.why)}</span></div>${d.geo.length ? geoBar(RD.geoSegments(d.geo)) : ""}`;
+    <div class="mt-3 flex flex-wrap items-center gap-3">${badge(d)}<span class="text-sm text-zinc-300">${esc(p.lvl === "unknown" && p.abroad != null ? RD.plainSentence(p, e.s) : p.why)}</span></div>${d.geo.length ? geoBar(RD.geoSegments(d.geo)) : ""}`;
   el.querySelector("[data-go-tab]").onclick = () => selectTab("revenue");
 }
 function linksCard(g, sym, pd) {

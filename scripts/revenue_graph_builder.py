@@ -425,7 +425,9 @@ class LLM:
         want = (provider or env.get("LLM_PROVIDER") or "auto").lower()
         self.cands = []
         # A second key (GROQ_API_KEY_1, GEMINI_API_KEY_1) has its OWN daily allowance, so its models are added after the first key's: candidate model "name#1" means "name, second key".
-        for prov, base in (("groq", "GROQ_API_KEY"), ("gemini", "GEMINI_API_KEY")):
+        # GitHub Models (free with the GitHub account; in Actions the workflow's own token with "models: read", passed as GITHUB_MODELS_TOKEN) comes last:
+        # small daily allowances per model, but no extra key to manage. Each model has its own allowance. Requests are capped at about 8,000 tokens in.
+        for prov, base in (("groq", "GROQ_API_KEY"), ("gemini", "GEMINI_API_KEY"), ("github", "GITHUB_MODELS_TOKEN")):
             keys = [("", base)] + [(f"#{i}", f"{base}_{i}") for i in (1, 2)]
             have = [(tag, name) for tag, name in keys if env.get(name)]
             if not (want in ("auto", prov) and have):
@@ -433,6 +435,8 @@ class LLM:
             if prov == "groq":
                 first = env.get("GROQ_MODEL") or "openai/gpt-oss-120b"
                 models = list(dict.fromkeys([first] + [m.strip() for m in (env.get("GROQ_FALLBACK_MODELS") or "openai/gpt-oss-20b,qwen/qwen3.8-27b").split(",") if m.strip()]))
+            elif prov == "github":
+                models = [m.strip() for m in (env.get("GITHUB_MODELS") or "openai/gpt-4.1-mini,openai/gpt-4o-mini,openai/gpt-4.1").split(",") if m.strip()]
             else:
                 models = [env["GEMINI_MODEL"]] if env.get("GEMINI_MODEL") else ["gemini-flash-latest", "gemini-flash-lite-latest"]   # aliases: Google retires fixed names
             self.cands += [(prov, m + tag) for tag, _ in have for m in models]
@@ -454,7 +458,12 @@ class LLM:
         import requests
         prov, model = cand
         model, _, idx = model.partition("#")                           # "name#1" = the model on the second key
-        keyname = ("GROQ_API_KEY" if prov == "groq" else "GEMINI_API_KEY") + (f"_{idx}" if idx else "")
+        keyname = {"groq": "GROQ_API_KEY", "gemini": "GEMINI_API_KEY", "github": "GITHUB_MODELS_TOKEN"}[prov] + (f"_{idx}" if idx else "")
+        if prov == "github":
+            body = {"model": model, "temperature": 0, "response_format": {"type": "json_object"}, "max_tokens": 3500,
+                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+            return requests.post("https://models.github.ai/inference/chat/completions", timeout=90, json=body,
+                                 headers={"Authorization": "Bearer " + os.environ[keyname], "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": UA})
         if prov == "groq":
             body = {"model": model, "temperature": 0, "response_format": {"type": "json_object"}, "max_completion_tokens": 3500,
                     "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
@@ -509,10 +518,10 @@ class LLM:
             js = r.json()
             used = (js.get("usage") or {}).get("total_tokens") or (js.get("usageMetadata") or {}).get("totalTokenCount") or 0
             self.tokens[cand[1]] = self.tokens.get(cand[1], 0) + used
-            tpm, gap = (7000, 1.0) if cand[0] == "groq" else (200000, 6.5)
+            tpm, gap = {"groq": (7000, 1.0), "github": (40000, 4.5)}.get(cand[0], (200000, 6.5))      # GitHub's free tier: about 15 requests a minute
             self._ready[cand] = self.clock() + max(gap, used / tpm * 60.0)
             self.provider, self.model = cand
-            if cand[0] == "groq":
+            if cand[0] in ("groq", "github"):
                 return js["choices"][0]["message"]["content"]
             return js["candidates"][0]["content"]["parts"][0]["text"]
         raise RuntimeError("model API unreachable or rate-limited after several tries; stopping this filing")

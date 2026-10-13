@@ -87,7 +87,7 @@ def test_each_workflow_ends_with_the_report_and_the_artifact_upload_and_can_read
     root = Path(__file__).resolve().parent.parent / ".github" / "workflows"
     for name in ("aladin", "live-prices", "nexus"):
         d = yaml.safe_load((root / f"{name}.yml").read_text(encoding="utf-8"))
-        assert d["permissions"]["actions"] == "read"
+        assert d["permissions"]["actions"] in ("read", "write")                # write (to start the next nightly job) includes read
         job = d["jobs"]["live" if name == "live-prices" else name if name == "aladin" else "graph"]
         names = [s.get("name") for s in job["steps"]]
         assert names[-2].startswith("Run report") and names[-1] == "Upload the run report"

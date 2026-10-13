@@ -18,7 +18,9 @@ export function plainSentence(p, name = "the company") {
     ? `About ${P(p.top.share)} of ${who} revenue comes from ${p.top.name ? p.top.name : "one customer"}${p.top.src === "derived" ? " (worked out from its related-party sales)" : ""}`
     : `One customer brings in 10% or more of ${who} revenue`);
   else if (p.lvl === "low") parts.push(`No single customer brings in 10% of ${who} revenue`);
-  if (p.abroad != null && p.abroad >= 0.05) parts.push(parts.length ? `${P(p.abroad)} comes from outside India` : `${P(p.abroad)} of ${who} revenue comes from outside India`);
+  const exp = p.abroad_src === "BRSR exports";                                       // the BRSR figure is exports as a share of turnover, not revenue earned abroad
+  if (p.abroad != null && p.abroad >= 0.05) parts.push(exp ? (parts.length ? `exports are ${P(p.abroad)} of turnover` : `Exports are ${P(p.abroad)} of ${who} turnover`)
+    : parts.length ? `${P(p.abroad)} comes from outside India` : `${P(p.abroad)} of ${who} revenue comes from outside India`);
   return parts.length ? parts.join("; ") + "." : null;
 }
 
@@ -26,7 +28,7 @@ export function plainSentence(p, name = "the company") {
 export function summary(p) {
   if (!p) return { lvl: "unknown", ...LEVELS.unknown, why: "This company's filings have not been read yet.", top: null, abroad: null, geo: [], listed: [] };
   const L = LEVELS[p.lvl] || LEVELS.unknown;
-  return { lvl: p.lvl, ...L, why: p.why, top: p.top, abroad: p.abroad, geo: (p.geo && p.geo.rows) || [],
+  return { lvl: p.lvl, ...L, why: p.why, top: p.top, abroad: p.abroad, abroad_src: p.abroad_src || null, brsr: p.brsr || null, geo: (p.geo && p.geo.rows) || [],
            listed: [...new Set([...(p.listed_customers || []), ...(p.listed_suppliers || [])])], customers: p.customers || [], suppliers: p.suppliers || [],
            major: p.major || { status: "not_found", customers: [] }, read: p.read || {} };
 }
@@ -98,4 +100,11 @@ export function newsLinks(title, tickers, idx, doc, max = 3) {
   if (idx && idx.re && title) for (const m of String(title).matchAll(idx.re)) for (const l of idx.by.get(m[1].toLowerCase()) || []) put(l);
   const rank = { high: 0, moderate: 1, low: 2, link: 3 };
   return [...out.values()].sort((a, b) => rank[a.lvl] - rank[b.lvl]).slice(0, max);
+}
+
+/* The BRSR part (the company's own sustainability filing): turnover by business activity and the types of customers, for a short block. */
+export function brsrLines(p) {
+  const b = p && p.brsr; if (!b) return null;
+  const mix = (b.mix || []).filter(m => m.share != null && m.share > 0).map(m => ({ d: m.d, share: m.share }));
+  return { fy: b.fy || null, mix, cust: b.cust || null, exports: b.exports, pdf: b.pdf || null };
 }

@@ -153,7 +153,7 @@ def main() -> None:
     present["deps"] = False
     try:
         import dependency_profile
-        dp = dependency_profile.build(dependency_profile._load(DATA / "supply_graph.json", {"cos": {}, "edges": [], "nodes": []}), dependency_profile._load(DATA / "revenue_profile.json", {"cos": {}}))
+        dp = dependency_profile.build(dependency_profile._load(DATA / "supply_graph.json", {"cos": {}, "edges": [], "nodes": []}), dependency_profile._load(DATA / "revenue_profile.json", {"cos": {}}), brsr=dependency_profile._load(DATA / "brsr_profile.json", {"cos": {}}))
         if dp["cos"]:
             (SITE / "dependencies.json").write_text(json.dumps(dp, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
             present["deps"] = True

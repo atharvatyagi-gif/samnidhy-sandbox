@@ -6,6 +6,8 @@ Revenue dependency profile of every company the supply-chain work has read: one 
 Sources (nothing else, nothing estimated):
   data/supply_graph.json     named and unnamed customers and suppliers from filings and calls, each with its quote; stated revenue shares; derived related-party shares
   data/revenue_profile.json  the Ind AS 108 segment note: customers bringing 10% or more of revenue, or the statement that none does; revenue by geography
+  data/brsr_profile.json     the company's own BRSR filing (XBRL): exports as a share of turnover, the types of customers, the turnover split by business activity.
+                             The share from abroad is the segment note's (revenue outside India) when read, else the BRSR export share, and says which ("abroad_src").
 
 Dependency level (customer concentration), from the largest single-customer share of revenue the filings support:
   high      one customer is 25% of revenue or more
@@ -20,6 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 GRAPH, PROFILE, OUT = ROOT / "data" / "supply_graph.json", ROOT / "data" / "revenue_profile.json", ROOT / "data" / "dependencies.json"
+BRSR = ROOT / "data" / "brsr_profile.json"
 HIGH, MODERATE = 0.25, 0.10
 INDIA = ("india", "domestic", "within india", "in india")
 import re as _re
@@ -50,12 +53,13 @@ def level(top_share, top_min10, none_over_10):
     return "unknown"
 
 
-def build(graph, profile, now=None):
+def build(graph, profile, now=None, brsr=None):
     nodes = {n["id"]: n for n in graph.get("nodes", [])}
     label = lambda nid, e: (e.get("cpn") if nid.startswith("ANON_") else None) or (nodes.get(nid) or {}).get("n") or e.get("cpn") or nid   # an unnamed counterparty: the filing's own words ("Indian Defence Services")
     sym_of = lambda nid: (nodes.get(nid) or {}).get("sym")
     out = {}
-    companies = set(graph.get("cos", {})) | set((profile or {}).get("cos", {}))
+    bcos = (brsr or {}).get("cos") or {}
+    companies = set(graph.get("cos", {})) | set((profile or {}).get("cos", {})) | set(bcos)
     for sym in sorted(companies):
         cust, supp = {}, {}
         for e in graph.get("edges", []):
@@ -83,11 +87,13 @@ def build(graph, profile, now=None):
         lvl = level(top[0] if top else None, min10 and not (top and top[0] >= MODERATE), major.get("status") == "none_over_10")
         if lvl == "low" and top and top[0] >= MODERATE:
             lvl = "moderate"
-        abroad = None
+        abroad, abroad_src, b = None, None, bcos.get(sym) or {}
         if geo and geo.get("rows"):
             home = [r for r in geo["rows"] if r["region"].strip().lower() in INDIA]
             if len(home) == 1:
-                abroad = round(1 - home[0]["share"], 4)
+                abroad, abroad_src = round(1 - home[0]["share"], 4), "segment note"
+        if abroad is None and b.get("exports") is not None:
+            abroad, abroad_src = b["exports"], "BRSR exports"
         if lvl == "high":
             why = f"one customer brings {top[0] * 100:.0f}% of revenue" + (f" ({top[2]})" if top[2] else "")
         elif lvl == "moderate":
@@ -99,17 +105,18 @@ def build(graph, profile, now=None):
         out[sym] = {"lvl": lvl, "why": why,
                     "top": {"share": top[0], "src": top[1], "name": top[2], "q": top[3], "url": top[4], "pg": top[5]} if top else None,
                     "major": {"status": major.get("status"), "n": len(major.get("customers", [])), "customers": major.get("customers", []), "q": major.get("q")},
-                    "geo": {"rows": geo["rows"], "q": geo.get("q"), "pg": geo.get("pg")} if geo else None, "abroad": abroad,
+                    "geo": {"rows": geo["rows"], "q": geo.get("q"), "pg": geo.get("pg")} if geo else None, "abroad": abroad, "abroad_src": abroad_src,
+                    "brsr": {"fy": b.get("fy"), "exports": b.get("exports"), "cust": (b.get("customers") or "")[:240] or None, "mix": (b.get("activities") or [])[:5], "pdf": b.get("pdf")} if b else None,
                     "customers": customers[:25], "suppliers": suppliers[:25],
                     "listed_customers": sorted({r["sym"] for r in customers if r["sym"]}), "listed_suppliers": sorted({r["sym"] for r in suppliers if r["sym"]}),
-                    "read": {"graph": (graph.get("cos", {}).get(sym) or {}).get("at"), "segment_note": prof.get("at"), "annual_report": prof.get("url"), "per": prof.get("per")}}
+                    "read": {"graph": (graph.get("cos", {}).get(sym) or {}).get("at"), "segment_note": prof.get("at"), "annual_report": prof.get("url"), "per": prof.get("per"), "by": prof.get("by"), "pending": bool(prof.get("pending"))}}
     counts = {k: sum(1 for v in out.values() if v["lvl"] == k) for k in ("high", "moderate", "low", "unknown")}
     return {"v": 1, "generated_utc": (now or datetime.now(timezone.utc)).isoformat(timespec="seconds"), "counts": counts, "cos": out,
             "method": __doc__.strip().split("Dependency level")[1].strip()}
 
 
 def main():
-    doc = build(_load(GRAPH, {"cos": {}, "edges": [], "nodes": []}), _load(PROFILE, {"cos": {}}))
+    doc = build(_load(GRAPH, {"cos": {}, "edges": [], "nodes": []}), _load(PROFILE, {"cos": {}}), brsr=_load(BRSR, {"cos": {}}))
     OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"dependencies.json: {len(doc['cos'])} companies, levels {doc['counts']}")
 

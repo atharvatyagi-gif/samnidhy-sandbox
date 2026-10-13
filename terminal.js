@@ -1127,7 +1127,9 @@ function revDepsHtml(sym) {
   return `<div class="sec-t">Revenue dependency</div>
     <p class="rd-line"><span class="rd-lv ${d.tone}">${esc(d.label)}</span> ${esc(p ? p.why : d.why)}</p>
     ${d.top && d.top.q ? `<p class="note rd-q">“${esc(d.top.q.slice(0, 180))}${d.top.q.length > 180 ? "…" : ""}”${d.top.src === "derived" ? " (share worked out from related-party sales ÷ revenue)" : ""}</p>` : ""}
-    ${geo}${p ? `<p><button class="lnk" data-nexus="company:${esc(sym)}" data-nexus-tab="deps">Customers, suppliers and the evidence →</button></p>` : `<p class="note">${esc(d.why)}</p>`}`;
+    ${geo}${(() => { const b = RD.brsrLines(p); if (!b || !(b.mix.length || b.cust || b.exports != null)) return "";
+      return `<p class="note rd-q"><b>From its sustainability report${b.fy ? " " + esc(b.fy) : ""}:</b> ${b.mix.length ? b.mix.slice(0, 4).map(m => `${esc(m.d)} ${(m.share * 100).toFixed(0)}%`).join(" · ") + ". " : ""}${b.exports != null ? `Exports ${(b.exports * 100).toFixed(1)}% of turnover. ` : ""}${b.cust ? "Customers: " + esc(b.cust.slice(0, 200)) + (b.cust.length > 200 ? "…" : "") : ""}</p>`; })()}
+    ${p ? `<p><button class="lnk" data-nexus="company:${esc(sym)}" data-nexus-tab="deps">Customers, suppliers and the evidence →</button></p>` : `<p class="note">${esc(d.why)}</p>`}`;
 }
 function renderPrints() {
   const it = intraOf(sec), rows = it ? (it.d || []) : [];

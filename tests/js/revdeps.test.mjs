@@ -42,3 +42,11 @@ test("a headline about a big customer flags the supplier that depends on it; a c
   assert.deepEqual(newsLinks("Unknown Co results", ["UNK"], idx, DOC), []);                           // no measured level, no link
   assert.equal(newsLinks("x", ["HAL"], idx, DOC)[0].sym, "HAL");
 });
+
+import { plainSentence as PS2, brsrLines } from "../../desk-revdeps.js";
+test("a BRSR export share reads as exports of turnover, not revenue from abroad; the BRSR block lists the business mix", () => {
+  assert.match(PS2({ lvl: "unknown", abroad: 0.3, abroad_src: "BRSR exports" }, "AAA"), /Exports are 30% of AAA’s turnover/);
+  assert.match(PS2({ lvl: "unknown", abroad: 0.3, abroad_src: "segment note" }, "AAA"), /30% of AAA’s revenue comes from outside India/);
+  assert.deepEqual(brsrLines({ brsr: { fy: "2025-26", mix: [{ d: "Parts", share: 0.9 }, { d: "x", share: 0 }], cust: "OEMs" } }).mix, [{ d: "Parts", share: 0.9 }]);
+  assert.equal(brsrLines({}), null);
+});

@@ -13,6 +13,10 @@ from the same cached annual report the supply-chain builder already downloaded, 
   * "no single customer is 10% or more" is kept only if the quote says so in words (no / not / none / any single ... 10%);
   * geography rows are kept only if every amount is in the quote, there are at least two rows, and the rows add up to the stated total (within 3%) when one is stated;
   * nothing is estimated: a company whose filing does not say it is "not found", never "low".
+CODE FIRST (2026-10-13): scripts/revenue_rules.py reads the same note without a model (the geography table, the "no single customer" and "one customer"
+sentences) and its findings pass the SAME checks. A model is called only for what the code did not find; when the free model quota is used up, the run goes
+on with the code alone and marks those companies "model step pending", so they are completed on a later day. Each record says which part came from where ("by").
+Companies: those the supply-chain builder has read first (their reports are cached), then the rest of the NIFTY 500.
 Output: data/revenue_profile.json  {cos: {SYM: {at, url, per, major: {status, customers: [...]}, geo: {rows: [...], total, unit, q, pg}, notes}}}
 """
 import argparse
@@ -25,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import revenue_graph_builder as rb  # noqa: E402
 import related_party_shares as rp  # noqa: E402
+import revenue_rules as RR  # noqa: E402
 
 ROOT = rb.ROOT
 OUT = ROOT / "data" / "revenue_profile.json"
@@ -48,7 +53,7 @@ KEYWORDS = ["major customer", "single customer", "10%", "10 %", "ten per", "geog
 BONUS = [{"re": r"information (about|on|regarding) (major|key|significant) customers?|single (external )?customer|10\s?%\s*(or more|of the (company|group)|of (total )?revenue)", "w": 6},
          {"re": r"geographical (information|areas?|segment)|revenue from external customers|outside india", "w": 5},
          {"re": r"ind as 108|operating segments?|entity[- ]wide", "w": 3}]
-NO_MAJOR_RX = re.compile(r"\b(no|not|none|neither|nil|any single|did not|does not|do not)\b.{0,140}(10\s?%|ten per ?cent)|(10\s?%|ten per ?cent).{0,140}\b(no|not|none|nil)\b", re.I)
+NO_MAJOR_RX = re.compile(r"\b(no|not|none|neither|nil|any single|did not|does not|do not)\b.{0,140}(10(?:\.0+)?\s?%|ten per ?cent)|(10(?:\.0+)?\s?%|ten per ?cent).{0,140}\b(no|not|none|nil)\b", re.I)
 CUSTOMER_RX = re.compile(r"customer|client|buyer|party", re.I)
 REVENUE_RX = re.compile(r"revenue|sales|turnover|income", re.I)
 
@@ -144,7 +149,7 @@ def check_major(answers, norm_pages, geo, rev):
                     amt_rs = amt * f
                     if share is None and base:
                         share = amt_rs / base
-            min10 = bool(re.search(r"10\s?%|ten per ?cent", q, re.I))
+            min10 = bool(re.search(r"10(?:\.0+)?\s?%|ten per ?cent", q, re.I))
             if share is not None and not (0.0999 <= share <= 1.0):
                 notes.append(f"major customer: share {share:.3f} is outside 10-100% (likely a unit or year mismatch), not kept"); share = None
             if share is None and not min10:
@@ -173,9 +178,20 @@ def profile(answers, pages):
 
 
 def extract(doc, fetcher, llm, cache_dir):
+    """-> (profile, notes, readings). The code reading first; the model only for what it left open (llm=None: code only, the rest marked pending)."""
     sh, pages = fetcher.pages(doc["url"])
     if not pages:
         return None, ["annual: no readable text"], 0
+    allp = {int(no): t for no, t in pages}
+    code, cn = profile([RR.answer(allp)], allp)
+    got_geo, got_major = code["geo"] is not None, code["major"]["status"] != "not_found"
+    by = {"geo": "code" if got_geo else None, "major": "code" if got_major else None}
+    if got_geo and got_major:
+        return {**code, "by": by}, ["read by code, no model call"] + cn, 1
+    if llm is None:
+        if not (got_geo or got_major):
+            return None, ["code found nothing; model quota used up"], 0
+        return {**code, "by": by, "pending": True}, ["read by code; model step pending (quota)"] + cn, 1
     sel = pages_for(pages)
     chunks = rb.chunk_pages(sel, 10000)[:2]
     answers, notes, answered, pmap_all = [], [f"profile: {len(pages)} pages, {len(sel)} relevant, {len(chunks)} sent"], 0, {}
@@ -194,16 +210,25 @@ def extract(doc, fetcher, llm, cache_dir):
             cp.write_text(json.dumps(ans), encoding="utf-8")
         answers.append(ans); answered += 1
     prof, pn = profile(answers, pmap_all)
-    return prof, notes + pn, answered
+    if got_geo:
+        prof["geo"] = code["geo"]
+    elif prof["geo"]:
+        by["geo"] = "model"
+    if got_major:
+        prof["major"] = code["major"]
+    elif prof["major"]["status"] != "not_found":
+        by["major"] = "model"
+    return {**prof, "by": by}, notes + pn, answered + (1 if got_geo or got_major else 0)
 
 
 def run(symbols, limit, session, llm, fetcher, now=None, log=print, out=None, redo=False):
     now = now or rb.now_utc(); out = Path(out or OUT)
     src = rb.load_json(rb.SRC); doc = rb.load_json(out, {"v": 1, "cos": {}}) or {"v": 1, "cos": {}}
     graph = rb.load_json(rb.OUT, {"cos": {}})
-    pool = symbols or sorted(graph.get("cos", {}))                                  # companies whose filings the supply-chain builder already found
-    todo = [s for s in pool if redo or s not in doc["cos"]][:limit]
-    cache = rb.CACHE / "llm"; cache.mkdir(parents=True, exist_ok=True); report = []
+    pool = symbols or sorted(graph.get("cos", {})) + nifty500(exclude=set(graph.get("cos", {})))     # read first (cached reports), then the rest of the NIFTY 500
+    pending = [s for s in pool if (doc["cos"].get(s) or {}).get("pending")]
+    todo = ([s for s in pool if redo or s not in doc["cos"]] + pending)[:limit]
+    cache = rb.CACHE / "llm"; cache.mkdir(parents=True, exist_ok=True); report = []; revs = revenue_hint()
     for sym in todo:
         try:
             docs = [d for d in rb.discover(session, sym, {**src, "transcript_candidates": 0}, now) if d["kind"] == "annual"]
@@ -216,19 +241,55 @@ def run(symbols, limit, session, llm, fetcher, now=None, log=print, out=None, re
         else:
             try:
                 prof, notes, answered = extract(docs[0], fetcher, llm, cache)
-            except rb.LLMBudget as b:
-                report.append((sym, "stopped: " + str(b))); log("  " + report[-1][1]); break
+            except rb.LLMBudget as b:                                           # the model quota is used up: go on with the code reading alone
+                log("  model quota used up (" + str(b)[:80] + "); continuing with the code reading only"); llm = None
+                try:
+                    prof, notes, answered = extract(docs[0], fetcher, None, cache)
+                except Exception as ex:  # noqa: BLE001
+                    report.append((sym, f"failed: {str(ex)[:80]}")); continue
             except Exception as ex:  # noqa: BLE001
                 report.append((sym, f"failed: {str(ex)[:80]}")); continue
             if answered == 0:
                 report.append((sym, "NOT recorded, will be retried: " + "; ".join(notes[:2]))); continue
+            prof["geo"], gn = sane_geo(prof.get("geo"), revs.get(sym))
+            if gn:
+                notes = [gn] + notes
             rec.update({"url": docs[0]["url"], "per": docs[0].get("period"), **prof, "notes": notes[:6]})
         doc["cos"][sym] = rec; doc["generated_utc"] = rec["at"]
         out.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         m = rec["major"]; g = rec.get("geo")
-        report.append((sym, f"major: {m['status']} ({len(m['customers'])}), geography: {len(g['rows']) if g else 0} regions"))
+        report.append((sym, f"major: {m['status']} ({len(m['customers'])}), geography: {len(g['rows']) if g else 0} regions, by {rec.get('by')}{' (model step pending)' if rec.get('pending') else ''}"))
         log("  %-12s %s" % report[-1])
     return doc, report
+
+
+def revenue_hint():
+    """Each company's revenue from the fundamentals file (trailing year, consolidated, in rupees): a sanity check only, never a number shown."""
+    try:
+        f = json.loads((ROOT / "data" / "terminal" / "fund.json").read_text(encoding="utf-8")); f = f.get("stocks", f)
+        return {k: v["rev"] for k, v in f.items() if isinstance(v, dict) and v.get("rev")}
+    except (OSError, ValueError, AttributeError):
+        return {}
+
+
+def sane_geo(geo, rev):
+    """A geography table whose total (in rupees) is more than twice or less than half the company's reported revenue is a unit or table mistake: not kept.
+    (Different periods and standalone vs consolidated explain gaps far smaller than that.) -> (geo or None, note or None)."""
+    if not geo or not rev or not geo.get("factor"):
+        return geo, None
+    r = geo["total"] * geo["factor"] / rev
+    if 0.5 <= r <= 2.0:
+        return geo, None
+    return None, f"geography: total is {r:.2f}x the reported revenue (unit or table mistake), not kept"
+
+
+def nifty500(exclude=()):
+    """NIFTY 500 members from the universe file, by traded value (most traded first)."""
+    try:
+        u = json.loads((ROOT / "data" / "terminal" / "universe.json").read_text(encoding="utf-8"))["stocks"]
+    except (OSError, ValueError, KeyError):
+        return []
+    return [s["s"] for s in sorted((x for x in u if x.get("n500") and x["s"] not in exclude), key=lambda x: -(x.get("val_cr") or 0))]
 
 
 def main(argv=None):
@@ -243,14 +304,15 @@ def main(argv=None):
         pass
     llm = rb.LLM(max_calls=a.max_calls)
     if llm.provider is None:
-        print("No GROQ_API_KEY or GEMINI_API_KEY set: nothing to extract with."); return 0
+        print("No model key set: the code reading only."); llm = None
     from aladin_ticker_daemon import NseSession
     syms = [s.strip().upper() for s in a.symbols.split(",") if s.strip()]
     try:
         run(syms, a.limit, NseSession(), llm, rb.Fetcher(), redo=a.redo)
     except rb.NoUniverse as e:
         print(e)
-    print(f"model calls this run: {llm.calls}; tokens reported by the providers: {sum(llm.tokens.values()):,} {llm.tokens}")
+    if llm is not None:
+        print(f"model calls this run: {llm.calls}; tokens reported by the providers: {sum(llm.tokens.values()):,} {llm.tokens}")
     return 0
 
 
