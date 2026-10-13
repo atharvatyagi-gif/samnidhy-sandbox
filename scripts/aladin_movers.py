@@ -351,6 +351,43 @@ def evaluate_forward(lines):
             "top_beat_all_weeks": sum(1 for w in done if w["top_beat_all"]), "avg_spread_after_costs": round(float(np.mean([w["spread_after_costs"] for w in done])), 3) if done else None}
 
 
+PROMOTE_WEEKS = 26
+BOT_LIVE = ROOT / "data" / "aladin2" / "paper" / "live.json"
+
+
+def bot_value(rows, day, before=False):
+    """The ALADIN2 paper bot's account value on a date (its equity rows are [date, value, ...]); the last row on or before the date (strictly before with before=True)."""
+    best = None
+    for r in rows or []:
+        if (r[0] < day) if before else (r[0] <= day):
+            best = r[1]
+    return best
+
+
+def shadow(fw, lines, bot_doc, now):
+    """The movers portfolio as a shadow of the paper bot (owner's choice 2026-10-13): same ₹10 lakh, same weeks. After PROMOTE_WEEKS finished weeks, if its return beats
+    the bot's over exactly those weeks AND the top tenth beat the bottom tenth on average after costs, a "promote" line is written once and the page shows the movers
+    portfolio as the bot from then on. Never reversed automatically."""
+    done = [w for w in fw["weeks"] if w.get("status") == "done"]
+    prom = next((r for r in lines if r["t"] == "promote"), None)
+    out = {"weeks": len(done), "promote_after_weeks": PROMOTE_WEEKS, "promoted": prom, "movers_return_pct": None, "bot_return_pct": None}
+    if not done:
+        return out
+    first = pd.Timestamp(done[0]["friday"]); entry = (first + pd.Timedelta(days=(7 - first.weekday()) % 7 or 7)).date().isoformat()
+    last_close = (pd.Timestamp(done[-1]["friday"]) + pd.Timedelta(days=7)).date().isoformat()
+    rows = (bot_doc or {}).get("equity") or []
+    b0, b1 = bot_value(rows, entry, before=True) or ((bot_doc or {}).get("stats") or {}).get("start_equity"), bot_value(rows, last_close)
+    out["movers_return_pct"] = round((fw["equity"] / BUDGET_INR - 1) * 100, 2)
+    out["bot_return_pct"] = round((b1 / b0 - 1) * 100, 2) if b0 and b1 else None
+    out["from"], out["to"] = entry, last_close
+    if prom is None and len(done) >= PROMOTE_WEEKS and out["bot_return_pct"] is not None and out["movers_return_pct"] > out["bot_return_pct"] and (fw["avg_spread_after_costs"] or 0) > 0:
+        rec = {"t": "promote", "ts": now.isoformat(timespec="seconds"), "weeks": len(done), "movers_return_pct": out["movers_return_pct"], "bot_return_pct": out["bot_return_pct"]}
+        with open(LEDGER, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, separators=(",", ":")) + "\n")
+        out["promoted"] = rec
+    return out
+
+
 def live(now=None, workers=None):
     now = now or datetime.now(timezone.utc); now_ist = pd.Timestamp(now).tz_convert(IST); OUT.mkdir(parents=True, exist_ok=True); lines = read_ledger()
     nf = nifty_frame(); last_bar = nf.index.max() if nf is not None else None
@@ -365,6 +402,8 @@ def live(now=None, workers=None):
             lines = read_ledger(); print(f"book for week ending {bk['friday']}: {bk['n']} stocks ranked, counted={counted}")
     books = [r for r in lines if r["t"] == "book"]; cur = books[-1] if books else None
     fw = evaluate_forward(lines)
+    bot_doc = json.loads(BOT_LIVE.read_text(encoding="utf-8")) if BOT_LIVE.exists() else None
+    sh = shadow(fw, read_ledger(), bot_doc, now)
     st = json.loads((OUT / "study_r2.json").read_text(encoding="utf-8")) if (OUT / "study_r2.json").exists() else {}
     names = {}
     try:
@@ -376,7 +415,7 @@ def live(now=None, workers=None):
            "updated_utc": now.isoformat(timespec="seconds"),
            "book": {"friday": cur["friday"], "created_utc": cur["created_utc"], "counted": cur["counted"], "n": cur["n"], "k": cur["k"], "trained_to": cur["trained_to"],
                     "top": view(cur["rows"][:cur["k"]]), "bottom": view(cur["rows"][-cur["k"]:][::-1])} if cur else None,
-           "forward": fw,
+           "forward": fw, "shadow": sh,
            "backtest": {k: st.get(k) for k in ("auc_big", "auc_big_recent_volatility", "auc_up", "ranking_top_minus_bottom_weekly_pct_after_costs", "years_top_beats_bottom", "years_positive_after_costs", "gates", "base_rate_big", "top_tenth_big_rate")},
            "method": "Three LightGBM models on 66 price, volume, results-calendar and F&O inputs; retrained every Friday on all finished weeks since 2012. Expected move = (2 x chance up - 1) x expected size. Entry Monday open, exit Friday close, 0.30% round-trip cost."}
     LATEST.write_text(json.dumps(doc, separators=(",", ":"), default=float), encoding="utf-8")
