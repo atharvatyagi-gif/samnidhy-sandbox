@@ -11,7 +11,7 @@ import { shareText } from "./desk-deps.js";
 
 let ctx = null, root = null, W = null, graph = null, loading = null, failed = false;
 const st = { q: "", filter: "all", sel: null, tab: "summary", page: "signals", pmode: "live" };
-let paper = null, paperLoading = false;
+let paper = null, paperLoading = false, movers;
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.";
 const REL = { supplies: "supplies", equipment_for: "supplies equipment to", raw_material_from: "sources raw material from", logistics_for: "provides logistics to", related_party: "is a related party of", customer_of: "is a customer of" };
 const TABS = [["summary", "Summary"], ["how", "How it was made"], ["range", "Range and chance"], ["deps", "Revenue dependencies"]];
@@ -118,7 +118,7 @@ function listHtml() {
 async function loadPaper() {
   if (paper || paperLoading) return; paperLoading = true;
   const get = f => ctx.getJSON("aladin2/" + f, false).catch(() => null);
-  const [live, hist] = await Promise.all([get("paper_live.json"), get("paper_backtest.json")]); paper = { live, hist }; paperLoading = false;
+  const [live, hist, mv] = await Promise.all([get("paper_live.json"), get("paper_backtest.json"), ctx.getJSON("aladin_movers.json", false).catch(() => null)]); paper = { live, hist }; movers = mv; paperLoading = false;
   if (root && st.page === "paper") paintPaper();
 }
 const rupee = v => v == null ? "--" : (v < 0 ? "-" : "") + "₹" + inr(Math.abs(v), 0);
@@ -129,6 +129,41 @@ function tradesTable(list) {
   if (!list || !list.length) return '<p class="note">No closed trades yet.</p>';
   const nm = { stop: "stop", time: "5-day limit", goal: "goal", "no data": "no data" };
   return `<div class="sg-tablewrap sg-short"><table class="sg-table"><thead><tr><th>Stock</th><th>In</th><th>Out</th><th class="r">Price in → out</th><th class="r">Net P/L</th><th>Why out</th></tr></thead><tbody>${list.slice(-40).reverse().map(t => `<tr><td class="sg-st"><b>${esc(t.sym)}</b><small>${t.qty} shares</small></td><td>${esc(t.entry_date)}</td><td>${esc(t.exit_date)}</td><td class="r"><b>${inr(t.entry)} → ${inr(t.exit)}</b></td><td class="r"><b class="${cls(t.net)}">${rupee(t.net)}</b><small class="${cls(t.ret_pct)}">${sgn(t.ret_pct, 2)}</small></td><td>${esc(nm[t.reason] || t.reason)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+/* The weekly ranking (scripts/aladin_movers.py, data/aladin_movers/latest.json): every stock ranked by its expected 5-day move, recorded before Monday's open,
+   checked against real prices, and run as a shadow of the paper bot. Pure: doc = aladin_movers.json, n = rows shown per side. Gates that failed are shown as failed. */
+export function moversHtml(doc, n = 15) {
+  if (!doc) return '<p class="note">The weekly ranking is not published yet. The first one is written after the close on Friday.</p>';
+  const B = doc.book, F = doc.forward || {}, S = doc.shadow || {}, T = doc.backtest || {}, G = T.gates || {};
+  const pct = (v, d = 1) => v == null ? "--" : (v * 100).toFixed(d) + "%";
+  const row = r => `<tr tabindex="0" data-sym="${esc(r.sym)}"><td class="sg-st"><b>${esc(r.sym)}</b><small>${esc(r.name || r.sector || "")}</small></td>
+    <td class="r ${cls(r.exp_move)}"><b>${sgn(r.exp_move * 100, 2)}</b></td><td class="r">${pct(r.p_up, 0)}</td><td class="r">±${(r.size * 100).toFixed(1)}%</td>
+    <td>${r.results_this_week ? '<span class="sg-flag">Results due</span>' : ""}</td></tr>`;
+  const table = (title, rows, sub) => `<div class="sg-card"><h4>${title}</h4><p class="note">${sub}</p><div class="sg-tablewrap sg-short"><table class="sg-table"><thead><tr><th>Stock</th><th class="r">Expected move</th><th class="r">Chance up</th><th class="r">Typical size</th><th></th></tr></thead><tbody>${rows.slice(0, n).map(row).join("")}</tbody></table></div></div>`;
+  const book = B ? `<div class="sg-stats sg-kp">${kpi("Ranking for the week after", dmy(B.friday), B.counted ? "written before Monday's open: counts" : "written late: shown, not counted")}${kpi("Stocks ranked", String(B.n), `top and bottom tenth: ${B.k} each`)}${kpi("Finished weeks", `${F.done || 0} of ${S.promote_after_weeks || 26}`, "before the record is judged")}${kpi("Paper top tenth", rupee(F.equity), `all stocks equally: ${rupee(F.equity_all_stocks)}`)}</div>
+    <div class="sg-split">${table("Highest expected move", B.top, `The top tenth. This is the shadow paper portfolio for the week: equal amounts, Monday open to Friday close, 0.30% costs.`)}
+    ${table("Lowest expected move", B.bottom, `The bottom tenth, kept to check that the ranking separates: the top should do better than these.`)}</div>`
+    : `<div class="sg-empty"><b>No ranking written yet.</b><span>The first one is written after the close on Friday and recorded before Monday's open.</span></div>`;
+  const done = (F.weeks || []).filter(w => w.status === "done");
+  const weeks = (F.weeks || []).length ? `<ol class="sg-wks">${F.weeks.map(w => `<li class="sg-wk ${w.status === "done" ? "in-time" : "waiting"}"><b>${dmy(w.friday)}</b><span>${w.status === "done" ? "finished" : "running"}</span>${w.status === "done" ? `<small>top <i class="${cls(w.top)}">${sgn(w.top, 2)}</i> · bottom <i class="${cls(w.bottom)}">${sgn(w.bottom, 2)}</i> · all ${sgn(w.all, 2)}</small>` : ""}</li>`).join("")}</ol>` : "";
+  const prog = Math.min(1, (S.weeks || 0) / (S.promote_after_weeks || 26));
+  const shadow = `<div class="sg-card"><h4>Shadow of the paper bot · same ₹10 lakh, same weeks</h4>
+    <div class="sg-prog" role="img" aria-label="${S.weeks || 0} of ${S.promote_after_weeks || 26} finished weeks"><i style="width:${(prog * 100).toFixed(1)}%"></i></div>
+    <table class="sg-mini"><thead><tr><td></td><td>Weekly ranking</td><td>Current paper bot</td></tr></thead><tbody>
+      <tr><td>Return over the same weeks${S.from ? ` (${dmy(S.from)} to ${dmy(S.to)})` : ""}</td><td class="${cls(S.movers_return_pct)}">${sgn(S.movers_return_pct, 2)}</td><td class="${cls(S.bot_return_pct)}">${sgn(S.bot_return_pct, 2)}</td></tr>
+      <tr><td>Finished weeks</td><td>${S.weeks || 0}</td><td>same weeks</td></tr></tbody></table>
+    <p class="note">${S.promoted ? `<b>Switched on ${esc(String(S.promoted.ts).slice(0, 10))}</b> after ${S.promoted.weeks} weeks: the ranking returned ${sgn(S.promoted.movers_return_pct, 2)} against the bot's ${sgn(S.promoted.bot_return_pct, 2)}. It is now the paper bot; this is never reversed automatically.`
+      : `The rule, written before the first week: after ${S.promote_after_weeks || 26} finished weeks, if the ranking's return beats the bot's over exactly those weeks AND the top tenth beat the bottom tenth on average after costs, it replaces the bot. Checked every week, decided once.`}</p>${weeks}</div>`;
+  const gate = (ok, name, txt) => `<tr><td><b>${name}</b></td><td><span class="sg-flag ${ok ? "ok" : "no"}">${ok == null ? "not measured" : ok ? "passed" : "did not pass"}</span></td><td>${txt}</td></tr>`;
+  const dec = T.deciles_expected_move || [], mx = Math.max(0.0001, ...dec.map(d => Math.abs(d.mean_r5)));
+  const bars = dec.length ? `<h4 style="margin-top:12px">Average 5-day return by tenth of the ranking (2016 to 2026, before costs)</h4><ul class="sg-bars">${dec.map((d, i) => `<li><span>${i === 0 ? "Lowest tenth" : i === dec.length - 1 ? "Highest tenth" : `Tenth ${i + 1}`}</span><div><i class="${d.mean_r5 >= 0 ? "up" : "down"}" style="width:${(Math.abs(d.mean_r5) / mx * 100).toFixed(0)}%"></i></div><em>${sgn(d.mean_r5 * 100, 2)}</em></li>`).join("")}</ul>` : "";
+  const back = `<div class="sg-card"><h4>What the 10-year test showed (every year out of sample)</h4><table class="sg-mini"><tbody>
+    ${gate(G.size, "How big", `Telling big movers (over 5% either way) from quiet ones: score ${T.auc_big ?? "--"}, only a little better than the stock's own recent volatility (${T.auc_big_recent_volatility ?? "--"}). The gate needed 0.70. Not shown as a forecast on its own.`)}
+    ${gate(G.direction, "Which way", `Calling up or down: score ${T.auc_up ?? "--"}, where 0.50 is a coin toss. The gate needed 0.53. Not shown as a forecast on its own.`)}
+    ${gate(G.ranking, "Ranking", `Top tenth minus bottom tenth: ${sgn(T.ranking_top_minus_bottom_weekly_pct_after_costs, 3)} a week after costs; positive in ${T.years_positive_after_costs ?? "--"} of 11 years, top ahead of bottom in ${T.years_top_beats_bottom ?? "--"} of 11.`)}
+    </tbody></table>${bars}<p class="note">So the ranking as a whole separated stocks over ten years, while a single stock's forecast is weak. ${T.rows ? `${inr(T.rows, 0)} stock-weeks, ${inr(T.stocks, 0)} stocks. ` : ""}The years were looked at twice (round 2 after round 1 failed), and the test uses stocks listed today, so it is flattered. That is why it runs forward before anything changes.</p></div>`;
+  return `<div class="sg-banner">${esc(doc.label || "")}</div>${book}${shadow}${back}
+    <p class="note">${esc(doc.method || "")} Educational simulation, not advice. Updated ${doc.updated_utc ? new Date(doc.updated_utc).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }) + " IST" : "--"}.</p>`;
 }
 /* The continuous front test: a heartbeat, the week-by-week strip from the forward clock, progress to the judging point, live vs history. doc = paper/live.json. */
 const dmy = d => d ? new Date(d + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }) : "--";
@@ -171,7 +206,8 @@ export function liveTodayHtml(doc, book, quotes, today) {
 }
 function paperHtml() {
   if (!paper) return '<p class="note">Loading the paper account…</p>';
-  const doc = st.pmode === "live" ? paper.live : paper.hist, seg = `<div class="sg-chips" role="group" aria-label="Paper account view"><button type="button" class="sg-chip ${st.pmode === "live" ? "on" : ""}" data-pm="live" aria-pressed="${st.pmode === "live"}">Live front test</button><button type="button" class="sg-chip ${st.pmode === "hist" ? "on" : ""}" data-pm="hist" aria-pressed="${st.pmode === "hist"}">History 2013 to 2026</button></div>`;
+  const doc = st.pmode === "live" ? paper.live : paper.hist, seg = `<div class="sg-chips" role="group" aria-label="Paper account view"><button type="button" class="sg-chip ${st.pmode === "live" ? "on" : ""}" data-pm="live" aria-pressed="${st.pmode === "live"}">Live front test</button><button type="button" class="sg-chip ${st.pmode === "hist" ? "on" : ""}" data-pm="hist" aria-pressed="${st.pmode === "hist"}">History 2013 to 2026</button><button type="button" class="sg-chip ${st.pmode === "movers" ? "on" : ""}" data-pm="movers" aria-pressed="${st.pmode === "movers"}">Weekly ranking (forward test)</button></div>`;
+  if (st.pmode === "movers") return `<div class="sg-bar">${seg}</div>${moversHtml(movers)}`;
   if (!doc) return `<div class="sg-bar">${seg}</div><p class="note">This part of the paper account is not published yet.</p>`;
   const S = doc.stats || {}, R = doc.rules || {}, hist = st.pmode === "hist";
   const rulesCard = `<div class="sg-card"><h4>The bot's written rules</h4><dl class="sg-dl"><div><dt>Budget</dt><dd>${rupee(R.budget_inr)}, simulated</dd></div><div><dt>Which signals</dt><dd>${esc(R.books || "")}</dd></div><div><dt>Entry</dt><dd>${esc(R.entry || "")}</dd></div><div><dt>Exit</dt><dd>${esc(R.exit_order || "")}</dd></div><div><dt>Size</dt><dd>${R.risk_per_trade_pct}% of the account at risk to the stop, at most ${R.max_position_pct}% in one stock, at most ${(R.adv_participation_max * 100).toFixed(0)}% of its daily volume, at most ${R.max_open} stocks at once</dd></div><div><dt>Costs</dt><dd>${esc(R.costs || "")}</dd></div>${R.idle_cash ? `<div><dt>Idle cash</dt><dd>${esc(R.idle_cash)}</dd></div>` : ""}</dl>
@@ -194,6 +230,7 @@ function paperHtml() {
 function paintPaper() {
   const el = root && root.querySelector("#sg-p2"); if (!el) return; el.innerHTML = paperHtml();
   el.querySelectorAll("[data-pm]").forEach(b => b.onclick = () => { st.pmode = b.dataset.pm; paintPaper(); });
+  el.querySelectorAll("tr[data-sym]").forEach(tr => { const go = () => { ctx.openSec(tr.dataset.sym); ctx.go("terminal"); }; tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter") go(); }; });
 }
 function showPage(p) {
   st.page = p; root.querySelectorAll("[data-page]").forEach(b => { const on = b.dataset.page === p; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
