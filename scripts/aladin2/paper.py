@@ -120,12 +120,18 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
     cash = float(cash0); pos = {}; lastc = {}; eq_rows = []; trades = []; skipped = []
     def equity_now():
         return cash + sum(p["qty"] * lastc.get(s, p["entry"]) for s, p in pos.items())
+    def money(p):
+        cap = p["qty"] * p["entry"]
+        return {"capital": round(cap, 2), "pct_of_account": round(cap / p["account"] * 100, 2), "account_at_entry": round(p["account"], 2), "sized_by": p["sized_by"],
+                "risk_to_stop": round(p["qty"] * (p["entry"] - p["stop"]), 2), "cost_in": round(p["cost_in"], 2), "sector": p["sector"], "liquidity_decile": p["decile"]}
+
     def close_pos(sym, i, fill, reason):
         nonlocal cash
         p = pos.pop(sym); value = p["qty"] * fill; cost_out = float(C.leg_cost("sell", value, "delivery", p["decile"], cfg)["total"]); cash += value - cost_out
         gross = p["qty"] * (fill - p["entry"]); costs = p["cost_in"] + cost_out; net = gross - costs
         trades.append({"sym": sym, "as_of": p["as_of"], "rank": p["rank"], "entry_date": str(cal[p["i"]].date()), "exit_date": str(cal[i].date()), "days": int(i - p["i"]), "qty": p["qty"], "entry": round(p["entry"], 2), "exit": round(float(fill), 2),
-                       "stop": round(p["stop"], 2), "goal": round(p["goal"], 2) if p["goal"] else None, "reason": reason, "gross": round(gross, 2), "costs": round(costs, 2), "net": round(net, 2), "ret_pct": round(net / (p["qty"] * p["entry"]) * 100, 3)})
+                       "stop": round(p["stop"], 2), "goal": round(p["goal"], 2) if p["goal"] else None, "reason": reason, "gross": round(gross, 2), "costs": round(costs, 2), "net": round(net, 2), "ret_pct": round(net / (p["qty"] * p["entry"]) * 100, 3),
+                       **money(p), "cost_out": round(cost_out, 2), "exit_value": round(value, 2)})
     for i in range(i0, last + 1):
         for sym, p in list(pos.items()):                                                    # 1. exits that happen at the open: the weekly time limit
             b = bar(sym); o = b["o"][i] if b else np.nan
@@ -143,8 +149,10 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
                     else:
                         eq = equity_now(); sec = pk.get("sector") or "?"
                         sec_val = sum(q["qty"] * lastc.get(s, q["entry"]) for s, q in pos.items() if q["sector"] == sec)
-                        size = SG.position_size(eq, o, stop, pk.get("adv_shares") or 0, mu, sd, cfg, risk_pct=risk_pct, max_pos_pct=max_pos_pct); qty = int(size["qty"])
-                        qty = min(qty, int(max(0.0, eq * sector_cap_pct / 100 - sec_val) // o))
+                        size = SG.position_size(eq, o, stop, pk.get("adv_shares") or 0, mu, sd, cfg, risk_pct=risk_pct, max_pos_pct=max_pos_pct); qty = int(size["qty"]); sized_by = size.get("binding")
+                        q_sec = int(max(0.0, eq * sector_cap_pct / 100 - sec_val) // o)
+                        if q_sec < qty: qty, sized_by = q_sec, f"sector cap {sector_cap_pct:g}%"
+                        q0 = qty
                         while qty > 0:
                             cost_in = float(C.leg_cost("buy", qty * o, "delivery", pk["decile"], cfg)["total"])
                             if qty * o + cost_in <= cash + 1e-9: break
@@ -152,7 +160,8 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
                         if qty < 1: why = f"size 0 ({size.get('binding')}) or no cash/sector room"
                         else:
                             cash -= qty * o + cost_in
-                            pos[sym] = {"qty": qty, "entry": o, "stop": stop, "goal": goal, "i": i, "exit_i": i + hold, "cost_in": cost_in, "decile": pk["decile"], "sector": sec, "as_of": bk["as_of"], "rank": pk.get("rank")}
+                            pos[sym] = {"qty": qty, "entry": o, "stop": stop, "goal": goal, "i": i, "exit_i": i + hold, "cost_in": cost_in, "decile": pk["decile"], "sector": sec, "as_of": bk["as_of"], "rank": pk.get("rank"),
+                                        "account": eq, "sized_by": "cash left" if qty < q0 else sized_by}
                 if why:
                     skipped.append({"sym": sym, "as_of": bk["as_of"], "why": why})
         for sym, p in list(pos.items()):                                                    # 3. stop and target during the day (the stop first when both are touched)
@@ -174,7 +183,8 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
                 close_pos(sym, i, lastc.get(sym, p["entry"]), "no data")
         eq_rows.append([str(cal[i].date()), round(equity_now(), 2), round(cash, 2), len(pos)])
     openp = [{"sym": s, "qty": p["qty"], "entry": round(p["entry"], 2), "entry_date": str(cal[p["i"]].date()), "stop": round(p["stop"], 2), "goal": round(p["goal"], 2) if p["goal"] else None, "last": round(lastc.get(s, p["entry"]), 2),
-              "pnl": round(p["qty"] * (lastc.get(s, p["entry"]) - p["entry"]) - p["cost_in"], 2), "days_held": int(last - p["i"]), "days_left": int(max(0, p["exit_i"] - last)), "as_of": p["as_of"], "rank": p["rank"], "sector": p["sector"]} for s, p in pos.items()]
+              "pnl": round(p["qty"] * (lastc.get(s, p["entry"]) - p["entry"]) - p["cost_in"], 2), "days_held": int(last - p["i"]), "days_left": int(max(0, p["exit_i"] - last)), "as_of": p["as_of"], "rank": p["rank"], **money(p),
+              "value_now": round(p["qty"] * lastc.get(s, p["entry"]), 2), "exit_due": str(cal[p["exit_i"]].date()) if p["exit_i"] < len(cal) else None} for s, p in pos.items()]
     return {"equity": eq_rows, "trades": trades, "open": openp, "skipped": skipped}
 
 
@@ -386,7 +396,7 @@ def run_live(ledger_dir=None, out=None):
         nxt = pd.Timestamp(start)
         doc.update({"stats": {"started": False}, "equity": [], "open": [], "trades": [], "skipped": [], "note": "No live Friday book has been written in time yet. The first one is the Friday book; the bot enters at the next trading day's open."})
     else:
-        r = run_bot(books, prices, idx, cfg, india_rate(refresh=True)); doc.update({"stats": stats(r), "equity": r["equity"], "open": r["open"], "trades": r["trades"][-200:], "skipped": r["skipped"][-100:], "note": None})
+        r = run_bot(books, prices, idx, cfg, india_rate(refresh=True)); doc.update({"stats": stats(r), "equity": r["equity"], "open": r["open"], "trades": r["trades"], "skipped": r["skipped"][-100:], "note": None})
     bt = OUT / "backtest.json"; hs = json.loads(bt.read_text(encoding="utf-8")).get("stats", {}) if bt.exists() else {}          # what the current rules did in the history
     doc["timeline"] = timeline(LG.read_all(ledger_dir), doc["trades"], doc["open"], start, expect={"win_rate": hs["win_rate"], "profit_factor": hs["profit_factor"]} if hs.get("win_rate") else None)
     f = Path(out or OUT / "live.json"); f.parent.mkdir(parents=True, exist_ok=True); f.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")

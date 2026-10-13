@@ -116,3 +116,12 @@ def test_rule_v3_ignores_the_stop_holds_five_days_and_idle_cash_earns_the_fund_r
 def test_fund_rate_carries_the_last_known_month_forward():
     rate = pd.Series({pd.Timestamp("2026-07-01"): 5.8}); d = P.fund_daily(pd.bdate_range("2026-10-01", periods=3), rate)
     assert d.round(8).tolist() == [round(0.055 / 252, 8)] * 3
+
+
+def test_every_trade_and_open_position_says_how_much_money_it_used_and_what_limited_its_size():
+    r = run(px({2: (101.0, 102.0, 100.0, 101.5), 7: (104.0, 105.0, 103.0, 104.5)})); t = r["trades"][0]
+    assert t["capital"] == pytest.approx(t["qty"] * 101.0) and t["pct_of_account"] == pytest.approx(t["capital"] / P.START_CASH * 100, abs=0.01)
+    assert t["cost_in"] + t["cost_out"] == pytest.approx(t["costs"], abs=0.02) and t["exit_value"] == pytest.approx(t["qty"] * 104.0)
+    assert t["risk_to_stop"] == pytest.approx(t["qty"] * (101.0 - 95.0)) and t["sized_by"] in ("risk per trade", "max position size", "liquidity", "fractional Kelly (edge too small)")
+    o = P.simulate([book()], {"AAA": px({})}, CAL, CFG, end=str(CAL[4].date()))["open"][0]
+    assert o["capital"] == pytest.approx(o["qty"] * o["entry"]) and o["value_now"] == pytest.approx(o["qty"] * o["last"]) and o["exit_due"] == str(CAL[7].date())

@@ -10,7 +10,7 @@ import * as A2 from "./desk-aladin2.js";
 import { shareText } from "./desk-deps.js";
 
 let ctx = null, root = null, W = null, graph = null, loading = null, failed = false;
-const st = { q: "", filter: "all", sel: null, tab: "summary", page: "signals", pmode: "live" };
+const st = { q: "", filter: "all", sel: null, tab: "summary", page: "signals", pmode: "live", tb: "all" };
 let paper = null, paperLoading = false, movers;
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.";
 const REL = { supplies: "supplies", equipment_for: "supplies equipment to", raw_material_from: "sources raw material from", logistics_for: "provides logistics to", related_party: "is a related party of", customer_of: "is a customer of" };
@@ -165,6 +165,52 @@ export function moversHtml(doc, n = 15) {
   return `<div class="sg-banner">${esc(doc.label || "")}</div>${book}${shadow}${back}
     <p class="note">${esc(doc.method || "")} Educational simulation, not advice. Updated ${doc.updated_utc ? new Date(doc.updated_utc).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }) + " IST" : "--"}.</p>`;
 }
+/* The live account's complete trade book: every position it has ever taken, open ones first, with the money each one used and why it was that size.
+   Pure: doc = paper/live.json, view = "all" | "open" | "closed". Fields the bot has not recorded yet show "--", never a guess (capital = shares x entry price is exact). */
+const SIZED = { "risk per trade": "risk to the stop", "max position size": "per-stock cap", "liquidity": "daily volume cap", "fractional Kelly (edge too small)": "small-edge cap", "cash left": "cash left" };
+export function tradeBookRows(doc) {
+  const capOf = t => t.capital ?? t.qty * t.entry;
+  const open = (doc.open || []).map(o => ({ ...o, status: "open", capital: capOf(o), value: o.value_now ?? o.qty * o.last, costs: o.cost_in ?? null, net: o.pnl, ret: o.pnl != null ? o.pnl / capOf(o) * 100 : null }));
+  const closed = (doc.trades || []).map(t => ({ ...t, status: "closed", capital: capOf(t), value: t.exit_value ?? t.qty * t.exit, net: t.net, ret: t.ret_pct })).reverse();
+  return open.concat(closed);
+}
+export function tradeBookHtml(doc, view = "all") {
+  const all = tradeBookRows(doc), R = doc.rules || {}, eqr = (doc.equity || []).slice(-1)[0];
+  if (!all.length) return "";
+  const rows = all.filter(r => view === "all" || r.status === view), open = all.filter(r => r.status === "open"), closed = all.filter(r => r.status === "closed");
+  const acct = eqr ? eqr[1] : null, invested = open.reduce((a, r) => a + r.value, 0), costs = all.some(r => r.costs == null) ? null : all.reduce((a, r) => a + r.costs, 0);
+  const avgCap = all.reduce((a, r) => a + r.capital, 0) / all.length, big = all.reduce((m, r) => r.capital > m.capital ? r : m, all[0]);
+  const realised = closed.reduce((a, r) => a + r.net, 0), unreal = open.reduce((a, r) => a + (r.net || 0), 0);
+  const pctAcc = r => r.pct_of_account != null ? `${r.pct_of_account.toFixed(1)}% of account` : acct ? `about ${(r.capital / acct * 100).toFixed(0)}% of today's account` : "";
+  const tr = r => `<tr tabindex="0" data-sym="${esc(r.sym)}"><td class="sg-st"><b>${esc(r.sym)}</b><small>${esc([r.sector && r.sector !== "Unknown" && r.sector !== "?" ? r.sector : "", r.as_of ? `list of ${dmy(r.as_of)}` : ""].filter(Boolean).join(" · "))}</small></td>
+    <td class="r"><b>${dmy(r.entry_date)}</b><small>₹${inr(r.entry, 2)}</small></td><td class="r">${inr(r.qty, 0)}</td>
+    <td class="r"><b>${rupee(r.capital)}</b><small>${pctAcc(r)}</small></td>
+    <td>${r.sized_by ? `<span class="sg-flag">${esc(SIZED[r.sized_by] || r.sized_by)}</span>` : '<span class="sg-nm" title="Recorded from tonight’s run">--</span>'}${r.risk_to_stop != null ? `<small class="sg-sub">${rupee(r.risk_to_stop)} to the exit level</small>` : ""}</td>
+    <td class="r">${r.status === "open" ? `<b>₹${inr(r.last, 2)} now</b><small>out ${r.exit_due ? dmy(r.exit_due) : `in ${r.days_left} days`}</small>` : `<b>₹${inr(r.exit, 2)}</b><small>${dmy(r.exit_date)} · ${esc(r.reason === "time" ? "5-day limit" : r.reason)}</small>`}</td>
+    <td class="r">${r.costs != null ? rupee(r.costs) : "--"}</td>
+    <td class="r"><b class="${cls(r.net)}">${rupee(r.net)}</b><small class="${cls(r.ret)}">${sgn(r.ret, 2)}</small></td>
+    <td><span class="sg-flag ${r.status === "open" ? "" : r.net >= 0 ? "ok" : "no"}">${r.status === "open" ? `open · day ${r.days_held}` : r.net >= 0 ? "profit" : "loss"}</span></td></tr>`;
+  const chip = (v, label, n) => `<button type="button" class="sg-chip ${view === v ? "on" : ""}" data-tb="${v}" aria-pressed="${view === v}">${label} (${n})</button>`;
+  const sk = (doc.skipped || []).map(s => `<li><b>${esc(s.sym)}</b> <span>${esc(String(s.why).replace(/^size 0 \((.*)\) or no cash\/sector room$/, (m, w) => `size came out at zero (${SIZED[w] || w})`))}</span> <small>list of ${dmy(s.as_of)}</small></li>`).join("");
+  return `<div class="sg-card sg-book"><h4>Trade book · every position since ${dmy(doc.stats && doc.stats.from)}</h4>
+    <div class="sg-stats sg-kp">${kpi("In stocks now", rupee(invested), acct ? `${(invested / acct * 100).toFixed(0)}% of ${rupee(acct)} account · ${open.length} positions` : `${open.length} positions`)}
+      ${kpi("Cash and liquid fund", acct ? rupee(acct - invested) : "--", "idle money earns the call-money rate")}
+      ${kpi("Average capital per trade", rupee(avgCap), `largest ${esc(big.sym)} ${rupee(big.capital)}`)}
+      ${kpi("Costs paid", costs == null ? "--" : rupee(costs), costs == null ? "entry costs are recorded from tonight's run" : "brokerage, STT, stamp duty, exchange and GST")}</div>
+    <div class="sg-stats sg-kp">${kpi("Positions taken", String(all.length), `${open.length} open · ${closed.length} closed`)}${kpi("Realised P/L", closed.length ? rupee(realised) : "--", closed.length ? `${closed.filter(r => r.net > 0).length} of ${closed.length} in profit` : "nothing closed yet", cls(closed.length ? realised : null))}
+      ${kpi("Open P/L (after entry costs)", rupee(unreal), "marked at the last close", cls(unreal))}${kpi("Names on the lists not taken", String((doc.skipped || []).length), "reasons below")}</div>
+    <p class="note">How each trade is sized: at most ${R.risk_per_trade_pct ?? "--"}% of the account lost if the price fell to the exit level, at most ${R.max_position_pct ?? "--"}% of the account in one stock, at most ${R.adv_participation_max != null ? (R.adv_participation_max * 100).toFixed(0) : "--"}% of the stock's daily volume, at most ${R.max_open ?? "--"} positions and ${R.max_sector_pct ?? "--"}% in one sector, and a cap from the size of the edge. The smallest of these wins; the "Sized by" column names it.</p>
+    <div class="sg-bar"><div class="sg-chips" role="group" aria-label="Trades shown">${chip("all", "All", all.length)}${chip("open", "Open", open.length)}${chip("closed", "Closed", closed.length)}</div><button type="button" class="sg-chip" id="tb-csv">Download CSV</button></div>
+    <div class="sg-tablewrap"><table class="sg-table sg-ledger"><thead><tr><th>Stock</th><th class="r">Entered</th><th class="r">Shares</th><th class="r">Capital used</th><th>Sized by</th><th class="r">Exit / now</th><th class="r">Costs</th><th class="r">Net P/L</th><th>Status</th></tr></thead>
+    <tbody>${rows.length ? rows.map(tr).join("") : `<tr><td colspan="9" class="note">No ${view} positions.</td></tr>`}</tbody></table></div>
+    ${sk ? `<details class="sg-skip"><summary>On the lists but not taken (${(doc.skipped || []).length})</summary><ul>${sk}</ul></details>` : ""}
+    <p class="note">Simulated money on real prices. Entry at the open after each Friday list, exit at the open five trading days later. Costs are charged on both legs; open P/L already includes the entry costs.</p></div>`;
+}
+export function tradeBookCsv(doc) {
+  const cols = ["status", "sym", "sector", "as_of", "entry_date", "entry", "qty", "capital", "pct_of_account", "sized_by", "risk_to_stop", "exit_date", "exit", "last", "reason", "costs", "net", "ret"];
+  const q = v => v == null ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+  return [cols.join(",")].concat(tradeBookRows(doc).map(r => cols.map(c => q(c === "capital" || c === "net" || c === "ret" ? (r[c] == null ? null : Math.round(r[c] * 100) / 100) : r[c])).join(","))).join("\n");
+}
 /* The continuous front test: a heartbeat, the week-by-week strip from the forward clock, progress to the judging point, live vs history. doc = paper/live.json. */
 const dmy = d => d ? new Date(d + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }) : "--";
 export function frontTestHtml(doc) {
@@ -218,18 +264,20 @@ function paperHtml() {
   const chart = lineChart([{ name: "Paper account (after all costs)", pts: doc.equity.map(r => [r[0], r[1]]), cls: "a" }].concat(matched ? [{ name: `Market with the same ${(ex * 100).toFixed(0)}% in stocks, rest cash (the fair comparison)`, pts: matched, cls: "c" }] : []).concat(bench ? [{ name: "Market, all money in the liquid stocks every week, before costs", pts: bench, cls: "b" }] : []), { base: S.start_equity, label: "Paper account value over time", fmt: v => rupee(v) });
   const yrs = S.by_year_pct ? Object.entries(S.by_year_pct) : [], mx = Math.max(1, ...yrs.map(([, v]) => Math.abs(v)));
   const ab = hist && doc.ablation ? `<div class="sg-card"><h4>Rule versions compared (same signals, same history)</h4><table class="sg-mini"><thead><tr><td></td><td>Return</td><td>Per year</td><td>Worst fall</td><td>Profit factor</td></tr></thead><tbody>${Object.entries(doc.ablation).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${sgn(v.return_pct, 0)}</td><td>${sgn(v.cagr_pct, 1)}</td><td>${sgn(v.max_drawdown_pct, 0)}</td><td>${v.profit_factor ?? "--"}</td></tr>`).join("")}</tbody></table><p class="note">v1 (an order to leave at the price goal) lost money; v2 (stop + time) was replaced the same day by v3, the owner's choice, before any live trade. v3 was picked after its history was seen, so the live record is what decides. The price goal and exit level stay on the page as information.</p></div>` : "";
-  const open = !hist && doc.open && doc.open.length ? `<div class="sg-card"><h4>Open positions</h4><div class="sg-tablewrap sg-short"><table class="sg-table"><thead><tr><th>Stock</th><th>In</th><th class="r">Price in → now</th><th class="r">P/L so far</th><th class="r" title="Sizes the trade; not an order since rule v3">Exit level (info)</th><th>Days left</th></tr></thead><tbody>${doc.open.map(o => `<tr><td class="sg-st"><b>${esc(o.sym)}</b><small>${o.qty} shares</small></td><td>${esc(o.entry_date)}</td><td class="r"><b>${inr(o.entry)} → ${inr(o.last)}</b></td><td class="r"><b class="${cls(o.pnl)}">${rupee(o.pnl)}</b></td><td class="r">${inr(o.stop)}</td><td>${o.days_left}</td></tr>`).join("")}</tbody></table></div></div>` : "";
-  return `<div class="sg-bar">${seg}</div><div class="sg-banner">${esc(doc.label || "")}</div>${ft}
+  const book = hist ? "" : tradeBookHtml(doc, st.tb);
+  return `<div class="sg-bar">${seg}</div><div class="sg-banner">${esc(doc.label || "")}</div>${ft}${book}
     <div class="sg-stats sg-kp">${kpi("Budget", rupee(S.start_equity), `from ${esc(S.from)}`)}${kpi("Account value", rupee(S.end_equity), `to ${esc(S.to)}`)}${kpi("Profit or loss", rupee(S.pnl), sgn(S.return_pct) + (S.cagr_pct != null ? ` · ${sgn(S.cagr_pct)} a year` : ""), cls(S.pnl))}${kpi("Worst fall from a peak", sgn(S.max_drawdown_pct), "the deepest drop of the account value", "down")}</div>
     <div class="sg-stats sg-kp">${kpi("Trades", String(S.trades), `${(S.win_rate * 100).toFixed(0)}% ended in profit`)}${kpi("Average win · loss", `${sgn(S.avg_win_pct, 2)} · ${sgn(S.avg_loss_pct, 2)}`, `profit factor ${S.profit_factor ?? "--"}`)}${kpi("Costs paid", rupee(S.costs_paid), "brokerage, taxes, charges, spread")}${kpi("Money at work", S.avg_invested_pct != null ? S.avg_invested_pct.toFixed(0) + "%" : "--", `average share of the account in stocks; exits: ${Object.entries(S.exits || {}).filter(([, n]) => n).map(([k, n]) => k + " " + n).join(", ")}`)}</div>
     <div class="sg-card"><h4>Account value over time</h4>${chart}${hist && matched ? `<p class="note">The bot trades only the best-ranked 1%, so on average just ${(ex * 100).toFixed(0)}% of the account is in stocks; the rest sits in a liquid fund at the India call-money rate minus fund costs. The fair comparison is the market held at the same share (middle line). The top dashed line has all its money in stocks every week, so it also carries about twice the worst fall.</p>` : ""}</div>
-    ${open}<div class="sg-card"><h4>Return by year</h4><ul class="sg-bars">${yrs.map(([y, v]) => `<li><span>${esc(y)}</span><div><i class="${v >= 0 ? "up" : "down"}" style="width:${(Math.abs(v) / mx * 100).toFixed(0)}%"></i></div><em>${sgn(v, 1)}</em></li>`).join("")}</ul></div>
-    ${ab}<div class="sg-card"><h4>${hist ? "Most recent trades" : "Closed trades"}</h4>${tradesTable(hist ? doc.recent_trades : doc.trades)}</div>${rulesCard}
+    <div class="sg-card"><h4>Return by year</h4><ul class="sg-bars">${yrs.map(([y, v]) => `<li><span>${esc(y)}</span><div><i class="${v >= 0 ? "up" : "down"}" style="width:${(Math.abs(v) / mx * 100).toFixed(0)}%"></i></div><em>${sgn(v, 1)}</em></li>`).join("")}</ul></div>
+    ${ab}${hist ? `<div class="sg-card"><h4>Most recent trades</h4>${tradesTable(doc.recent_trades)}</div>` : ""}${rulesCard}
     <p class="note">${hist ? "History: ALADIN 1's out-of-sample scores replayed week by week on real prices, stocks listed today (flatters the positive signals), the price goal in the history is a volatility stand-in, idle cash earns the liquid-fund rate, no tax on gains. It shows how the rules behave; it is not a forecast and not live trading." : "Live: simulated trades on real prices from the forward clock. The first weeks prove nothing: judge it after months."} Simulated money, no broker, no real trade. Educational analysis only, not investment advice.</p>`;
 }
 function paintPaper() {
   const el = root && root.querySelector("#sg-p2"); if (!el) return; el.innerHTML = paperHtml();
   el.querySelectorAll("[data-pm]").forEach(b => b.onclick = () => { st.pmode = b.dataset.pm; paintPaper(); });
+  el.querySelectorAll("[data-tb]").forEach(b => b.onclick = () => { st.tb = b.dataset.tb; paintPaper(); });
+  const csv = el.querySelector("#tb-csv"); if (csv && paper && paper.live) csv.onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([tradeBookCsv(paper.live)], { type: "text/csv" })); a.download = `paper-trades-${paper.live.last_price_date || "live"}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
   el.querySelectorAll("tr[data-sym]").forEach(tr => { const go = () => { ctx.openSec(tr.dataset.sym); ctx.go("terminal"); }; tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter") go(); }; });
 }
 function showPage(p) {
