@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-13T13:30:48+00:00",
+  "generated_on": "2026-10-13T19:55:37+00:00",
   "session_date": "2026-10-13",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -44,15 +44,15 @@
       "market_cap": 277118156800,
       "history": {
         "first_date": "2021-10-06",
-        "trading_days": 1238,
+        "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": -0.101587,
       "total_return": -0.279777,
-      "annualised_volatility": 0.391535,
+      "annualised_volatility": 0.390996,
       "max_drawdown": -0.496512,
-      "beta": 1.4255
+      "beta": 1.4308
     },
     "BSOFT.NS": {
       "symbol": "BSOFT",
@@ -69,19 +69,19 @@
         "turnover_crore": 477.15
       },
       "latest_close": 296.75,
-      "trailing_pe": 13.9581375,
+      "trailing_pe": 14.596655,
       "market_cap": 82985263104,
       "history": {
         "first_date": "2021-10-06",
-        "trading_days": 1238,
+        "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": -0.134905,
       "total_return": -0.358517,
-      "annualised_volatility": 0.353664,
+      "annualised_volatility": 0.357205,
       "max_drawdown": -0.67272,
-      "beta": 1.2513
+      "beta": 1.2715
     },
     "HCLTECH.NS": {
       "symbol": "HCLTECH",
@@ -102,15 +102,15 @@
       "market_cap": 3587846701056,
       "history": {
         "first_date": "2021-10-06",
-        "trading_days": 1238,
+        "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": 0.04787,
       "total_return": 0.154023,
-      "annualised_volatility": 0.265003,
+      "annualised_volatility": 0.264221,
       "max_drawdown": -0.447645,
-      "beta": 0.8374
+      "beta": 0.8435
     },
     "RBLBANK.NS": {
       "symbol": "RBLBANK",
@@ -127,19 +127,19 @@
         "turnover_crore": 1529.74
       },
       "latest_close": 388.05,
-      "trailing_pe": 27.997835,
+      "trailing_pe": 28.01805,
       "market_cap": 602362806272,
       "history": {
         "first_date": "2021-10-06",
-        "trading_days": 1238,
+        "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": 0.18876,
       "total_return": 0.698489,
-      "annualised_volatility": 0.378379,
+      "annualised_volatility": 0.378085,
       "max_drawdown": -0.490033,
-      "beta": 1.4427
+      "beta": 1.4272
     },
     "AEGISLOG.NS": {
       "symbol": "AEGISLOG",
@@ -160,15 +160,15 @@
       "market_cap": 488592015360,
       "history": {
         "first_date": "2021-10-06",
-        "trading_days": 1236,
+        "trading_days": 1237,
         "years": 5.02,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": 0.609745,
-      "total_return": 3.29964,
-      "annualised_volatility": 0.509868,
+      "total_return": 3.299639,
+      "annualised_volatility": 0.510692,
       "max_drawdown": -0.383587,
-      "beta": 0.7843
+      "beta": 0.7627
     },
     "RRKABEL.NS": {
       "symbol": "RRKABEL",
@@ -185,25 +185,25 @@
         "turnover_crore": 78.36
       },
       "latest_close": 2614.2,
-      "trailing_pe": 48.955055,
+      "trailing_pe": 48.6725,
       "market_cap": 295680409600,
       "history": {
         "first_date": "2023-09-20",
-        "trading_days": 750,
+        "trading_days": 751,
         "years": 3.06,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": 0.295644,
       "total_return": 1.211144,
-      "annualised_volatility": 0.380211,
+      "annualised_volatility": 0.380155,
       "max_drawdown": -0.529086,
-      "beta": 0.843
+      "beta": 0.8324
     }
   },
   "analysis_window": {
     "start": "2023-09-20",
     "end": "2026-10-13",
-    "trading_days": 749,
+    "trading_days": 750,
     "years": 3.06,
     "limited_by": [
       "RRKABEL.NS"
@@ -218,113 +218,113 @@
       "start": "2021-10-06",
       "end": "2026-10-13",
       "years": 5.02,
-      "session_price_from": "Yahoo"
+      "session_price_from": "NSE"
     },
     "latest_close": 22721.95,
     "session_pct_change": 1.6035,
     "annualised_return": 0.044212,
     "total_return": 0.141726,
-    "annualised_volatility": 0.133271,
+    "annualised_volatility": 0.133467,
     "max_drawdown": -0.157667
   },
   "correlation_matrix": {
     "BANDHANBNK.NS": {
       "BANDHANBNK.NS": 1.0,
-      "BSOFT.NS": 0.2669,
-      "HCLTECH.NS": 0.1017,
-      "RBLBANK.NS": 0.4425,
-      "AEGISLOG.NS": 0.1362,
-      "RRKABEL.NS": 0.1766
+      "BSOFT.NS": 0.2742,
+      "HCLTECH.NS": 0.0994,
+      "RBLBANK.NS": 0.4436,
+      "AEGISLOG.NS": 0.1297,
+      "RRKABEL.NS": 0.1758
     },
     "BSOFT.NS": {
-      "BANDHANBNK.NS": 0.2669,
+      "BANDHANBNK.NS": 0.2742,
       "BSOFT.NS": 1.0,
-      "HCLTECH.NS": 0.477,
-      "RBLBANK.NS": 0.2498,
-      "AEGISLOG.NS": 0.0896,
-      "RRKABEL.NS": 0.1557
+      "HCLTECH.NS": 0.4857,
+      "RBLBANK.NS": 0.2389,
+      "AEGISLOG.NS": 0.0782,
+      "RRKABEL.NS": 0.1481
     },
     "HCLTECH.NS": {
-      "BANDHANBNK.NS": 0.1017,
-      "BSOFT.NS": 0.477,
+      "BANDHANBNK.NS": 0.0994,
+      "BSOFT.NS": 0.4857,
       "HCLTECH.NS": 1.0,
-      "RBLBANK.NS": 0.0811,
-      "AEGISLOG.NS": 0.0194,
-      "RRKABEL.NS": 0.0435
+      "RBLBANK.NS": 0.0828,
+      "AEGISLOG.NS": 0.0111,
+      "RRKABEL.NS": 0.0428
     },
     "RBLBANK.NS": {
-      "BANDHANBNK.NS": 0.4425,
-      "BSOFT.NS": 0.2498,
-      "HCLTECH.NS": 0.0811,
+      "BANDHANBNK.NS": 0.4436,
+      "BSOFT.NS": 0.2389,
+      "HCLTECH.NS": 0.0828,
       "RBLBANK.NS": 1.0,
-      "AEGISLOG.NS": 0.1235,
-      "RRKABEL.NS": 0.227
+      "AEGISLOG.NS": 0.1284,
+      "RRKABEL.NS": 0.2278
     },
     "AEGISLOG.NS": {
-      "BANDHANBNK.NS": 0.1362,
-      "BSOFT.NS": 0.0896,
-      "HCLTECH.NS": 0.0194,
-      "RBLBANK.NS": 0.1235,
+      "BANDHANBNK.NS": 0.1297,
+      "BSOFT.NS": 0.0782,
+      "HCLTECH.NS": 0.0111,
+      "RBLBANK.NS": 0.1284,
       "AEGISLOG.NS": 1.0,
-      "RRKABEL.NS": 0.1171
+      "RRKABEL.NS": 0.1201
     },
     "RRKABEL.NS": {
-      "BANDHANBNK.NS": 0.1766,
-      "BSOFT.NS": 0.1557,
-      "HCLTECH.NS": 0.0435,
-      "RBLBANK.NS": 0.227,
-      "AEGISLOG.NS": 0.1171,
+      "BANDHANBNK.NS": 0.1758,
+      "BSOFT.NS": 0.1481,
+      "HCLTECH.NS": 0.0428,
+      "RBLBANK.NS": 0.2278,
+      "AEGISLOG.NS": 0.1201,
       "RRKABEL.NS": 1.0
     }
   },
   "covariance_matrix": {
     "BANDHANBNK.NS": {
-      "BANDHANBNK.NS": 0.153299,
-      "BSOFT.NS": 0.036963,
-      "HCLTECH.NS": 0.010556,
-      "RBLBANK.NS": 0.065555,
-      "AEGISLOG.NS": 0.027194,
-      "RRKABEL.NS": 0.026289
+      "BANDHANBNK.NS": 0.152878,
+      "BSOFT.NS": 0.038291,
+      "HCLTECH.NS": 0.010268,
+      "RBLBANK.NS": 0.065571,
+      "AEGISLOG.NS": 0.025893,
+      "RRKABEL.NS": 0.026125
     },
     "BSOFT.NS": {
-      "BANDHANBNK.NS": 0.036963,
-      "BSOFT.NS": 0.125078,
-      "HCLTECH.NS": 0.044705,
-      "RBLBANK.NS": 0.033425,
-      "AEGISLOG.NS": 0.016148,
-      "RRKABEL.NS": 0.020935
+      "BANDHANBNK.NS": 0.038291,
+      "BSOFT.NS": 0.127595,
+      "HCLTECH.NS": 0.04584,
+      "RBLBANK.NS": 0.032264,
+      "AEGISLOG.NS": 0.014266,
+      "RRKABEL.NS": 0.020112
     },
     "HCLTECH.NS": {
-      "BANDHANBNK.NS": 0.010556,
-      "BSOFT.NS": 0.044705,
-      "HCLTECH.NS": 0.070227,
-      "RBLBANK.NS": 0.008132,
-      "AEGISLOG.NS": 0.002626,
-      "RRKABEL.NS": 0.004387
+      "BANDHANBNK.NS": 0.010268,
+      "BSOFT.NS": 0.04584,
+      "HCLTECH.NS": 0.069813,
+      "RBLBANK.NS": 0.008275,
+      "AEGISLOG.NS": 0.001497,
+      "RRKABEL.NS": 0.004295
     },
     "RBLBANK.NS": {
-      "BANDHANBNK.NS": 0.065555,
-      "BSOFT.NS": 0.033425,
-      "HCLTECH.NS": 0.008132,
-      "RBLBANK.NS": 0.143171,
-      "AEGISLOG.NS": 0.023826,
-      "RRKABEL.NS": 0.032655
+      "BANDHANBNK.NS": 0.065571,
+      "BSOFT.NS": 0.032264,
+      "HCLTECH.NS": 0.008275,
+      "RBLBANK.NS": 0.142948,
+      "AEGISLOG.NS": 0.024795,
+      "RRKABEL.NS": 0.032738
     },
     "AEGISLOG.NS": {
-      "BANDHANBNK.NS": 0.027194,
-      "BSOFT.NS": 0.016148,
-      "HCLTECH.NS": 0.002626,
-      "RBLBANK.NS": 0.023826,
-      "AEGISLOG.NS": 0.259966,
-      "RRKABEL.NS": 0.022701
+      "BANDHANBNK.NS": 0.025893,
+      "BSOFT.NS": 0.014266,
+      "HCLTECH.NS": 0.001497,
+      "RBLBANK.NS": 0.024795,
+      "AEGISLOG.NS": 0.260806,
+      "RRKABEL.NS": 0.023314
     },
     "RRKABEL.NS": {
-      "BANDHANBNK.NS": 0.026289,
-      "BSOFT.NS": 0.020935,
-      "HCLTECH.NS": 0.004387,
-      "RBLBANK.NS": 0.032655,
-      "AEGISLOG.NS": 0.022701,
-      "RRKABEL.NS": 0.14456
+      "BANDHANBNK.NS": 0.026125,
+      "BSOFT.NS": 0.020112,
+      "HCLTECH.NS": 0.004295,
+      "RBLBANK.NS": 0.032738,
+      "AEGISLOG.NS": 0.023314,
+      "RRKABEL.NS": 0.144518
     }
   },
   "weekly": {
@@ -2124,7 +2124,7 @@
         1205.3,
         1209.27,
         1161.23,
-        1199.82,
+        1199.83,
         1237.52,
         1248.76,
         1211.76,
