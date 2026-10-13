@@ -17,14 +17,6 @@
 <meta property="og:url" content="https://atharvatyagi-gif.github.io/samnidhy-sandbox/index.html">
 <meta property="og:image" content="https://atharvatyagi-gif.github.io/samnidhy-sandbox/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<script>
-  /* First visit: this search page. Every visit after that: straight into the full terminal (index.html?home keeps the search page). */
-  try {
-    var seen = localStorage.getItem("blab-seen-home");
-    if (seen && !/[?&]home\b/.test(location.search)) location.replace("expert-terminal.html" + location.hash);
-    else localStorage.setItem("blab-seen-home", new Date().toISOString());
-  } catch (e) { /* storage blocked: always show the search page */ }
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="ui.css">
@@ -35,7 +27,7 @@
 <div class="hx-bg" aria-hidden="true"><div class="hx-grid"></div><div class="hx-spot"></div></div>
 
 <header class="relative z-10 mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-  <a href="index.html?home" class="flex items-center gap-2.5 text-zinc-100">
+  <a href="index.html" class="flex items-center gap-2.5 text-zinc-100">
     <svg class="h-7 text-emerald-400" viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="17" width="6" height="12" rx="1.5" fill="currentColor"/><rect x="13" y="9" width="6" height="20" rx="1.5" fill="currentColor"/><rect x="23" y="3" width="6" height="26" rx="1.5" fill="currentColor"/></svg>
     <span class="font-semibold tracking-tight">B-Lab <span class="text-zinc-400">Terminal</span></span>
   </a>

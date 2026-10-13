@@ -8,7 +8,7 @@
   var here = location.pathname.split("/").pop() || "index.html";
   var inDays = /\/days\//.test(location.pathname);
   var BRAND = "B-Lab Terminal";                                      // the product name, in one place (to be decided)
-  var links = [["Search", "index.html?home"], ["Terminal", "expert-terminal.html"], ["Screen", "advanced.html"], ["Lessons", "sandbox.html"]];
+  var links = [["Search", "index.html"], ["Terminal", "expert-terminal.html"], ["Screen", "advanced.html"], ["Lessons", "sandbox.html"]];
   function el(tag, attrs, text) { var n = document.createElement(tag); for (var k in attrs) n.setAttribute(k, attrs[k]); if (text) n.textContent = text; return n; }
 
   function build() {
@@ -17,7 +17,7 @@
     var prog = el("div", { "class": "fx-progress", "data-fx": "progress", "aria-hidden": "true" });
     var nav = el("div", { "class": "fx-nav" + (keepOwn ? " fx-static" : "") });          // a <div> so it never adds a second banner landmark
     var bar = el("nav", { "aria-label": "Site", style: "display:contents" });
-    bar.appendChild(el("a", { "class": "fx-brand", href: base + "index.html?home" }, BRAND));
+    bar.appendChild(el("a", { "class": "fx-brand", href: base + "index.html" }, BRAND));
     links.forEach(function (l) { bar.appendChild(el("a", Object.assign({ href: base + l[1] }, here === l[1].split("?")[0] ? { "aria-current": "page" } : {}), l[0])); });
     var wrap = el("span", { "class": "fx-has-days" });
     var btn = el("button", { type: "button", "aria-haspopup": "true", "aria-expanded": "false" }, "Archive");

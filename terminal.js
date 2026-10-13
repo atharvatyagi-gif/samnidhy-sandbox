@@ -72,7 +72,7 @@ function onReady(user) {
   S.user = user; if (S.uni) liveConnect();
   $("#sys-user").textContent = user.email;
   $("#av").textContent = (user.email || "?")[0].toUpperCase();
-  if (user.guest) { const b = $("#logout"); b.textContent = "Search"; b.title = "Back to the stock search"; b.onclick = () => { location.href = "index.html?home"; }; }
+  if (user.guest) { const b = $("#logout"); b.textContent = "Search"; b.title = "Back to the stock search"; b.onclick = () => { location.href = "index.html"; }; }
 }
 $("#logout").onclick = async () => { try { await window.__expertSignOut?.(); } finally { location.replace("auth.html"); } };
 document.addEventListener("expert-ready", e => { window.__expertSignOut = e.detail.signOut; onReady(e.detail.user); });

@@ -1,4 +1,4 @@
-/* Search-first home, built for first-time users: find a stock, understand it in plain words, try "what if I had invested", compare, keep a watchlist
+/* Search-first home, the landing page on every visit: find a stock, understand it in plain words, try "what if I had invested", compare, keep a watchlist
    (shared with the terminal), then open the full terminal. Every number is a published file of this site; a missing one says so.
    Components: HyperUI (MIT) tabs/1, toasts/1, button-groups/1, range-inputs/1, empty-states/1; help bubbles use the browser's popover API.
    Files: t/universe.json + t/quotes.json (search, prices), live.json (market strip), t/d/<key>.json (5 years daily), t/x/d/Nifty_2050.json,
