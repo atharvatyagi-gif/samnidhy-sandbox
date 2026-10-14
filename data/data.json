@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-13T19:55:37+00:00",
+  "generated_on": "2026-10-14T02:00:43+00:00",
   "session_date": "2026-10-13",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,13 +40,13 @@
         "turnover_crore": 871.78
       },
       "latest_close": 172.0,
-      "trailing_pe": 20.574163,
+      "trailing_pe": 18.777292,
       "market_cap": 277118156800,
       "history": {
         "first_date": "2021-10-06",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.101587,
       "total_return": -0.279777,
@@ -69,13 +69,13 @@
         "turnover_crore": 477.15
       },
       "latest_close": 296.75,
-      "trailing_pe": 14.596655,
+      "trailing_pe": 13.421529,
       "market_cap": 82985263104,
       "history": {
         "first_date": "2021-10-06",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.134905,
       "total_return": -0.358517,
@@ -98,13 +98,13 @@
         "turnover_crore": 2818.02
       },
       "latest_close": 1326.0,
-      "trailing_pe": 19.720406,
+      "trailing_pe": 18.094978,
       "market_cap": 3587846701056,
       "history": {
         "first_date": "2021-10-06",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.04787,
       "total_return": 0.154023,
@@ -127,13 +127,13 @@
         "turnover_crore": 1529.74
       },
       "latest_close": 388.05,
-      "trailing_pe": 28.01805,
+      "trailing_pe": 30.151514,
       "market_cap": 602362806272,
       "history": {
         "first_date": "2021-10-06",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.18876,
       "total_return": 0.698489,
@@ -156,13 +156,13 @@
         "turnover_crore": 111.9
       },
       "latest_close": 1392.0,
-      "trailing_pe": 40.761345,
+      "trailing_pe": 39.04628,
       "market_cap": 488592015360,
       "history": {
         "first_date": "2021-10-06",
         "trading_days": 1237,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.609745,
       "total_return": 3.299639,
@@ -218,7 +218,7 @@
       "start": "2021-10-06",
       "end": "2026-10-13",
       "years": 5.02,
-      "session_price_from": "NSE"
+      "session_price_from": "Yahoo"
     },
     "latest_close": 22721.95,
     "session_pct_change": 1.6035,
@@ -1228,7 +1228,7 @@
         1121.17,
         1158.97,
         1131.52,
-        1096.96,
+        1096.97,
         1099.54,
         1115.71,
         1128.8,
@@ -1293,7 +1293,7 @@
         1786.16,
         1828.99,
         1775.62,
-        1757.64,
+        1757.65,
         1808.41,
         1853.42,
         1678.73,
@@ -1722,7 +1722,7 @@
         335.44,
         329.84,
         346.24,
-        334.67,
+        334.66,
         322.07,
         354.3,
         342.38,
@@ -2065,7 +2065,7 @@
         1720.62,
         1787.4,
         1755.17,
-        1717.61,
+        1717.6,
         1739.34,
         1694.63,
         1628.08,
@@ -2124,7 +2124,7 @@
         1205.3,
         1209.27,
         1161.23,
-        1199.83,
+        1199.82,
         1237.52,
         1248.76,
         1211.76,
