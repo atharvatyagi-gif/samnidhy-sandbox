@@ -1,0 +1,104 @@
+# NEXUS predicted links: for every listed company, the other listed companies most likely to have a revenue relationship
+# with it that the filings do NOT confirm (scripts/nexus_predict.py; shown as "Predicted, not confirmed" with the evidence
+# and the model's measured hit rate).
+# Daily: industry + business description for companies due (Yahoo profile, 90-day refresh), the latest annual report of
+# up to 200 more companies (about 50 s each: 13 nights to cover every listed company) scanned by code for names of other listed companies (no model, no quota; only the mentions are
+# kept), then the model is retrained and re-tested. Reads the terminal's price cache and the graph builder's filings cache
+# (restore only: this workflow never saves either cache, so it cannot overwrite what the other workflows wrote).
+# Every step may fail: the repository keeps the previous files. Commits end in "[skip ci]" and touch only data/nexus_predict;
+# the inputs (mentions, profiles) are saved nightly, the predictions and their test once a week (Sunday) or on a manual run.
+name: NEXUS predicted links
+
+on:
+  schedule:
+    - cron: "45 21 * * *"          # 03:15 IST, after the night's daily update has refreshed the price cache
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "How many new annual reports to scan this run"
+        required: false
+        default: "200"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: nexus-predict
+  cancel-in-progress: false
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        continue-on-error: true
+        run: |
+          pip install -r requirements.txt
+          pip install pypdf
+
+      - name: Restore the terminal's price cache (read only)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: data/terminal
+          key: terminal-${{ github.run_id }}
+          restore-keys: terminal-
+
+      - name: Restore the filings cache (read only)
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: data/nexus_cache
+          key: nexus-${{ github.run_id }}
+          restore-keys: nexus-
+
+      - name: NSE universe (only when the price cache had none)
+        continue-on-error: true
+        run: '[ -f data/terminal/universe.json ] || python scripts/nse_eod.py'
+
+      - name: Industry and business description of every listed company (Yahoo profile; missing first, 90-day refresh)
+        continue-on-error: true
+        timeout-minutes: 40
+        run: python scripts/company_profiles.py --max 1200
+
+      - name: Companies named in other companies' filings (cached filings, then new annual reports from NSE, read by code)
+        continue-on-error: true
+        timeout-minutes: 200
+        env:
+          PYTHONUNBUFFERED: "1"
+          LIMIT: ${{ github.event.inputs.limit || '200' }}
+        run: python scripts/filing_mentions.py --limit "$LIMIT"
+
+      - name: Train, test and write the predicted links
+        id: predict
+        continue-on-error: true
+        timeout-minutes: 30
+        run: python scripts/nexus_predict.py
+
+      - name: Save to the repository
+        if: steps.predict.outcome == 'success'
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/nexus_predict/mentions.json data/nexus_predict/profiles.json
+          # the predictions (~7 MB) are saved once a week (Sunday IST) or when none are saved yet, so git does not grow ~1 MB a night
+          if [ "$(TZ=Asia/Kolkata date +%u)" = "7" ] || [ -z "$(git ls-files data/nexus_predict/links)" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            git add data/nexus_predict/predicted.json data/nexus_predict/links
+          fi
+          if git diff --cached --quiet; then
+            echo "Nothing new to save."
+          else
+            git commit -q -m "NEXUS predicted links: $(date -u +%Y-%m-%d) [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi

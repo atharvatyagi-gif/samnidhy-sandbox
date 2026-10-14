@@ -14,7 +14,7 @@ def run(i, ago_min, conclusion="success", status="completed", attempt=1, took_mi
 
 
 def fresh_nexus():
-    return {"nexus.yml": [run(99, 60)]}
+    return {"nexus.yml": [run(99, 60)], "nexus-predict.yml": [run(98, 60)]}
 
 
 def test_a_failed_run_is_rerun_once_then_only_reported():
@@ -47,8 +47,8 @@ def test_no_dispatch_when_the_next_link_already_started_or_the_data_job_failed_o
 
 
 def test_nexus_is_started_when_it_has_not_run_for_a_day():
-    assert ("dispatch", "nexus.yml") in [a[:2] for a in W.plan({"nexus.yml": [run(1, 60 * 30)]}, lambda i: [], NOW)]
-    assert W.plan({"nexus.yml": [run(1, 60 * 3)]}, lambda i: [], NOW) == []
+    assert ("dispatch", "nexus.yml") in [a[:2] for a in W.plan({**fresh_nexus(), "nexus.yml": [run(1, 60 * 30)]}, lambda i: [], NOW)]
+    assert W.plan({**fresh_nexus(), "nexus.yml": [run(1, 60 * 3)]}, lambda i: [], NOW) == []
 
 
 def test_a_run_stuck_far_past_its_time_limit_is_cancelled():

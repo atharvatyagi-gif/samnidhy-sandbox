@@ -21,12 +21,12 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 API = "https://api.github.com"
-WATCHED = ["crypto-live.yml", "daily-update.yml", "aladin.yml", "aladin2.yml", "nexus.yml", "globe-data.yml", "aladin-sentiment.yml", "live-prices.yml"]
+WATCHED = ["crypto-live.yml", "daily-update.yml", "aladin.yml", "aladin2.yml", "nexus.yml", "nexus-predict.yml", "globe-data.yml", "aladin-sentiment.yml", "live-prices.yml"]
 CHAIN = [("daily-update.yml", "update", "aladin.yml"), ("aladin.yml", "aladin", "aladin2.yml")]     # (upstream, its data job, what must follow it)
-DAILY = {"nexus.yml": 26}                                                                          # workflow -> hours allowed without a run
+DAILY = {"nexus.yml": 26, "nexus-predict.yml": 26}                                                                          # workflow -> hours allowed without a run
 CHAIN_GRACE_MIN = 45
 STUCK_MIN = {"live-prices.yml": 60, "crypto-live.yml": 40, "globe-data.yml": 60, "aladin-sentiment.yml": 60, "daily-update.yml": 180,
-             "aladin.yml": 200, "aladin2.yml": 200, "nexus.yml": 330}                                     # well past each workflow's own timeout
+             "aladin.yml": 200, "aladin2.yml": 200, "nexus.yml": 330, "nexus-predict.yml": 330}                                     # well past each workflow's own timeout
 LOOKBACK_H = 24
 
 
