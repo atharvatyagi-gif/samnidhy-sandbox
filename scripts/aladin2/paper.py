@@ -107,7 +107,11 @@ def entry_index(cal, as_of):
     return int(cal.searchsorted(pd.Timestamp(as_of), side="right"))
 
 
-def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), max_open=10, hold=5, mu=0.0027, sd=0.06, sector_cap_pct=30.0, end=None, risk_pct=None, max_pos_pct=None, sell_fee=0.0):
+def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), max_open=10, hold=5, mu=0.0027, sd=0.06, sector_cap_pct=30.0, end=None, risk_pct=None, max_pos_pct=None, sell_fee=0.0,
+             protect_atr=None, short_cap_pct=50.0):
+    """protect_atr: a protective stop order at entry -/+ protect_atr x ATR (picks carry "atr"), checked against every day's low/high (exit "protective stop").
+    A pick with "side": "short" is a stock-futures short: its stop is ABOVE the entry, it pays the futures cost model, only its costs leave the cash at entry,
+    its P/L is (entry - exit) x qty, and all shorts together are capped at short_cap_pct of the account."""
     """Event loop over trading days. books: [{"as_of", "picks": [{sym, rank, stop, goal (or None), adv_shares, decile, sector}]}] (picks best first); prices: {sym: DataFrame o,h,l,c,v};
     cal: DatetimeIndex of trading days. Returns {equity: [[date, equity, cash, n_open]], trades: [...], open: [...], skipped: [...]}."""
     cal = pd.DatetimeIndex(cal); bars = {}
@@ -125,16 +129,21 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
     i0, last = min(due), (len(cal) - 1 if end is None else min(len(cal) - 1, int(cal.searchsorted(pd.Timestamp(end), side="right")) - 1))
     cash = float(cash0); pos = {}; lastc = {}; eq_rows = []; trades = []; skipped = []
     def equity_now():
-        return cash + sum(p["qty"] * lastc.get(s, p["entry"]) for s, p in pos.items())
+        return cash + sum(p["qty"] * lastc.get(s, p["entry"]) if p["side"] == "long" else p["qty"] * (p["entry"] - lastc.get(s, p["entry"])) for s, p in pos.items())
     def money(p):
         cap = p["qty"] * p["entry"]
         return {"capital": round(cap, 2), "pct_of_account": round(cap / p["account"] * 100, 2), "account_at_entry": round(p["account"], 2), "sized_by": p["sized_by"],
-                "risk_to_stop": round(p["qty"] * (p["entry"] - p["stop"]), 2), "cost_in": round(p["cost_in"], 2), "sector": p["sector"], "liquidity_decile": p["decile"]}
+                "risk_to_stop": round(p["qty"] * abs(p["entry"] - p["stop"]), 2), "cost_in": round(p["cost_in"], 2), "sector": p["sector"], "liquidity_decile": p["decile"], "side": p["side"],
+                "protective_stop": round(p["pstop"], 2) if p.get("pstop") else None}
 
     def close_pos(sym, i, fill, reason):
         nonlocal cash
-        p = pos.pop(sym); value = p["qty"] * fill; cost_out = float(C.leg_cost("sell", value, "delivery", p["decile"], cfg)["total"]) + sell_fee; cash += value - cost_out
-        gross = p["qty"] * (fill - p["entry"]); costs = p["cost_in"] + cost_out; net = gross - costs
+        p = pos.pop(sym); value = p["qty"] * fill
+        if p["side"] == "long":
+            cost_out = float(C.leg_cost("sell", value, "delivery", p["decile"], cfg)["total"]) + sell_fee; cash += value - cost_out; gross = p["qty"] * (fill - p["entry"])
+        else:                                                                                # buying the future back
+            cost_out = float(C.leg_cost("buy", value, "futures", p["decile"], cfg)["total"]); gross = p["qty"] * (p["entry"] - fill); cash += gross - cost_out
+        costs = p["cost_in"] + cost_out; net = gross - costs
         trades.append({"sym": sym, "as_of": p["as_of"], "rank": p["rank"], "entry_date": str(cal[p["i"]].date()), "exit_date": str(cal[i].date()), "days": int(i - p["i"]), "qty": p["qty"], "entry": round(p["entry"], 2), "exit": round(float(fill), 2),
                        "stop": round(p["stop"], 2), "goal": round(p["goal"], 2) if p["goal"] else None, "reason": reason, "gross": round(gross, 2), "costs": round(costs, 2), "net": round(net, 2), "ret_pct": round(net / (p["qty"] * p["entry"]) * 100, 3),
                        **money(p), "cost_out": round(cost_out, 2), "exit_value": round(value, 2)})
@@ -150,24 +159,31 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
                 elif b is None or not _f(b["o"][i]) or not (b["v"][i] > 0): why = "no open price (suspended or no data)"
                 elif len(pos) >= max_open: why = f"already {max_open} open positions"
                 else:
+                    side = pk.get("side", "long"); sg = 1 if side == "long" else -1
                     o = float(b["o"][i]); stop = float(pk["stop"]) if _f(pk.get("stop")) else None; goal = float(pk["goal"]) if _f(pk.get("goal")) else None
-                    if stop is None or o <= stop: why = "opened at or below the stop"
+                    if stop is None or (o - stop) * sg <= 0: why = "opened at or below the stop" if side == "long" else "opened at or above the stop"
                     else:
                         eq = equity_now(); sec = pk.get("sector") or "?"
                         sec_val = sum(q["qty"] * lastc.get(s, q["entry"]) for s, q in pos.items() if q["sector"] == sec)
-                        size = SG.position_size(eq, o, stop, pk.get("adv_shares") or 0, mu, sd, cfg, risk_pct=risk_pct, max_pos_pct=max_pos_pct); qty = int(size["qty"]); sized_by = size.get("binding")
+                        size = SG.position_size(eq, o, o - abs(o - stop), pk.get("adv_shares") or 0, mu, sd, cfg, risk_pct=risk_pct, max_pos_pct=max_pos_pct); qty = int(size["qty"]); sized_by = size.get("binding")
                         q_sec = int(max(0.0, eq * sector_cap_pct / 100 - sec_val) // o)
                         if q_sec < qty: qty, sized_by = q_sec, f"sector cap {sector_cap_pct:g}%"
+                        if side == "short":
+                            shorts = sum(q["qty"] * lastc.get(s, q["entry"]) for s, q in pos.items() if q["side"] == "short")
+                            q_sh = int(max(0.0, eq * short_cap_pct / 100 - shorts) // o)
+                            if q_sh < qty: qty, sized_by = q_sh, f"short cap {short_cap_pct:g}%"
                         q0 = qty
                         while qty > 0:
-                            cost_in = float(C.leg_cost("buy", qty * o, "delivery", pk["decile"], cfg)["total"])
-                            if qty * o + cost_in <= cash + 1e-9: break
+                            cost_in = float(C.leg_cost("buy" if side == "long" else "sell", qty * o, "delivery" if side == "long" else "futures", pk["decile"], cfg)["total"])
+                            if (qty * o if side == "long" else 0.0) + cost_in <= cash + 1e-9: break
                             qty -= 1
                         if qty < 1: why = f"size 0 ({size.get('binding')}) or no cash/sector room"
                         else:
-                            cash -= qty * o + cost_in
+                            cash -= (qty * o if side == "long" else 0.0) + cost_in
+                            atr = float(pk["atr"]) if _f(pk.get("atr")) else None
                             pos[sym] = {"qty": qty, "entry": o, "stop": stop, "goal": goal, "i": i, "exit_i": i + hold, "cost_in": cost_in, "decile": pk["decile"], "sector": sec, "as_of": bk["as_of"], "rank": pk.get("rank"),
-                                        "account": eq, "sized_by": "cash left" if qty < q0 else sized_by}
+                                        "account": eq, "sized_by": "cash left" if qty < q0 else sized_by, "side": side,
+                                        "pstop": (o - sg * protect_atr * atr) if protect_atr and atr else None}
                 if why:
                     skipped.append({"sym": sym, "as_of": bk["as_of"], "why": why})
         for sym, p in list(pos.items()):                                                    # 3. stop and target during the day (the stop first when both are touched)
@@ -175,6 +191,11 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
             if not b or not _f(b["o"][i]):
                 continue
             o, h, l = b["o"][i], b["h"][i], b["l"][i]
+            ps = p.get("pstop")
+            if ps and (l <= ps if p["side"] == "long" else h >= ps):                     # the protective stop: a gap through it fills at the open (never better than the open)
+                close_pos(sym, i, (min(o, ps) if p["side"] == "long" else max(o, ps)) if i > p["i"] else ps, "protective stop"); continue
+            if p["side"] == "short":
+                continue
             if "stop" in exits and l <= p["stop"]:
                 close_pos(sym, i, o if o <= p["stop"] else p["stop"], "stop")
             elif "goal" in exits and p["goal"] and h >= p["goal"]:
@@ -189,7 +210,7 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
                 close_pos(sym, i, lastc.get(sym, p["entry"]), "no data")
         eq_rows.append([str(cal[i].date()), round(equity_now(), 2), round(cash, 2), len(pos)])
     openp = [{"sym": s, "qty": p["qty"], "entry": round(p["entry"], 2), "entry_date": str(cal[p["i"]].date()), "stop": round(p["stop"], 2), "goal": round(p["goal"], 2) if p["goal"] else None, "last": round(lastc.get(s, p["entry"]), 2),
-              "pnl": round(p["qty"] * (lastc.get(s, p["entry"]) - p["entry"]) - p["cost_in"], 2), "days_held": int(last - p["i"]), "days_left": int(max(0, p["exit_i"] - last)), "as_of": p["as_of"], "rank": p["rank"], **money(p),
+              "pnl": round(p["qty"] * (lastc.get(s, p["entry"]) - p["entry"]) * (1 if p["side"] == "long" else -1) - p["cost_in"], 2), "days_held": int(last - p["i"]), "days_left": int(max(0, p["exit_i"] - last)), "as_of": p["as_of"], "rank": p["rank"], **money(p),
               "value_now": round(p["qty"] * lastc.get(s, p["entry"]), 2), "exit_due": str(cal[p["exit_i"]].date()) if p["exit_i"] < len(cal) else None} for s, p in pos.items()]
     return {"equity": eq_rows, "trades": trades, "open": openp, "skipped": skipped}
 
@@ -210,7 +231,7 @@ def stats(res, cash0=START_CASH):
             "cagr_pct": round(float((e[-1] / cash0) ** (1 / yrs) - 1) * 100, 2) if yrs >= 1 else None, "max_drawdown_pct": round(float(dd.min()) * 100, 2), "trades": len(tr), "win_rate": round(len(win) / len(tr), 4) if tr else None,
             "avg_win_pct": round(float(np.mean([t["ret_pct"] for t in win])), 3) if win else None, "avg_loss_pct": round(float(np.mean([t["ret_pct"] for t in los])), 3) if los else None, "profit_factor": round(gw / gl, 3) if gl > 0 else None,
             "avg_net_pct_per_trade": round(float(np.mean([t["ret_pct"] for t in tr])), 3) if tr else None, "costs_paid": round(sum(t["costs"] for t in tr), 2), "avg_days": round(float(np.mean([t["days"] for t in tr])), 2) if tr else None,
-            "exits": {k: sum(1 for t in tr if t["reason"] == k) for k in ("stop", "goal", "time", "no data")}, "avg_invested_pct": round(float(invested.mean()) * 100, 1) if len(invested) else None, "by_year_pct": by_year}
+            "exits": {k: sum(1 for t in tr if t["reason"] == k) for k in ("stop", "goal", "time", "no data", "protective stop")}, "avg_invested_pct": round(float(invested.mean()) * 100, 1) if len(invested) else None, "by_year_pct": by_year}
 
 
 # ------------------------------------------------------------------ plans from prices (the history; live picks carry the levels the page showed)
@@ -240,7 +261,7 @@ def plan_from_prices(px, as_of, cfg):
     return plan_at(prep_prices(px, cfg), as_of)
 
 
-def books_from_scores(O, prep, cfg, universe):
+def books_from_scores(O, prep, cfg, universe, shorts=None):
     """Historical Friday books from ALADIN 1's walk-forward 5-day probabilities (O: date, sym, p). Rank among the stocks liquid that day (trailing 250-day traded value >= Rs 2 crore), best 1% = BUY."""
     Wc = cfg["weekly"]; allv = [v["adv_cr"] for v in universe.values()]; books = []
     for d, g in O.groupby("date"):
@@ -259,7 +280,16 @@ def books_from_scores(O, prep, cfg, universe):
             pct = 1 - (k + 0.5) / n
             if W.decide(pct, Wc) != "bull":
                 break
-            picks.append({"sym": sym, "rank": round(pct, 4), "stop": plan["stop"], "goal": plan["goal"], "adv_shares": plan["adv_shares"], "decile": C.adv_decile(universe[sym]["adv_cr"], allv), "sector": universe[sym]["sector"]})
+            picks.append({"sym": sym, "rank": round(pct, 4), "stop": plan["stop"], "goal": plan["goal"], "adv_shares": plan["adv_shares"], "decile": C.adv_decile(universe[sym]["adv_cr"], allv), "sector": universe[sym]["sector"], "atr": plan["atr"]})
+        if shorts is not None:                                                              # shorts(date) -> the F&O stock set that day, or None before F&O data
+            fno = shorts(pd.Timestamp(d))
+            for k in range(n - 1, -1, -1):
+                sym, p, plan = rows[k]; pct = 1 - (k + 0.5) / n
+                if W.decide(pct, Wc) != "bear":
+                    break
+                if fno and sym in fno:
+                    picks.append({"sym": sym, "side": "short", "rank": round(pct, 4), "stop": plan["close"] + (plan["close"] - plan["stop"]), "goal": None, "adv_shares": plan["adv_shares"],
+                                  "decile": C.adv_decile(universe[sym]["adv_cr"], allv), "sector": universe[sym]["sector"], "atr": plan["atr"]})
         books.append({"as_of": str(pd.Timestamp(d).date()), "picks": picks, "n": n})
     return books
 

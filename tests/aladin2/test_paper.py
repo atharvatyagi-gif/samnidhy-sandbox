@@ -144,3 +144,17 @@ def test_the_small_account_only_counts_lists_from_its_own_first_friday(monkeypat
     monkeypatch.setattr(P, "india_rate", lambda refresh=False: pd.Series(dtype=float)); monkeypatch.setattr(P.LG, "read_all", lambda *a: [])
     d = P.run_live(str(tmp_path), str(tmp_path / "s.json"), small=True)
     assert d["books_used"] == ["2026-10-16"] and d["rules"]["budget_inr"] == 10_000 and d["rules"]["dp_charge_per_sale_inr"] == 15.93
+
+
+def test_a_short_pick_is_a_futures_short_and_the_protective_stop_closes_a_runaway_trade():
+    short = {"as_of": str(CAL[1].date()), "picks": [{"sym": "AAA", "side": "short", "rank": 0.01, "stop": 105.0, "goal": None, "adv_shares": 1_000_000, "decile": 2, "sector": "IT", "atr": 2.0}]}
+    r = P.simulate([short], {"AAA": px({7: (96.0, 96.5, 95.5, 96.0)})}, CAL, CFG, exits=("time",), risk_pct=2.0, max_pos_pct=20.0, protect_atr=3.0)
+    t = r["trades"][0]; assert t["side"] == "short" and t["reason"] == "time" and t["exit"] == 96.0 and t["gross"] == pytest.approx(t["qty"] * 4.0) and t["net"] < t["gross"]
+    assert t["capital"] <= P.START_CASH * 0.50 + 1                                                       # the short cap
+    run_away = P.simulate([short], {"AAA": px({4: (101.0, 107.0, 100.5, 106.0)})}, CAL, CFG, exits=("time",), risk_pct=2.0, max_pos_pct=20.0, protect_atr=3.0)["trades"][0]
+    assert run_away["reason"] == "protective stop" and run_away["exit"] == 106.0 and run_away["net"] < 0      # entry 100 + 3 x 2
+    longp = dict(book(), picks=[dict(book()["picks"][0], atr=2.0)])
+    lp = P.simulate([longp], {"AAA": px({4: (99.0, 99.5, 93.0, 94.0)})}, CAL, CFG, exits=("time",), risk_pct=2.0, max_pos_pct=20.0, protect_atr=3.0)["trades"][0]
+    assert lp["reason"] == "protective stop" and lp["exit"] == 94.0
+    eq = P.simulate([short], {"AAA": px({4: (100.0, 100.5, 97.5, 98.0)})}, CAL, CFG, exits=("time",), end=str(CAL[4].date()))
+    assert eq["open"][0]["side"] == "short" and eq["equity"][-1][1] > eq["equity"][-1][2]                    # a short in profit adds to the account value
