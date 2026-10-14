@@ -35,6 +35,11 @@ GATES (judged ONCE on 2016-01 to 2026-09, against the CURRENT bot v3's own repla
   5  shorts     the short side's own net P/L (after its costs) is positive; if it is not, the SAME rules without shorts are judged instead, once,
                 and the record says so
   All pass -> the live paper account switches to these rules (a rule-history line is written). Any fail -> the current bot stays; this report is published.
+
+ROUND 1 RESULT (2026-10-14): FAIL on every gate. Shorts lost money after costs (-Rs 21,182), so long-only was judged as declared: CAGR -0.14% a year
+against the current bot's +20.5% on the same dates, maximum drawdown -37.3% (current -27.5%), profit factor 0.97 over 5,073 trades, positive in 4 of 10 years.
+By setup: breakouts lost Rs 6.6 lakh, pullbacks made Rs 4.0 lakh; 62% of trades ended on the 5-day limit, 30% on the stop, 8% at the profit-taking level.
+The live account keeps the current rules. Anything built on the "pullbacks made money" observation would be a second look at the same years, and says so.
 """
 import argparse
 import json
