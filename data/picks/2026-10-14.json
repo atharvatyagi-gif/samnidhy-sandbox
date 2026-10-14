@@ -1,0 +1,157 @@
+{
+  "session_date": "2026-10-14",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_14102026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 494,
+  "eligible_count": 433,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "TARIL",
+      "yahoo_ticker": "TARIL.NS",
+      "name": "Transformers And Rectifiers (India) Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 304.0,
+      "open": 333.0,
+      "high": 360.8,
+      "low": 332.95,
+      "close": 349.5,
+      "pct_change": 14.9671,
+      "volume": 69007422,
+      "turnover_crore": 2413.26
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "ELECON",
+      "yahoo_ticker": "ELECON.NS",
+      "name": "Elecon Engineering Co. Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 440.0,
+      "open": 440.0,
+      "high": 501.8,
+      "low": 434.65,
+      "close": 486.9,
+      "pct_change": 10.6591,
+      "volume": 23156626,
+      "turnover_crore": 1116.63
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "IDBI",
+      "yahoo_ticker": "IDBI.NS",
+      "name": "IDBI Bank Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 82.94,
+      "open": 84.8,
+      "high": 93.6,
+      "low": 84.33,
+      "close": 90.39,
+      "pct_change": 8.9824,
+      "volume": 148602851,
+      "turnover_crore": 1341.86
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "LICHSGFIN",
+      "yahoo_ticker": "LICHSGFIN.NS",
+      "name": "LIC Housing Finance Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 564.0,
+      "open": 562.0,
+      "high": 562.0,
+      "low": 533.75,
+      "close": 535.0,
+      "pct_change": -5.1418,
+      "volume": 6004605,
+      "turnover_crore": 324.91
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "HDBFS",
+      "yahoo_ticker": "HDBFS.NS",
+      "name": "HDB Financial Services Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 609.05,
+      "open": 610.0,
+      "high": 611.0,
+      "low": 581.5,
+      "close": 583.75,
+      "pct_change": -4.154,
+      "volume": 1095073,
+      "turnover_crore": 64.63
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "BANKBARODA",
+      "yahoo_ticker": "BANKBARODA.NS",
+      "name": "Bank of Baroda",
+      "industry": "Financial Services",
+      "prev_close": 238.43,
+      "open": 235.9,
+      "high": 235.9,
+      "low": 228.81,
+      "close": 229.0,
+      "pct_change": -3.955,
+      "volume": 18009302,
+      "turnover_crore": 415.88
+    }
+  ],
+  "skipped": [
+    {
+      "symbol": "MEESHO",
+      "group": "loser",
+      "pct_change": -5.119,
+      "history_years": 0.84,
+      "would_have_been": "Top Loser #2",
+      "reason": "only 0.8 years of price history (minimum 1)"
+    },
+    {
+      "symbol": "PIRAMALFIN",
+      "group": "loser",
+      "pct_change": -4.1841,
+      "history_years": 0.93,
+      "would_have_been": "Top Loser #2",
+      "reason": "only 0.9 years of price history (minimum 1)"
+    }
+  ],
+  "fetched_at_utc": "2026-10-14T13:30:43+00:00",
+  "fetched_at_ist": "14 Oct 2026, 07:00 PM IST"
+}
