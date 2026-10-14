@@ -158,3 +158,37 @@ export function predList(shard, sym, names, max = 10) {
   const rows = (shard && shard.cos && shard.cos[sym]) || [];
   return rows.slice(0, max).map(r => predReasons(r, sym, names));
 }
+
+/* ---------------- Linked companies (confirmed + predicted) for the Movers views ----------------
+   compact = pl/compact.json from build_site.py: { cos: { SYM: [[partner, "fpbg" + "r" when same industry], ...] } } (kinds as letters). */
+const CODE = { f: "filings", p: "price", b: "business", g: "group" };
+export const decodeKinds = s => [...String(s || "")].map(c => CODE[c]).filter(Boolean);
+
+/* A stock's listed partners: confirmed ones from the graph first (with their role), then predicted ones not already confirmed. */
+export function linkedOf(sym, graph, compact, max = 8) {
+  const out = [], seen = new Set([sym]);
+  if (graph && graph.edges) {
+    const N = new Map((graph.nodes || []).map(n => [n.id, n]));
+    const symOf = id => { const n = N.get(id); return n && n.sym ? n.sym : null; };
+    for (const e of graph.edges) {
+      const s = symOf(e.s), d = symOf(e.d);
+      if (!s || !d || s === d || (s !== sym && d !== sym)) continue;
+      const other = s === sym ? d : s;
+      if (seen.has(other)) continue;
+      seen.add(other); out.push({ sym: other, confirmed: true, role: s === sym ? "customer" : "supplier", kinds: [], rival: false });
+    }
+  }
+  for (const [p, k] of ((compact && compact.cos) || {})[sym] || []) {
+    if (seen.has(p)) continue;
+    seen.add(p); out.push({ sym: p, confirmed: false, role: null, kinds: decodeKinds(k), rival: String(k).includes("r") });
+  }
+  return out.slice(0, max);
+}
+
+/* How many linked companies moved the same way today (a move of at least `min` %, same sign); only partners with a quote count. */
+export function sameWay(move, links, moveOf, min = 0.5) {
+  const quoted = links.map(l => ({ ...l, move: moveOf(l.sym) })).filter(l => l.move != null);
+  if (move == null || Math.abs(move) < min) return { same: 0, quoted: quoted.length, rows: quoted };
+  const same = quoted.filter(l => Math.abs(l.move) >= min && Math.sign(l.move) === Math.sign(move)).length;
+  return { same, quoted: quoted.length, rows: quoted };
+}

@@ -1216,3 +1216,13 @@ body.resizing, body.resizing * { cursor: inherit; user-select: none; }
 body.resizing.rs-v { cursor: col-resize; } body.resizing.rs-h { cursor: row-resize; }
 .rail-tabs .rail-wide { flex: none; width: 40px; font-size: 14px; letter-spacing: 0; }
 @media (max-width: 1000px) { .gutter, .rail-tabs .rail-wide { display: none; } }
+
+/* ---------- Movers: linked companies (solid = confirmed in a filing, dashed = predicted) ---------- */
+.lk-row { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.lk-c { display: inline-flex; gap: 6px; align-items: baseline; padding: 2px 8px; border: 1px solid var(--acc-edge); border-radius: var(--r); font: 500 11.5px var(--mono); color: var(--ink); white-space: nowrap; }
+.lk-c:hover, .lk-c:focus-visible { background: var(--card-hover); }
+.lk-c.lk-conf { background: var(--acc-soft); border-color: var(--ink-3); }
+.lk-c.lk-pred { border-style: dashed; color: var(--ink-2); background: transparent; }
+.lk-c i { font-style: normal; color: var(--ink-3); margin-right: -2px; }
+.lk-c b { font-weight: 600; }
+.lk-key { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 6px 0 10px; color: var(--ink-3); font-size: 12px; }

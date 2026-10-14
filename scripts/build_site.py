@@ -165,8 +165,16 @@ def main() -> None:
     if (pdir / "predicted.json").exists() and (pdir / "links").is_dir():
         (SITE / "pl").mkdir(parents=True, exist_ok=True)
         shutil.copyfile(pdir / "predicted.json", SITE / "pl" / "index.json")
+        compact = {}
+        code = {"filings": "f", "price": "p", "business": "b", "group": "g"}
         for f in (pdir / "links").glob("*.json"):
             shutil.copyfile(f, SITE / "pl" / f.name)
+            try:                                      # pl/compact.json: every company's predicted partners and evidence letters only (the Movers views read it in one request)
+                for sym, rows in json.loads(f.read_text(encoding="utf-8")).get("cos", {}).items():
+                    compact[sym] = [[r["p"], "".join(code.get(k, "") for k in r.get("kinds", [])) + ("r" if (r.get("ev") or {}).get("same_ind") else "")] for r in rows]
+            except (OSError, ValueError, KeyError, TypeError):
+                pass
+        (SITE / "pl" / "compact.json").write_text(json.dumps({"cos": compact}, separators=(",", ":")), encoding="utf-8")
         present["pred"] = True
     # geo.json itself loads only when the Globe tab is opened; this tiny summary (a few hundred bytes) is what the regime strip and the Brief read.
     present["geo_summary"] = False

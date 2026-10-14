@@ -11,7 +11,14 @@ import { preload as alPreload, sentHtml } from "./desk-aladin.js";
 let ctx = null, kind = "price", horizon = 10, graph = null, graphLoading = null, shocks = null, moves = null, movesTried = false;
 const open = new Set();
 const files = () => ctx.S.deskMan || {};
-const KINDS = { price: "Price & volume", aladin: "ALADIN probability", shock: "Supply-chain shocks" };
+const KINDS = { price: "Price & volume", aladin: "ALADIN probability", shock: "Supply-chain shocks", link: "Linked companies" };
+let compact = null, compactTried = false;                                            // pl/compact.json: every company's predicted partners (letters for the evidence)
+async function loadCompact() {
+  if (compact || compactTried || !files().pred) return compact;
+  compactTried = true;
+  compact = await ctx.getJSON("pl/compact.json", false).catch(() => null);
+  return compact;
+}
 const pct0 = v => v == null ? "—" : Math.round(v * 100) + "%";
 
 export function init(c) {
@@ -47,7 +54,7 @@ export const currentKind = () => kind;
 async function renderAlt() {
   const el = ctx.$("#mov-alt"); if (!el) return;
   el.innerHTML = '<p class="empty">Loading…</p>';
-  if (kind === "aladin") await renderMoves(el); else if (kind === "shock") await renderShocks(el);
+  if (kind === "aladin") await renderMoves(el); else if (kind === "shock") await renderShocks(el); else if (kind === "link") await renderLinked(el);
   restore();
 }
 
@@ -116,12 +123,41 @@ function patchShocks() {
     a.textContent = sg(r.cpMove); a.className = `num sh-cp ${cls(r.cpMove)}`; b.textContent = sg(r.focalMove); b.className = `num sh-fo ${cls(r.focalMove)}`; t.textContent = shockSentence(r);
   }
 }
+/* ---------- linked companies: today's biggest movers and how their confirmed and predicted partners moved ---------- */
+const sgn = v => v == null ? "—" : `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(1)}%`;
+const ucls = v => v == null ? "mut" : v > 0 ? "up" : v < 0 ? "down" : "";
+function chip(l) {
+  const { esc } = ctx, mv = liveMove(l.sym);
+  const what = l.confirmed ? `Confirmed ${l.role} in the filings` : `${RD.PRED_LABEL}: ${l.kinds.map(RD.kindLabel).join(", ")}${l.rival ? " (same industry: may be a rival)" : ""}`;
+  return `<button class="lk-c ${l.confirmed ? "lk-conf" : "lk-pred"}" data-nexus="company:${esc(l.sym)}" data-nexus-tab="deps" title="${esc(what)}">${l.rival ? '<i aria-hidden="true">≈</i>' : ""}${esc(l.sym)} <b class="${ucls(mv)}">${sgn(mv)}</b></button>`;
+}
+function linkedRows() {
+  const pool = (ctx.S.uni && ctx.S.uni.stocks || []).filter(s => !s.etf && (s.n500 || (s.val_cr || 0) >= 10));
+  return pool.map(s => ({ s, mv: liveMove(s.s) })).filter(r => r.mv != null && Math.abs(r.mv) >= 1)
+    .sort((a, b) => Math.abs(b.mv) - Math.abs(a.mv)).slice(0, 60)
+    .map(r => ({ ...r, links: RD.linkedOf(r.s.s, graph || null, compact) })).filter(r => r.links.length).slice(0, 30);
+}
+async function renderLinked(el) {
+  const { esc } = ctx;
+  if (!files().pred && !files().graph) { el.innerHTML = '<p class="empty">The linked-company data has not been published yet.</p>'; return; }
+  await Promise.all([loadCompact(), loadGraph()]);
+  if (!compact && !graph) { el.innerHTML = '<p class="empty">The linked-company data could not be loaded. Try again in a minute.</p>'; return; }
+  const rows = linkedRows();
+  el.innerHTML = `<p class="asof">Today's biggest moves (NIFTY 500 and stocks trading ₹10 Cr or more) with their linked companies · moves are live where a quote exists, otherwise the last close</p>
+    <p class="lk-key"><span class="lk-c lk-conf">Solid</span> confirmed in a filing <span class="lk-c lk-pred">Dashed</span> ${esc(RD.PRED_LABEL.toLowerCase())} (a model's estimate) <span class="lk-c lk-pred"><i>≈</i>Same industry</span> may be a rival, not counted in "Same way"</p>
+    ${rows.length ? `<div class="tablecard"><table class="tbl sm" id="mov-link"><thead><tr><th>#</th><th>Symbol</th><th class="mov-co">Company</th><th class="r">Move today</th><th class="r">Same way</th><th>Linked companies and their move today</th></tr></thead><tbody>${rows.map((r, i) => {
+      const on = open.has(r.s.s), sw = RD.sameWay(r.mv, r.links.filter(l => !l.rival), liveMove);   // rivals in the same industry move with their sector: not counted
+      return `<tr class="mv-r" data-s="${esc(r.s.s)}"><td class="mut">${i + 1}</td><td class="sym"><button class="mv-tg" data-s="${esc(r.s.s)}" aria-expanded="${on}" aria-label="${on ? "Hide" : "Show"} lineage, drivers and sentiment for ${esc(r.s.s)}">${on ? "▾" : "▸"}</button> ${esc(r.s.s)}</td><td class="co mov-co">${esc(r.s.n || "")}</td>
+        <td class="num ${ucls(r.mv)}">${sgn(r.mv)}</td><td class="num" title="Linked companies that moved at least 0.5% in the same direction, of those with a price today (same-industry rivals, marked ≈, are not counted)">${sw.quoted ? `${sw.same} of ${sw.quoted}` : "—"}</td><td class="lk-row">${r.links.map(chip).join("")}</td></tr>${on ? `<tr class="mv-x" data-for="${esc(r.s.s)}"><td colspan="6"></td></tr>` : ""}`;
+    }).join("")}</tbody></table></div>` : '<p class="empty">No big mover has a linked company yet.</p>'}
+    <p class="note">A linked company moving the same way is an association, not proof that one move caused the other. Confirmed links come from the companies' own filings; predicted ones are a statistical model's estimate and are often wrong. Open a company for the evidence. Educational analysis only, not investment advice.</p>`;
+}
 /* called from the page's poll */
-export function refresh() { if (ctx && kind === "shock") patchShocks(); }
+export function refresh() { if (!ctx) return; if (kind === "shock") patchShocks(); else if (kind === "link" && !open.size) renderLinked(ctx.$("#mov-alt")); }
 
 /* ---------- row expansion (all views) ---------- */
 async function ensureDeps() {
-  await Promise.all([alPreload().catch(() => null), loadGraph()]);
+  await Promise.all([alPreload().catch(() => null), loadGraph(), loadCompact()]);
 }
 function expansionHtml(sym) {
   const { esc } = ctx, a = ((ctx.S.aladin || {}).stocks || {})[sym], N = graph ? new Map(graph.nodes.map(n => [n.id, n])) : null;
@@ -137,6 +173,10 @@ function expansionHtml(sym) {
       : `<div class="sec-t">Customers</div>${L.customers.length ? `<ul class="nx-ul">${L.customers.map(e => edgeLine(e, e.d)).join("")}</ul>` : '<p class="mut">None disclosed</p>'}
          <div class="sec-t">Suppliers</div>${L.suppliers.length ? `<ul class="nx-ul">${L.suppliers.map(e => edgeLine(e, e.s)).join("")}</ul>` : '<p class="mut">None disclosed</p>'}
          <div class="sec-t">Component bottlenecks</div>${L.bottlenecks.length ? `<ul class="nx-ul">${L.bottlenecks.map(b => `<li>${esc(b.comp)}: supplied only by ${nm(b.edge.s)} <span class="mut">in the filings read</span></li>`).join("")}</ul>` : '<p class="mut">Not disclosed</p>'}`;
+  }
+  if (compact || graph) {
+    const L = RD.linkedOf(sym, graph || null, compact);
+    if (L.length) lin += `<div class="sec-t">Linked companies today</div><p class="lk-row">${L.map(chip).join("")}</p><p class="mut">Solid: confirmed in a filing. Dashed: ${esc(RD.PRED_LABEL.toLowerCase())}.</p>`;
   }
   const rp = ctx.S.deps && ctx.S.deps.cos ? ctx.S.deps.cos[sym] : null, rt = RD.tag(rp, sym);                 // the revenue-dependency level, where the filings measured it
   if (rt) lin = `<p class="rd-line"><span class="rd-lv ${rt.tone}">${esc(rt.label)}</span> ${esc(RD.plainSentence(rp, sym) || rp.why || "")}</p>` + lin;

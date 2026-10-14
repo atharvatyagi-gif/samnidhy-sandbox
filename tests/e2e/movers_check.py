@@ -62,7 +62,7 @@ def run():
         cells = row.locator("td")
         rv, sw = cells.nth(7).inner_text(), cells.nth(8).inner_text()
         check("a row's Rel vol is a ratio (or a dash) and its Sweep cell explains itself", (rv.endswith("×") or rv == "—") and sw == "—" and "tick program" in (cells.nth(8).get_attribute("title") or ""), [rv, sw])
-        check("the three views are offered, Price & volume is on", pg.locator("#mov-kind button").count() == 3 and pg.get_attribute('#mov-kind [data-k="price"]', "aria-pressed") == "true")
+        check("the four views are offered (Linked companies added 2026-10-14), Price & volume is on", pg.locator("#mov-kind button").count() == 4 and pg.get_attribute('#mov-kind [data-k="price"]', "aria-pressed") == "true")
         check("the supply-chain file and the comparison file are not requested yet", not any(("supply_graph.json" in u or "aladin_moves.json" in u) for u, _ in reqs))
 
         sym = row.get_attribute("data-s")

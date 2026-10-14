@@ -86,3 +86,21 @@ test("predicted links: a filing fragment is not shown as a quote, the filing lin
   const [r] = predList(sh, "A", new Map());
   assert.equal(r.quote, null); assert.equal(r.source, "https://x/a.pdf");
 });
+
+import { linkedOf, sameWay, decodeKinds } from "../../desk-revdeps.js";
+
+test("linked companies: confirmed first with their role, then predicted ones not already confirmed", () => {
+  const graph = { nodes: [{ id: "MARUTI", sym: "MARUTI" }, { id: "GABRIEL", sym: "GABRIEL" }, { id: "ANON_X" }], edges: [{ s: "GABRIEL", d: "MARUTI" }, { s: "MARUTI", d: "ANON_X" }] };
+  const compact = { cos: { MARUTI: [["GABRIEL", "p"], ["BHARATSE", "fb"], ["TVSMOTOR", "br"]] } };
+  const L = linkedOf("MARUTI", graph, compact);
+  assert.deepEqual(L.map(l => [l.sym, l.confirmed, l.role]), [["GABRIEL", true, "supplier"], ["BHARATSE", false, null], ["TVSMOTOR", false, null]]);
+  assert.deepEqual(L[1].kinds, ["filings", "business"]); assert.equal(L[2].rival, true);
+  assert.deepEqual(linkedOf("NONE", null, null), []); assert.deepEqual(decodeKinds("gx"), ["group"]);
+});
+
+test("same-way count needs a real move and counts only partners with a quote", () => {
+  const L = [{ sym: "A" }, { sym: "B" }, { sym: "C" }, { sym: "D" }], mv = { A: 2.1, B: -1.2, C: 0.2 };
+  const r = sameWay(3.4, L, s => mv[s] ?? null);
+  assert.equal(r.same, 1); assert.equal(r.quoted, 3);
+  assert.equal(sameWay(0.1, L, s => mv[s] ?? null).same, 0);
+});
