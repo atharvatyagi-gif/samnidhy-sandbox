@@ -21,7 +21,20 @@ let deps = null;
 const extra = { lanes: null };                                         // trade_lanes.json, fetched for the flight / vessel / hotspot / chokepoint panels
 const MOVING = new Set(["flight", "vessel", "hotspot", "chokepoint"]);
 const cur = { type: null, id: null, tab: "overview" };
-const gst = { tier: 1, side: "both", low: false, view: "graph", hit: [] };
+const gst = { tier: 1, side: "both", low: false, view: "graph", hit: [], pred: true };
+/* Predicted links (pl/index.json + pl/<letter>.json, scripts/nexus_predict.py): model estimates, drawn dashed and labelled "Predicted, not confirmed". */
+const pred = { idx: undefined, shards: new Map() };
+function loadPred(sym) {
+  if (!files().pred || !sym) return;
+  const k = RD.predShard(sym), again = () => { if (cur.type === "company" && RD.predShard(cur.id) === k) draw(); };
+  if (pred.idx === undefined) { pred.idx = null; ctx.getJSON("pl/index.json", false).then(j => { pred.idx = j; again(); }).catch(() => {}); }
+  if (!pred.shards.has(k)) { pred.shards.set(k, "loading"); ctx.getJSON(`pl/${k}.json`, false).then(j => { pred.shards.set(k, j); }).catch(() => { pred.shards.set(k, null); }).finally(again); }
+}
+function predOf(sym) {
+  const sh = pred.shards.get(RD.predShard(sym));
+  if (sh === "loading" || sh === undefined) return null;
+  return RD.predList(sh, sym, new Map([...(ctx.S.map || new Map())].map(([k, v]) => [k, v.n])), 8);
+}
 
 export function init(c) {
   ctx = c;
@@ -101,6 +114,7 @@ function shell() {
     if (el.id === "nx-tier") { gst.tier = +el.value; draw(); }
     else if (el.id === "nx-side") { gst.side = el.value; draw(); }
     else if (el.id === "nx-low") { gst.low = el.checked; draw(); }
+    else if (el.id === "nx-pred") { gst.pred = el.checked; draw(); }
   });
   root.querySelector("#nx-body").addEventListener("click", e => {
     const v = e.target.closest("[data-nx-view]");
@@ -172,6 +186,7 @@ function draw() {
   if (!files().graph && !graph) { body.innerHTML = '<p class="note">The supply-chain data has not been published yet, so there are no dependencies to show. Everything else about this entity stays available in the ALADIN tab.</p>'; return; }
   if (!graph) { body.innerHTML = '<p class="note">The supply-chain data could not be loaded. Try again in a minute.</p>'; return; }
   const t = cur.type;
+  if (t === "company") loadPred(cur.id);
   body.innerHTML = t === "company" ? companyTab() : t === "facility" ? facilityPanel() : t === "edge" ? edgePanel() : placeholderPanel();
   if (t === "company" && cur.tab === "chain") drawGraph(body);
 }
@@ -298,10 +313,24 @@ function profileBlock(sym) {
     ${segs.length ? `<p class="mut" style="margin-top:10px">Revenue by region (current year, from the segment note)</p><div class="rd-geo">${segs.map(g => `<i class="${g.home ? "home" : ""}" style="width:${(g.share * 100).toFixed(1)}%" title="${esc(g.region)} ${(g.share * 100).toFixed(1)}%"></i>`).join("")}</div><div class="rd-geo-l">${segs.map(g => `<span>${esc(g.region)} <b>${(g.share * 100).toFixed(1)}%</b></span>`).join("")}</div>` : ""}
     <p class="mut">Read: supply-chain filings ${esc((p.read.graph || "—").slice(0, 10))}, segment note ${esc((p.read.segment_note || "not yet").slice(0, 10))}. Nothing is estimated: a company that does not disclose stays "Not disclosed".</p>`;
 }
+function predBlock(sym) {
+  const { esc } = ctx;
+  if (!files().pred) return "";
+  const rows = predOf(sym), test = RD.predTestLine(pred.idx);
+  if (rows === null) return `<div class="sec-t">Predicted links</div><p class="note">Loading…</p>`;
+  if (!rows.length) return `<div class="sec-t">Predicted links</div><p class="note">No predicted link has evidence we can show for ${esc(sym)} yet.</p>`;
+  return `<div class="sec-t">Predicted links <span class="tag pl-lab">${esc(RD.PRED_LABEL)}</span></div>
+    <p class="mut">Listed companies a model thinks may do business with ${esc(sym)}, beyond the confirmed links. Which side is the customer is not predicted.</p>
+    <div class="tablecard"><table class="tbl sm"><thead><tr><th>Company</th><th>Evidence</th><th class="r">Move today</th><th>Why</th></tr></thead><tbody>${rows.map(r => `<tr>
+      <td><button class="lnk" data-nexus="company:${esc(r.sym)}">${esc(r.sym)}</button> <span class="mut">${esc(r.name)}</span>${r.rival ? ' <span class="tag warn" title="Same industry: this may be a rival rather than a business partner">may be a rival</span>' : ""}</td>
+      <td>${r.kinds.map(k => `<span class="tag pl-k">${esc(RD.kindLabel(k))}</span>`).join(" ")}</td><td class="r">${move(r.sym)}</td>
+      <td><details class="nx-q"><summary>why</summary><ul class="nx-ul">${r.reasons.map(t => `<li>${esc(t)}</li>`).join("")}</ul>${r.quote ? `<p class="mut">“${esc(r.quote.text.slice(0, 220))}”${r.quote.url ? ` · <a href="${esc(r.quote.url)}" target="_blank" rel="noopener noreferrer">source</a>` : ""}</p>` : ""}</details></td></tr>`).join("")}</tbody></table></div>
+    ${test ? `<p class="mut">${esc(test)}</p>` : ""}`;
+}
 function depsTab() {
   const { esc } = ctx, sym = cur.id, es = edgesOf(sym).filter(e => gst.low || e.conf >= minConf());
   const sh = new Map(((shocks || {}).shocks || []).map(s => [s.edge, s]));
-  if (!es.length) return profileBlock(sym) + `<div class="sec-t">Named customers and suppliers</div><p class="note">Not measured: no named customer or supplier of ${esc(sym)} is disclosed in the filings read so far. ${esc(covLine(sym))}</p>`;
+  if (!es.length) return profileBlock(sym) + `<div class="sec-t">Named customers and suppliers</div><p class="note">Not measured: no named customer or supplier of ${esc(sym)} is disclosed in the filings read so far. ${esc(covLine(sym))}</p>` + predBlock(sym);
   const rows = es.slice().sort((p, q) => (q.w || 0) - (p.w || 0) || q.conf - p.conf).map(e => {
     const up = e.d === sym, cp = up ? e.s : e.d, cn = nodeOf(cp), listed = cn && cn.k === "co";
     const s = sh.get(e.id);
@@ -311,7 +340,7 @@ function depsTab() {
   }).join("");
   return profileBlock(sym) + `<div class="sec-t">Named customers and suppliers</div><label class="nx-chk"><input type="checkbox" id="nx-low" ${gst.low ? "checked" : ""}> Include low-confidence links (below ${minConf()})</label>
     <div class="tablecard"><table class="tbl sm"><thead><tr><th>Role</th><th>Counterparty</th><th>Link</th><th>Share</th><th>Period</th><th class="r">Conf</th><th class="r">Move today</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="mut">A share is the supplier's revenue share for customers and the customer's purchase share for suppliers; the two are never mixed. Association, not proof of cause.</p>`;
+    <p class="mut">A share is the supplier's revenue share for customers and the customer's purchase share for suppliers; the two are never mixed. Association, not proof of cause.</p>` + predBlock(sym);
 }
 
 function quantTab() {
@@ -344,10 +373,11 @@ function chainTab() {
   const ctl = `<div class="controls nx-ctl"><label>Depth <select id="nx-tier"><option value="1" ${gst.tier === 1 ? "selected" : ""}>Tier 1</option><option value="2" ${gst.tier === 2 ? "selected" : ""}>Tier 2</option><option value="3" ${gst.tier === 3 ? "selected" : ""}>Tier 3</option></select></label>
     <label>Show <select id="nx-side"><option value="both" ${gst.side === "both" ? "selected" : ""}>Suppliers and customers</option><option value="suppliers" ${gst.side === "suppliers" ? "selected" : ""}>Suppliers</option><option value="customers" ${gst.side === "customers" ? "selected" : ""}>Customers</option></select></label>
     <label class="nx-chk"><input type="checkbox" id="nx-low" ${gst.low ? "checked" : ""}> Include low-confidence links</label>
+    ${files().pred ? `<label class="nx-chk"><input type="checkbox" id="nx-pred" ${gst.pred ? "checked" : ""}> Predicted links (dashed)</label>` : ""}
     <span class="seg"><button class="${gst.view === "graph" ? "on" : ""}" data-nx-view="graph">Graph</button><button class="${gst.view === "table" ? "on" : ""}" data-nx-view="table">Table</button></span></div>`;
-  const g = buildGraph(sym);
-  if (!g.edges.length) return `${ctl}<p class="note">Not measured: no dependency of ${esc(sym)} is disclosed in the filings read so far. ${esc(covLine(sym))} Deeper tiers: not disclosed.</p>`;
-  const note = `<p class="mut">Left: suppliers. Right: customers. Line width = disclosed share; gold ring = at least 10%; dashed = low confidence; hollow = unlisted or unnamed. ${g.more ? `${g.more} more not drawn. ` : ""}Beyond what listed companies disclose: not disclosed.</p>`;
+  const g = buildGraph(sym), pr = gst.pred ? predOf(sym) || [] : [];
+  if (!g.edges.length && !pr.length) return `${ctl}<p class="note">Not measured: no dependency of ${esc(sym)} is disclosed in the filings read so far. ${esc(covLine(sym))} Deeper tiers: not disclosed.</p>`;
+  const note = `<p class="mut">Left: suppliers. Right: customers. Line width = disclosed share; gold ring = at least 10%; dashed = low confidence; hollow = unlisted or unnamed. ${pr.length ? `Fine dashes and dashed rings in the middle column: ${esc(RD.PRED_LABEL.toLowerCase())} links (a model's estimate; which side is the customer is not predicted; hover for the evidence). ` : ""}${g.more ? `${g.more} more not drawn. ` : ""}Beyond what listed companies disclose: not disclosed.</p>`;
   return ctl + (gst.view === "graph" ? `<div class="nx-gwrap"><canvas id="nx-canvas" aria-hidden="true"></canvas><div class="nx-tip" id="nx-tip" hidden></div></div>${note}` : "") + tableOf(g, sym);
 }
 function buildGraph(focal) {
@@ -388,14 +418,16 @@ function drawGraph(body) {
   if (!cv) return;
   const focal = cur.id, g = buildGraph(focal), tip = body.querySelector("#nx-tip");
   const dpr = window.devicePixelRatio || 1, W = cv.parentElement.clientWidth || 560;
+  const pr = (gst.pred ? predOf(focal) || [] : []).filter(r => !g.lvl.has(r.sym)), prBy = new Map(pr.map(r => [r.sym, r]));
   const levels = new Map();
   for (const [id, L] of g.lvl) { if (!levels.has(L)) levels.set(L, []); levels.get(L).push(id); }
+  if (pr.length) { const mid = pr.map(r => r.sym), half = Math.ceil(mid.length / 2); levels.set(0, [...mid.slice(0, half), focal, ...mid.slice(half)]); }
   const ks = [...levels.keys()].sort((a, b) => a - b), rowMax = Math.max(...[...levels.values()].map(v => v.length));
   const H = Math.max(260, Math.min(720, 60 + rowMax * 34));
   cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px";
   const c = cv.getContext("2d"); c.scale(dpr, dpr); c.clearRect(0, 0, W, H);
   const pos = new Map(), colW = ks.length > 1 ? (W - 120) / (ks.length - 1) : 0;
-  ks.forEach((L, i) => { const ids = levels.get(L).sort((a, b) => nameOf(a).localeCompare(nameOf(b))); ids.forEach((id, j) => pos.set(id, { x: ks.length > 1 ? 60 + i * colW : W / 2, y: (j + 1) * H / (ids.length + 1) })); });
+  ks.forEach((L, i) => { const ids = L === 0 ? levels.get(L) : levels.get(L).sort((a, b) => nameOf(a).localeCompare(nameOf(b))); ids.forEach((id, j) => pos.set(id, { x: ks.length > 1 ? 60 + i * colW : W / 2, y: (j + 1) * H / (ids.length + 1) })); });
   const acc = css("--acc"), gold = css("--gold"), ink = css("--ink-2"), ink4 = css("--ink-4"), rule = css("--rule-2"), down = css("--down"), card = css("--card");
   g.hit = [];
   for (const e of g.edges) {
@@ -404,9 +436,18 @@ function drawGraph(body) {
     c.strokeStyle = e.w != null && e.w >= 0.10 ? gold : rule; c.lineWidth = 1 + (e.w || 0) * 8; c.setLineDash(e.conf < minConf() ? [4, 4] : []); c.stroke(); c.setLineDash([]);
     if (e.w != null && e.w >= 0.10) { c.fillStyle = gold; c.font = "10px sans-serif"; c.fillText(`${Math.round(e.w * 100)}% · conf ${e.conf.toFixed(1)}`, (a.x + b.x) / 2 - 20, (a.y + b.y) / 2 - 4); }
   }
+  for (const r of pr) {                                       // predicted: fine dashes, never a share or a direction
+    const a = pos.get(focal), b = pos.get(r.sym); if (!a || !b) continue;
+    c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.strokeStyle = ink4; c.lineWidth = 1; c.setLineDash([2, 4]); c.stroke(); c.setLineDash([]);
+  }
   const items = [];
   for (const [id, p] of pos) {
     const n = nodeOf(id), listed = n && n.k === "co", r = id === focal ? 11 : 7;
+    if (prBy.has(id)) {
+      c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.fillStyle = card; c.fill(); c.strokeStyle = ink; c.lineWidth = 1.5; c.setLineDash([3, 3]); c.stroke(); c.setLineDash([]);
+      c.fillStyle = ink; c.font = "11px sans-serif"; c.textAlign = p.x > W - 100 ? "right" : "left"; c.fillText(id, p.x + (p.x > W - 100 ? -r - 4 : r + 4), p.y + 4);
+      items.push({ id, x: p.x, y: p.y, r: r + 4, pred: prBy.get(id) }); continue;
+    }
     c.beginPath(); c.arc(p.x, p.y, r, 0, 7);
     if (listed || id === focal) { c.fillStyle = id === focal ? acc : ink; c.fill(); } else { c.fillStyle = card; c.fill(); c.strokeStyle = n && n.k === "anon" ? down : ink4; c.lineWidth = 1.5; c.stroke(); }
     c.fillStyle = ink; c.font = "11px sans-serif";
@@ -421,6 +462,11 @@ function drawGraph(body) {
     const rc = cv.getBoundingClientRect(), it = at(ev.clientX - rc.left, ev.clientY - rc.top);
     cv.style.cursor = it ? "pointer" : "default";
     if (!it) { tip.hidden = true; return; }
+    if (it.pred) {
+      const r = it.pred;
+      tip.innerHTML = `<b>${ctx.esc(r.name)}</b><br><span class="mut">${ctx.esc(RD.PRED_LABEL)} · ${ctx.esc(r.kinds.map(RD.kindLabel).join(" · "))}${r.rival ? " · may be a rival" : ""}</span>${r.reasons[0] ? `<br>${ctx.esc(r.reasons[0])}` : ""}`;
+      tip.hidden = false; tip.style.left = Math.min(ev.clientX - rc.left + 12, W - 240) + "px"; tip.style.top = (ev.clientY - rc.top + 12) + "px"; return;
+    }
     const ed = g.edges.filter(e => e.s === it.id || e.d === it.id).sort((p, q) => (q.w || 0) - (p.w || 0))[0];
     const n = nodeOf(it.id);
     tip.innerHTML = `<b>${ctx.esc((n && n.n) || it.id)}</b><br><span class="mut">${ctx.esc(KIND[(n || {}).k] || "")}</span>${ed ? `<br>“${ctx.esc(ed.q.length > 150 ? ed.q.slice(0, 149) + "…" : ed.q)}”` : ""}`;
@@ -430,7 +476,7 @@ function drawGraph(body) {
   cv.onclick = ev => {
     const rc = cv.getBoundingClientRect(), it = at(ev.clientX - rc.left, ev.clientY - rc.top);
     const n = it && nodeOf(it.id);
-    if (it && it.id !== focal && n && n.k === "co") openNexus({ type: "company", id: it.id, tab: "chain" });
+    if (it && it.id !== focal && ((n && n.k === "co") || it.pred)) openNexus({ type: "company", id: it.id, tab: "chain" });
   };
 }
 

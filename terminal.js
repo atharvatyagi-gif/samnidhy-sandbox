@@ -985,12 +985,42 @@ function setSide(v) {
     const h = $("#watch-h"); h.classList.remove("flash"); void h.offsetWidth; h.classList.add("flash"); return;
   }
   side = v;
-  $$("#rail-tabs button").forEach(b => b.classList.toggle("on", b.dataset.side === v));
+  $$("#rail-tabs button[data-side]").forEach(b => b.classList.toggle("on", b.dataset.side === v));
   $$(".rail-view").forEach(el => el.hidden = el.dataset.side !== v);
   if (v === "prints") renderPrints();
   if (v === "details") renderDetails();
 }
-$$("#rail-tabs button").forEach(b => b.onclick = () => setSide(b.dataset.side));
+$$("#rail-tabs button[data-side]").forEach(b => b.onclick = () => setSide(b.dataset.side));
+
+/* Resizable terminal: the rail's width (drag its left edge) and the watchlist's height (drag the bar under it). Arrow keys move
+   them too, double-click resets, and the sizes are remembered on this device. The chart follows on its own (autoSize). */
+(function resizers() {
+  const term = $("#v-terminal .term"), rail = $("#v-terminal .rail"), gv = $("#g-rail"), gh = $("#g-watch"), wide = $("#rail-wide");
+  if (!term || !rail || !gv || !gh) return;
+  const RAIL0 = 400;
+  const railMax = () => Math.max(RAIL0, Math.round((term.clientWidth || innerWidth) * 0.7));          // hidden view (width 0): judge by the window
+  const setRail = w => { w = Math.round(Math.min(railMax(), Math.max(280, w))); term.style.setProperty("--rail-w", w + "px"); wide.setAttribute("aria-pressed", String(w > 600)); gv.setAttribute("aria-valuenow", String(w)); return w; };
+  const setWatch = h => { const max = (rail.clientHeight || innerHeight - 160) - 140; h = Math.round(Math.min(Math.max(60, max), Math.max(60, h))); rail.style.setProperty("--watch-h", h + "px"); gh.setAttribute("aria-valuenow", String(h)); return h; };
+  const saved = LS.get("blab-term-size", {});
+  if (saved.rail) setRail(saved.rail);
+  if (saved.watch) setWatch(saved.watch);
+  const save = () => LS.set("blab-term-size", { rail: parseInt(term.style.getPropertyValue("--rail-w")) || null, watch: parseInt(rail.style.getPropertyValue("--watch-h")) || null });
+  const drag = (g, axis, onMove) => {
+    g.addEventListener("pointerdown", e => {
+      e.preventDefault(); g.setPointerCapture(e.pointerId); g.classList.add("drag"); document.body.classList.add("resizing", axis === "x" ? "rs-v" : "rs-h");
+      const mv = ev => onMove(ev), up = () => { g.classList.remove("drag"); document.body.classList.remove("resizing", "rs-v", "rs-h"); g.removeEventListener("pointermove", mv); g.removeEventListener("pointerup", up); save(); };
+      g.addEventListener("pointermove", mv); g.addEventListener("pointerup", up);
+    });
+  };
+  drag(gv, "x", ev => setRail(term.getBoundingClientRect().right - ev.clientX));
+  drag(gh, "y", ev => setWatch(ev.clientY - $("#v-terminal .rail-watch").getBoundingClientRect().top + $("#watch-h").offsetHeight));
+  const cur = () => rail.getBoundingClientRect().width, curH = () => $("#v-terminal .rail-watch").getBoundingClientRect().height + $("#watch-h").offsetHeight;
+  gv.addEventListener("keydown", e => { const d = { ArrowLeft: 24, ArrowRight: -24 }[e.key]; if (d) { e.preventDefault(); setRail(cur() + d); save(); } });
+  gh.addEventListener("keydown", e => { const d = { ArrowUp: -24, ArrowDown: 24 }[e.key]; if (d) { e.preventDefault(); setWatch(curH() + d); save(); } });
+  gv.addEventListener("dblclick", () => { term.style.removeProperty("--rail-w"); wide.setAttribute("aria-pressed", "false"); save(); });
+  gh.addEventListener("dblclick", () => { rail.style.removeProperty("--watch-h"); save(); });
+  wide.onclick = () => { if (cur() > 600) { term.style.removeProperty("--rail-w"); wide.setAttribute("aria-pressed", "false"); } else setRail(term.clientWidth * 0.5); save(); };
+})();
 function loadWatch() {
   const w = LS.get("blab-watch", null);
   if (Array.isArray(w)) return w.filter(s => S.map.has(s));
@@ -1070,30 +1100,45 @@ function renderDetails() {
   const f = S.fund ? (S.fund[sec] || null) : undefined, pick = (S.screen.picks || []).find(p => p.symbol === sec);
   const stat = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`, perf = perfFrom(sec);
   const a2old = $("#a2-brief");
-  let html = `${A2.wrap(sec)}<div class="sec-t">Ranges</div>${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}${outlookHtml(sec)}${Aladin.renderAladinMini(sec)}${analysisHtml(sec)}
-    <div class="sec-t">Key stats</div><div class="stats">${stat("Open", inr(x.o))}${stat("Prev close", inr(x.pc))}${stat("Volume", big(x.v))}${stat("Avg vol 20D", big(s.avgv20))}
+  // Details is folded into named sections (open/closed remembered per section); a jump bar at the top; two columns when the rail is wide.
+  const statsHtml = `<div class="stats">${stat("Open", inr(x.o))}${stat("Prev close", inr(x.pc))}${stat("Volume", big(x.v))}${stat("Avg vol 20D", big(s.avgv20))}
       ${stat("Value", x.v != null ? cr(x.v * x.p / 1e7) : "--")}${stat("Delivery", s.deliv == null ? "--" : s.deliv.toFixed(1) + "%")}
       ${f ? stat("Market cap", f.mcap ? cr(f.mcap / 1e7) : "--") + stat("P/E", f.pe ? f.pe.toFixed(1) : "--") + stat("EPS", f.eps != null ? "₹" + inr(f.eps) : "--") + stat("Div yield", f.dy != null ? f.dy.toFixed(2) + "%" : "--")
         + stat("P/B", f.pb ? f.pb.toFixed(2) : "--") + stat("Beta", f.beta != null ? f.beta.toFixed(2) : "--") + stat("ROE", pctF(f.roe)) + stat("Debt/eq", f.de != null ? (f.de / 100).toFixed(2) : "--") : ""}</div>`;
-  html += revDepsHtml(sec) + predHtml(sec);
-  if (perf) html += `<div class="sec-t">Performance</div><div class="perf">${perf.map(([k, v]) => `<div class="${v == null ? "" : v >= 0 ? "pu" : "pd"}"><span>${k}</span><b class="${ud(v)}">${v == null ? "--" : sg(v, 1) + "%"}</b></div>`).join("")}</div>`;
+  let analyst = "";
   if (f && (f.rec || f.est)) {
     const pos = { strongly_positive: 95, positive: 75, neutral: 50, negative: 25, strongly_negative: 5 }[f.rec] ?? 50, up = f.est ? (f.est / x.p - 1) * 100 : null;
-    html += `<div class="sec-t">Analyst view</div><div class="gauge"><i style="left:calc(${pos}% - 2px)"></i></div><div class="g-l"><span>Negative</span><span>Neutral</span><span>Positive</span></div>
+    analyst = `<div class="gauge"><i style="left:calc(${pos}% - 2px)"></i></div><div class="g-l"><span>Negative</span><span>Neutral</span><span>Positive</span></div>
       <div class="stats" style="margin-top:10px">${stat("Consensus", f.rec ? REC[f.rec] || f.rec : "--")}${stat("Analysts", f.an ?? "--")}${stat("Price estimate", f.est ? "₹" + inr(f.est, 0) : "--")}${stat("Upside", up == null ? "--" : `<span class="${ud(up)}">${sg(up, 1)}%</span>`)}</div>
       <p class="note">12-month analyst price estimates (Yahoo Finance). On average analysts are too optimistic.</p>`;
   }
-  if (pick) html += `<div class="sec-t">B-Lab screen</div><div class="stats">${stat("Magic rank", "#" + pick.magic_rank + " of " + pick.of)}${stat("F-Score", pick.fscore + "/9")}${stat("Ret. on capital", pctF(pick.roc))}${stat("Earn. yield", pctF(pick.earnings_yield))}</div>`;
-  html += `<div class="sec-t">Profile</div>`;
-  if (f === undefined) html += `<p class="note">Loading…</p>`;
-  else if (f) html += `<div class="stats">${stat("Sector", esc(f.sector || "--"))}${stat("Employees", f.emp ? Math.round(f.emp).toLocaleString("en-IN") : "--")}${stat("ISIN", esc(s.isin || "--"))}${stat("Listed", esc(s.listed || "--"))}</div>
+  const screen = pick ? `<div class="stats">${stat("Magic rank", "#" + pick.magic_rank + " of " + pick.of)}${stat("F-Score", pick.fscore + "/9")}${stat("Ret. on capital", pctF(pick.roc))}${stat("Earn. yield", pctF(pick.earnings_yield))}</div>` : "";
+  let profile;
+  if (f === undefined) profile = `<p class="note">Loading…</p>`;
+  else if (f) profile = `<div class="stats">${stat("Sector", esc(f.sector || "--"))}${stat("Employees", f.emp ? Math.round(f.emp).toLocaleString("en-IN") : "--")}${stat("ISIN", esc(s.isin || "--"))}${stat("Listed", esc(s.listed || "--"))}</div>
       ${f.desc ? `<p class="desc ${descOpen ? "" : "clamp"}">${esc(f.desc)}</p><button class="more" id="more">${descOpen ? "Show less" : "Show more"}</button>` : ""}${f.web ? `<p class="note">${esc(f.web)}</p>` : ""}`;
-  else html += `<div class="stats">${stat("ISIN", esc(s.isin || "--"))}${stat("Listed", esc(s.listed || "--"))}${stat("Series", esc(s.series))}${stat("Board", esc(s.board))}</div>
+  else profile = `<div class="stats">${stat("ISIN", esc(s.isin || "--"))}${stat("Listed", esc(s.listed || "--"))}${stat("Series", esc(s.series))}${stat("Board", esc(s.board))}</div>
       <p class="note">${s.etf ? `${esc(sec)} is an exchange-traded fund, not a company.` : `Company fundamentals are loaded for NIFTY 500 companies; ${esc(sec)} is outside it.`} Only NSE's official trading data is shown. Nothing is estimated.</p>`;
+  const perfHtml = perf ? `<div class="perf">${perf.map(([k, v]) => `<div class="${v == null ? "" : v >= 0 ? "pu" : "pd"}"><span>${k}</span><b class="${ud(v)}">${v == null ? "--" : sg(v, 1) + "%"}</b></div>`).join("")}</div>` : "";
+  const sections = [
+    ["overview", "Overview", `${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}<div class="sec-t">Key stats</div>${statsHtml}${perfHtml ? `<div class="sec-t">Performance</div>${perfHtml}` : ""}`],
+    ["aladin", "ALADIN & signals", `${A2.wrap(sec)}${outlookHtml(sec)}${Aladin.renderAladinMini(sec)}${analysisHtml(sec)}`],
+    ["revenue", "Revenue & links", revDepsHtml(sec) + predHtml(sec)],
+    ["analyst", "Analyst view", analyst],
+    ["screen", "B-Lab screen", screen],
+    ["profile", "Profile", profile],
+  ].filter(r => r[2] && r[2].trim());
+  const closed = LS.get("blab-dsec-closed", []);
+  let html = `<nav class="dnav" aria-label="Details sections">${sections.map(([k, t]) => `<button data-djump="${k}">${esc(t)}</button>`).join("")}</nav>
+    <div class="dgrid">${sections.map(([k, t, body]) => `<details class="dsec" id="dsec-${k}" data-k="${k}"${closed.includes(k) ? "" : " open"}><summary>${esc(t)}</summary><div class="dbody">${body}</div></details>`).join("")}</div>`;
   $("#details").innerHTML = html;
   { const nw = $("#a2-brief"); if (nw) { if (a2old && a2old.dataset.sig === nw.dataset.sig && a2old.dataset.sym === nw.dataset.sym) nw.replaceWith(a2old); else A2.bind(nw, sec); } }
   const more = $("#more"); if (more) more.onclick = () => { descOpen = !descOpen; renderDetails(); };
   $$("#details [data-pl]").forEach(b => b.onclick = () => openSec(b.dataset.pl));
+  $$("#details .dsec").forEach(d => d.addEventListener("toggle", () => {
+    const c = new Set(LS.get("blab-dsec-closed", [])); d.open ? c.delete(d.dataset.k) : c.add(d.dataset.k); LS.set("blab-dsec-closed", [...c]);
+  }));
+  $$("#details [data-djump]").forEach(b => b.onclick = () => { const d = $("#dsec-" + b.dataset.djump); if (!d) return; d.open = true; d.scrollIntoView({ block: "start", behavior: "smooth" }); });
   $$("#details [data-rec]").forEach(bt => bt.onclick = () => { const r = eng.suggested[+bt.dataset.rec]; if (!r) return; r.add.forEach(([id, p]) => eng.addIndicator(id, p)); go("terminal"); });
 }
 /* Revenue dependency (dependencies.json, scripts/dependency_profile.py): how much of the company's revenue rests on single customers, and on exports */

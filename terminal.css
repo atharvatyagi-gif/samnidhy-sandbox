@@ -30,6 +30,8 @@
   --mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Consolas, monospace;
   --r: 6px;                  /* inputs / buttons */
   --r-card: 12px;            /* cards / dialogs */
+  --rail-w: 400px;           /* terminal side panel width (drag its edge; terminal.js remembers it) */
+  --watch-h: 38%;            /* terminal watchlist height (drag the bar under it) */
   color-scheme: dark;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1172,3 +1174,45 @@ html.sg-lock, html.sg-lock body { overflow: hidden; }
 .rd-geo i.home { background: var(--up); }
 .rd-geo-l { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 12px; color: var(--ink-2); }
 .rd-geo-l b { color: var(--ink); font-family: var(--mono); }
+
+/* ---------- Details: named, foldable sections; jump bar; two columns when the rail is wide ---------- */
+.details { padding: 0; container: details / inline-size; font-size: 13.5px; line-height: 1.5; }
+.dnav { position: sticky; top: 0; z-index: 2; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 8px 12px; background: var(--card); border-bottom: 1px solid var(--rule); }
+.dnav button { flex: none; padding: 4px 10px; border: 1px solid var(--rule-2); border-radius: 999px; font: 500 11.5px var(--sans); color: var(--ink-2); white-space: nowrap; }
+.dnav button:hover, .dnav button:focus-visible { color: var(--ink); border-color: var(--acc-edge); }
+.dgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 10px 12px 16px; }
+.dsec { border: 1px solid var(--rule); border-radius: var(--r-card); background: var(--card); scroll-margin-top: 48px; min-width: 0; }
+.dsec > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; font: 600 12px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
+.dsec > summary::-webkit-details-marker { display: none; }
+.dsec > summary::after { content: "–"; color: var(--ink-3); font-size: 16px; }
+.dsec:not([open]) > summary::after { content: "+"; }
+.dsec > summary:hover { background: var(--card-hover); border-radius: var(--r-card); }
+.dbody { padding: 2px 14px 14px; min-width: 0; overflow-wrap: break-word; container: dsec / inline-size; }
+.dbody .sec-t { margin: 14px 0 6px; color: var(--ink-2); font-size: 10.5px; }
+.dbody > .sec-t:first-child, .dbody > :first-child .sec-t:first-child { margin-top: 4px; }
+.dbody .stats div { font-size: 13px; padding: 8px 10px; }
+.dbody .note { font-size: 12.5px; }
+.dbody .stats div:nth-child(odd) { border-right: 1px solid var(--rule); }
+@container dsec (max-width: 400px) {
+  .dbody .stats { grid-template-columns: minmax(0, 1fr); }
+  .dbody .stats div:nth-child(odd) { border-right: 0; }
+}
+@container details (min-width: 640px) {                     /* wide rail: sections flow in newspaper columns, no gaps */
+  .dgrid { display: block; columns: 2 300px; column-gap: 10px; }
+  .dsec { break-inside: avoid; margin-bottom: 10px; display: block; }
+}
+@container details (min-width: 1000px) { .dgrid { columns: 3 300px; } }
+
+/* ---------- Resizable terminal: drag the rail's left edge (width) and the bar under the watchlist (height) ---------- */
+
+@media (min-width: 1001px) { .term:not(.focus) { grid-template-columns: 46px minmax(0, 1fr) var(--rail-w); } }
+.rail { position: relative; }
+@media (min-width: 1001px) { .rail-watch { flex-basis: var(--watch-h, 38%); } }
+.gutter { flex: none; background: transparent; touch-action: none; z-index: 5; }
+.gutter:hover, .gutter:focus-visible, .gutter.drag { background: var(--acc-edge); outline: none; }
+.gutter-v { position: absolute; left: -3px; top: 0; bottom: 0; width: 6px; cursor: col-resize; }
+.gutter-h { height: 6px; margin: -3px 0; position: relative; cursor: row-resize; }
+body.resizing, body.resizing * { cursor: inherit; user-select: none; }
+body.resizing.rs-v { cursor: col-resize; } body.resizing.rs-h { cursor: row-resize; }
+.rail-tabs .rail-wide { flex: none; width: 40px; font-size: 14px; letter-spacing: 0; }
+@media (max-width: 1000px) { .gutter, .rail-tabs .rail-wide { display: none; } }

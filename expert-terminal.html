@@ -170,12 +170,14 @@
         </div>
 
         <aside class="rail">
+          <div class="gutter gutter-v" id="g-rail" role="separator" aria-orientation="vertical" aria-label="Resize the side panel (drag, or use the arrow keys; double-click to reset)" tabindex="0"></div>
           <div class="rail-h" id="watch-h"><span>Watchlist</span><button class="btn-line sm" id="wl-add" title="Add a stock to the watchlist">+ Add</button></div>
           <div class="rail-watch">
             <div class="wl-cols"><span>Symbol</span><span>Last</span><span>Chg%</span></div>
             <div class="wl" id="watch"></div>
           </div>
-          <div class="rail-tabs" id="rail-tabs"><button data-side="details" class="on">Details</button><button data-side="prints">Prints</button></div>
+          <div class="gutter gutter-h" id="g-watch" role="separator" aria-orientation="horizontal" aria-label="Resize the watchlist (drag, or use the arrow keys; double-click to reset)" tabindex="0"></div>
+          <div class="rail-tabs" id="rail-tabs"><button data-side="details" class="on">Details</button><button data-side="prints">Prints</button><button class="rail-wide" id="rail-wide" title="Widen the side panel" aria-pressed="false">⇔</button></div>
           <div class="rail-view" data-side="details"><div class="details" id="details"></div></div>
           <div class="rail-view" data-side="prints" hidden><div class="prints-wrap" id="prints"></div></div>
         </aside>
