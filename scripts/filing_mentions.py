@@ -227,10 +227,14 @@ def download_new(todo, matcher, names, state, limit, log=print, session=None, ge
         url, per = r["fileName"], f"FY{r['fromYr']}-{str(r['toYr'])[-2:]}"
         try:
             raw = get_pdf(url)
-            pages = pdf_pages(raw) if raw else []
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001 - network trouble: retried next run
             log(f"  {sym}: download failed ({str(e)[:60]}); retried next run")
             continue
+        try:
+            pages = pdf_pages(raw) if raw else []
+        except Exception as e:  # noqa: BLE001 - a damaged PDF stays damaged: recorded, not retried every night
+            log(f"  {sym}: unreadable PDF ({str(e)[:60]})")
+            pages = []
         if not pages:
             state["done"][sym] = {"at": today, "url": url, "none": "report too large or unreadable"}
             continue

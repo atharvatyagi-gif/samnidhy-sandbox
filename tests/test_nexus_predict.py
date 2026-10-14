@@ -100,3 +100,23 @@ def test_test_protocol_finds_a_planted_signal_and_beats_chance():
     readv = np.ones(N, bool)
     res, oof = NP.evaluate(F, linked, readv, N, ind, 0, np.array([0]), np.random.default_rng(0))
     assert res["hit10"] > 0.9 and res["random_hit10"] < 0.06 and len(oof) == res["tests"]
+
+
+def test_a_damaged_pdf_is_recorded_once_and_a_network_error_is_retried(monkeypatch):
+    import revenue_graph_builder as RGB
+    monkeypatch.setattr(RGB, "pdf_pages", lambda raw: (_ for _ in ()).throw(ValueError("Invalid object in /Pages")))
+    monkeypatch.setattr(FM.time, "sleep", lambda s: None)
+
+    class Sess:
+        def get_json(self, *a, **k):
+            return {"data": [{"fileName": "https://x/AR_1_AAA_2025_2026_A.pdf", "fromYr": "2025", "toYr": "2026"}]}
+    state = {"m": {}, "done": {}}
+    m = FM.Matcher(STOCKS)
+    FM.download_new(["AAA"], m, {}, state, 5, log=lambda *a: None, session=Sess(), get_pdf=lambda u: b"%PDF")
+    assert state["done"]["AAA"]["none"] == "report too large or unreadable"
+
+    def boom(u):
+        raise ConnectionError("reset")
+    state2 = {"m": {}, "done": {}}
+    FM.download_new(["BBB"], m, {}, state2, 5, log=lambda *a: None, session=Sess(), get_pdf=boom)
+    assert "BBB" not in state2["done"]
