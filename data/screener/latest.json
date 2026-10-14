@@ -1437,9 +1437,9 @@
    1.11073
   ]
  },
- "generated_utc": "2026-10-14T02:03:22+00:00",
- "generated_ist": "14 Oct 2026, 07:33 AM IST",
- "screened_ist": "14 Oct 2026, 07:33 AM IST",
+ "generated_utc": "2026-10-14T03:34:05+00:00",
+ "generated_ist": "14 Oct 2026, 09:04 AM IST",
+ "screened_ist": "14 Oct 2026, 09:04 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1469,11 +1469,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 280
+   "count": 274
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 159
+   "count": 158
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1484,11 +1484,11 @@
   "0": 0,
   "1": 0,
   "2": 3,
-  "3": 19,
+  "3": 18,
   "4": 34,
-  "5": 65,
+  "5": 61,
   "6": 71,
-  "7": 45,
+  "7": 44,
   "8": 28,
   "9": 15
  },
@@ -1507,6 +1507,12 @@
    "INFY"
   ],
   "download failed (YFRateLimitError)": [
+   "STLTECH",
+   "SUMICHEM",
+   "SUNPHARMA",
+   "SUNTV",
+   "SUPREMEIND",
+   "SWANCORP",
    "SWIGGY",
    "SYNGENE",
    "SYRMA",
@@ -1614,7 +1620,7 @@
    "magic_rank": 1,
    "rank_roc": 9,
    "rank_ey": 9,
-   "of": 159
+   "of": 158
   },
   {
    "symbol": "INDIAMART",
@@ -1667,7 +1673,7 @@
    "magic_rank": 2,
    "rank_roc": 1,
    "rank_ey": 18,
-   "of": 159
+   "of": 158
   },
   {
    "symbol": "BLS",
@@ -1720,7 +1726,7 @@
    "magic_rank": 3,
    "rank_roc": 11,
    "rank_ey": 14,
-   "of": 159
+   "of": 158
   },
   {
    "symbol": "CASTROLIND",
@@ -1773,7 +1779,7 @@
    "magic_rank": 4,
    "rank_roc": 5,
    "rank_ey": 30,
-   "of": 159
+   "of": 158
   },
   {
    "symbol": "NBCC",
@@ -1807,7 +1813,7 @@
    "pb": 6.9393253,
    "roe": null,
    "debt_to_equity": 0.008,
-   "dividend_yield": 1.24,
+   "dividend_yield": 1.22,
    "held_institutions": 0.14513,
    "held_insiders": 0.61754,
    "analysts": 1,
@@ -1826,7 +1832,7 @@
    "magic_rank": 5,
    "rank_roc": 10,
    "rank_ey": 26,
-   "of": 159
+   "of": 158
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1860,7 +1866,7 @@
    "pb": 4.6269937,
    "roe": null,
    "debt_to_equity": 3.57,
-   "dividend_yield": 3.75,
+   "dividend_yield": 3.7,
    "held_institutions": 0.37893,
    "held_insiders": 0.37236,
    "analysts": 36,
@@ -1879,7 +1885,7 @@
    "magic_rank": 6,
    "rank_roc": 18,
    "rank_ey": 19,
-   "of": 159
+   "of": 158
   },
   {
    "symbol": "ENGINERSIN",
@@ -1913,7 +1919,7 @@
    "pb": 5.168831,
    "roe": null,
    "debt_to_equity": 0.534,
-   "dividend_yield": 1.69,
+   "dividend_yield": 1.73,
    "held_institutions": 0.17878,
    "held_insiders": 0.51366,
    "analysts": 6,
@@ -1932,7 +1938,7 @@
    "magic_rank": 7,
    "rank_roc": 6,
    "rank_ey": 38,
-   "of": 159
+   "of": 158
   },
   {
    "symbol": "NATIONALUM",
@@ -1966,7 +1972,7 @@
    "pb": 2.7284548,
    "roe": null,
    "debt_to_equity": 0.277,
-   "dividend_yield": 1.29,
+   "dividend_yield": 1.25,
    "held_institutions": 0.21911,
    "held_insiders": 0.51278,
    "analysts": 13,
@@ -1985,7 +1991,7 @@
    "magic_rank": 8,
    "rank_roc": 41,
    "rank_ey": 7,
-   "of": 159
+   "of": 158
   },
   {
    "symbol": "HINDZINC",
@@ -2038,7 +2044,7 @@
    "magic_rank": 9,
    "rank_roc": 29,
    "rank_ey": 20,
-   "of": 159
+   "of": 158
   },
   {
    "symbol": "FORCEMOT",
@@ -2091,7 +2097,7 @@
    "magic_rank": 10,
    "rank_roc": 27,
    "rank_ey": 27,
-   "of": 159
+   "of": 158
   }
  ]
 }
