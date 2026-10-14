@@ -24,6 +24,10 @@ GATES (judged ONCE on 2013-01 to 2026-09; the current bot v3 is replayed with th
   5  shorts     the short side's own net P/L after its costs is positive; if not, the SAME rules without shorts (v3 + protective stop) are judged
                 instead, once, and the record says so.
   All pass -> the live paper account switches to these rules (rule v4, written into the rule history). Any fail -> v3 stays and this report is published.
+
+ROUND 2 RESULT (2026-10-14): FAIL. Shorts lost Rs 6.75 lakh after costs (138 short picks 2020-2026), so the rules without shorts were judged, as declared:
+CAGR 19.52% against v3's 20.84%, maximum drawdown -29.6% against -27.5% (return and risk gates fail; quality PF 1.23 and stability pass). The protective
+stop fired on 114 trades and cut more winners' recoveries than it saved. With shorts: CAGR 17.69%, DD -27.4%. v3 stays the live rule.
 """
 import argparse
 import json
