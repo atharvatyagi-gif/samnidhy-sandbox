@@ -158,3 +158,18 @@ def test_a_short_pick_is_a_futures_short_and_the_protective_stop_closes_a_runawa
     assert lp["reason"] == "protective stop" and lp["exit"] == 94.0
     eq = P.simulate([short], {"AAA": px({4: (100.0, 100.5, 97.5, 98.0)})}, CAL, CFG, exits=("time",), end=str(CAL[4].date()))
     assert eq["open"][0]["side"] == "short" and eq["equity"][-1][1] > eq["equity"][-1][2]                    # a short in profit adds to the account value
+
+
+def test_the_v4_shadow_is_promoted_once_after_26_weeks_only_if_it_returned_more_without_a_deeper_fall(tmp_path, monkeypatch):
+    monkeypatch.setattr(P, "PROMOTE", tmp_path / "promote.json")
+    days = pd.bdate_range("2026-10-19", periods=27 * 5)
+    bot = {"equity": [[str(d.date()), 1_000_000 * (1 + 0.0004 * i), 0, 0] for i, d in enumerate(days)]}
+    better = {"equity": [[str(d.date()), 1_000_000 * (1 + 0.0006 * i), 0, 0] for i, d in enumerate(days)]}
+    assert P.shadow_check({"equity": better["equity"][:100]}, bot)["promoted"] is None                       # 20 weeks: too early
+    worse = {"equity": [[str(d.date()), 1_000_000 * (1 + 0.0002 * i), 0, 0] for i, d in enumerate(days)]}
+    assert P.shadow_check(worse, bot)["promoted"] is None
+    deep = {"equity": [r if i != 60 else [r[0], 700_000, 0, 0] for i, r in enumerate(better["equity"])]}
+    assert P.shadow_check(deep, bot)["promoted"] is None                                                     # more return but a deeper fall
+    out = P.shadow_check(better, bot)
+    assert out["promoted"] and out["shadow_return_pct"] > out["bot_return_pct"] and (tmp_path / "promote.json").exists()
+    assert P.promoted()["weeks"] == out["weeks"]

@@ -195,6 +195,7 @@ class Run:
         d = PP.run_live(str(self.ledger), str(self.base / "paper" / "live.json")); st = d["stats"]
         try:
             PP.run_live(str(self.ledger), str(self.base / "paper" / "live_small.json"), small=True)          # the Rs 10,000 account: same rules, same lists
+            PP.run_live(str(self.ledger), str(self.base / "paper" / "live_shadow.json"), shadow=True)        # the v4 trading-rules shadow (shorts + protective stop)
         except Exception as e:  # noqa: BLE001  (the main account's result must not depend on it)
             print("small paper account failed:", type(e).__name__, e)
         return f"live paper account: {len(d['books_used'])} book(s); " + (f"equity {st['end_equity']:,.0f} ({st['return_pct']}%), {st['trades']} closed trades, {len(d['open'])} open" if st.get("started") else "no live trade yet (the first Friday book enters at the next open)")

@@ -119,7 +119,7 @@ function listHtml() {
 async function loadPaper() {
   if (paper || paperLoading) return; paperLoading = true;
   const get = f => ctx.getJSON("aladin2/" + f, false).catch(() => null);
-  const [live, hist, mv, small] = await Promise.all([get("paper_live.json"), get("paper_backtest.json"), ctx.getJSON("aladin_movers.json", false).catch(() => null), get("paper_live_small.json")]); paper = { live, hist, small }; movers = mv; paperLoading = false;
+  const [live, hist, mv, small, shadow] = await Promise.all([get("paper_live.json"), get("paper_backtest.json"), ctx.getJSON("aladin_movers.json", false).catch(() => null), get("paper_live_small.json"), get("paper_live_shadow.json")]); paper = { live, hist, small, shadow }; movers = mv; paperLoading = false;
   if (root && st.page === "paper") paintPaper();
 }
 const rupee = v => v == null ? "--" : (v < 0 ? "-" : "") + "₹" + inr(Math.abs(v), 0);
@@ -130,6 +130,53 @@ function tradesTable(list) {
   if (!list || !list.length) return '<p class="note">No closed trades yet.</p>';
   const nm = { stop: "stop", time: "5-day limit", goal: "goal", "no data": "no data" };
   return `<div class="sg-tablewrap sg-short"><table class="sg-table"><thead><tr><th>Stock</th><th>In</th><th>Out</th><th class="r">Price in → out</th><th class="r">Net P/L</th><th>Why out</th></tr></thead><tbody>${list.slice(-40).reverse().map(t => `<tr><td class="sg-st"><b>${esc(t.sym)}</b><small>${t.qty} shares</small></td><td>${esc(t.entry_date)}</td><td>${esc(t.exit_date)}</td><td class="r"><b>${inr(t.entry)} → ${inr(t.exit)}</b></td><td class="r"><b class="${cls(t.net)}">${rupee(t.net)}</b><small class="${cls(t.ret_pct)}">${sgn(t.ret_pct, 2)}</small></td><td>${esc(nm[t.reason] || t.reason)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+/* The desk blotter: what the account did, day by day (entries, exits, names it passed on), what it will do next, and its exposure now.
+   Built only from the account's own record (paper/live.json or a shadow); nothing here changes a number. Pure: doc, today = "YYYY-MM-DD". */
+const EXIT_WHY = { time: "5-day limit", "protective stop": "protective stop", stop: "stop", goal: "price goal", "no data": "no price data" };
+export function blotterEvents(doc) {
+  const ev = [], side = t => (t.side || "long") === "short" ? "short" : "long";
+  for (const t of doc.trades || []) {
+    ev.push({ d: t.entry_date, k: "in", sym: t.sym, side: side(t), text: `Entered ${side(t)} ${inr(t.qty, 0)} at ₹${inr(t.entry, 2)}`, amt: t.capital ?? t.qty * t.entry });
+    ev.push({ d: t.exit_date, k: "out", sym: t.sym, side: side(t), text: `Exited at ₹${inr(t.exit, 2)} (${EXIT_WHY[t.reason] || t.reason}), ${t.days} days`, pl: t.net });
+  }
+  for (const o of doc.open || []) ev.push({ d: o.entry_date, k: "in", sym: o.sym, side: side(o), text: `Entered ${side(o)} ${inr(o.qty, 0)} at ₹${inr(o.entry, 2)}`, amt: o.capital ?? o.qty * o.entry });
+  const entryOf = {}; for (const w of (doc.timeline && doc.timeline.weeks) || []) entryOf[w.friday] = w.entry_day;
+  for (const s of doc.skipped || []) ev.push({ d: entryOf[s.as_of] || s.as_of, k: "skip", sym: s.sym, side: "", text: `Passed: ${String(s.why).replace(/^size 0 \((.*)\) or no cash\/sector room$/, "size came out at zero ($1)")}` });
+  const order = { out: 0, in: 1, skip: 2 };
+  return ev.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : order[a.k] - order[b.k] || a.sym.localeCompare(b.sym)));
+}
+export function exposure(doc) {
+  const open = doc.open || [], eqr = (doc.equity || []).slice(-1)[0], prev = (doc.equity || []).slice(-2)[0];
+  const val = o => o.value_now ?? o.qty * (o.last ?? o.entry), long = open.filter(o => (o.side || "long") === "long").reduce((a, o) => a + val(o), 0);
+  const short = open.filter(o => o.side === "short").reduce((a, o) => a + val(o), 0), acct = eqr ? eqr[1] : null;
+  const risk = open.every(o => o.risk_to_stop != null) ? open.reduce((a, o) => a + o.risk_to_stop, 0) : null;
+  return { acct, long, short, gross: acct ? (long + short) / acct : null, net: acct ? (long - short) / acct : null, cash: eqr ? eqr[2] : null, risk,
+           day: eqr && prev && prev !== eqr ? eqr[1] - prev[1] : null, dayOf: eqr ? eqr[0] : null, n: open.length };
+}
+export function blotterHtml(doc, today) {
+  const ev = blotterEvents(doc), X = exposure(doc), T = doc.timeline || {};
+  if (!ev.length && !X.n) return "";
+  const next = (doc.open || []).filter(o => o.exit_due || o.days_left != null).map(o => ({ d: o.exit_due || null, left: o.days_left, sym: o.sym })).sort((a, b) => (a.d || "~") < (b.d || "~") ? -1 : 1);
+  const days = [...new Set(ev.map(e => e.d))].slice(0, 15);
+  const pct = v => v == null ? "--" : (v * 100).toFixed(0) + "%";
+  return `<div class="sg-card sg-blotter"><h4>Desk blotter · what the account did, and what it does next</h4>
+    <div class="sg-stats sg-kp">${kpi("Exposure", pct(X.gross), `long ${rupee(X.long)}${X.short ? ` · short ${rupee(X.short)}` : ""} · ${X.n} positions`)}${kpi("Net long", pct(X.net), X.acct ? `of a ${rupee(X.acct)} account` : "")}
+      ${kpi("Open risk", X.risk == null ? "--" : rupee(X.risk), X.risk == null ? "recorded from tonight's run" : "lost if every position fell to its sizing level")}${kpi(`Day P/L${X.dayOf ? " · " + dmy(X.dayOf) : ""}`, X.day == null ? "--" : rupee(X.day), "change in account value at the close", cls(X.day))}</div>
+    <div class="sg-bl-next"><b>Next:</b> ${next.length ? next.slice(0, 6).map(n => `${esc(n.sym)} exits at the open ${n.d ? "on " + dmy(n.d) : `in ${n.left} trading day${n.left === 1 ? "" : "s"}`}`).join(" · ") + (next.length > 6 ? ` and ${next.length - 6} more` : "") + ". " : ""}${T.next_book ? `New list after the close on ${dmy(T.next_book)}; entries at the open on ${dmy(T.next_entry)}.` : ""}</div>
+    <ol class="sg-bl">${days.map(d => `<li><b class="sg-bl-d">${dmy(d)}${d === today ? " · today" : ""}</b><ul>${ev.filter(e => e.d === d).map(e => `<li class="sg-bl-${e.k}"><span class="sg-flag ${e.k === "out" ? (e.pl >= 0 ? "ok" : "no") : ""}">${e.k === "in" ? "fill" : e.k === "out" ? "exit" : "pass"}</span> <button type="button" class="lnk" data-bl-sym="${esc(e.sym)}">${esc(e.sym)}</button>${e.side === "short" ? ' <span class="sg-flag">short</span>' : ""} ${esc(e.text)}${e.pl != null ? ` · <b class="${cls(e.pl)}">${rupee(e.pl)}</b>` : e.amt != null ? ` · ${rupee(e.amt)}` : ""}</li>`).join("")}</ul></li>`).join("")}</ol>
+    <p class="note">Simulated fills on real prices: entries at the open after each Friday list, exits at the open five trading days later${(doc.rules || {}).shadow ? ", or earlier at the protective stop" : ""}. Each night's run writes the day's fills; nothing is edited afterwards.</p></div>`;
+}
+export function shadowCompareHtml(doc) {
+  const S = doc && doc.shadow_vs_bot; if (!S) return "";
+  const prog = Math.min(1, (S.weeks || 0) / (S.promote_after_weeks || 26));
+  return `<div class="sg-card"><h4>v4 shadow against the bot · same lists, same dates</h4>
+    <div class="sg-prog" role="img" aria-label="${S.weeks || 0} of ${S.promote_after_weeks} weeks"><i style="width:${(prog * 100).toFixed(1)}%"></i></div>
+    <table class="sg-mini"><thead><tr><td></td><td>v4 shadow (trading rules)</td><td>Current bot (v3)</td></tr></thead><tbody>
+      <tr><td>Return${S.from ? ` (${dmy(S.from)} to ${dmy(S.to)})` : ""}</td><td class="${cls(S.shadow_return_pct)}">${sgn(S.shadow_return_pct, 2)}</td><td class="${cls(S.bot_return_pct)}">${sgn(S.bot_return_pct, 2)}</td></tr>
+      <tr><td>Deepest fall</td><td>${sgn(S.shadow_dd_pct, 2)}</td><td>${sgn(S.bot_dd_pct, 2)}</td></tr><tr><td>Weeks</td><td colspan="2">${S.weeks || 0} of ${S.promote_after_weeks}</td></tr></tbody></table>
+    <p class="note">${S.promoted ? `<b>Switched:</b> after ${S.promoted.weeks} weeks the shadow returned ${sgn(S.promoted.shadow_return_pct, 2)} against the bot's ${sgn(S.promoted.bot_return_pct, 2)}; the bot trades with these rules from the next list. Never reversed automatically.`
+      : `These rules failed their 2013-2026 history test (return 19.5% a year against 20.8%, shorts lost money), so they run here first. After ${S.promote_after_weeks} weeks, if the shadow returned more than the bot over exactly the same dates without a deeper fall, the bot switches to them. Decided once.`}</p></div>`;
 }
 /* The weekly ranking (scripts/aladin_movers.py, data/aladin_movers/latest.json): every stock ranked by its expected 5-day move, recorded before Monday's open,
    checked against real prices, and run as a shadow of the paper bot. Pure: doc = aladin_movers.json, n = rows shown per side. Gates that failed are shown as failed. */
@@ -183,7 +230,7 @@ export function tradeBookHtml(doc, view = "all") {
   const avgCap = all.reduce((a, r) => a + r.capital, 0) / all.length, big = all.reduce((m, r) => r.capital > m.capital ? r : m, all[0]);
   const realised = closed.reduce((a, r) => a + r.net, 0), unreal = open.reduce((a, r) => a + (r.net || 0), 0);
   const pctAcc = r => r.pct_of_account != null ? `${r.pct_of_account.toFixed(1)}% of account` : acct ? `about ${(r.capital / acct * 100).toFixed(0)}% of today's account` : "";
-  const tr = r => `<tr tabindex="0" data-sym="${esc(r.sym)}"><td class="sg-st"><b>${esc(r.sym)}</b><small>${esc([r.sector && r.sector !== "Unknown" && r.sector !== "?" ? r.sector : "", r.as_of ? `list of ${dmy(r.as_of)}` : ""].filter(Boolean).join(" · "))}</small></td>
+  const tr = r => `<tr tabindex="0" data-sym="${esc(r.sym)}"><td class="sg-st"><b>${esc(r.sym)}${r.side === "short" ? ' <span class="sg-flag no">short</span>' : ""}</b><small>${esc([r.sector && r.sector !== "Unknown" && r.sector !== "?" ? r.sector : "", r.as_of ? `list of ${dmy(r.as_of)}` : ""].filter(Boolean).join(" · "))}</small></td>
     <td class="r"><b>${dmy(r.entry_date)}</b><small>₹${inr(r.entry, 2)}</small></td><td class="r">${inr(r.qty, 0)}</td>
     <td class="r"><b>${rupee(r.capital)}</b><small>${pctAcc(r)}</small></td>
     <td>${r.sized_by ? `<span class="sg-flag">${esc(SIZED[r.sized_by] || r.sized_by)}</span>` : '<span class="sg-nm" title="Recorded from tonight’s run">--</span>'}${r.risk_to_stop != null ? `<small class="sg-sub">${rupee(r.risk_to_stop)} to the exit level</small>` : ""}</td>
@@ -258,7 +305,7 @@ export function liveTodayHtml(doc, book, quotes, today) {
 }
 function paperHtml() {
   if (!paper) return '<p class="note">Loading the paper account…</p>';
-  const doc = st.pmode === "live" ? (st.acct === "small" ? paper.small : paper.live) : paper.hist, seg = `<div class="sg-chips" role="group" aria-label="Paper account view"><button type="button" class="sg-chip ${st.pmode === "live" ? "on" : ""}" data-pm="live" aria-pressed="${st.pmode === "live"}">Live front test</button><button type="button" class="sg-chip ${st.pmode === "hist" ? "on" : ""}" data-pm="hist" aria-pressed="${st.pmode === "hist"}">History 2013 to 2026</button><button type="button" class="sg-chip ${st.pmode === "movers" ? "on" : ""}" data-pm="movers" aria-pressed="${st.pmode === "movers"}">Weekly ranking (forward test)</button></div>${st.pmode === "live" ? `<div class="sg-chips" role="group" aria-label="Account size"><button type="button" class="sg-chip ${st.acct === "big" ? "on" : ""}" data-acct="big" aria-pressed="${st.acct === "big"}">₹10 lakh account</button><button type="button" class="sg-chip ${st.acct === "small" ? "on" : ""}" data-acct="small" aria-pressed="${st.acct === "small"}">₹10,000 account</button></div>` : ""}`;
+  const doc = st.pmode === "live" ? (st.acct === "small" ? paper.small : st.acct === "shadow" ? paper.shadow : paper.live) : paper.hist, seg = `<div class="sg-chips" role="group" aria-label="Paper account view"><button type="button" class="sg-chip ${st.pmode === "live" ? "on" : ""}" data-pm="live" aria-pressed="${st.pmode === "live"}">Live front test</button><button type="button" class="sg-chip ${st.pmode === "hist" ? "on" : ""}" data-pm="hist" aria-pressed="${st.pmode === "hist"}">History 2013 to 2026</button><button type="button" class="sg-chip ${st.pmode === "movers" ? "on" : ""}" data-pm="movers" aria-pressed="${st.pmode === "movers"}">Weekly ranking (forward test)</button></div>${st.pmode === "live" ? `<div class="sg-chips" role="group" aria-label="Account size"><button type="button" class="sg-chip ${st.acct === "big" ? "on" : ""}" data-acct="big" aria-pressed="${st.acct === "big"}">₹10 lakh account</button><button type="button" class="sg-chip ${st.acct === "small" ? "on" : ""}" data-acct="small" aria-pressed="${st.acct === "small"}">₹10,000 account</button><button type="button" class="sg-chip ${st.acct === "shadow" ? "on" : ""}" data-acct="shadow" aria-pressed="${st.acct === "shadow"}" title="The trading rules (F&O shorts and a protective stop) running live beside the bot">v4 shadow</button></div>` : ""}`;
   if (st.pmode === "movers") return `<div class="sg-bar">${seg}</div>${moversHtml(movers)}`;
   if (!doc) return `<div class="sg-bar">${seg}</div><p class="note">This part of the paper account is not published yet.</p>`;
   const S = doc.stats || {}, R = doc.rules || {}, hist = st.pmode === "hist";
@@ -270,7 +317,7 @@ function paperHtml() {
   const chart = lineChart([{ name: "Paper account (after all costs)", pts: doc.equity.map(r => [r[0], r[1]]), cls: "a" }].concat(matched ? [{ name: `Market with the same ${(ex * 100).toFixed(0)}% in stocks, rest cash (the fair comparison)`, pts: matched, cls: "c" }] : []).concat(bench ? [{ name: "Market, all money in the liquid stocks every week, before costs", pts: bench, cls: "b" }] : []), { base: S.start_equity, label: "Paper account value over time", fmt: v => rupee(v) });
   const yrs = S.by_year_pct ? Object.entries(S.by_year_pct) : [], mx = Math.max(1, ...yrs.map(([, v]) => Math.abs(v)));
   const ab = hist && doc.ablation ? `<div class="sg-card"><h4>Rule versions compared (same signals, same history)</h4><table class="sg-mini"><thead><tr><td></td><td>Return</td><td>Per year</td><td>Worst fall</td><td>Profit factor</td></tr></thead><tbody>${Object.entries(doc.ablation).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${sgn(v.return_pct, 0)}</td><td>${sgn(v.cagr_pct, 1)}</td><td>${sgn(v.max_drawdown_pct, 0)}</td><td>${v.profit_factor ?? "--"}</td></tr>`).join("")}</tbody></table><p class="note">v1 (an order to leave at the price goal) lost money; v2 (stop + time) was replaced the same day by v3, the owner's choice, before any live trade. v3 was picked after its history was seen, so the live record is what decides. The price goal and exit level stay on the page as information.</p></div>` : "";
-  const book = hist ? "" : tradeBookHtml(doc, st.tb);
+  const book = hist ? "" : (st.acct === "shadow" ? shadowCompareHtml(doc) : "") + blotterHtml(doc, new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })) + tradeBookHtml(doc, st.tb);
   return `<div class="sg-bar">${seg}</div><div class="sg-banner">${esc(doc.label || "")}</div>${ft}${book}
     <div class="sg-stats sg-kp">${kpi("Budget", rupee(S.start_equity), `from ${esc(S.from)}`)}${kpi("Account value", rupee(S.end_equity), `to ${esc(S.to)}`)}${kpi("Profit or loss", rupee(S.pnl), sgn(S.return_pct) + (S.cagr_pct != null ? ` · ${sgn(S.cagr_pct)} a year` : ""), cls(S.pnl))}${kpi("Worst fall from a peak", sgn(S.max_drawdown_pct), "the deepest drop of the account value", "down")}</div>
     <div class="sg-stats sg-kp">${kpi("Trades", String(S.trades), `${(S.win_rate * 100).toFixed(0)}% ended in profit`)}${kpi("Average win · loss", `${sgn(S.avg_win_pct, 2)} · ${sgn(S.avg_loss_pct, 2)}`, `profit factor ${S.profit_factor ?? "--"}`)}${kpi("Costs paid", rupee(S.costs_paid), "brokerage, taxes, charges, spread")}${kpi("Money at work", S.avg_invested_pct != null ? S.avg_invested_pct.toFixed(0) + "%" : "--", `average share of the account in stocks; exits: ${Object.entries(S.exits || {}).filter(([, n]) => n).map(([k, n]) => k + " " + n).join(", ")}`)}</div>
@@ -283,8 +330,9 @@ function paintPaper() {
   const el = root && root.querySelector("#sg-p2"); if (!el) return; el.innerHTML = paperHtml();
   el.querySelectorAll("[data-pm]").forEach(b => b.onclick = () => { st.pmode = b.dataset.pm; paintPaper(); });
   el.querySelectorAll("[data-acct]").forEach(b => b.onclick = () => { st.acct = b.dataset.acct; st.tb = "all"; paintPaper(); });
+  el.querySelectorAll("[data-bl-sym]").forEach(b => b.onclick = () => { ctx.openSec(b.dataset.blSym); ctx.go("terminal"); });
   el.querySelectorAll("[data-tb]").forEach(b => b.onclick = () => { st.tb = b.dataset.tb; paintPaper(); });
-  const csv = el.querySelector("#tb-csv"); const cur = paper && (st.acct === "small" ? paper.small : paper.live); if (csv && cur) csv.onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([tradeBookCsv(cur)], { type: "text/csv" })); a.download = `paper-trades-${st.acct === "small" ? "10k" : "10L"}-${cur.last_price_date || "live"}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+  const csv = el.querySelector("#tb-csv"); const cur = paper && (st.acct === "small" ? paper.small : st.acct === "shadow" ? paper.shadow : paper.live); if (csv && cur) csv.onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([tradeBookCsv(cur)], { type: "text/csv" })); a.download = `paper-trades-${st.acct === "small" ? "10k" : st.acct === "shadow" ? "v4-shadow" : "10L"}-${cur.last_price_date || "live"}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
   el.querySelectorAll("tr[data-sym]").forEach(tr => { const go = () => { ctx.openSec(tr.dataset.sym); ctx.go("terminal"); }; tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter") go(); }; });
 }
 function showPage(p) {

@@ -92,9 +92,9 @@ def overlay(equity, daily_ret, switch_cost=0.0):
     return out
 
 
-def run_bot(books, prices, cal, cfg, rate=None, cash0=START_CASH, sell_fee=0.0):
+def run_bot(books, prices, cal, cfg, rate=None, cash0=START_CASH, sell_fee=0.0, short_cap_pct=50.0):
     """The bot's current rules (BOT, v3): the one simulator, then idle cash in the liquid fund."""
-    r = simulate(books, prices, cal, cfg, cash0=cash0, exits=BOT["exits"], risk_pct=BOT["risk_pct"], max_pos_pct=BOT["max_pos_pct"], sell_fee=sell_fee)
+    r = simulate(books, prices, cal, cfg, cash0=cash0, exits=BOT["exits"], risk_pct=BOT["risk_pct"], max_pos_pct=BOT["max_pos_pct"], sell_fee=sell_fee, short_cap_pct=short_cap_pct)
     r["equity"] = overlay(r["equity"], fund_daily(cal, rate)); return r
 
 
@@ -183,7 +183,7 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
                             atr = float(pk["atr"]) if _f(pk.get("atr")) else None
                             pos[sym] = {"qty": qty, "entry": o, "stop": stop, "goal": goal, "i": i, "exit_i": i + hold, "cost_in": cost_in, "decile": pk["decile"], "sector": sec, "as_of": bk["as_of"], "rank": pk.get("rank"),
                                         "account": eq, "sized_by": "cash left" if qty < q0 else sized_by, "side": side,
-                                        "pstop": (o - sg * protect_atr * atr) if protect_atr and atr else None}
+                                        "pstop": (o - sg * pk.get("protect_atr", protect_atr) * atr) if pk.get("protect_atr", protect_atr) and atr else None}
                 if why:
                     skipped.append({"sym": sym, "as_of": bk["as_of"], "why": why})
         for sym, p in list(pos.items()):                                                    # 3. stop and target during the day (the stop first when both are touched)
@@ -349,7 +349,7 @@ def run_backtest(workers=12, oos=None, out=None, sample=None):
 
 
 # ------------------------------------------------------------------ the live front test
-def live_books(ledger_dir=None, cfg=None, start=None):
+def live_books(ledger_dir=None, cfg=None, start=None, shorts=None):
     """Books from the ledger that count as LIVE: Friday signal dates on or after the forward clock, written before the entry open. Levels come from the ledger line (what the page showed); an older line without
     levels is recomputed from the prices on its own date (deterministic)."""
     cfg = cfg or C.load_cfg(); start = start or cfg["forward_clock_start"]; books = []; uni = _universe_meta(); allv = [v["adv_cr"] for v in uni.values()]
@@ -367,7 +367,19 @@ def live_books(ledger_dir=None, cfg=None, start=None):
                     continue
                 stop, goal, adv_sh = pl["stop"], None, pl["adv_shares"]
             m = uni.get(sym, {"adv_cr": 1.0, "sector": "Unknown"})
-            picks.append({"sym": sym, "rank": rank, "stop": stop, "goal": goal, "adv_shares": adv_sh or 0, "decile": C.adv_decile(m["adv_cr"], allv), "sector": m["sector"]})
+            atr = x[2] if x and _f(x[2]) else (pl or {}).get("atr") if not (x and _f(x[0])) else None
+            picks.append({"sym": sym, "rank": rank, "stop": stop, "goal": goal, "adv_shares": adv_sh or 0, "decile": C.adv_decile(m["adv_cr"], allv), "sector": m["sector"], "atr": atr})
+        if shorts is not None:                                                  # the SELL bucket of the same line, F&O stocks only, as stock-futures shorts
+            fno = shorts(pd.Timestamp(r["d"])) or set()
+            for sym, close, rank in sorted(r.get("sell") or [], key=lambda x: x[2]):
+                if sym not in fno:
+                    continue
+                pl = plan_from_prices(L.load_prices(sym), r["d"], cfg)
+                if not pl:
+                    continue
+                m = uni.get(sym, {"adv_cr": 1.0, "sector": "Unknown"})
+                picks.append({"sym": sym, "side": "short", "rank": rank, "stop": pl["close"] + (pl["close"] - pl["stop"]), "goal": None, "adv_shares": pl["adv_shares"],
+                              "decile": C.adv_decile(m["adv_cr"], allv), "sector": m["sector"], "atr": pl["atr"]})
         books.append({"as_of": r["d"], "picks": picks})
     return books
 
@@ -418,29 +430,84 @@ def timeline(lines, trades, openp, start, today=None, n_target=100, expect=None)
             "expect_from_history": {**(expect or {"win_rate": 0.51, "profit_factor": 1.2}), "note": "what the 13-year history did; the live record is judged against these after about 100 closed trades"}}
 
 
-def run_live(ledger_dir=None, out=None, small=False):
+# The v4 shadow (owner, 2026-10-14: "both"): the trading rules that failed their history test (round 2, scripts/aladin2/trader.py) run LIVE beside the bot from
+# the list of Friday 2026-10-16: the same lists plus F&O shorts on the SELL bucket and a 3 ATR protective stop. After 26 finished weeks, if the shadow's return
+# beats the bot's over exactly the same dates AND its maximum drawdown is no deeper, a promote line is written once (shadow_promote.json) and from the next
+# list on the bot itself trades with the v4 rules. Never reversed automatically.
+SHADOW = {"from_book": "2026-10-16", "protect_atr": 3.0, "short_cap_pct": 50.0, "promote_after_weeks": 26, "declared": "2026-10-14"}
+PROMOTE = OUT / "shadow_promote.json"
+
+
+def promoted():
+    try:
+        return json.loads(PROMOTE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def shadow_check(shadow_doc, bot_doc, now=None):
+    """Pure apart from writing the promote file once. -> {"weeks", "shadow_return_pct", "bot_return_pct", "shadow_dd_pct", "bot_dd_pct", "promoted"}."""
+    se, be = shadow_doc.get("equity") or [], bot_doc.get("equity") or []
+    out = {"weeks": 0, "promote_after_weeks": SHADOW["promote_after_weeks"], "promoted": promoted()}
+    if not se:
+        return out
+    d0, d1 = se[0][0], se[-1][0]; bw = [r for r in be if d0 <= r[0] <= d1]
+    out["weeks"] = len({pd.Timestamp(r[0]).isocalendar()[:2] for r in se}) - 1
+    if not bw:
+        return out
+    ret = lambda rows: round((rows[-1][1] / rows[0][1] - 1) * 100, 2)
+    dd = lambda rows: round(float(min(r[1] / max(x[1] for x in rows[:k + 1]) - 1 for k, r in enumerate(rows))) * 100, 2)
+    out.update({"from": d0, "to": d1, "shadow_return_pct": ret(se), "bot_return_pct": ret(bw), "shadow_dd_pct": dd(se), "bot_dd_pct": dd(bw)})
+    if out["promoted"] is None and out["weeks"] >= SHADOW["promote_after_weeks"] and out["shadow_return_pct"] > out["bot_return_pct"] and out["shadow_dd_pct"] >= out["bot_dd_pct"]:
+        rec = {"ts": (now or pd.Timestamp.utcnow()).isoformat(), "weeks": out["weeks"], "shadow_return_pct": out["shadow_return_pct"], "bot_return_pct": out["bot_return_pct"],
+               "from_next_list_after": d1}
+        PROMOTE.write_text(json.dumps(rec), encoding="utf-8"); out["promoted"] = rec
+    return out
+
+
+def run_live(ledger_dir=None, out=None, small=False, shadow=False):
     """The live front test. small=True: the Rs 10,000 account (SMALL) on the same lists from its own first list, written to live_small.json."""
-    cfg = C.load_cfg(); start = cfg["forward_clock_start"]; books = live_books(ledger_dir, cfg)
+    cfg = C.load_cfg(); start = cfg["forward_clock_start"]; prom = promoted()
+    fno = None
+    if shadow or prom:
+        from .trader import fno_lookup
+        fno = fno_lookup()
+    books = live_books(ledger_dir, cfg, shorts=fno)
     cash0, fee = (SMALL["budget_inr"], SMALL["dp_charge_per_sale_inr"]) if small else (START_CASH, 0.0)
     if small:
         books = [b for b in books if b["as_of"] >= SMALL["from_book"]]
+    if shadow:
+        books = [{**b, "picks": [{**p, "protect_atr": SHADOW["protect_atr"]} for p in b["picks"]]} for b in books if b["as_of"] >= SHADOW["from_book"]]
+    else:                                                                       # the bot: v3 lists (no shorts), or v4 from the list after a promotion
+        books = [b if prom and b["as_of"] > prom["from_next_list_after"] else {**b, "picks": [p for p in b["picks"] if p.get("side", "long") == "long"]} for b in books]
+        if prom:
+            books = [{**b, "picks": [{**p, "protect_atr": SHADOW["protect_atr"]} for p in b["picks"]]} if b["as_of"] > prom["from_next_list_after"] else b for b in books]
     syms = sorted({p["sym"] for b in books for p in b["picks"]}); prices = {}
     for s in syms:
         p = L.load_prices(s)
         if p is not None:
             prices[s] = L.clean_prices(p)
     idx = trading_calendar(prices, pd.Timestamp(start) - pd.Timedelta(days=10))
-    rules = {**RULES, "budget_inr": cash0, **({"first_list": SMALL["from_book"], "dp_charge_per_sale_inr": fee, "declared": SMALL["declared"]} if small else {})}
-    last_bar = str(idx[-1].date()); doc = {"kind": "LIVE FRONT TEST (paper)" + (", small account" if small else ""), "label": "LIVE FRONT TEST: simulated trades on real prices from the forward clock. Simulated money, no broker." + (f" Small account: Rs {cash0:,}, the same rules and lists as the Rs 10 lakh account." if small else ""), "created_utc": pd.Timestamp.utcnow().isoformat(), "rules": rules,
+    rules = {**RULES, "budget_inr": cash0, **({"first_list": SMALL["from_book"], "dp_charge_per_sale_inr": fee, "declared": SMALL["declared"]} if small else {}),
+             **({"shadow": "rule v4 candidate: the same lists plus F&O shorts on the SELL bucket (at most 50% of the account) and a 3 ATR protective stop on every position",
+                 "first_list": SHADOW["from_book"], "declared": SHADOW["declared"]} if shadow else {})}
+    last_bar = str(idx[-1].date()); doc = {"kind": "LIVE FRONT TEST (paper)" + (", small account" if small else "") + (", v4 shadow" if shadow else ""), "label": "LIVE FRONT TEST: simulated trades on real prices from the forward clock. Simulated money, no broker." + (f" Small account: Rs {cash0:,}, the same rules and lists as the Rs 10 lakh account." if small else ""), "created_utc": pd.Timestamp.utcnow().isoformat(), "rules": rules,
            "rule_history": RULE_HISTORY, "forward_clock_start": start, "books_used": [b["as_of"] for b in books], "last_price_date": last_bar}
     if not books:
         nxt = pd.Timestamp(start)
         doc.update({"stats": {"started": False}, "equity": [], "open": [], "trades": [], "skipped": [], "note": f"The small account starts with the list of Friday {SMALL['from_book']}; it enters at the next trading day's open." if small else "No live Friday book has been written in time yet. The first one is the Friday book; the bot enters at the next trading day's open."})
     else:
-        r = run_bot(books, prices, idx, cfg, india_rate(refresh=True), cash0=cash0, sell_fee=fee); doc.update({"stats": stats(r, cash0), "equity": r["equity"], "open": r["open"], "trades": r["trades"], "skipped": r["skipped"][-100:], "note": None})
+        r = run_bot(books, prices, idx, cfg, india_rate(refresh=True), cash0=cash0, sell_fee=fee, short_cap_pct=SHADOW["short_cap_pct"]); doc.update({"stats": stats(r, cash0), "equity": r["equity"], "open": r["open"], "trades": r["trades"], "skipped": r["skipped"][-100:], "note": None})
     bt = OUT / "backtest.json"; hs = json.loads(bt.read_text(encoding="utf-8")).get("stats", {}) if bt.exists() else {}          # what the current rules did in the history
-    doc["timeline"] = timeline([x for x in LG.read_all(ledger_dir) if not small or x.get("d", "") >= SMALL["from_book"]], doc["trades"], doc["open"], SMALL["from_book"] if small else start, expect={"win_rate": hs["win_rate"], "profit_factor": hs["profit_factor"]} if hs.get("win_rate") else None)
-    f = Path(out or OUT / ("live_small.json" if small else "live.json")); f.parent.mkdir(parents=True, exist_ok=True); f.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
+    first = SMALL["from_book"] if small else SHADOW["from_book"] if shadow else None
+    doc["timeline"] = timeline([x for x in LG.read_all(ledger_dir) if not first or x.get("d", "") >= first], doc["trades"], doc["open"], first or start, expect={"win_rate": hs["win_rate"], "profit_factor": hs["profit_factor"]} if hs.get("win_rate") else None)
+    if shadow:
+        try:
+            doc["shadow_vs_bot"] = shadow_check(doc, json.loads((OUT / "live.json").read_text(encoding="utf-8")))
+        except (OSError, ValueError):
+            doc["shadow_vs_bot"] = {"weeks": 0, "promote_after_weeks": SHADOW["promote_after_weeks"], "promoted": promoted()}
+    doc["promotion"] = prom
+    f = Path(out or OUT / ("live_small.json" if small else "live_shadow.json" if shadow else "live.json")); f.parent.mkdir(parents=True, exist_ok=True); f.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
     print(f"live paper account{' (small)' if small else ''}: {len(books)} book(s) {[b['as_of'] for b in books]}; stats {doc['stats'].get('end_equity', 'not started')}; wrote {f}")
     return doc
 
@@ -451,7 +518,7 @@ def main():
     if a.backtest:
         run_backtest(a.workers, sample=a.sample)
     if a.live:
-        run_live(); run_live(small=True)
+        run_live(); run_live(small=True); run_live(shadow=True)
 
 
 if __name__ == "__main__":
