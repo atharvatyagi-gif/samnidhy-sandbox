@@ -108,3 +108,53 @@ export function brsrLines(p) {
   const mix = (b.mix || []).filter(m => m.share != null && m.share > 0).map(m => ({ d: m.d, share: m.share }));
   return { fy: b.fy || null, mix, cust: b.cust || null, exports: b.exports, pdf: b.pdf || null };
 }
+
+/* ---------------- Predicted links (data/nexus_predict, scripts/nexus_predict.py) ----------------
+   Model estimates, never facts: every row says "Predicted, not confirmed", lists the evidence it rests on, and the panel
+   shows the model's fair test result. The site serves them as pl/index.json (summary + test) and pl/<A-Z or 0>.json. */
+export const PRED_LABEL = "Predicted, not confirmed";
+export const predShard = sym => { const c = String(sym || "").charAt(0).toUpperCase(); return c >= "A" && c <= "Z" ? c : "0"; };
+const pct1 = v => (v * 100).toFixed(v < 0.1 ? 1 : 0) + "%";
+const KIND_LABEL = { filings: "Named in a filing", price: "Shares move together", business: "Businesses fit", group: "Same business group" };
+export const kindLabel = k => KIND_LABEL[k] || k;
+
+/* The model's test in one sentence (the fair number: without the filing evidence, which is where the confirmed links came from). */
+export function predTestLine(idx) {
+  const t = idx && idx.test && idx.test.without_filings;
+  if (!t || t.hit10 == null) return null;
+  return `In a fair test that hid ${idx.coverage ? idx.coverage.confirmed_listed_links + " " : ""}confirmed links, the real partner was in a company's top 10 here ${pct1(t.hit10)} of the time (by chance: ${pct1(t.random_hit10)}).`;
+}
+
+/* One prediction -> plain reasons a first-time reader can check, the best filing sentence, and the rival flag. */
+export function predReasons(row, sym, names) {
+  const ev = row.ev || {}, other = row.p, out = [];
+  const nm = s => String((names && names.get && names.get(s)) || s).replace(/\s+(Limited|Ltd\.?)$/i, "");
+  for (const n of ev.named || []) {
+    const whom = n.by === sym ? other : sym, where = [n.kind === "annual" ? "annual report" : "filing", n.per, n.pg && n.pg.length ? "page " + n.pg[0] : null].filter(Boolean).join(", ");
+    out.push(`${nm(n.by)} names ${nm(whom)} in its ${where}${n.sup ? ", in a sentence about supply, customers or orders" : ""}.`);
+  }
+  if (ev.corr != null && row.kinds.includes("price")) {
+    const lead = ev.lead && ev.lead.v != null ? ` ${nm(ev.lead.first)} has tended to move a week earlier (${ev.lead.v.toFixed(2)}).` : "";
+    out.push(`Over up to 3 years the two shares moved together beyond what the market and their industries explain (correlation ${ev.corr.toFixed(2)}).${lead}`);
+  }
+  if (ev.words) {
+    const a = ev.words[sym] || [], b = ev.words[other] || [];
+    if (a.length || b.length) out.push(`Their business descriptions point at each other${a.length ? `: ${nm(sym)} mentions “${a.join(", ")}”` : ""}${b.length ? `${a.length ? ";" : ":"} ${nm(other)} mentions “${b.join(", ")}”` : ""}.`);
+  }
+  if (ev.group) out.push(`Both belong to the ${ev.group}.`);
+  const good = n => n.q && n.q.replace(/[^A-Za-z]/g, "").length >= 40;       // a fragment ("X Limited Associates 14.") says nothing: page and link only
+  const q = (ev.named || []).find(n => good(n) && n.sup) || (ev.named || []).find(good) || null;
+  const src = (ev.named || []).find(n => n.url) || null;
+  return {
+    sym: other, name: row.n || nm(other), rank: row.rank, kinds: row.kinds || [], reasons: out,
+    quote: q ? { text: q.q, by: q.by, url: q.url || null, pg: q.pg && q.pg[0], per: q.per || null } : null,
+    source: src ? src.url : null,
+    rival: !!ev.same_ind, industry: ev.ind ? ev.ind[1] : null,
+  };
+}
+
+/* A company's predicted links from its shard, best first. */
+export function predList(shard, sym, names, max = 10) {
+  const rows = (shard && shard.cos && shard.cos[sym]) || [];
+  return rows.slice(0, max).map(r => predReasons(r, sym, names));
+}

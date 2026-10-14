@@ -1075,7 +1075,7 @@ function renderDetails() {
       ${stat("Value", x.v != null ? cr(x.v * x.p / 1e7) : "--")}${stat("Delivery", s.deliv == null ? "--" : s.deliv.toFixed(1) + "%")}
       ${f ? stat("Market cap", f.mcap ? cr(f.mcap / 1e7) : "--") + stat("P/E", f.pe ? f.pe.toFixed(1) : "--") + stat("EPS", f.eps != null ? "₹" + inr(f.eps) : "--") + stat("Div yield", f.dy != null ? f.dy.toFixed(2) + "%" : "--")
         + stat("P/B", f.pb ? f.pb.toFixed(2) : "--") + stat("Beta", f.beta != null ? f.beta.toFixed(2) : "--") + stat("ROE", pctF(f.roe)) + stat("Debt/eq", f.de != null ? (f.de / 100).toFixed(2) : "--") : ""}</div>`;
-  html += revDepsHtml(sec);
+  html += revDepsHtml(sec) + predHtml(sec);
   if (perf) html += `<div class="sec-t">Performance</div><div class="perf">${perf.map(([k, v]) => `<div class="${v == null ? "" : v >= 0 ? "pu" : "pd"}"><span>${k}</span><b class="${ud(v)}">${v == null ? "--" : sg(v, 1) + "%"}</b></div>`).join("")}</div>`;
   if (f && (f.rec || f.est)) {
     const pos = { strongly_positive: 95, positive: 75, neutral: 50, negative: 25, strongly_negative: 5 }[f.rec] ?? 50, up = f.est ? (f.est / x.p - 1) * 100 : null;
@@ -1093,6 +1093,7 @@ function renderDetails() {
   $("#details").innerHTML = html;
   { const nw = $("#a2-brief"); if (nw) { if (a2old && a2old.dataset.sig === nw.dataset.sig && a2old.dataset.sym === nw.dataset.sym) nw.replaceWith(a2old); else A2.bind(nw, sec); } }
   const more = $("#more"); if (more) more.onclick = () => { descOpen = !descOpen; renderDetails(); };
+  $$("#details [data-pl]").forEach(b => b.onclick = () => openSec(b.dataset.pl));
   $$("#details [data-rec]").forEach(bt => bt.onclick = () => { const r = eng.suggested[+bt.dataset.rec]; if (!r) return; r.add.forEach(([id, p]) => eng.addIndicator(id, p)); go("terminal"); });
 }
 /* Revenue dependency (dependencies.json, scripts/dependency_profile.py): how much of the company's revenue rests on single customers, and on exports */
@@ -1130,6 +1131,30 @@ function revDepsHtml(sym) {
     ${geo}${(() => { const b = RD.brsrLines(p); if (!b || !(b.mix.length || b.cust || b.exports != null)) return "";
       return `<p class="note rd-q"><b>From its sustainability report${b.fy ? " " + esc(b.fy) : ""}:</b> ${b.mix.length ? b.mix.slice(0, 4).map(m => `${esc(m.d)} ${(m.share * 100).toFixed(0)}%`).join(" · ") + ". " : ""}${b.exports != null ? `Exports ${(b.exports * 100).toFixed(1)}% of turnover. ` : ""}${b.cust ? "Customers: " + esc(b.cust.slice(0, 200)) + (b.cust.length > 200 ? "…" : "") : ""}</p>`; })()}
     ${p ? `<p><button class="lnk" data-nexus="company:${esc(sym)}" data-nexus-tab="deps">Customers, suppliers and the evidence →</button></p>` : `<p class="note">${esc(d.why)}</p>`}`;
+}
+/* Predicted links (pl/index.json + pl/<letter>.json, scripts/nexus_predict.py): model estimates shown under the confirmed dependency,
+   each with its evidence; loaded per company, and the details panel re-renders when the shard arrives. */
+let predIdx, predIdxLoading = null;
+const predShards = new Map();
+function loadPred(sym) {
+  if (!S.deskMan || !S.deskMan.pred) return;
+  const k = RD.predShard(sym), done = () => { if (side === "details" && sec === sym) renderDetails(); };
+  if (predIdx === undefined && !predIdxLoading) predIdxLoading = getJSON("pl/index.json", false).then(j => { predIdx = j; }).catch(() => { predIdx = null; }).finally(() => { predIdxLoading = null; done(); });
+  if (!predShards.has(k)) predShards.set(k, getJSON(`pl/${k}.json`, false).then(j => { predShards.set(k, j); }).catch(() => { predShards.set(k, null); }).finally(done));
+}
+function predHtml(sym) {
+  if (!S.deskMan || !S.deskMan.pred) return "";
+  const sh = predShards.get(RD.predShard(sym));
+  if (sh === undefined || sh instanceof Promise) { loadPred(sym); return `<div class="sec-t">Predicted links</div><p class="note">Loading…</p>`; }
+  const names = new Map([...S.map].map(([k, v]) => [k, v.n])), rows = RD.predList(sh, sym, names, 8), test = RD.predTestLine(predIdx);
+  if (!rows.length) return `<div class="sec-t">Predicted links</div><p class="note">No predicted link has evidence we can show for ${esc(sym)} yet.</p>`;
+  return `<div class="sec-t">Predicted links <span class="tag pl-lab">${esc(RD.PRED_LABEL)}</span></div>
+    <p class="note">Listed companies the model thinks may do business with ${esc(sym)}, beyond the links confirmed in filings. Each is an estimate; open one to see the evidence.</p>
+    <ul class="pl-list">${rows.map(r => `<li><details><summary><button class="lnk" data-pl="${esc(r.sym)}" title="Open ${esc(r.sym)}">${esc(r.sym)}</button> <span class="pl-n">${esc(r.name)}</span>
+      ${r.kinds.map(k => `<span class="tag pl-k">${esc(RD.kindLabel(k))}</span>`).join("")}${r.rival ? '<span class="tag warn" title="Same industry: this may be a rival rather than a business partner">May be a rival</span>' : ""}</summary>
+      <ul class="pl-why">${r.reasons.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
+      ${r.quote ? `<p class="note rd-q">“${esc(r.quote.text.slice(0, 220))}${r.quote.text.length > 220 ? "…" : ""}”${r.quote.url ? ` <a href="${esc(r.quote.url)}" target="_blank" rel="noopener">source</a>` : ""}</p>` : r.source ? `<p class="note"><a href="${esc(r.source)}" target="_blank" rel="noopener">The filing</a></p>` : ""}</details></li>`).join("")}</ul>
+    ${test ? `<p class="note">${esc(test)}</p>` : ""}`;
 }
 function renderPrints() {
   const it = intraOf(sec), rows = it ? (it.d || []) : [];

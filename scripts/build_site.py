@@ -159,6 +159,15 @@ def main() -> None:
             present["deps"] = True
     except Exception as e:  # noqa: BLE001  the site still builds without it
         print("dependencies.json not built:", e)
+    # Predicted links (scripts/nexus_predict.py): pl/index.json (summary + the model's test) and pl/<A-Z or 0>.json, one shard per first letter, loaded per company.
+    present["pred"] = False
+    pdir = DATA / "nexus_predict"
+    if (pdir / "predicted.json").exists() and (pdir / "links").is_dir():
+        (SITE / "pl").mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(pdir / "predicted.json", SITE / "pl" / "index.json")
+        for f in (pdir / "links").glob("*.json"):
+            shutil.copyfile(f, SITE / "pl" / f.name)
+        present["pred"] = True
     # geo.json itself loads only when the Globe tab is opened; this tiny summary (a few hundred bytes) is what the regime strip and the Brief read.
     present["geo_summary"] = False
     if present.get("geo"):

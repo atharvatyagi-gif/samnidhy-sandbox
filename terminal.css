@@ -1159,6 +1159,14 @@ html.sg-lock, html.sg-lock body { overflow: hidden; }
 .rd-lv.mut { color: var(--ink-3); }
 .rd-line { line-height: 1.6; }
 .rd-q { font-style: italic; }
+.pl-lab { font-weight: 500; color: var(--ink-3); border-style: dashed; }
+.pl-list { list-style: none; margin: 6px 0 0; padding: 0; }
+.pl-list > li { border-top: 1px solid var(--rule); padding: 6px 0; }
+.pl-list > li:first-child { border-top: 0; }
+.pl-list summary { cursor: pointer; line-height: 1.7; }
+.pl-n { color: var(--ink-2); }
+.pl-k { border-style: dashed; }
+.pl-why { margin: 4px 0 0 18px; padding: 0; line-height: 1.5; color: var(--ink-2); }
 .rd-geo { display: flex; height: 10px; border-radius: var(--r); overflow: hidden; background: var(--rule); margin-top: 8px; }
 .rd-geo i { display: block; height: 100%; background: var(--ink-3); border-right: 1px solid var(--paper); }
 .rd-geo i.home { background: var(--up); }

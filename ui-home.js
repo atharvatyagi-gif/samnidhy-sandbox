@@ -33,6 +33,7 @@ const HELP = {
   dd: "Biggest fall from a high: the worst drop from a peak to a later low in the period shown. A feel for how bumpy holding it has been.",
   nifty: "Nifty 50: an index of India's 50 biggest companies, used here as 'the market' to compare with.",
   links: "Customers and suppliers named in the company's own filings and earnings calls, each with the sentence it came from.",
+  pred: "Predicted links are a statistical model's estimate, not facts. The model looks at four kinds of evidence: one company naming the other in its annual report, the two shares moving together beyond their industries, business descriptions that fit together, and the same business group. Links already confirmed in filings are not repeated here.",
   dep: "Revenue dependency: how much of the company's sales rest on a single customer. Indian accounting rules (Ind AS 108) make listed companies disclose every customer worth 10% or more of revenue, usually without the name. High = one customer is 25% or more; Moderate = 10 to 25%; Low = the company states that none reaches 10%.",
   geo: "Where the revenue comes from: the split by region that the company reports in its segment note. A large share from outside India means exposure to other economies and to the rupee.",
 };
@@ -242,6 +243,7 @@ async function openStory(sym, tab) {
     <section data-panel="revenue" id="panel-revenue" role="tabpanel" aria-labelledby="tab-revenue" class="mt-5 space-y-4" hidden>
       <div class="st-card" id="st-dep"><h3>Revenue dependency ${help("dep")}</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div>
       <div class="st-card" id="st-links"><h3>Named customers and suppliers ${help("links")}</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div>
+      <div class="st-card" id="st-pred"><h3>Predicted links ${help("pred")}</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div>
     </section>
     <p class="mt-6 text-center text-xs text-zinc-500">Educational analysis, not investment advice. Models are statistical and often wrong.</p>`;
   $("#st-back").onclick = closeStory; $("#st-back").focus();
@@ -265,6 +267,7 @@ async function openStory(sym, tab) {
     once("graph", () => get("supply_graph.json")).catch(() => null), once("deps", () => get("dependencies.json")).catch(() => null)]);
   if (S.cur?.e !== e) return;
   const pd = dp && dp.cos && dp.cos[sym];
+  predCard(sym);
   bizCard(e, f, sym); modelCard(a, sym); linksCard(g, sym, pd); peersCard(e, f, sym); plainWords(e, d, nf, f, a, sym, pd); depCard(e, pd); depMini(e, pd);
 }
 function paintWatchBtn(sym) { const b = $("#st-watch"); if (!b) return; const on = watch().includes(sym); b.textContent = on ? "★ Watching" : "☆ Watch"; b.setAttribute("aria-pressed", String(on)); }
@@ -479,6 +482,23 @@ function depMini(e, p) {
   el.innerHTML = `<div class="flex flex-wrap items-center justify-between gap-3"><h3>Revenue dependency ${help("dep")}</h3><button type="button" class="text-sm text-emerald-400 underline" data-go-tab="revenue">Customers and regions →</button></div>
     <div class="mt-3 flex flex-wrap items-center gap-3">${badge(d)}<span class="text-sm text-zinc-300">${esc(p.lvl === "unknown" && p.abroad != null ? RD.plainSentence(p, e.s) : p.why)}</span></div>${d.geo.length ? geoBar(RD.geoSegments(d.geo)) : ""}`;
   el.querySelector("[data-go-tab]").onclick = () => selectTab("revenue");
+}
+async function predCard(sym) {
+  const el = $("#st-pred"), h = `<h3>Predicted links ${help("pred")}</h3>`;
+  if (!el) return;
+  const [idx, sh] = await Promise.all([once("pl", () => get("pl/index.json")).catch(() => null), once("pl" + RD.predShard(sym), () => get(`pl/${RD.predShard(sym)}.json`)).catch(() => null)]);
+  if (S.cur?.e?.s !== sym) return;
+  if (!sh) { el.innerHTML = h + `<p class="mt-3 text-sm text-zinc-400">Predicted links could not be loaded.</p>`; return; }
+  const names = new Map(S.list.map(x => [x.s, x.n])), rows = RD.predList(sh, sym, names, 8), test = RD.predTestLine(idx);
+  if (!rows.length) { el.innerHTML = h + `<p class="mt-3 text-sm text-zinc-400">No predicted link has evidence we can show for this company yet.</p>`; return; }
+  const row = r => `<li class="border-t border-zinc-800 py-3 first:border-0"><details><summary class="flex cursor-pointer items-start justify-between gap-3"><span class="min-w-0">${S.map.has(r.sym) ? `<button type="button" data-peer="${esc(r.sym)}" class="text-left text-zinc-100 underline decoration-zinc-600 underline-offset-4 hover:decoration-zinc-300">${esc(r.name)}</button>` : `<span class="text-zinc-100">${esc(r.name)}</span>`} <span class="font-mono text-xs text-emerald-400">${esc(r.sym)}</span>
+      <span class="block text-xs text-zinc-500">${r.kinds.map(k => esc(RD.kindLabel(k))).join(" · ")}${r.rival ? " · same industry: may be a rival" : ""}</span></span>
+      <span class="shrink-0 rounded-full border border-zinc-600 px-2.5 py-0.5 text-sm whitespace-nowrap text-zinc-300">Why?</span></summary>
+      <ul class="mt-2 space-y-1 text-sm text-zinc-300">${r.reasons.map(t => `<li class="flex gap-2"><span class="text-emerald-400" aria-hidden="true">•</span><span>${esc(t)}</span></li>`).join("")}</ul>
+      ${r.quote ? `<p class="mt-2 text-xs text-zinc-500">“${esc(r.quote.text.slice(0, 220))}${r.quote.text.length > 220 ? "…" : ""}”${r.quote.url ? ` <a class="underline" href="${esc(r.quote.url)}" target="_blank" rel="noopener">source</a>` : ""}</p>` : r.source ? `<p class="mt-2 text-xs text-zinc-500"><a class="underline" href="${esc(r.source)}" target="_blank" rel="noopener">The filing</a></p>` : ""}</details></li>`;
+  el.innerHTML = h + `<p class="mt-2 text-sm text-zinc-400"><b class="text-amber-200">${esc(RD.PRED_LABEL)}.</b> Listed companies a model thinks may do business with this one, beyond the links confirmed in filings. Tap one to see the evidence.</p>
+    <ul class="mt-2">${rows.map(row).join("")}</ul>${test ? `<p class="mt-4 text-xs text-zinc-500">${esc(test)}</p>` : ""}`;
+  el.querySelectorAll("[data-peer]").forEach(b => b.onclick = ev => { ev.preventDefault(); openStory(b.dataset.peer, "revenue"); });
 }
 function linksCard(g, sym, pd) {
   const el = $("#st-links"), h = `<h3>Named customers and suppliers ${help("links")}</h3>`;
