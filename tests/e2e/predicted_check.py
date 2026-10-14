@@ -75,6 +75,13 @@ def run():
         pg.locator("#mov-link .mv-tg").first.click(); pg.wait_for_timeout(2500)
         check("Movers: a row's expansion lists the linked companies today", "linked companies today" in pg.inner_text("#mov-alt").lower())
         check("Movers: 0 console errors", not errs, errs[:3])
+        pg.goto(f"{BASE}#v=signals"); pg.reload(); pg.wait_for_selector("#signals tr[data-sym]", timeout=30000)
+        pg.locator("#signals tr[data-sym]").first.click(); pg.wait_for_selector(".sg-sheet", timeout=20000); pg.wait_for_timeout(2500)
+        check("ALADIN: the stock's summary says how its linked companies moved", "linked compan" in pg.inner_text(".sg-sheet").lower())
+        pg.click('.sg-tabs [data-t="deps"]'); pg.wait_for_timeout(3000)
+        t = pg.inner_text(".sg-sheet").lower()
+        check("ALADIN: the dependencies tab shows linked companies today and predicted links", "linked companies today" in t and "predicted, not confirmed" in t)
+        check("ALADIN: 0 console errors", not errs, errs[:3])
         # (opening a stock without an ALADIN 2.0 shard logs a 404 for aladin2/stock/<SYM>.json: older behaviour of the terminal, not of this section)
         b.close()
 

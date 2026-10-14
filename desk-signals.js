@@ -355,8 +355,13 @@ function meter(label, v, ci, n) {
   return `<div class="sg-meter"><div class="sg-ml"><span>${esc(label)}</span><b>${pct0(v)}</b></div><div class="sg-track" role="img" aria-label="${esc(label)} ${pct0(v)}${ci ? ", 95% range " + pct0(lo) + " to " + pct0(hi) : ""}"><i class="sg-ci" style="left:${pos(lo)}%;width:${Math.max(1, pos(hi) - pos(lo))}%"></i><i class="sg-half" style="left:${pos(0.5)}%"></i><i class="sg-mk" style="left:${pos(v)}%"></i></div>
     <small>${ci ? `95% range ${pct0(lo)} to ${pct0(hi)}` : ""}${n ? ` · ${n.toLocaleString("en-IN")} past stock-weeks` : ""} · the thin line is a coin flip (50%)</small></div>`;
 }
+function linkedSummary(r) {
+  if (!graph) loadGraph();
+  const links = linkedOfSel(r.sym); if (!links.length) return "";
+  return `<div class="sg-card"><h4>Linked companies today</h4><p>${esc(linkedLine(r.sym, links, moveOf(r.sym)) || "")} <button type="button" class="lnk" data-t="deps">See them and why they are linked →</button></p></div>`;
+}
 function summaryHtml(r) {
-  const L = lab(), b = r.book; if (!b) return holdSummary(r);
+  const L = lab(), b = r.book; if (!b) return holdSummary(r) + linkedSummary(r);
   const c = b.chance, bull = r.sig === "bull", rec = b.record;
   const tile = (name, big, sub, cls = "") => `<div class="sg-tile ${cls}"><span>${esc(name)}</span><b>${big}</b><small>${sub}</small></div>`;
   const rrText = r.rr == null ? "" : r.rr < 1 ? `<p class="sg-warn">The ${esc((L.goal || "range edge").toLowerCase())} is closer than the ${esc((L.stop || "exit level").toLowerCase())} (reward ${r.rr.toFixed(2)} for each 1 of risk): one win is smaller than one loss, so this only pays if it wins often enough. The chances below say how often it has.</p>` : `<p class="sg-ok">Reward ${r.rr.toFixed(2)} for each 1 of risk.</p>`;
@@ -365,7 +370,7 @@ function summaryHtml(r) {
       ${tile(L.stop || "Stop loss", r.stop != null ? `${inr(r.stop)} <em class="${r.stopPct >= 0 ? "up" : "down"}">${pct(r.stopPct, 1)}</em>` : '<span class="sg-nm">not measured</span>', esc(b.stop_basis || ""))}</div>${rrText}
     <div class="sg-card"><h4>Chance, from 13 years of out-of-sample history</h4>${c ? meter("Closes higher in 5 trading days", c.closes_higher, c.closes_higher_ci95, c.n_stock_weeks) + meter("Beats the market in 5 trading days", c.beats_market, c.beats_market_ci95, c.n_stock_weeks) : '<p class="note">Not measured for this rank.</p>'}</div>
     <div class="sg-card"><h4>What to do</h4><p>${esc(b.what_to_do)}</p>${bull && b.entry_zone ? `<dl class="sg-dl"><div><dt>Entry zone</dt><dd>${inr(b.entry_zone[0])} to ${inr(b.entry_zone[1])}</dd></div><div><dt>Exit</dt><dd>${esc(b.exit)}</dd></div><div><dt>Round trip cost</dt><dd>${esc(String(b.round_trip_cost_bps))} bps</dd></div>${b.size_for_capital ? `<div><dt>Size for ₹${b.size_for_capital.capital.toLocaleString("en-IN")}</dt><dd>${b.size_for_capital.qty.toLocaleString("en-IN")} shares, ₹${b.size_for_capital.capital_at_risk.toLocaleString("en-IN")} at risk</dd></div>` : ""}</dl>` : ""}</div>
-    ${rec ? `<div class="sg-card"><h4>The same signal in the past (history, not live)</h4><dl class="sg-dl"><div><dt>Stock-weeks</dt><dd>${rec.n.toLocaleString("en-IN")}</dd></div><div><dt>Closed higher</dt><dd>${pct0(rec.share_closing_up)}</dd></div>${bull ? `<div><dt>After costs, vs the market</dt><dd>${rec.net_bps >= 0 ? "+" : ""}${rec.net_bps} bps a week</dd></div><div><dt>Years positive</dt><dd>${esc(rec.years_positive_net || "--")}</dd></div>` : `<div><dt>Vs the market, before costs</dt><dd>${rec.gross_excess_bps} bps a week</dd></div><div><dt>Years below the market</dt><dd>${esc(rec.years_below_market || "--")}</dd></div>`}</dl>${heldOutHtml(rec, bull)}</div>` : ""}`;
+    ${linkedSummary(r)}${rec ? `<div class="sg-card"><h4>The same signal in the past (history, not live)</h4><dl class="sg-dl"><div><dt>Stock-weeks</dt><dd>${rec.n.toLocaleString("en-IN")}</dd></div><div><dt>Closed higher</dt><dd>${pct0(rec.share_closing_up)}</dd></div>${bull ? `<div><dt>After costs, vs the market</dt><dd>${rec.net_bps >= 0 ? "+" : ""}${rec.net_bps} bps a week</dd></div><div><dt>Years positive</dt><dd>${esc(rec.years_positive_net || "--")}</dd></div>` : `<div><dt>Vs the market, before costs</dt><dd>${rec.gross_excess_bps} bps a week</dd></div><div><dt>Years below the market</dt><dd>${esc(rec.years_below_market || "--")}</dd></div>`}</dl>${heldOutHtml(rec, bull)}</div>` : ""}`;
 }
 function holdSummary(r) {
   const L = lab(), none = r.sig === "none";
@@ -396,6 +401,47 @@ function rangeHtml(r) {
   setTimeout(() => { const el = root.querySelector("#a2-brief"); if (el) A2.bind(el, r.sym); }, 0);
   return `<div class="sg-card a2-embed">${A2.wrap(r.sym)}</div><p class="note">The chart on the Terminal tab draws the same range to the right of the last candle.</p>`;
 }
+/* ---------- linked companies (confirmed from the graph, predicted from pl/compact.json and pl/<letter>.json) ---------- */
+const pl = { compact: undefined, idx: undefined, shards: new Map() };
+function loadPred(sym) {
+  const man = ctx.S.deskMan || {};
+  if (!man.pred) return;
+  const again = () => { if (st.sel && (st.tab === "deps" || st.tab === "summary")) paintSheet(); };
+  if (pl.compact === undefined) { pl.compact = null; ctx.getJSON("pl/compact.json", false).then(j => { pl.compact = j; again(); }).catch(() => {}); }
+  if (pl.idx === undefined) { pl.idx = null; ctx.getJSON("pl/index.json", false).then(j => { pl.idx = j; again(); }).catch(() => {}); }
+  const k = RD.predShard(sym);
+  if (!pl.shards.has(k)) { pl.shards.set(k, "loading"); ctx.getJSON(`pl/${k}.json`, false).then(j => { pl.shards.set(k, j); }).catch(() => { pl.shards.set(k, null); }).finally(again); }
+}
+const moveOf = s => { const x = ctx.q ? ctx.q(s) : null; return x && x.pct != null ? x.pct : null; };
+const sgn1 = v => v == null ? "—" : `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(1)}%`;
+const ucls = v => v == null ? "mut" : v > 0 ? "up" : v < 0 ? "down" : "";
+export function linkedLine(sym, links, move) {
+  const others = links.filter(l => !l.rival), sw = RD.sameWay(move, others, moveOf);
+  if (!links.length) return null;
+  if (!others.length) return "Only same-industry companies are linked so far (not counted: they move with their sector).";
+  return sw.quoted ? `${sw.same} of ${sw.quoted} linked compan${sw.quoted === 1 ? "y" : "ies"} moved the same way today.` : "No linked company has a price today.";
+}
+function linkedOfSel(sym) { loadPred(sym); return RD.linkedOf(sym, graph && !graph.missing ? graph : null, pl.compact, 8); }
+function chipsHtml(links) {
+  return links.map(l => `<button type="button" class="lk-c ${l.confirmed ? "lk-conf" : "lk-pred"}" data-nexus="company:${esc(l.sym)}" data-nexus-tab="deps" title="${esc(l.confirmed ? `Confirmed ${l.role} in the filings` : `${RD.PRED_LABEL}: ${l.kinds.map(RD.kindLabel).join(", ")}${l.rival ? " (same industry: may be a rival)" : ""}`)}">${l.rival ? '<i aria-hidden="true">≈</i>' : ""}${esc(l.sym)} <b class="${ucls(moveOf(l.sym))}">${sgn1(moveOf(l.sym))}</b></button>`).join("");
+}
+function linkedCard(r) {
+  const links = linkedOfSel(r.sym); if (!links.length) return "";
+  return `<div class="sg-card"><h4>Linked companies today</h4><p>${esc(linkedLine(r.sym, links, moveOf(r.sym)) || "")}</p><p class="lk-row">${chipsHtml(links)}</p>
+    <p class="note">Solid: confirmed in a filing. Dashed: ${esc(RD.PRED_LABEL.toLowerCase())}. ≈ same industry, may be a rival (not counted). Moving together is an association, not proof of cause.</p></div>`;
+}
+function predCard(r) {
+  if (!(ctx.S.deskMan || {}).pred) return "";
+  loadPred(r.sym);
+  const sh = pl.shards.get(RD.predShard(r.sym));
+  if (sh === "loading" || sh === undefined) return '<div class="sg-card"><h4>Predicted links</h4><p class="note">Loading…</p></div>';
+  const rows = RD.predList(sh, r.sym, ctx.S.map ? new Map([...ctx.S.map].map(([k, v]) => [k, v.n])) : null, 8), test = RD.predTestLine(pl.idx);
+  if (!rows.length) return `<div class="sg-card"><h4>Predicted links</h4><p class="note">No predicted link has evidence we can show for ${esc(r.sym)} yet.</p></div>`;
+  return `<div class="sg-card"><h4>Predicted links <span class="tag pl-lab">${esc(RD.PRED_LABEL)}</span></h4><p class="note">Listed companies a model thinks may do business with ${esc(r.sym)}, beyond the confirmed links. Which side is the customer is not predicted.</p>
+    <ul class="sg-deps">${rows.map(x => `<li><details><summary class="sg-dh"><b><button type="button" class="lnk" data-nexus="company:${esc(x.sym)}">${esc(x.sym)}</button> ${esc(x.name)}</b><span>${x.kinds.map(k => `<span class="sg-tag">${esc(RD.kindLabel(k))}</span>`).join(" ")}${x.rival ? ' <span class="sg-tag">may be a rival</span>' : ""}</span></summary>
+      <ul class="pl-why">${x.reasons.map(t => `<li>${esc(t)}</li>`).join("")}</ul>${x.quote ? `<blockquote>“${esc(x.quote.text.slice(0, 240))}”</blockquote>` : ""}${x.quote && x.quote.url ? `<a href="${esc(x.quote.url)}" target="_blank" rel="noopener">Filing${x.quote.pg ? ", page " + x.quote.pg : ""} ↗</a>` : x.source ? `<a href="${esc(x.source)}" target="_blank" rel="noopener">Filing ↗</a>` : ""}</details></li>`).join("")}</ul>
+    ${test ? `<p class="note">${esc(test)}</p>` : ""}</div>`;
+}
 function depsHtml(r) {
   if (!graph) { loadGraph(); return '<p class="note">Loading the dependency graph…</p>'; }
   const d = dependenciesOf(graph, r.sym);
@@ -410,7 +456,7 @@ function depsHtml(r) {
   return `<div class="sg-card"><h4>Who ${esc(r.sym)} depends on, and who depends on it</h4>${rt ? `<p class="rd-line"><span class="rd-lv ${rt.tone}">${esc(rt.label)}</span> ${esc(RD.plainSentence(rp, r.sym) || rp.why || "")}</p>` : ""}${d.rows.length ? `<ul class="sg-deps">${d.rows.slice(0, 8).map(row).join("")}</ul>${d.rows.length > 8 ? `<p class="note">${d.rows.length - 8} more in NEXUS.</p>` : ""}`
       : `<p class="note">${d.read ? "The filings were read and no dependency was disclosed." : "Not measured: the filings for this company have not been read yet. NEXUS has read " + (d.done ?? "some") + " of " + (d.total ?? "all") + " listed companies so far."}</p>`}
     <div class="sg-actions"><button type="button" class="btn-ink" id="sg-nx">Open the full supply-chain view →</button></div>
-    <p class="note">Every link carries its filing, page and a verbatim quote. A move in a linked stock is an association, not proof of cause. Dependencies are not part of the signal rule yet: see "How it was made".</p></div>`;
+    <p class="note">Every link carries its filing, page and a verbatim quote. A move in a linked stock is an association, not proof of cause. Dependencies are not part of the signal rule yet: see "How it was made".</p></div>${linkedCard(r)}${predCard(r)}`;
 }
 
 function sheetHtml(r) {
