@@ -120,3 +120,15 @@ def test_a_damaged_pdf_is_recorded_once_and_a_network_error_is_retried(monkeypat
     state2 = {"m": {}, "done": {}}
     FM.download_new(["BBB"], m, {}, state2, 5, log=lambda *a: None, session=Sess(), get_pdf=boom)
     assert "BBB" not in state2["done"]
+
+
+def test_earlier_mentions_survive_a_run_without_the_filings_cache(tmp_path, monkeypatch):
+    out = tmp_path / "mentions.json"
+    import json as _j
+    out.write_text(_j.dumps({"read": ["MARUTI"], "done": {}, "m": {"MARUTI": {"BHARATSE": {"n": 3, "sup": 1, "pg": [9], "q": "q", "url": "u1"}}}}), encoding="utf-8")
+    monkeypatch.setattr(FM, "OUT", out)
+    monkeypatch.setattr(FM, "load", lambda p, d: _j.loads(p.read_text(encoding="utf-8")) if p == out else ({"stocks": STOCKS} if "universe" in str(p) else d))
+    monkeypatch.setattr(FM, "scan_cached", lambda *a, **k: ({}, {}))          # the cache was evicted: nothing cached this run
+    FM.main(["--no-download"])
+    got = _j.loads(out.read_text(encoding="utf-8"))
+    assert "BHARATSE" in got["m"]["MARUTI"] and "MARUTI" in got["read"]

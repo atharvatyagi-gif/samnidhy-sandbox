@@ -259,21 +259,23 @@ def main(argv=None):
     symbols = set(names)
     prev = load(OUT, {})
     state = {"m": {}, "done": prev.get("done", {})}
-    # downloaded-only results are kept between runs; cached filings are re-scanned in full every run
-    for own, rows in prev.get("m", {}).items():
-        if own in state["done"] and state["done"][own].get("url"):
-            keep = {k: v for k, v in rows.items() if v.get("url") == state["done"][own]["url"]}
-            if keep:
-                state["m"][own] = keep
+    # Earlier results are kept: the Actions cache of downloaded filings can be evicted (GitHub's 10 GB limit), and a run without it must not
+    # forget what earlier runs read. Only a company whose cached filings are scanned again this run has those rows replaced.
     cm, docs = scan_cached(matcher, names, symbols)
+    for own, rows in prev.get("m", {}).items():
+        if own in docs:                                   # re-scanned now: keep only what came from its downloaded annual report
+            d = state["done"].get(own) or {}
+            rows = {k: v for k, v in rows.items() if d.get("url") and v.get("url") == d["url"]}
+        if rows:
+            state["m"][own] = rows
     for own, rows in cm.items():
         merge(state["m"], own, rows)
     if not a.no_download:
         companies = [s["s"] for s in stocks if not s.get("etf") and s.get("series") in ("EQ", "BE", "BZ")]
-        todo = [s for s in companies if s not in docs and s not in state["done"]]
+        todo = [s for s in companies if s not in docs and s not in state["done"] and s not in set(prev.get("read") or [])]
         print(f"downloading: {len(todo)} companies not read yet; up to {a.limit} this run")
         download_new(todo, matcher, names, state, a.limit)
-    read = set(docs) | {s for s, d in state["done"].items() if d.get("url") and not d.get("none")}
+    read = set(prev.get("read") or []) | set(docs) | {s for s, d in state["done"].items() if d.get("url") and not d.get("none")}
     named_by = {}
     for own, rows in state["m"].items():
         for sym in rows:

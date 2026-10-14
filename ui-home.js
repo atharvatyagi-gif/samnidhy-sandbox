@@ -33,6 +33,7 @@ const HELP = {
   dd: "Biggest fall from a high: the worst drop from a peak to a later low in the period shown. A feel for how bumpy holding it has been.",
   nifty: "Nifty 50: an index of India's 50 biggest companies, used here as 'the market' to compare with.",
   links: "Customers and suppliers named in the company's own filings and earnings calls, each with the sentence it came from.",
+  linked: "Listed companies linked to this one: solid ones are confirmed customers or suppliers in the companies' own filings; dashed ones are a statistical model's prediction. Each shows its own move today. Moving together is an association, not proof of cause.",
   pred: "Predicted links are a statistical model's estimate, not facts. The model looks at four kinds of evidence: one company naming the other in its annual report, the two shares moving together beyond their industries, business descriptions that fit together, and the same business group. Links already confirmed in filings are not repeated here.",
   dep: "Revenue dependency: how much of the company's sales rest on a single customer. Indian accounting rules (Ind AS 108) make listed companies disclose every customer worth 10% or more of revenue, usually without the name. High = one customer is 25% or more; Moderate = 10 to 25%; Low = the company states that none reaches 10%.",
   geo: "Where the revenue comes from: the split by region that the company reports in its segment note. A large share from outside India means exposure to other economies and to the rupee.",
@@ -80,6 +81,7 @@ Promise.all([get("t/universe.json"), get("t/quotes.json", true).catch(() => ({})
   const top = S.list.filter(e => e.board === "Main" && !e.etf && e.val_cr).sort((a, b) => b.val_cr - a.val_cr).slice(0, 6);
   $("#hx-trending").insertAdjacentHTML("beforeend", top.map(e => { const qq = quoteOf(e); return `<button type="button" class="hx-chip" data-sym="${esc(e.s)}">${esc(e.s)}<b class="${cls(qq.pct)}">${pct(qq.pct, 1)}</b></button>`; }).join(""));
   paintMine();
+  { const sec = $("#hx-linked"); if (sec && "IntersectionObserver" in window) { const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { io.disconnect(); homeLinked(); } }, { rootMargin: "200px" }); io.observe(sec); } else if (sec) homeLinked(); }
   if (input.value) render();
   const hp = new URLSearchParams(location.hash.slice(1)); if (hp.get("s") && S.map.has(hp.get("s"))) openStory(hp.get("s"), hp.get("tab"));
 }).catch(() => { box.hidden = false; box.innerHTML = '<li class="empty">The stock list could not be loaded. Please try again in a minute.</li>'; });
@@ -219,6 +221,7 @@ async function openStory(sym, tab) {
       <div class="st-card"><h3>In plain words</h3><ul class="mt-3 space-y-2 text-[15px] leading-relaxed text-zinc-200" id="st-plain"><li class="text-zinc-500">Reading the numbers…</li></ul></div>
       <div class="grid gap-4 md:grid-cols-2"><div class="st-card" id="st-range"><h3>Where the price sits</h3></div><div class="st-card" id="st-model"><h3>What our models see</h3></div></div>
       <div class="st-card" id="st-depmini" hidden></div>
+      <div class="st-card" id="st-linked" hidden></div>
       <div class="st-card" id="st-peers"><h3>Similar companies</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div>
     </section>
     <section data-panel="chart" id="panel-chart" role="tabpanel" aria-labelledby="tab-chart" class="mt-5 space-y-4" hidden>
@@ -267,7 +270,7 @@ async function openStory(sym, tab) {
     once("graph", () => get("supply_graph.json")).catch(() => null), once("deps", () => get("dependencies.json")).catch(() => null)]);
   if (S.cur?.e !== e) return;
   const pd = dp && dp.cos && dp.cos[sym];
-  predCard(sym);
+  predCard(sym); linkedCard(sym);
   bizCard(e, f, sym); modelCard(a, sym); linksCard(g, sym, pd); peersCard(e, f, sym); plainWords(e, d, nf, f, a, sym, pd); depCard(e, pd); depMini(e, pd);
 }
 function paintWatchBtn(sym) { const b = $("#st-watch"); if (!b) return; const on = watch().includes(sym); b.textContent = on ? "★ Watching" : "☆ Watch"; b.setAttribute("aria-pressed", String(on)); }
@@ -482,6 +485,55 @@ function depMini(e, p) {
   el.innerHTML = `<div class="flex flex-wrap items-center justify-between gap-3"><h3>Revenue dependency ${help("dep")}</h3><button type="button" class="text-sm text-emerald-400 underline" data-go-tab="revenue">Customers and regions →</button></div>
     <div class="mt-3 flex flex-wrap items-center gap-3">${badge(d)}<span class="text-sm text-zinc-300">${esc(p.lvl === "unknown" && p.abroad != null ? RD.plainSentence(p, e.s) : p.why)}</span></div>${d.geo.length ? geoBar(RD.geoSegments(d.geo)) : ""}`;
   el.querySelector("[data-go-tab]").onclick = () => selectTab("revenue");
+}
+/* ---------------- Linked companies (confirmed from dependencies.json, predicted from pl/compact.json) ---------------- */
+function depsGraph(dp) {                       // the listed customers and suppliers of dependencies.json as a tiny graph for RD.linkedOf
+  const nodes = new Map(), edges = [], node = x => { if (!nodes.has(x)) nodes.set(x, { id: x, sym: x }); };
+  for (const [sym, p] of Object.entries((dp && dp.cos) || {})) {
+    for (const c of p.listed_customers || []) { node(sym); node(c); edges.push({ s: sym, d: c }); }
+    for (const c of p.listed_suppliers || []) { node(sym); node(c); edges.push({ s: c, d: sym }); }
+  }
+  return { nodes: [...nodes.values()], edges };
+}
+const linkedData = () => Promise.all([once("deps", () => get("dependencies.json")).catch(() => null), once("plc", () => get("pl/compact.json")).catch(() => null)])
+  .then(([dp, pc]) => { if (!S.dg && dp) S.dg = depsGraph(dp); return { g: S.dg || null, pc }; });
+const pctOf = sym => { const e = S.map.get(sym); return e ? quoteOf(e).pct : null; };
+function linkChips(links) {
+  return links.map(l => `<button type="button" data-peer="${esc(l.sym)}" title="${esc(l.confirmed ? `Confirmed ${l.role} in the filings` : `${RD.PRED_LABEL}: ${l.kinds.map(RD.kindLabel).join(", ")}${l.rival ? " (same industry: may be a rival)" : ""}`)}"
+    class="inline-flex items-baseline gap-1.5 rounded-md border px-2 py-0.5 font-mono text-xs whitespace-nowrap ${l.confirmed ? "border-zinc-500 bg-zinc-800 text-zinc-100" : "border-dashed border-zinc-600 text-zinc-300"} hover:border-zinc-300">${l.rival ? '<span class="text-zinc-500" aria-hidden="true">≈</span>' : ""}${esc(l.sym)} <b class="${cls(pctOf(l.sym))}">${pct(pctOf(l.sym), 1)}</b></button>`).join("");
+}
+const LINK_KEY = `<p class="mt-3 text-xs text-zinc-500">Solid: confirmed in a filing. Dashed: ${RD.PRED_LABEL.toLowerCase()} (a model's estimate). ≈ same industry, may be a rival (not counted). Moving together is an association, not proof that one move caused the other.</p>`;
+function sameWayText(mv, links) {
+  const others = links.filter(l => !l.rival), sw = RD.sameWay(mv, others, pctOf);
+  if (!others.length) return "only same-industry companies are linked so far (not counted: they move with their sector)";
+  return sw.quoted ? `${sw.same} of ${sw.quoted} linked compan${sw.quoted === 1 ? "y" : "ies"} moved the same way today` : "no linked company has a price today";
+}
+async function linkedCard(sym) {
+  const el = $("#st-linked"); if (!el) return;
+  const { g, pc } = await linkedData();
+  if (S.cur?.e?.s !== sym) return;
+  const links = RD.linkedOf(sym, g, pc, 8);
+  if (!links.length) { el.hidden = true; return; }
+  const mv = pctOf(sym);
+  el.innerHTML = `<div class="flex flex-wrap items-center justify-between gap-3"><h3>Linked companies today ${help("linked")}</h3><button type="button" class="text-sm text-emerald-400 underline" data-go-tab="revenue">Why are they linked? →</button></div>
+    <p class="mt-2 text-sm text-zinc-300">${esc(sameWayText(mv, links))}.</p><div class="mt-3 flex flex-wrap gap-2">${linkChips(links)}</div>${LINK_KEY}`;
+  el.hidden = false;
+  el.querySelector("[data-go-tab]").onclick = () => selectTab("revenue");
+  el.querySelectorAll("[data-peer]").forEach(b => b.onclick = () => openStory(b.dataset.peer));
+}
+async function homeLinked() {
+  const el = $("#hx-linked-body"); if (!el || el.dataset.done) return;
+  el.dataset.done = "1";
+  const { g, pc } = await linkedData();
+  if (!g && !pc) { el.innerHTML = '<p class="text-sm text-zinc-400">The linked-company data could not be loaded.</p>'; return; }
+  const rows = S.list.filter(e => e.n500 && !e.etf).map(e => ({ e, mv: quoteOf(e).pct })).filter(r => r.mv != null && Math.abs(r.mv) >= 1)
+    .sort((a, b) => Math.abs(b.mv) - Math.abs(a.mv)).map(r => ({ ...r, links: RD.linkedOf(r.e.s, g, pc, 6) })).filter(r => r.links.length).slice(0, 5);
+  el.innerHTML = rows.length ? `<ul class="divide-y divide-zinc-800 rounded-lg border border-zinc-800">${rows.map(r => `<li class="px-4 py-3">
+      <div class="flex flex-wrap items-baseline justify-between gap-2"><button type="button" data-peer="${esc(r.e.s)}" class="text-left"><b class="font-mono">${esc(r.e.s)}</b> <span class="text-sm text-zinc-400">${esc(r.e.n || "")}</span></button>
+        <span class="font-mono font-semibold ${cls(r.mv)}">${pct(r.mv)}</span></div>
+      <p class="mt-1 text-xs text-zinc-500">${esc(sameWayText(r.mv, r.links))}</p><div class="mt-2 flex flex-wrap gap-2">${linkChips(r.links)}</div></li>`).join("")}</ul>${LINK_KEY}`
+    : '<p class="text-sm text-zinc-400">No big NIFTY 500 move today has a linked company yet.</p>';
+  el.querySelectorAll("[data-peer]").forEach(b => b.onclick = () => openStory(b.dataset.peer));
 }
 async function predCard(sym) {
   const el = $("#st-pred"), h = `<h3>Predicted links ${help("pred")}</h3>`;
