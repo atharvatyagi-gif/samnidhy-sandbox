@@ -1,6 +1,6 @@
 {
  "v": 1,
- "generated_utc": "2026-10-14T09:39:17Z",
+ "generated_utc": "2026-10-14T10:41:08Z",
  "label": "Predicted, not confirmed",
  "method": [
   "NEXUS predicted links: for every listed company (not only the NIFTY 500), the other listed companies most likely to have a\nrevenue relationship with it (customer, supplier or group trade) that the filings read so far do NOT confirm.\nA prediction is a model estimate, never a fact: the page labels it \"Predicted, not confirmed\", shows the evidence behind\nit, and shows the model's measured hit rate. Confirmed links (data/supply_graph.json) are never repeated as predictions.",
@@ -9,52 +9,52 @@
   "  python scripts/nexus_predict.py      -> data/nexus_predict/predicted.json (summary + test) and data/nexus_predict/links/<A-Z0>.json"
  ],
  "weights": {
-  "corr": 7.8012,
-  "lead": 0.5901,
-  "ment": 3.8564,
-  "ment_sup": 0.3863,
-  "txt": -2.9313,
-  "txt_cross": 9.2003,
-  "group": 4.1706,
-  "size": 0.5824
+  "corr": 8.1815,
+  "lead": -2.5757,
+  "ment": 1.3899,
+  "ment_sup": 4.7444,
+  "txt": 12.4283,
+  "txt_cross": 7.4694,
+  "group": 3.4067,
+  "size": 0.8309
  },
  "test": {
   "all_evidence": {
    "tests": 71,
-   "hit10": 0.338,
-   "hit50": 0.479,
-   "median_rank": 64,
-   "candidates": 3171,
-   "random_hit10": 0.0032,
-   "random_hit50": 0.0158
+   "hit10": 0.254,
+   "hit50": 0.451,
+   "median_rank": 90,
+   "candidates": 3179,
+   "random_hit10": 0.0031,
+   "random_hit50": 0.0157
   },
   "without_filings": {
    "tests": 71,
    "hit10": 0.225,
-   "hit50": 0.408,
-   "median_rank": 77,
-   "candidates": 3171,
-   "random_hit10": 0.0032,
-   "random_hit50": 0.0158
+   "hit50": 0.423,
+   "median_rank": 99,
+   "candidates": 3179,
+   "random_hit10": 0.0031,
+   "random_hit50": 0.0157
   },
   "price_only": {
    "tests": 71,
-   "hit10": 0.099,
-   "hit50": 0.239,
-   "median_rank": 201,
-   "candidates": 3171,
-   "random_hit10": 0.0032,
-   "random_hit50": 0.0158
+   "hit10": 0.113,
+   "hit50": 0.225,
+   "median_rank": 196,
+   "candidates": 3179,
+   "random_hit10": 0.0031,
+   "random_hit50": 0.0157
   },
   "note": "Confirmed links were found in the same filings the mention evidence reads, so the all-evidence number flatters the model; the without-filings number is the fair one."
  },
  "coverage": {
-  "companies": 3172,
-  "with_profile": 2490,
-  "with_price": 2609,
-  "filings_read": 476,
+  "companies": 3180,
+  "with_profile": 2618,
+  "with_price": 2615,
+  "filings_read": 593,
   "confirmed_listed_links": 39,
-  "industries": 126
+  "industries": 127
  },
  "top_k": 10
 }
