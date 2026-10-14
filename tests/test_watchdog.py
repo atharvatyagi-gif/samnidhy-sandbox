@@ -55,3 +55,13 @@ def test_a_run_stuck_far_past_its_time_limit_is_cancelled():
     runs = {**fresh_nexus(), "live-prices.yml": [run(5, 60 * 34, status="in_progress", conclusion=None), run(6, 3, status="in_progress", conclusion=None)]}
     acts = W.plan(runs, lambda i: [], NOW)
     assert [a[:3] for a in acts] == [("cancel", "live-prices.yml", 5)]
+
+
+def test_only_the_two_newest_copies_of_each_cache_are_kept():
+    c = lambda i, key, t, ref="refs/heads/main": {"id": i, "key": key, "ref": ref, "created_at": t, "size_in_bytes": 100}
+    caches = [c(1, "aladin-sentiment-38603507907", "2026-10-14T17:00:00Z"), c(2, "aladin-sentiment-38594841473", "2026-10-14T16:00:00Z"),
+              c(3, "aladin-sentiment-38585949922", "2026-10-14T15:00:00Z"), c(4, "nexus-38538617353", "2026-10-14T12:00:00Z"),
+              c(5, "setup-python-Linux-x64-24.04-Ubuntu-python-3.12.15-pip-aaf04e0089d767", "2026-10-01T00:00:00Z"),
+              c(6, "terminal-38506642564", "2026-10-14T03:00:00Z"), c(7, "terminal-38525879935", "2026-10-14T07:00:00Z"), c(8, "terminal-38538932572", "2026-10-14T09:00:00Z"),
+              c(9, "terminal-38500000000", "2026-10-13T09:00:00Z", ref="refs/heads/feature")]
+    assert sorted(i for i, _, _ in W.prune_plan(caches)) == [3, 6]          # the nexus cache, pip's cache and another branch's copy stay

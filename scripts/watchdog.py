@@ -9,8 +9,12 @@ What it repairs, and only this (every action is printed and written to the job s
      not take). On 10 Oct a Live prices publish job sat "waiting" for GitHub Pages for 34 hours and every later deploy failed behind it,
      so the public site froze for two days.
   4. Jobs that must run at least once a day (NEXUS graph): started if no run began in the last 26 hours. GitHub's own cron is unreliable.
+  5. Old cache copies. Every workflow saves its cache under "<name>-<run id>", so copies pile up (the hourly sentiment job alone adds
+     ~386 MB an hour) and GitHub's 10 GB limit then evicts the least recently used ones: on 14 Oct the NEXUS filings cache was evicted
+     and a run lost its filings. For each name only the KEEP_CACHES newest copies are kept; older ones are deleted. Caches whose key
+     does not end in a run id (setup-python's pip cache) are left to GitHub.
 
-It never touches data, never cancels anything and never re-runs a cancelled run (cancellations here are expected: the 5-minute Live
+It never touches data or a workflow's newest cache copies, never cancels anything and never re-runs a cancelled run (cancellations here are expected: the 5-minute Live
 prices publishes replace each other). Uses only the GitHub REST API with the job's own token.
 """
 import json
@@ -28,6 +32,24 @@ CHAIN_GRACE_MIN = 45
 STUCK_MIN = {"live-prices.yml": 60, "crypto-live.yml": 40, "globe-data.yml": 60, "aladin-sentiment.yml": 60, "daily-update.yml": 180,
              "aladin.yml": 200, "aladin2.yml": 200, "nexus.yml": 330, "nexus-predict.yml": 330}                                     # well past each workflow's own timeout
 LOOKBACK_H = 24
+KEEP_CACHES = 2                                                                               # newest copies kept per cache name
+import re as _re
+RUN_KEY = _re.compile(r"^(.+)-(\d{6,})$")
+
+
+def prune_plan(caches, keep=KEEP_CACHES):
+    """caches: GitHub's cache list (id, key, ref, created_at, size_in_bytes). -> [(id, key, size)] to delete: all but the `keep` newest of
+    each name (key without its trailing run id) on each branch."""
+    groups = {}
+    for c in caches:
+        m = RUN_KEY.match(c.get("key") or "")
+        if m:
+            groups.setdefault((m.group(1), c.get("ref")), []).append(c)
+    out = []
+    for cs in groups.values():
+        cs.sort(key=lambda c: c.get("created_at") or "", reverse=True)
+        out += [(c["id"], c["key"], c.get("size_in_bytes", 0)) for c in cs[keep:]]
+    return out
 
 
 def ts(s):
@@ -105,6 +127,25 @@ def main():
             done = f"FAILED ({e})"
         lines.append(f"| {act} | {wf} | {rid or ''} | {why} | {done} |")
         print(f"watchdog: {act} {wf} {rid or ''}: {why} -> {done}")
+    try:                                                                             # 5. old cache copies
+        caches, page = [], 1
+        while page <= 10:
+            got = get("actions/caches", per_page=100, page=page).get("actions_caches", [])
+            caches += got
+            if len(got) < 100:
+                break
+            page += 1
+        gone = 0
+        for cid, key, size in prune_plan(caches):
+            if not dry:
+                d = s.delete(f"{API}/repos/{repo}/actions/caches/{cid}", timeout=30)
+                if d.status_code not in (200, 204, 404):
+                    print(f"watchdog: could not delete cache {key}: HTTP {d.status_code}"); continue
+            gone += size
+            lines.append(f"| delete cache | {key} | {cid} | older copy ({size / 2**20:.0f} MB) | {'dry run, not done' if dry else 'done'} |")
+        print(f"watchdog: caches {len(caches)}, {sum(c.get('size_in_bytes', 0) for c in caches) / 2**30:.1f} GB; old copies {'to delete' if dry else 'deleted'}: {gone / 2**30:.2f} GB")
+    except Exception as e:                                                           # noqa: BLE001  cache housekeeping must never stop the watchdog
+        print(f"watchdog: cache housekeeping skipped: {e}")
     if not acts:
         print("watchdog: everything ran as expected")
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
