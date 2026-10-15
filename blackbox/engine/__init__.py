@@ -1,0 +1,1 @@
+"""Stress-Test Black Box."""

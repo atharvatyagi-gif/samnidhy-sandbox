@@ -1,0 +1,8 @@
+numpy
+pandas
+scipy
+pyyaml
+pyarrow
+plotly
+streamlit
+pytest
