@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-10-15",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_15102026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 494,
+  "eligible_count": 436,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "GALLANTT",
+      "yahoo_ticker": "GALLANTT.NS",
+      "name": "Gallantt Ispat Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 567.7,
+      "open": 565.95,
+      "high": 647.7,
+      "low": 561.0,
+      "close": 628.15,
+      "pct_change": 10.6482,
+      "volume": 28405871,
+      "turnover_crore": 1788.39
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "RITES",
+      "yahoo_ticker": "RITES.NS",
+      "name": "RITES Ltd.",
+      "industry": "Construction",
+      "prev_close": 200.76,
+      "open": 200.74,
+      "high": 219.0,
+      "low": 200.69,
+      "close": 214.27,
+      "pct_change": 6.7294,
+      "volume": 19824604,
+      "turnover_crore": 423.5
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "TATACOMM",
+      "yahoo_ticker": "TATACOMM.NS",
+      "name": "Tata Communications Ltd.",
+      "industry": "Telecommunication",
+      "prev_close": 1658.9,
+      "open": 1667.5,
+      "high": 1866.0,
+      "low": 1643.1,
+      "close": 1763.7,
+      "pct_change": 6.3174,
+      "volume": 5090596,
+      "turnover_crore": 912.71
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "NESTLEIND",
+      "yahoo_ticker": "NESTLEIND.NS",
+      "name": "Nestle India Ltd.",
+      "industry": "Fast Moving Consumer Goods",
+      "prev_close": 1383.2,
+      "open": 1380.0,
+      "high": 1385.9,
+      "low": 1260.5,
+      "close": 1275.8,
+      "pct_change": -7.7646,
+      "volume": 7766212,
+      "turnover_crore": 1024.24
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "IDBI",
+      "yahoo_ticker": "IDBI.NS",
+      "name": "IDBI Bank Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 90.39,
+      "open": 89.86,
+      "high": 89.86,
+      "low": 82.5,
+      "close": 83.45,
+      "pct_change": -7.6778,
+      "volume": 72696329,
+      "turnover_crore": 618.08
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "HDBFS",
+      "yahoo_ticker": "HDBFS.NS",
+      "name": "HDB Financial Services Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 583.75,
+      "open": 572.0,
+      "high": 573.65,
+      "low": 536.7,
+      "close": 539.1,
+      "pct_change": -7.6488,
+      "volume": 6573951,
+      "turnover_crore": 359.9
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-10-15T13:30:49+00:00",
+  "fetched_at_ist": "15 Oct 2026, 07:00 PM IST"
+}
