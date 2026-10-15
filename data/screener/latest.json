@@ -988,7 +988,7 @@
    0.22313,
    0.22465,
    0.22483,
-   0.22492,
+   0.22493,
    0.2257,
    0.22647,
    0.22699,
@@ -1440,9 +1440,9 @@
    1.11081
   ]
  },
- "generated_utc": "2026-10-15T13:32:36+00:00",
- "generated_ist": "15 Oct 2026, 07:02 PM IST",
- "screened_ist": "15 Oct 2026, 07:02 PM IST",
+ "generated_utc": "2026-10-15T17:51:24+00:00",
+ "generated_ist": "15 Oct 2026, 11:21 PM IST",
+ "screened_ist": "15 Oct 2026, 11:21 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1869,7 +1869,7 @@
    "analysts": 36,
    "consensus": "positive",
    "consensus_score": 2.18421,
-   "estimate_mean": 6211.3887,
+   "estimate_mean": 6200.278,
    "estimate_high": 7760.0,
    "estimate_low": 4350.0,
    "eps": 272.08,
