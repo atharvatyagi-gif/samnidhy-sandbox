@@ -3,11 +3,11 @@
  "weekday": "Thursday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 1174,
+ "total_s": 667,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 4.9,
+   "seconds": 3.9,
    "note": "latest price bar 2026-10-15; delivery / F&O / macro refreshed"
   },
   {
@@ -22,28 +22,28 @@
   },
   {
    "step": "drift",
-   "seconds": 5.8,
+   "seconds": 3.7,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 982.0,
-   "note": "50 generations, 1200 new rules, 0 passed, 34676 tested in total"
+   "seconds": 537.7,
+   "note": "50 generations, 1200 new rules, 0 passed, 35876 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 162.6,
-   "note": "as of 2026-10-15, 1337 stocks, states {'Suspended': 1337}, ledger already in the ledger, not rewritten"
+   "seconds": 108.2,
+   "note": "as of 2026-10-15, 1400 stocks, states {'Suspended': 1400}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 16.8,
-   "note": "as of 2026-10-15: bull 12, bear 25, hold 1211; ledger already in the ledger; 0 outcome lines"
+   "seconds": 12.2,
+   "note": "as of 2026-10-15: bull 13, bear 26, hold 1272; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 1.2,
-   "note": "live paper account: 1 book(s); equity 1,013,423 (1.34%), 0 closed trades, 6 open"
+   "seconds": 1.0,
+   "note": "live paper account: 1 book(s); equity 1,014,058 (1.41%), 0 closed trades, 6 open"
   },
   {
    "step": "bot",
@@ -65,20 +65,20 @@
    "generations": 50,
    "new_rules": 1200,
    "passed": 0,
-   "total_tested": 34676
+   "total_tested": 35876
   },
   "forecast": {
    "as_of": "2026-10-15",
-   "stocks_forecast": 1337,
+   "stocks_forecast": 1400,
    "product_state_counts": {
-    "Suspended": 1337
+    "Suspended": 1400
    },
    "ledger_status": "already in the ledger, not rewritten"
   },
   "weekly": {
-   "bull": 12,
-   "bear": 25,
-   "hold": 1211
+   "bull": 13,
+   "bear": 26,
+   "hold": 1272
   }
  },
  "within_budget": true
