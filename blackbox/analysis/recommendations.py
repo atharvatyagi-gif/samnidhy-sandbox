@@ -11,6 +11,10 @@ import pandas as pd
 
 GROUPS = {"a": "Strategy changes", "b": "Risk-control changes", "c": "Parameter defaults to adopt", "d": "Terminal / UI / code changes", "e": "Things to remove"}
 ORDER = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
+PRICE_ONLY = {"crypto_trend": "scripts/crypto_quant.py study round 2 failed its gate on real BTC data", "crypto_ha_trend": "scripts/crypto_flow.py study (ha_trend) did not pass on real BTC data",
+              "swing_r1": "scripts/aladin2/swing.py round 1 failed every gate on real NSE data 2016-2026"}
+PRICE_NOTE = ("The synthetic prices carry no built-in trend or momentum, so a price-pattern rule cannot show an edge here by construction: this result tests its "
+              "costs and risk, not its edge. The real-data verdict: {}.")
 CRASH = ("S01_systemic_crash", "S02_flash_crash", "S06_banking_stress", "S12_mixed_regimes")
 QUIET = ("S08_sideways_chop", "S10_dead_flat")
 
@@ -27,12 +31,13 @@ def build(summary: pd.DataFrame, gaps: pd.DataFrame, modules: pd.DataFrame, inve
         g = g.set_index("scenario"); n = len(g)
         lose_rand = g.index[g["p_beat_random"] < 0.5].tolist(); neg = g.index[g["sharpe"] < 0].tolist()
         if len(lose_rand) >= R["loses_to_random_min_scenarios"]:
-            pr = "Critical" if len(lose_rand) >= n / 2 else "High"
-            _rec(out, "a", pr, f"{strat}: redesign the signal or the rules - it does not beat random entry",
-                 f"Beats a random-entry trader with the same trade count and holding period in fewer than half the seeds in {len(lose_rand)} of {n} scenarios "
-                 f"({', '.join(x.split('_', 1)[1] for x in lose_rand[:5])}{'...' if len(lose_rand) > 5 else ''}).",
+            pr = ("High" if strat in PRICE_ONLY else "Critical") if len(lose_rand) >= n / 2 else ("Medium" if strat in PRICE_ONLY else "High")
+            why = (f"Beats a random-entry trader with the same trade count, holding period and cost per trade in fewer than half the seeds in {len(lose_rand)} of {n} scenarios "
+                   f"({', '.join(x.split('_', 1)[1] for x in lose_rand[:5])}{'...' if len(lose_rand) > 5 else ''}).")
+            _rec(out, "a", pr, f"{strat}: " + ("keep it out of the live account until a real-data test passes" if strat in PRICE_ONLY else "redesign the signal or the rules - it does not beat random entry"),
+                 why + (" " + PRICE_NOTE.format(PRICE_ONLY[strat]) if strat in PRICE_ONLY else ""),
                  "Without an edge over random timing, its results are its market exposure plus costs.", strat)
-        if len(lose_rand) >= 0.75 * n and len(neg) >= 0.66 * n:
+        if len(lose_rand) >= 0.75 * n and len(neg) >= 0.66 * n and strat not in PRICE_ONLY:
             _rec(out, "e", "High", f"Remove {strat} (or keep it only as a documented failed experiment)",
                  f"Median Sharpe below zero in {len(neg)} of {n} scenarios and no edge over random in {len(lose_rand)}.", "Fewer moving parts; nothing of value lost.", strat)
         crash = g.loc[[c for c in CRASH if c in g.index]]
@@ -42,9 +47,9 @@ def build(summary: pd.DataFrame, gaps: pd.DataFrame, modules: pd.DataFrame, inve
                  f"{strat}: add a volatility-scaled position cap or a portfolio drawdown brake (halve new sizes when the account is 10% below its peak)",
                  f"Median maximum drawdown {crash.loc[w, 'max_dd']:.0%} in {w.split('_', 1)[1]} (limit {R['crash_max_dd_limit']:.0%}); 5th-percentile final equity "
                  f"{crash.loc[w, 'final_p5']:.2f}x.", "Smaller losses in crashes at the price of lower exposure in calm markets.", strat, w)
-        if g["p_ruin"].max() > 0:
+        if g["p_ruin"].max() >= 0.01:
             w = g["p_ruin"].idxmax()
-            _rec(out, "b", "Critical", f"{strat}: hard account-level loss limit", f"Ruin (equity below {cfg['run']['ruin_floor']:.0%} of the start) in "
+            _rec(out, "b", "Critical" if g["p_ruin"].max() >= 0.05 else "High", f"{strat}: hard account-level loss limit", f"Ruin (equity below {cfg['run']['ruin_floor']:.0%} of the start) in "
                  f"{g.loc[w, 'p_ruin']:.0%} of seeds in {w.split('_', 1)[1]}.", "Caps the worst case.", strat, w)
         quiet = g.loc[[c for c in QUIET if c in g.index]]
         for sc, r in quiet.iterrows():
@@ -65,8 +70,8 @@ def build(summary: pd.DataFrame, gaps: pd.DataFrame, modules: pd.DataFrame, inve
     if gaps is not None and len(gaps):
         for _, r in gaps.iterrows():
             gain = r["best_typical_sharpe"] - r["default_typical_sharpe"]
-            if r["param"] in ("ic", "cost_mult", "roundtrip_cost"):
-                continue                                                                    # assumptions about the world, not settings to adopt
+            if r["param"] in ("ic", "cost_mult", "roundtrip_cost") or r["strategy"] in PRICE_ONLY:
+                continue        # assumptions about the world, not settings; and a price-pattern rule cannot be tuned on trendless synthetic prices
             if r["best_value"] != r["default"] and gain > 0.1 and r["verdict"] != "FRAGILE":
                 _rec(out, "c", "High" if gain > 0.3 and r["verdict"] == "ROBUST" else "Medium", f"{r['strategy']}: set {r['param']} = {r['best_value']} (now {r['default']})",
                      f"Typical Sharpe across scenarios {r['default_typical_sharpe']:+.2f} -> {r['best_typical_sharpe']:+.2f}; at least as good in {r['wins']} of {r['scenarios']} scenarios ({r['verdict'].lower()}).",
@@ -89,16 +94,13 @@ def build(summary: pd.DataFrame, gaps: pd.DataFrame, modules: pd.DataFrame, inve
                 continue
             lag = modules[f"{key}_lag_days"].median(); far = modules[f"{key}_false_alarm_rate"].median()
             if (np.isfinite(lag) and lag >= R["indicator_lag_days"]) or far > 0.1:
+                lead_note = (" With that many false alarms an early reading before a fall is mostly chance, not a lead." if far > 0.1 and np.isfinite(lag) and lag < 0 else "")
                 _rec(out, "d", "High", f"{name}: show it as information only; do not use it as a risk-off signal ({path})",
-                     f"Median timing against simulated drawdowns {lag:+.0f} days (positive = after the fall started); it reads risk-off on {far:.0%} of calm days.",
+                     f"Median timing against simulated drawdowns {lag:+.0f} days (negative = before the fall started); it reads risk-off on {far:.0%} of calm days.{lead_note} "
+                     "(Synthetic headlines and flows react on the shock day: the timing reflects the module's own processing, not real news.)",
                      "No false comfort from an indicator that does not lead.", None, None, key)
-        for sig in ("above_200", "golden_cross", "mom_12_1", "near_52w_high", "low_vol"):
-            col = f"ic_{sig}"
-            if col in modules:
-                m = modules.groupby("scenario")[col].mean(); pos = int((m > 0.02).sum())
-                if pos <= 3:
-                    _rec(out, "d", "Low", f"Advanced page signal '{sig}': label it descriptive, not predictive (scripts/live_technicals.py)",
-                         f"Rank correlation with the next 20 days above 0.02 in only {pos} of {len(m)} scenarios (mean {m.mean():+.3f}).", "Honest labelling.", None, None, sig)
+        # The Advanced-page price signals are reported in the dashboard but NOT turned into recommendations: synthetic prices have no momentum or
+        # low-volatility premium built in, so a near-zero IC here says nothing about the real signals.
     for g in inventory.get("gaps", []):
         if g.get("terminal_change"):
             _rec(out, "d", g.get("priority", "Low"), g["terminal_change"], g.get("why", ""), g.get("effect", ""), None, None, g.get("name"))

@@ -28,12 +28,15 @@ def _max_dd(eq: np.ndarray) -> tuple[float, int]:
     return worst, longest
 
 
-def returns_stats(eq: np.ndarray, per_year: int = PER_YEAR) -> dict:
-    eq = np.asarray(eq, float); r = eq[1:] / eq[:-1] - 1; n = len(r)
+RF_ANN = 0.062          # Sharpe and Sortino are measured over cash in the liquid fund (config costs: 6.5% - 0.3% fee), so holding cash earns no Sharpe
+
+
+def returns_stats(eq: np.ndarray, per_year: int = PER_YEAR, rf_ann: float = RF_ANN) -> dict:
+    eq = np.asarray(eq, float); r = eq[1:] / eq[:-1] - 1; n = len(r); rx = r - rf_ann / per_year
     total = float(eq[-1] / eq[0] - 1); ann = float((eq[-1] / eq[0]) ** (per_year / max(1, n)) - 1) if eq[-1] > 0 else -1.0
     vol = float(np.std(r, ddof=1) * math.sqrt(per_year)) if n > 1 else 0.0
-    dn = r[r < 0]; dvol = float(np.sqrt(np.mean(dn ** 2)) * math.sqrt(per_year)) if len(dn) else 0.0
-    mdd, ddur = _max_dd(eq); mean = float(np.mean(r) * per_year) if n else 0.0
+    dn = rx[rx < 0]; dvol = float(np.sqrt(np.mean(dn ** 2)) * math.sqrt(per_year)) if len(dn) else 0.0
+    mdd, ddur = _max_dd(eq); mean = float(np.mean(rx) * per_year) if n else 0.0
     wk = eq[::5]; wr = wk[1:] / wk[:-1] - 1 if len(wk) > 1 else np.array([0.0])
     q = float(np.quantile(r, 0.05)) if n else 0.0
     return {"total_ret": total, "ann_ret": ann, "vol": vol, "sharpe": mean / vol if vol > 1e-12 else 0.0, "sortino": mean / dvol if dvol > 1e-12 else 0.0,

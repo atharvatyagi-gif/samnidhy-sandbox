@@ -157,7 +157,8 @@ with t3:
             piv.columns = [RP.label(c) for c in piv.columns]
             hm = go.Figure(go.Heatmap(z=piv.values, x=list(piv.columns), y=[str(v) for v in piv.index], colorscale=[[0, "#e66767"], [0.5, "#383835"], [1, "#3987e5"]], zmid=0,
                                       text=np.where(np.isfinite(piv.values.astype(float)), np.round(piv.values.astype(float), 2).astype(str), ""), texttemplate="%{text}", hovertemplate="%{y} · %{x}: Sharpe %{z:.2f}<extra></extra>"))
-            st.plotly_chart(layout(hm, f"Sensitivity: {prm} (median Sharpe; red < 0 < blue)", 120 + 30 * len(piv)).update_layout(hovermode="closest"), use_container_width=True)
+            hm.update_yaxes(type="category", title=prm); hm.update_xaxes(type="category")         # "35" is a label here, not a number on an axis
+            st.plotly_chart(layout(hm, f"Sensitivity: {prm} (median Sharpe; red < 0 < blue)", 160 + 34 * len(piv)).update_layout(hovermode="closest"), use_container_width=True)
 
 with t4:
     G = R["gaps"]

@@ -101,6 +101,7 @@ def test_costs_pay_the_spread_both_ways_rise_in_a_crisis_and_fail_part_of_the_fi
 
 def test_metrics_on_hand_computed_cases():
     s = ME.returns_stats(np.array([100.0, 110.0, 99.0, 108.9]))
+    cash = ME.returns_stats(100 * (1 + ME.RF_ANN / 252) ** np.arange(253.0)); assert abs(cash["sharpe"]) < 1e-6 and cash["total_ret"] > 0.06   # cash earns no Sharpe
     assert s["total_ret"] == pytest.approx(0.089) and s["max_dd"] == pytest.approx(-0.1) and s["worst_day"] == pytest.approx(-0.1)
     t = ME.trade_stats([{"pnl": 10, "pnl_pct": 0.1, "days": 2}, {"pnl": -5, "pnl_pct": -0.05, "days": 4}, {"pnl": -5, "pnl_pct": -0.05, "days": 3}], 252)
     assert t["win_rate"] == pytest.approx(1 / 3) and t["profit_factor"] == pytest.approx(1.0) and t["payoff"] == pytest.approx(2.0)
