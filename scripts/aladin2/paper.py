@@ -39,13 +39,15 @@ OUT = DATA / "paper"
 START_CASH = 1_000_000
 RULE_HISTORY = [{"v": 1, "declared": "2026-10-09", "exits": "stop + goal + time", "backtest_return_pct": -6.87, "why_dropped": "a take-profit at the 50% range edge cut the winners (average win +2.3%) and left the losers (average loss -3.8%)"},
                 {"v": 2, "declared": "2026-10-09", "exits": "stop + time (the price goal is information only)", "backtest_return_pct": 224.3, "why_dropped": "replaced by v3 the same day, before any live trade (the first live entry is 2026-10-12)"},
-                {"v": 3, "declared": "2026-10-09", "exits": "time only (5th trading day); 2% risk, at most 20% a stock; idle cash in a liquid fund", "why": "the owner's choice (option O7) from paper_options.py, before any live trade. O7 was added AFTER the first option results were seen, so its history is the weaker claim; the live record decides"}]
+                {"v": 3, "declared": "2026-10-09", "exits": "time only (5th trading day); 2% risk, at most 20% a stock; idle cash in a liquid fund", "why": "the owner's choice (option O7) from paper_options.py, before any live trade. O7 was added AFTER the first option results were seen, so its history is the weaker claim; the live record decides"},
+                {"v": "5.1", "declared": "2026-10-16", "exits": "time only, as v3, plus ROLL (a stock still on the new list is kept, no sale and re-purchase) and the configured 10% DRAWDOWN BRAKE (new sizes halved 10% below the peak)", "backtest_return_pct": None,
+                 "why": "the Stress-Test Black Box's recommendations; round 1 (all five changes incl. a 200-day trend filter) failed on real history (CAGR 14.7% vs 20.8%). Round 2, a declared SECOND look at the same years (so flattered), passed every gate: CAGR 19.61% vs 20.84%, max drawdown -21.3% vs -27.5%, Sharpe over cash 1.00 vs 0.94, costs Rs 4.6 lakh a year vs Rs 7.1 lakh (scripts/aladin2/v5.py). Live from the list of 2026-10-16; the v4 shadow keeps its declared v3 base."}]
 # The small account (owner, 2026-10-13: "apart from the 10L budget, also a 10k budget"). Declared before its first list: the same rules on the same Friday lists, with
 # Rs 10,000, starting with the list of Friday 2026-10-16 (the lists before it had already been traded when it was declared). Whole shares only, so a stock whose one share
 # is more than the per-stock cap cannot be held. It also pays the depository (DP) charge on every stock sold, Rs 15.93 incl. GST (a typical discount broker's CDSL charge):
 # negligible on a Rs 10 lakh account, but a real cost on Rs 2,000 positions. The Rs 10 lakh account's cost model is unchanged mid-test.
 SMALL = {"budget_inr": 10_000, "from_book": "2026-10-16", "dp_charge_per_sale_inr": 15.93, "declared": "2026-10-13"}
-BOT = {"exits": ("time",), "risk_pct": 2.0, "max_pos_pct": 20.0}             # v3 (option O7); the stop level is still computed: it sizes the trade and is shown, but it is not an order
+BOT = {"exits": ("time",), "risk_pct": 2.0, "max_pos_pct": 20.0, "roll": True, "brake_pct": 10.0}   # v5.1 (2026-10-16): v3 + roll + the 10% drawdown brake             # v3 (option O7); the stop level is still computed: it sizes the trade and is shown, but it is not an order
 RULES = {"budget_inr": START_CASH, "books": "Friday book, positive-signal names only (long-only cash equity)", "entry": "open of the next trading day", "hold_trading_days": 5, "exit_order": "the open of the 5th trading day after entry (the stop level sizes the trade and is shown, but is not an order; the price goal is information)", "risk_per_trade_pct": 2.0, "max_position_pct": 20, "adv_participation_max": 0.05, "max_open": 10, "max_sector_pct": 30, "costs": "full delivery cost model at the stock's liquidity decile",
          "edge_for_kelly_bps": 27.0, "sd_for_kelly": 0.06, "idle_cash": "cash not in stocks earns a liquid fund's return: India call-money rate (FRED IRSTCI01INM156N) minus 0.30% a year for fund costs, kept in its own pot (not fed back into position sizes)"}
 RATE_FILE = OUT / "india_call_rate.json"
@@ -92,9 +94,10 @@ def overlay(equity, daily_ret, switch_cost=0.0):
     return out
 
 
-def run_bot(books, prices, cal, cfg, rate=None, cash0=START_CASH, sell_fee=0.0, short_cap_pct=50.0):
-    """The bot's current rules (BOT, v3): the one simulator, then idle cash in the liquid fund."""
-    r = simulate(books, prices, cal, cfg, cash0=cash0, exits=BOT["exits"], risk_pct=BOT["risk_pct"], max_pos_pct=BOT["max_pos_pct"], sell_fee=sell_fee, short_cap_pct=short_cap_pct)
+def run_bot(books, prices, cal, cfg, rate=None, cash0=START_CASH, sell_fee=0.0, short_cap_pct=50.0, v51=True):
+    """The bot's current rules (BOT, v5.1 = v3 + roll + brake): the one simulator, then idle cash in the liquid fund. v51=False: v3 exactly (the v4 shadow's base)."""
+    extra = {"roll": BOT["roll"], "brake_pct": BOT["brake_pct"]} if v51 else {}
+    r = simulate(books, prices, cal, cfg, cash0=cash0, exits=BOT["exits"], risk_pct=BOT["risk_pct"], max_pos_pct=BOT["max_pos_pct"], sell_fee=sell_fee, short_cap_pct=short_cap_pct, **extra)
     r["equity"] = overlay(r["equity"], fund_daily(cal, rate)); return r
 
 
@@ -522,7 +525,7 @@ def run_live(ledger_dir=None, out=None, small=False, shadow=False):
         nxt = pd.Timestamp(start)
         doc.update({"stats": {"started": False}, "equity": [], "open": [], "trades": [], "skipped": [], "note": f"The small account starts with the list of Friday {SMALL['from_book']}; it enters at the next trading day's open." if small else "No live Friday book has been written in time yet. The first one is the Friday book; the bot enters at the next trading day's open."})
     else:
-        r = run_bot(books, prices, idx, cfg, india_rate(refresh=True), cash0=cash0, sell_fee=fee, short_cap_pct=SHADOW["short_cap_pct"]); doc.update({"stats": stats(r, cash0), "equity": r["equity"], "open": r["open"], "trades": r["trades"], "skipped": r["skipped"][-100:], "note": None})
+        r = run_bot(books, prices, idx, cfg, india_rate(refresh=True), cash0=cash0, sell_fee=fee, short_cap_pct=SHADOW["short_cap_pct"], v51=not shadow); doc.update({"stats": stats(r, cash0), "equity": r["equity"], "open": r["open"], "trades": r["trades"], "skipped": r["skipped"][-100:], "note": None})
     bt = OUT / "backtest.json"; hs = json.loads(bt.read_text(encoding="utf-8")).get("stats", {}) if bt.exists() else {}          # what the current rules did in the history
     first = SMALL["from_book"] if small else SHADOW["from_book"] if shadow else None
     doc["timeline"] = timeline([x for x in LG.read_all(ledger_dir) if not first or x.get("d", "") >= first], doc["trades"], doc["open"], first or start, expect={"win_rate": hs["win_rate"], "profit_factor": hs["profit_factor"]} if hs.get("win_rate") else None)

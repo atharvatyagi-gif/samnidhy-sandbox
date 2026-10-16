@@ -31,6 +31,9 @@ loss limit 20.46% / -30.5% / 0.925; vol scale 19.05% / -27.2% / 0.888. v3 stays 
 ROUND 2 (written after round 1, BEFORE any round-2 result; a SECOND look at the same years, chosen from round 1's components, so a pass is flattered):
   v5.1 = v3 + ROLL + BRAKE only (both are mechanical: roll removes the sale and re-purchase of a stock still on the list; the brake is the
   configured 10% one). Same gates. A pass switches the live bot to v5.1 with this caveat recorded in its rule history.
+
+ROUND 2 RESULT (2026-10-16): PASS on every gate. v5.1: CAGR 19.61% vs 20.84%, max drawdown -21.29% vs -27.51%, Sharpe over cash 1.002 vs 0.944,
+costs Rs 4.6 lakh a year vs Rs 7.1 lakh. Second look, so flattered. The live bot and the Rs 10,000 account switch to v5.1 from the list of 2026-10-16.
 """
 import argparse
 import json

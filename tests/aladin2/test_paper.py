@@ -111,7 +111,7 @@ def test_rule_v3_ignores_the_stop_holds_five_days_and_idle_cash_earns_the_fund_r
     no_fund = P.simulate([book()], prices, CAL, CFG, exits=P.BOT["exits"], risk_pct=2.0, max_pos_pct=20.0)
     gain = r["equity"][-1][1] - no_fund["equity"][-1][1]
     days = len(r["equity"]) - 1; assert gain > 0 and gain == pytest.approx(sum(row[2] for row in no_fund["equity"][:-1]) * 0.06 / 252, rel=0.02)
-    assert P.RULES["risk_per_trade_pct"] == 2.0 and P.RULES["max_position_pct"] == 20 and P.RULE_HISTORY[-1]["v"] == 3 and days > 0
+    assert P.RULES["risk_per_trade_pct"] == 2.0 and P.RULES["max_position_pct"] == 20 and any(h["v"] == 3 for h in P.RULE_HISTORY) and P.RULE_HISTORY[-1]["v"] == "5.1" and P.BOT["roll"] and P.BOT["brake_pct"] == 10.0 and days > 0
 
 
 def test_fund_rate_carries_the_last_known_month_forward():
