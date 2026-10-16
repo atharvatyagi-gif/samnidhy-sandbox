@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-16T06:42:01+00:00",
+  "generated_on": "2026-10-16T08:27:18+00:00",
   "session_date": "2026-10-15",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,8 +40,8 @@
         "turnover_crore": 1788.39
       },
       "latest_close": 628.15,
-      "trailing_pe": 33.66389,
-      "market_cap": 146204196864,
+      "trailing_pe": 33.880554,
+      "market_cap": 147145179136,
       "history": {
         "first_date": "2021-10-08",
         "trading_days": 1239,
@@ -69,8 +69,8 @@
         "turnover_crore": 423.5
       },
       "latest_close": 214.27,
-      "trailing_pe": 24.2376,
-      "market_cap": 100994080768,
+      "trailing_pe": 24.33564,
+      "market_cap": 101402591232,
       "history": {
         "first_date": "2021-10-08",
         "trading_days": 1239,
@@ -98,8 +98,8 @@
         "turnover_crore": 912.71
       },
       "latest_close": 1763.7,
-      "trailing_pe": 45.63114,
-      "market_cap": 502919561216,
+      "trailing_pe": 45.58717,
+      "market_cap": 502434922496,
       "history": {
         "first_date": "2021-10-08",
         "trading_days": 1239,
@@ -127,8 +127,8 @@
         "turnover_crore": 1024.24
       },
       "latest_close": 1275.8,
-      "trailing_pe": 59.583923,
-      "market_cap": 2430061772800,
+      "trailing_pe": 59.862885,
+      "market_cap": 2441438822400,
       "history": {
         "first_date": "2021-10-08",
         "trading_days": 1239,
@@ -156,8 +156,8 @@
         "turnover_crore": 618.08
       },
       "latest_close": 83.45,
-      "trailing_pe": 9.607843,
-      "market_cap": 895675138048,
+      "trailing_pe": 9.682814,
+      "market_cap": 902664159232,
       "history": {
         "first_date": "2021-10-08",
         "trading_days": 1239,
@@ -185,8 +185,8 @@
         "turnover_crore": 359.9
       },
       "latest_close": 539.1,
-      "trailing_pe": 15.503468,
-      "market_cap": 426032758784,
+      "trailing_pe": 15.431113,
+      "market_cap": 424044494848,
       "history": {
         "first_date": "2025-07-02",
         "trading_days": 319,
@@ -283,7 +283,7 @@
       "RITES.NS": 0.036542,
       "TATACOMM.NS": 0.024478,
       "NESTLEIND.NS": -0.000893,
-      "IDBI.NS": 0.031948,
+      "IDBI.NS": 0.031947,
       "HDBFS.NS": 0.028221
     },
     "RITES.NS": {
@@ -311,7 +311,7 @@
       "HDBFS.NS": 0.012986
     },
     "IDBI.NS": {
-      "GALLANTT.NS": 0.031948,
+      "GALLANTT.NS": 0.031947,
       "RITES.NS": 0.040255,
       "TATACOMM.NS": 0.00677,
       "NESTLEIND.NS": 0.017974,
@@ -1301,7 +1301,7 @@
         1594.48,
         1567.92,
         1467.74,
-        1415.94,
+        1415.95,
         1320.6,
         1351.21,
         1468.48,
