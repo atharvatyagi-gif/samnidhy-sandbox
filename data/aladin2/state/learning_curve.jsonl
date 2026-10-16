@@ -3,3 +3,4 @@
 {"d": "2026-10-13", "stocks": 1341, "validated_share": 0.0, "on_trial": 28, "live_ece": 0.0766, "live_cov80": 0.8854, "live_n": 2705}
 {"d": "2026-10-14", "stocks": 1406, "validated_share": 0.0, "on_trial": 28, "live_ece": 0.1498, "live_cov80": 0.8077, "live_n": 4046}
 {"d": "2026-10-15", "stocks": 87, "validated_share": 0.0, "on_trial": 28, "live_ece": 0.1419, "live_cov80": 0.8118, "live_n": 4133}
+{"d": "2026-10-16", "stocks": 1337, "validated_share": 0.0, "on_trial": 28, "live_ece": 0.1325, "live_cov80": 0.8109, "live_n": 4220}
