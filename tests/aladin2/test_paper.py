@@ -173,3 +173,35 @@ def test_the_v4_shadow_is_promoted_once_after_26_weeks_only_if_it_returned_more_
     out = P.shadow_check(better, bot)
     assert out["promoted"] and out["shadow_return_pct"] > out["bot_return_pct"] and (tmp_path / "promote.json").exists()
     assert P.promoted()["weeks"] == out["weeks"]
+
+
+def _books(weeks):
+    return [{"as_of": str(CAL[1 + 5 * k].date()), "picks": [{"sym": "AAA", "rank": 0.995, "stop": 95.0, "goal": None, "adv_shares": 1_000_000, "decile": 2, "sector": "IT", "atr": 2.0}]} for k in range(weeks)]
+
+
+def test_v5_roll_keeps_a_stock_that_is_still_on_the_list_instead_of_selling_and_buying_it_back():
+    plain = P.simulate(_books(3), {"AAA": px({})}, CAL, CFG, exits=("time",), risk_pct=2.0, max_pos_pct=20.0)
+    rolled = P.simulate(_books(3), {"AAA": px({})}, CAL, CFG, exits=("time",), risk_pct=2.0, max_pos_pct=20.0, roll=True)
+    assert len(plain["trades"]) == 3 and len(rolled["trades"]) == 1 and rolled["trades"][0]["days"] == 15
+    assert sum(t["costs"] for t in rolled["trades"]) < sum(t["costs"] for t in plain["trades"]) / 2      # one round trip instead of three
+
+
+def test_v5_trend_filter_brake_and_loss_limit():
+    off = P.simulate(_books(1), {"AAA": px({})}, CAL, CFG, exits=("time",), regime=lambda a: False)
+    assert not off["trades"] and "trend filter" in off["skipped"][0]["why"]
+    full = P.simulate(_books(1), {"AAA": px({})}, CAL, CFG, exits=("time",), risk_pct=2.0, max_pos_pct=20.0)["trades"][0]
+    half = P.simulate(_books(1), {"AAA": px({})}, CAL, CFG, exits=("time",), risk_pct=2.0, max_pos_pct=20.0, vol_scale=lambda a: 0.5)["trades"][0]
+    assert half["qty"] < 0.6 * full["qty"]                                                          # risk and per-stock cap halved (the Kelly cap is not scaled)
+    crash = px({k: (60.0, 61.0, 59.0, 60.0) for k in range(7, 30)})                                # a 40% loss on the first position
+    r = P.simulate(_books(4), {"AAA": crash}, CAL, CFG, exits=("time",), risk_pct=2.0, max_pos_pct=100.0, stop_pct=5.0, regime=lambda a: a < str(CAL[8].date()))
+    assert any("loss limit" in s["why"] for s in r["skipped"])
+
+
+def test_v5_market_filters_use_only_closes_up_to_the_list_friday_and_the_gates():
+    from scripts.aladin2 import v5 as V
+    d = pd.bdate_range("2020-01-01", periods=400); s = pd.Series(np.r_[np.linspace(100, 200, 300), np.linspace(200, 120, 100)], index=d)
+    reg, vs = V.market_filters(s)
+    assert reg(str(d[290].date())) and not reg(str(d[399].date())) and 0 < vs(str(d[399].date())) <= 1.0
+    base = {"max_drawdown_pct": -27.5, "cagr_pct": 20.8, "by_year_pct": {y: 5 for y in range(2013, 2026)}}
+    good = {"max_drawdown_pct": -20.0, "cagr_pct": 19.5, "by_year_pct": {y: 4 for y in range(2013, 2026)}}
+    assert V.judge(good, base, 1.0, 0.9)[1] and not V.judge({**good, "cagr_pct": 18.0}, base, 1.0, 0.9)[1]

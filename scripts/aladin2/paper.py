@@ -108,10 +108,17 @@ def entry_index(cal, as_of):
 
 
 def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), max_open=10, hold=5, mu=0.0027, sd=0.06, sector_cap_pct=30.0, end=None, risk_pct=None, max_pos_pct=None, sell_fee=0.0,
-             protect_atr=None, short_cap_pct=50.0):
+             protect_atr=None, short_cap_pct=50.0, roll=False, regime=None, brake_pct=None, stop_pct=None, vol_scale=None):
     """protect_atr: a protective stop order at entry -/+ protect_atr x ATR (picks carry "atr"), checked against every day's low/high (exit "protective stop").
     A pick with "side": "short" is a stock-futures short: its stop is ABOVE the entry, it pays the futures cost model, only its costs leave the cash at entry,
-    its P/L is (entry - exit) x qty, and all shorts together are capped at short_cap_pct of the account."""
+    its P/L is (entry - exit) x qty, and all shorts together are capped at short_cap_pct of the account.
+    v5 options (all off = the behaviour of v3 exactly):
+      roll       a position whose stock is on the new list on its exit day is KEPT (its 5-day clock restarts) instead of sold and bought back
+      regime     f(as_of) -> bool: new LONG positions only when it is True (the market trend filter); shorts are not filtered
+      brake_pct  new sizes are halved while the account is this % below its peak (data/config/aladin2.json risk.drawdown_brake_pct)
+      stop_pct   no new positions (and no rolls) once the account is this % below its peak, until the trend filter is on again at a list
+                 date; the peak then restarts from the account's value
+      vol_scale  f(as_of) -> 0..1: the risk per trade and the per-stock cap are multiplied by it (smaller sizes when the market is volatile)"""
     """Event loop over trading days. books: [{"as_of", "picks": [{sym, rank, stop, goal (or None), adv_shares, decile, sector}]}] (picks best first); prices: {sym: DataFrame o,h,l,c,v};
     cal: DatetimeIndex of trading days. Returns {equity: [[date, equity, cash, n_open]], trades: [...], open: [...], skipped: [...]}."""
     cal = pd.DatetimeIndex(cal); bars = {}
@@ -127,7 +134,8 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
     if not due:
         return {"equity": [], "trades": [], "open": [], "skipped": []}
     i0, last = min(due), (len(cal) - 1 if end is None else min(len(cal) - 1, int(cal.searchsorted(pd.Timestamp(end), side="right")) - 1))
-    cash = float(cash0); pos = {}; lastc = {}; eq_rows = []; trades = []; skipped = []
+    cash = float(cash0); pos = {}; lastc = {}; eq_rows = []; trades = []; skipped = []; peak = float(cash0); stopped = False
+    on = (lambda a: True) if regime is None else regime
     def equity_now():
         return cash + sum(p["qty"] * lastc.get(s, p["entry"]) if p["side"] == "long" else p["qty"] * (p["entry"] - lastc.get(s, p["entry"])) for s, p in pos.items())
     def money(p):
@@ -148,14 +156,27 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
                        "stop": round(p["stop"], 2), "goal": round(p["goal"], 2) if p["goal"] else None, "reason": reason, "gross": round(gross, 2), "costs": round(costs, 2), "net": round(net, 2), "ret_pct": round(net / (p["qty"] * p["entry"]) * 100, 3),
                        **money(p), "cost_out": round(cost_out, 2), "exit_value": round(value, 2)})
     for i in range(i0, last + 1):
+        eqn = equity_now(); peak = max(peak, eqn)
+        if due.get(i) and stop_pct:                                                          # the account loss limit, judged on list days
+            if not stopped and eqn < peak * (1 - stop_pct / 100):
+                stopped = True
+            elif stopped and all(on(bk["as_of"]) for bk in due[i]):
+                stopped, peak = False, eqn
+        keep = set()
+        if roll and not stopped:
+            keep = {(pk["sym"], pk.get("side", "long")) for bk in due.get(i, []) for pk in bk["picks"] if pk.get("side", "long") == "short" or on(bk["as_of"])}
         for sym, p in list(pos.items()):                                                    # 1. exits that happen at the open: the weekly time limit
             b = bar(sym); o = b["o"][i] if b else np.nan
             if i >= p["exit_i"] and _f(o):
+                if (sym, p["side"]) in keep:
+                    p["exit_i"] = i + hold; p["rolled"] = p.get("rolled", 0) + 1; continue           # still on the list: kept, no sale and no new purchase
                 close_pos(sym, i, o, "time")
         for bk in due.get(i, []):                                                           # 2. entries at the open
             for pk in bk["picks"]:
                 sym = pk["sym"]; b = bar(sym); why = None
-                if sym in pos: why = "already held"
+                if sym in pos: why = "already held" + (" (kept: still on the list)" if (sym, pk.get("side", "long")) in keep else "")
+                elif stopped: why = f"account loss limit: no new positions while {stop_pct:g}% below the peak until the market trend turns up"
+                elif pk.get("side", "long") == "long" and not on(bk["as_of"]): why = "market trend filter: the index is below its 200-day average"
                 elif b is None or not _f(b["o"][i]) or not (b["v"][i] > 0): why = "no open price (suspended or no data)"
                 elif len(pos) >= max_open: why = f"already {max_open} open positions"
                 else:
@@ -165,7 +186,11 @@ def simulate(books, prices, cal, cfg, cash0=START_CASH, exits=("stop", "time"), 
                     else:
                         eq = equity_now(); sec = pk.get("sector") or "?"
                         sec_val = sum(q["qty"] * lastc.get(s, q["entry"]) for s, q in pos.items() if q["sector"] == sec)
-                        size = SG.position_size(eq, o, o - abs(o - stop), pk.get("adv_shares") or 0, mu, sd, cfg, risk_pct=risk_pct, max_pos_pct=max_pos_pct); qty = int(size["qty"]); sized_by = size.get("binding")
+                        sc = float(vol_scale(bk["as_of"])) if vol_scale else 1.0
+                        rp = (risk_pct if risk_pct is not None else cfg["risk"]["risk_per_trade_pct"]) * sc; mp = (max_pos_pct if max_pos_pct is not None else cfg["risk"]["max_position_pct"]) * sc
+                        size = SG.position_size(eq, o, o - abs(o - stop), pk.get("adv_shares") or 0, mu, sd, cfg, risk_pct=rp, max_pos_pct=mp); qty = int(size["qty"]); sized_by = size.get("binding")
+                        if brake_pct and eq < peak * (1 - brake_pct / 100):
+                            qty, sized_by = qty // 2, f"{sized_by} + drawdown brake (halved)"
                         q_sec = int(max(0.0, eq * sector_cap_pct / 100 - sec_val) // o)
                         if q_sec < qty: qty, sized_by = q_sec, f"sector cap {sector_cap_pct:g}%"
                         if side == "short":
