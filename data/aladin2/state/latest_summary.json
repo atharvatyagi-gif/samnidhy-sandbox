@@ -1,7 +1,7 @@
 {
  "as_of": "2026-10-16",
- "created_utc": "2026-10-16T08:01:27.910123+00:00",
- "stocks_forecast": 1337,
+ "created_utc": "2026-10-16T09:21:33.745093+00:00",
+ "stocks_forecast": 1336,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1337
+  "Suspended": 1336
  },
  "active_strategies": [
   "disc_d2734315",
@@ -56,7 +56,7 @@
      "95": 0.9457
     },
     "p_up_n": 4220,
-    "ece": 0.1325
+    "ece": 0.1354
    },
    "5": {
     "n": 1833,
@@ -66,56 +66,56 @@
      "95": 0.9656
     },
     "p_up_n": 1833,
-    "ece": 0.169
+    "ece": 0.1701
    }
   }
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.133 is above 0.05 (n = 4220)"
+  "live calibration error 0.135 is above 0.05 (n = 4220)"
  ],
- "ledger_status": "written",
+ "ledger_status": "already in the ledger, not rewritten",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   61.8,
-   940902
+   34.1,
+   940718
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1337
+   1336
   ],
   [
    "fit + predict H=1",
-   20.0,
-   1337
+   13.1,
+   1336
   ],
   [
    "fit + predict H=5",
-   20.1,
-   1337
+   13.3,
+   1336
   ],
   [
    "fit + predict H=10",
-   20.1,
-   1337
+   13.5,
+   1336
   ],
   [
    "fit + predict H=20",
-   20.0,
-   1337
+   13.5,
+   1336
   ],
   [
    "fit + predict H=60",
-   20.1,
-   1337
+   13.2,
+   1336
   ],
   [
-   "ledger forecast batch (written)",
-   0.2,
-   1337
+   "ledger forecast batch (already in the ledger, not rewritten)",
+   0.1,
+   1336
   ],
   [
    "resolve matured forecasts",
@@ -124,9 +124,9 @@
   ],
   [
    "states, signals, kill switches",
-   0.2,
-   1337
+   0.1,
+   1336
   ]
  ],
- "total_s": 163
+ "total_s": 101
 }
