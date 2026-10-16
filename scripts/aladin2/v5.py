@@ -22,6 +22,15 @@ GATES (judged ONCE on the full history 2013-2026, v3 replayed with the same code
   4  stability at least as many positive calendar years 2013-2025 as v3
   All pass -> the live paper bot switches to v5 from the next list (rule history v5). Any fail -> v3 stays live and v5 runs as a published record.
 Also reported (information only, NOT used for the verdict): each v5 component on its own.
+
+ROUND 1 RESULT (2026-10-16): FAIL (risk passed, return and quality failed). v5: CAGR 14.71% vs v3 20.84%, max drawdown -17.4% vs -27.5%, Sharpe over
+cash 0.837 vs 0.944, costs Rs 2.2 lakh a year vs Rs 7.1 lakh. The trend filter kept the bot out of too many Indian rallies (alone: CAGR 15.2%).
+Components alone (information): roll 22.55% / -27.1% / 1.037; brake 18.85% / -21.3% / 0.956; trend 15.22% / -22.0% / 0.768;
+loss limit 20.46% / -30.5% / 0.925; vol scale 19.05% / -27.2% / 0.888. v3 stays live.
+
+ROUND 2 (written after round 1, BEFORE any round-2 result; a SECOND look at the same years, chosen from round 1's components, so a pass is flattered):
+  v5.1 = v3 + ROLL + BRAKE only (both are mechanical: roll removes the sale and re-purchase of a stock still on the list; the brake is the
+  configured 10% one). Same gates. A pass switches the live bot to v5.1 with this caveat recorded in its rule history.
 """
 import argparse
 import json
@@ -37,6 +46,7 @@ from . import data_lake as L
 from . import paper as P
 
 OUT = P.OUT / "v5_backtest.json"
+V51 = {"roll": True, "brake_pct": 10.0}
 V5 = {"roll": True, "trend_sma": 200, "brake_pct": 10.0, "stop_pct": 20.0, "vol_target": 0.16, "vol_days": 20}
 RF = 0.062
 GATES = {"dd_better_pts": 5.0, "cagr_worse_max_pts": 2.0, "years": (2013, 2025)}
@@ -88,7 +98,7 @@ def run_backtest(oos=None, out=None):
     def bot(**kw):
         r = P.simulate(books, prices, cal, cfg, exits=P.BOT["exits"], risk_pct=P.BOT["risk_pct"], max_pos_pct=P.BOT["max_pos_pct"], **kw)
         r["equity"] = P.overlay(r["equity"], rate); return r
-    variants = {"v3 (current bot, same code)": {}, "v5 (all five changes)": dict(roll=True, regime=regime, brake_pct=V5["brake_pct"], stop_pct=V5["stop_pct"], vol_scale=vscale),
+    variants = {"v3 (current bot, same code)": {}, "v5.1 (roll + brake)": dict(roll=True, brake_pct=V51["brake_pct"]), "v5 (all five changes)": dict(roll=True, regime=regime, brake_pct=V5["brake_pct"], stop_pct=V5["stop_pct"], vol_scale=vscale),
                 "info: roll only": dict(roll=True), "info: trend filter only": dict(regime=regime), "info: brake only": dict(brake_pct=V5["brake_pct"]),
                 "info: loss limit only": dict(stop_pct=V5["stop_pct"], regime=None), "info: vol scale only": dict(vol_scale=vscale)}
     runs, st = {}, {}
@@ -98,11 +108,14 @@ def run_backtest(oos=None, out=None):
         print(f"  {k}: CAGR {s['cagr_pct']}% DD {s['max_drawdown_pct']}% Sharpe(cash) {s['sharpe_over_cash']} trades {s['trades']} costs/yr {s['costs_per_year']:,.0f} ({time.time() - t0:.0f}s)", flush=True)
     base, new = st["v3 (current bot, same code)"], st["v5 (all five changes)"]
     gates, ok = judge(new, base, new["sharpe_over_cash"], base["sharpe_over_cash"])
+    n2 = st["v5.1 (roll + brake)"]; gates2, ok2 = judge(n2, base, n2["sharpe_over_cash"], base["sharpe_over_cash"])
     doc = {"kind": "HISTORICAL SIMULATION (rule v5, pre-declared)", "created_utc": pd.Timestamp.utcnow().isoformat(), "protocol": __doc__.strip(), "v5": V5, "gates_declared": GATES,
            "stats": st, "equity": {k: r["equity"][::5] + [r["equity"][-1]] for k, r in runs.items() if not k.startswith("info")},
-           "verdict": {"gates": gates, "pass": ok}, "runtime_s": round(time.time() - t0)}
+           "verdict": {"gates": gates, "pass": ok}, "verdict_round2": {"judged": "v5.1 (roll + brake)", "second_look": True, "gates": gates2, "pass": ok2},
+           "runtime_s": round(time.time() - t0)}
     Path(out or OUT).write_text(json.dumps(doc, separators=(",", ":"), default=float), encoding="utf-8")
-    print(f"VERDICT: {'PASS' if ok else 'FAIL'} {gates}")
+    print(f"VERDICT round 1 (v5): {'PASS' if ok else 'FAIL'} {gates}")
+    print(f"VERDICT round 2 (v5.1, second look): {'PASS' if ok2 else 'FAIL'} {gates2}")
     return doc
 
 
