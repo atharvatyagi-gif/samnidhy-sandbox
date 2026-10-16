@@ -1,6 +1,6 @@
 {
  "as_of": "2026-10-15",
- "created_utc": "2026-10-15T18:46:19.742966+00:00",
+ "created_utc": "2026-10-16T03:14:07.522020+00:00",
  "stocks_forecast": 1399,
  "horizons": [
   1,
@@ -56,7 +56,7 @@
      "95": 0.9485
     },
     "p_up_n": 4133,
-    "ece": 0.1429
+    "ece": 0.1419
    },
    "5": {
     "n": 477,
@@ -72,49 +72,49 @@
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.143 is above 0.05 (n = 4133)"
+  "live calibration error 0.142 is above 0.05 (n = 4133)"
  ],
  "ledger_status": "already in the ledger, not rewritten",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   38.4,
+   62.4,
    939313
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
-   0.1,
+   0.0,
    1399
   ],
   [
    "fit + predict H=1",
-   13.7,
+   19.9,
    1399
   ],
   [
    "fit + predict H=5",
-   14.0,
+   20.2,
    1399
   ],
   [
    "fit + predict H=10",
-   14.0,
+   20.1,
    1399
   ],
   [
    "fit + predict H=20",
-   13.8,
+   20.0,
    1399
   ],
   [
    "fit + predict H=60",
-   14.0,
+   20.1,
    1399
   ],
   [
    "ledger forecast batch (already in the ledger, not rewritten)",
-   0.1,
+   0.2,
    1399
   ],
   [
@@ -128,5 +128,5 @@
    1399
   ]
  ],
- "total_s": 108
+ "total_s": 163
 }
