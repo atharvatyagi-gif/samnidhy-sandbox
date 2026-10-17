@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-17T08:00:10+00:00",
+  "generated_on": "2026-10-17T13:31:22+00:00",
   "session_date": "2026-10-16",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -104,10 +104,10 @@
         "first_date": "2021-10-11",
         "trading_days": 1235,
         "years": 5.01,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.631162,
-      "total_return": 3.495343,
+      "total_return": 3.495344,
       "annualised_volatility": 0.40986,
       "max_drawdown": -0.282696,
       "beta": 1.1398
@@ -136,7 +136,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.257158,
-      "total_return": 1.019819,
+      "total_return": 1.01982,
       "annualised_volatility": 0.382623,
       "max_drawdown": -0.529086,
       "beta": 0.7969
@@ -156,7 +156,7 @@
         "turnover_crore": 142.91
       },
       "latest_close": 1008.3,
-      "trailing_pe": 29.124784,
+      "trailing_pe": 31.091581,
       "market_cap": 134450978816,
       "history": {
         "first_date": "2021-10-11",
@@ -324,7 +324,7 @@
       "SHRIPISTON.NS": 0.049139,
       "RRKABEL.NS": 0.047613,
       "CCL.NS": 0.013392,
-      "APARINDS.NS": 0.211006
+      "APARINDS.NS": 0.211007
     }
   },
   "weekly": {
@@ -880,7 +880,7 @@
         1179.0,
         1233.21,
         1261.38,
-        1267.07,
+        1267.06,
         1298.5,
         1261.64,
         1229.1,
@@ -1000,7 +1000,7 @@
         1264.14,
         1290.27,
         1318.43,
-        1347.0,
+        1347.01,
         1387.29,
         1400.17,
         1446.88,
@@ -1530,7 +1530,7 @@
         1720.62,
         1787.4,
         1755.17,
-        1717.61,
+        1717.6,
         1739.34,
         1694.63,
         1628.08,
@@ -2034,7 +2034,7 @@
         5229.09,
         5323.27,
         5382.0,
-        6226.26,
+        6226.27,
         6053.36,
         6057.55,
         6199.97,
@@ -2050,7 +2050,7 @@
         7844.25,
         7518.78,
         7865.91,
-        7903.92,
+        7903.91,
         7786.06,
         7935.96,
         8247.2,
@@ -2091,7 +2091,7 @@
         6307.97,
         6373.46,
         5743.34,
-        6049.65,
+        6049.66,
         5430.43,
         5872.92,
         5488.29,
