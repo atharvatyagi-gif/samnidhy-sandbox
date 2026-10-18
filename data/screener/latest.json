@@ -273,7 +273,7 @@
    0.03136,
    0.03546,
    0.03565,
-   0.03809,
+   0.0381,
    0.0402,
    0.04082,
    0.04098,
@@ -1440,9 +1440,9 @@
    1.11081
   ]
  },
- "generated_utc": "2026-10-18T02:04:13+00:00",
- "generated_ist": "18 Oct 2026, 07:34 AM IST",
- "screened_ist": "18 Oct 2026, 07:34 AM IST",
+ "generated_utc": "2026-10-18T03:33:49+00:00",
+ "generated_ist": "18 Oct 2026, 09:03 AM IST",
+ "screened_ist": "18 Oct 2026, 09:03 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1472,11 +1472,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 272
+   "count": 277
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 155
+   "count": 158
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1489,9 +1489,9 @@
   "2": 3,
   "3": 18,
   "4": 35,
-  "5": 61,
-  "6": 69,
-  "7": 43,
+  "5": 63,
+  "6": 70,
+  "7": 45,
   "8": 28,
   "9": 15
  },
@@ -1510,11 +1510,6 @@
    "INFY"
   ],
   "download failed (YFRateLimitError)": [
-   "SONACOMS",
-   "SRF",
-   "STLTECH",
-   "SUMICHEM",
-   "SUNPHARMA",
    "SUNTV",
    "SUPREMEIND",
    "SWANCORP",
@@ -1625,7 +1620,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 17,
-   "of": 155
+   "of": 158
   },
   {
    "symbol": "SIGNATURE",
@@ -1678,7 +1673,7 @@
    "magic_rank": 2,
    "rank_roc": 9,
    "rank_ey": 9,
-   "of": 155
+   "of": 158
   },
   {
    "symbol": "BLS",
@@ -1731,7 +1726,7 @@
    "magic_rank": 3,
    "rank_roc": 11,
    "rank_ey": 15,
-   "of": 155
+   "of": 158
   },
   {
    "symbol": "NBCC",
@@ -1784,7 +1779,7 @@
    "magic_rank": 4,
    "rank_roc": 10,
    "rank_ey": 22,
-   "of": 155
+   "of": 158
   },
   {
    "symbol": "CASTROLIND",
@@ -1837,7 +1832,7 @@
    "magic_rank": 5,
    "rank_roc": 5,
    "rank_ey": 30,
-   "of": 155
+   "of": 158
   },
   {
    "symbol": "ENGINERSIN",
@@ -1890,7 +1885,7 @@
    "magic_rank": 6,
    "rank_roc": 6,
    "rank_ey": 33,
-   "of": 155
+   "of": 158
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1943,7 +1938,7 @@
    "magic_rank": 7,
    "rank_roc": 18,
    "rank_ey": 21,
-   "of": 155
+   "of": 158
   },
   {
    "symbol": "HINDZINC",
@@ -1996,7 +1991,7 @@
    "magic_rank": 8,
    "rank_roc": 29,
    "rank_ey": 19,
-   "of": 155
+   "of": 158
   },
   {
    "symbol": "NATIONALUM",
@@ -2049,7 +2044,7 @@
    "magic_rank": 9,
    "rank_roc": 41,
    "rank_ey": 7,
-   "of": 155
+   "of": 158
   },
   {
    "symbol": "FORCEMOT",
@@ -2102,7 +2097,7 @@
    "magic_rank": 10,
    "rank_roc": 27,
    "rank_ey": 27,
-   "of": 155
+   "of": 158
   }
  ]
 }
