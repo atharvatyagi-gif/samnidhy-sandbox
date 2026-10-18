@@ -1440,9 +1440,9 @@
    1.11081
   ]
  },
- "generated_utc": "2026-10-18T13:33:26+00:00",
- "generated_ist": "18 Oct 2026, 07:03 PM IST",
- "screened_ist": "18 Oct 2026, 07:03 PM IST",
+ "generated_utc": "2026-10-18T16:43:28+00:00",
+ "generated_ist": "18 Oct 2026, 10:13 PM IST",
+ "screened_ist": "18 Oct 2026, 10:13 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1472,7 +1472,7 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 279
+   "count": 277
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
@@ -1489,7 +1489,7 @@
   "2": 3,
   "3": 18,
   "4": 35,
-  "5": 65,
+  "5": 63,
   "6": 70,
   "7": 45,
   "8": 28,
@@ -1510,6 +1510,8 @@
    "INFY"
   ],
   "download failed (YFRateLimitError)": [
+   "SUNTV",
+   "SUPREMEIND",
    "SWANCORP",
    "SWIGGY",
    "SYNGENE",
