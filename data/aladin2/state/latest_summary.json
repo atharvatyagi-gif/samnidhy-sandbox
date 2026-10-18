@@ -1,6 +1,6 @@
 {
  "as_of": "2026-10-16",
- "created_utc": "2026-10-18T14:31:41.525081+00:00",
+ "created_utc": "2026-10-18T17:41:59.487554+00:00",
  "stocks_forecast": 1401,
  "horizons": [
   1,
@@ -79,7 +79,7 @@
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   64.7,
+   60.9,
    938995
   ],
   [
@@ -89,27 +89,27 @@
   ],
   [
    "fit + predict H=1",
-   20.4,
+   20.0,
    1401
   ],
   [
    "fit + predict H=5",
-   20.3,
+   20.1,
    1401
   ],
   [
    "fit + predict H=10",
-   20.2,
+   20.1,
    1401
   ],
   [
    "fit + predict H=20",
-   20.2,
+   20.0,
    1401
   ],
   [
    "fit + predict H=60",
-   20.1,
+   20.0,
    1401
   ],
   [
@@ -124,9 +124,9 @@
   ],
   [
    "states, signals, kill switches",
-   0.1,
+   0.2,
    1401
   ]
  ],
- "total_s": 166
+ "total_s": 161
 }
