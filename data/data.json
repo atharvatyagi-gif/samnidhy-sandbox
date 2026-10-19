@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-18T16:40:44+00:00",
+  "generated_on": "2026-10-19T02:00:47+00:00",
   "session_date": "2026-10-16",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,8 +40,8 @@
         "turnover_crore": 3157.39
       },
       "latest_close": 833.15,
-      "trailing_pe": 29.586294,
-      "market_cap": 230944980992,
+      "trailing_pe": 29.440695,
+      "market_cap": 229808472064,
       "history": {
         "first_date": "2021-10-11",
         "trading_days": 1238,
@@ -78,7 +78,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.150992,
-      "total_return": 0.540303,
+      "total_return": 0.540304,
       "annualised_volatility": 0.26956,
       "max_drawdown": -0.2915,
       "beta": 0.8338
@@ -98,8 +98,8 @@
         "turnover_crore": 76.25
       },
       "latest_close": 4629.9,
-      "trailing_pe": 36.188057,
-      "market_cap": 214763798528,
+      "trailing_pe": 36.657806,
+      "market_cap": 217551618048,
       "history": {
         "first_date": "2021-10-11",
         "trading_days": 1235,
@@ -127,8 +127,8 @@
         "turnover_crore": 217.83
       },
       "latest_close": 2388.0,
-      "trailing_pe": 44.460995,
-      "market_cap": 270095941632,
+      "trailing_pe": 44.125862,
+      "market_cap": 268060049408,
       "history": {
         "first_date": "2023-09-20",
         "trading_days": 754,
@@ -156,8 +156,8 @@
         "turnover_crore": 142.91
       },
       "latest_close": 1008.3,
-      "trailing_pe": 29.124784,
-      "market_cap": 134450978816,
+      "trailing_pe": 29.110342,
+      "market_cap": 134384304128,
       "history": {
         "first_date": "2021-10-11",
         "trading_days": 1239,
@@ -185,8 +185,8 @@
         "turnover_crore": 306.19
       },
       "latest_close": 16033.0,
-      "trailing_pe": 54.636223,
-      "market_cap": 671339184128,
+      "trailing_pe": 54.60896,
+      "market_cap": 671004164096,
       "history": {
         "first_date": "2021-10-11",
         "trading_days": 1239,
@@ -1000,11 +1000,11 @@
         1264.14,
         1290.27,
         1318.43,
-        1347.0,
+        1347.01,
         1387.29,
         1400.17,
         1446.88,
-        1415.48,
+        1415.47,
         1414.54,
         1488.33,
         1500.63,
@@ -1226,7 +1226,7 @@
         1024.5,
         1007.87,
         985.75,
-        986.88,
+        986.89,
         1090.75,
         1012.36,
         988.81,
@@ -1530,7 +1530,7 @@
         1720.62,
         1787.4,
         1755.17,
-        1717.6,
+        1717.61,
         1739.34,
         1694.63,
         1628.08,
@@ -1772,7 +1772,7 @@
         630.57,
         633.81,
         649.82,
-        638.49,
+        638.5,
         627.89,
         619.41,
         604.77,
@@ -1986,7 +1986,7 @@
         2116.22,
         2332.51,
         2208.25,
-        2241.95,
+        2241.94,
         2244.33,
         2252.9,
         2267.85,
@@ -2002,7 +2002,7 @@
         2635.92,
         2955.53,
         3041.67,
-        3106.63,
+        3106.62,
         3379.3,
         3391.33,
         3434.96,
