@@ -3,11 +3,11 @@
  "weekday": "Monday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 1235,
+ "total_s": 1185,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 4.1,
+   "seconds": 3.5,
    "note": "latest price bar 2026-10-19; delivery / F&O / macro refreshed"
   },
   {
@@ -17,32 +17,32 @@
   },
   {
    "step": "learn",
-   "seconds": 357.7,
-   "note": "1422 stocks, 64 strategies; 299 lifecycle events (116 new in the journal); states {'Active': 28, 'Retired': 8, 'Demoted': 1}"
+   "seconds": 0.0,
+   "note": "cache hit: no new block since 2026-08-14 and the same strategies; states unchanged"
   },
   {
    "step": "drift",
-   "seconds": 4.2,
+   "seconds": 5.7,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 725.3,
-   "note": "50 generations, 1200 new rules, 0 passed, 50189 tested in total"
+   "seconds": 991.0,
+   "note": "50 generations, 1200 new rules, 0 passed, 51389 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 128.1,
+   "seconds": 164.7,
    "note": "as of 2026-10-19, 1331 stocks, states {'Suspended': 1331}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 14.3,
-   "note": "as of 2026-10-19: bull 12, bear 25, hold 1209; ledger already in the ledger; 1 outcome lines"
+   "seconds": 18.1,
+   "note": "as of 2026-10-19: bull 12, bear 25, hold 1209; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 1.7,
+   "seconds": 2.1,
    "note": "live paper account: 2 book(s); equity 1,013,817 (1.38%), 6 closed trades, 5 open"
   },
   {
@@ -59,19 +59,13 @@
  "errors": [],
  "counts": {
   "outcomes_written": 0,
-  "lifecycle_events": 299,
-  "journal_new": 116,
-  "strategy_states": {
-   "Active": 28,
-   "Retired": 8,
-   "Demoted": 1
-  },
+  "learn_cached": true,
   "drift_alarms": 0,
   "discovery": {
    "generations": 50,
    "new_rules": 1200,
    "passed": 0,
-   "total_tested": 50189
+   "total_tested": 51389
   },
   "forecast": {
    "as_of": "2026-10-19",
