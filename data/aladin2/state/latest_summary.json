@@ -1,7 +1,7 @@
 {
- "as_of": "2026-10-16",
- "created_utc": "2026-10-19T02:57:05.997239+00:00",
- "stocks_forecast": 1401,
+ "as_of": "2026-10-19",
+ "created_utc": "2026-10-19T04:46:55.657773+00:00",
+ "stocks_forecast": 113,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1401
+  "Suspended": 113
  },
  "active_strategies": [
   "disc_d2734315",
@@ -46,76 +46,76 @@
  "probation_strategies": [],
  "bullish_signals": 0,
  "live_stats": {
-  "forecast_batches": 7,
+  "forecast_batches": 8,
   "outcomes": {
    "1": {
-    "n": 4220,
+    "n": 4331,
     "coverage": {
-     "50": 0.504,
-     "80": 0.8109,
-     "95": 0.9457
+     "50": 0.5082,
+     "80": 0.8146,
+     "95": 0.9471
     },
-    "p_up_n": 4220,
-    "ece": 0.1354
+    "p_up_n": 4331,
+    "ece": 0.1378
    },
    "5": {
-    "n": 1833,
+    "n": 1942,
     "coverage": {
-     "50": 0.5625,
-     "80": 0.856,
-     "95": 0.9656
+     "50": 0.5654,
+     "80": 0.8589,
+     "95": 0.9655
     },
-    "p_up_n": 1833,
-    "ece": 0.1701
+    "p_up_n": 1942,
+    "ece": 0.1769
    }
   }
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.135 is above 0.05 (n = 4220)"
+  "live calibration error 0.138 is above 0.05 (n = 4331)"
  ],
- "ledger_status": "already in the ledger, not rewritten",
+ "ledger_status": "written",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   43.6,
-   938995
+   61.1,
+   938996
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1401
+   113
   ],
   [
    "fit + predict H=1",
-   16.2,
-   1401
+   20.0,
+   113
   ],
   [
    "fit + predict H=5",
-   16.7,
-   1401
+   20.0,
+   113
   ],
   [
    "fit + predict H=10",
-   16.6,
-   1401
+   20.0,
+   113
   ],
   [
    "fit + predict H=20",
-   16.7,
-   1401
+   20.1,
+   113
   ],
   [
    "fit + predict H=60",
-   16.5,
-   1401
+   20.0,
+   113
   ],
   [
-   "ledger forecast batch (already in the ledger, not rewritten)",
-   0.1,
-   1401
+   "ledger forecast batch (written)",
+   0.2,
+   113
   ],
   [
    "resolve matured forecasts",
@@ -124,9 +124,9 @@
   ],
   [
    "states, signals, kill switches",
-   0.1,
-   1401
+   0.2,
+   113
   ]
  ],
- "total_s": 126
+ "total_s": 162
 }
