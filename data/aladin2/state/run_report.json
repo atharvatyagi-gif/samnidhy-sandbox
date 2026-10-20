@@ -1,13 +1,13 @@
 {
- "day": "2026-10-19",
- "weekday": "Monday",
+ "day": "2026-10-20",
+ "weekday": "Tuesday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 201,
+ "total_s": 613,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 2.8,
+   "seconds": 4.7,
    "note": "latest price bar 2026-10-19; delivery / F&O / macro refreshed"
   },
   {
@@ -22,27 +22,27 @@
   },
   {
    "step": "drift",
-   "seconds": 5.9,
+   "seconds": 3.0,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 1.7,
-   "note": "0 generations, 0 new rules, 0 passed, 54967 tested in total"
+   "seconds": 487.1,
+   "note": "50 generations, 1146 new rules, 0 passed, 56113 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 169.1,
-   "note": "as of 2026-10-16, 1399 stocks, states {'Suspended': 1399}, ledger already in the ledger, not rewritten"
+   "seconds": 104.1,
+   "note": "as of 2026-10-19, 1399 stocks, states {'Suspended': 1399}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 19.0,
-   "note": "as of 2026-10-16: bull 13, bear 25, hold 1232; ledger already in the ledger; 0 outcome lines"
+   "seconds": 13.0,
+   "note": "as of 2026-10-19: bull 13, bear 26, hold 1259; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 2.3,
+   "seconds": 1.3,
    "note": "live paper account: 2 book(s); equity 1,010,028 (1.0%), 6 closed trades, 5 open"
   },
   {
@@ -62,13 +62,13 @@
   "learn_cached": true,
   "drift_alarms": 0,
   "discovery": {
-   "generations": 0,
-   "new_rules": 0,
+   "generations": 50,
+   "new_rules": 1146,
    "passed": 0,
-   "total_tested": 54967
+   "total_tested": 56113
   },
   "forecast": {
-   "as_of": "2026-10-16",
+   "as_of": "2026-10-19",
    "stocks_forecast": 1399,
    "product_state_counts": {
     "Suspended": 1399
@@ -77,8 +77,8 @@
   },
   "weekly": {
    "bull": 13,
-   "bear": 25,
-   "hold": 1232
+   "bear": 26,
+   "hold": 1259
   }
  },
  "within_budget": true
