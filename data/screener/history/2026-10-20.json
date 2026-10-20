@@ -1440,9 +1440,9 @@
    1.11053
   ]
  },
- "generated_utc": "2026-10-20T03:34:09+00:00",
- "generated_ist": "20 Oct 2026, 09:04 AM IST",
- "screened_ist": "20 Oct 2026, 09:04 AM IST",
+ "generated_utc": "2026-10-20T07:08:12+00:00",
+ "generated_ist": "20 Oct 2026, 12:38 PM IST",
+ "screened_ist": "20 Oct 2026, 12:38 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1472,11 +1472,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 292
+   "count": 276
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 166
+   "count": 158
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1487,11 +1487,11 @@
   "0": 0,
   "1": 0,
   "2": 3,
-  "3": 21,
-  "4": 37,
-  "5": 65,
-  "6": 75,
-  "7": 48,
+  "3": 18,
+  "4": 36,
+  "5": 61,
+  "6": 71,
+  "7": 44,
   "8": 28,
   "9": 15
  },
@@ -1504,6 +1504,22 @@
    "NESTLEIND"
   ],
   "download failed (YFRateLimitError)": [
+   "SOBHA",
+   "SOLARINDS",
+   "SONACOMS",
+   "SRF",
+   "STLTECH",
+   "SUMICHEM",
+   "SUNPHARMA",
+   "SUNTV",
+   "SUPREMEIND",
+   "SWANCORP",
+   "SWIGGY",
+   "SYNGENE",
+   "SYRMA",
+   "TARIL",
+   "TATACHEM",
+   "TATACOMM",
    "TATACONSUM",
    "TATAELXSI",
    "TATASTEEL",
@@ -1582,7 +1598,7 @@
    "capital_cr": 21.6,
    "ev_cr": 6499.8,
    "market_cap_cr": 9596.9,
-   "pe": 19.882881,
+   "pe": 19.499023,
    "pb": 4.323361,
    "roe": 0.23146,
    "debt_to_equity": 0.974,
@@ -1595,7 +1611,7 @@
    "estimate_mean": 2037.3334,
    "estimate_high": 2540.0,
    "estimate_low": 1650.0,
-   "eps": 80.26,
+   "eps": 81.84,
    "shares_out": 60138656.0,
    "employees": null,
    "website": "https://www.indiamart.com",
@@ -1605,7 +1621,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 17,
-   "of": 166
+   "of": 158
   },
   {
    "symbol": "SIGNATURE",
@@ -1635,7 +1651,7 @@
    "capital_cr": 664.2,
    "ev_cr": 10439.6,
    "market_cap_cr": 10112.5,
-   "pe": 9.687332,
+   "pe": 9.540749,
    "pb": 5.4610105,
    "roe": null,
    "debt_to_equity": 161.04,
@@ -1648,7 +1664,7 @@
    "estimate_mean": 1087.0,
    "estimate_high": 1246.0,
    "estimate_low": 940.0,
-   "eps": 74.2,
+   "eps": 75.34,
    "shares_out": 140686026.0,
    "employees": 1365.0,
    "website": "https://www.signatureglobal.in",
@@ -1658,7 +1674,7 @@
    "magic_rank": 2,
    "rank_roc": 10,
    "rank_ey": 10,
-   "of": 166
+   "of": 158
   },
   {
    "symbol": "BLS",
@@ -1711,7 +1727,7 @@
    "magic_rank": 3,
    "rank_roc": 12,
    "rank_ey": 15,
-   "of": 166
+   "of": 158
   },
   {
    "symbol": "NBCC",
@@ -1746,7 +1762,7 @@
    "roe": null,
    "debt_to_equity": 0.008,
    "dividend_yield": 1.28,
-   "held_institutions": 0.14359,
+   "held_institutions": 0.14377,
    "held_insiders": 0.61754,
    "analysts": 1,
    "consensus": "strongly_positive",
@@ -1764,7 +1780,7 @@
    "magic_rank": 4,
    "rank_roc": 11,
    "rank_ey": 22,
-   "of": 166
+   "of": 158
   },
   {
    "symbol": "CASTROLIND",
@@ -1799,7 +1815,7 @@
    "roe": 0.56996,
    "debt_to_equity": 2.784,
    "dividend_yield": 6.35,
-   "held_institutions": 0.16631001,
+   "held_institutions": 0.16625999,
    "held_insiders": 0.51304,
    "analysts": 5,
    "consensus": "positive",
@@ -1817,7 +1833,7 @@
    "magic_rank": 5,
    "rank_roc": 5,
    "rank_ey": 32,
-   "of": 166
+   "of": 158
   },
   {
    "symbol": "ENGINERSIN",
@@ -1851,8 +1867,8 @@
    "pb": 4.8338556,
    "roe": null,
    "debt_to_equity": 0.534,
-   "dividend_yield": 1.83,
-   "held_institutions": 0.18746,
+   "dividend_yield": 1.85,
+   "held_institutions": 0.18747,
    "held_insiders": 0.51366,
    "analysts": 6,
    "consensus": "strongly_positive",
@@ -1870,7 +1886,7 @@
    "magic_rank": 6,
    "rank_roc": 6,
    "rank_ey": 34,
-   "of": 166
+   "of": 158
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1905,7 +1921,7 @@
    "roe": null,
    "debt_to_equity": 3.57,
    "dividend_yield": 3.54,
-   "held_institutions": 0.36771,
+   "held_institutions": 0.36806,
    "held_insiders": 0.37236,
    "analysts": 36,
    "consensus": "positive",
@@ -1923,7 +1939,7 @@
    "magic_rank": 7,
    "rank_roc": 19,
    "rank_ey": 24,
-   "of": 166
+   "of": 158
   },
   {
    "symbol": "HINDZINC",
@@ -1953,12 +1969,12 @@
    "capital_cr": 24069.0,
    "ev_cr": 222673.2,
    "market_cap_cr": 227491.2,
-   "pe": 13.330033,
+   "pe": 10.920893,
    "pb": 10.053029,
    "roe": null,
    "debt_to_equity": 39.034,
    "dividend_yield": 2.04,
-   "held_institutions": 0.05691,
+   "held_institutions": 0.05712,
    "held_insiders": 0.88629997,
    "analysts": 14,
    "consensus": "positive",
@@ -1966,7 +1982,7 @@
    "estimate_mean": 638.7857,
    "estimate_high": 770.0,
    "estimate_low": 480.0,
-   "eps": 40.39,
+   "eps": 49.3,
    "shares_out": 4225319000.0,
    "employees": 3303.0,
    "website": "https://www.hzlindia.com",
@@ -1976,7 +1992,7 @@
    "magic_rank": 8,
    "rank_roc": 30,
    "rank_ey": 20,
-   "of": 166
+   "of": 158
   },
   {
    "symbol": "NATIONALUM",
@@ -2010,7 +2026,7 @@
    "pb": 2.7029552,
    "roe": null,
    "debt_to_equity": 0.277,
-   "dividend_yield": 1.23,
+   "dividend_yield": 1.26,
    "held_institutions": 0.21735,
    "held_insiders": 0.51278,
    "analysts": 13,
@@ -2029,7 +2045,7 @@
    "magic_rank": 9,
    "rank_roc": 42,
    "rank_ey": 8,
-   "of": 166
+   "of": 158
   },
   {
    "symbol": "FORCEMOT",
@@ -2059,7 +2075,7 @@
    "capital_cr": 1823.1,
    "ev_cr": 20947.4,
    "market_cap_cr": 23141.5,
-   "pe": 18.629936,
+   "pe": 18.485617,
    "pb": 5.6154575,
    "roe": null,
    "debt_to_equity": null,
@@ -2072,7 +2088,7 @@
    "estimate_mean": null,
    "estimate_high": null,
    "estimate_low": null,
-   "eps": 942.73,
+   "eps": 950.09,
    "shares_out": 13176262.0,
    "employees": 4832.0,
    "website": "https://www.forcemotors.com",
@@ -2082,7 +2098,7 @@
    "magic_rank": 10,
    "rank_roc": 28,
    "rank_ey": 29,
-   "of": 166
+   "of": 158
   }
  ]
 }
