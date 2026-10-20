@@ -7,7 +7,7 @@
  "steps": [
   {
    "step": "ingest",
-   "seconds": 3.4,
+   "seconds": 3.3,
    "note": "latest price bar 2026-10-19; delivery / F&O / macro refreshed"
   },
   {
@@ -22,7 +22,7 @@
   },
   {
    "step": "drift",
-   "seconds": 5.5,
+   "seconds": 5.7,
    "note": "28 strategies checked, 0 alarms"
   },
   {
@@ -37,12 +37,12 @@
   },
   {
    "step": "weekly",
-   "seconds": 17.3,
+   "seconds": 17.0,
    "note": "as of 2026-10-19: bull 13, bear 26, hold 1259; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 2.0,
+   "seconds": 1.9,
    "note": "live paper account: 2 book(s); equity 1,010,028 (1.0%), 6 closed trades, 5 open"
   },
   {
