@@ -3,11 +3,11 @@
  "weekday": "Tuesday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 613,
+ "total_s": 148,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 4.7,
+   "seconds": 3.3,
    "note": "latest price bar 2026-10-19; delivery / F&O / macro refreshed"
   },
   {
@@ -22,27 +22,27 @@
   },
   {
    "step": "drift",
-   "seconds": 3.0,
+   "seconds": 4.1,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 487.1,
-   "note": "50 generations, 1146 new rules, 0 passed, 56113 tested in total"
+   "seconds": 1.3,
+   "note": "0 generations, 0 new rules, 0 passed, 56113 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 104.1,
+   "seconds": 123.7,
    "note": "as of 2026-10-19, 1399 stocks, states {'Suspended': 1399}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 13.0,
+   "seconds": 14.1,
    "note": "as of 2026-10-19: bull 13, bear 26, hold 1259; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 1.3,
+   "seconds": 1.5,
    "note": "live paper account: 2 book(s); equity 1,010,028 (1.0%), 6 closed trades, 5 open"
   },
   {
@@ -62,8 +62,8 @@
   "learn_cached": true,
   "drift_alarms": 0,
   "discovery": {
-   "generations": 50,
-   "new_rules": 1146,
+   "generations": 0,
+   "new_rules": 0,
    "passed": 0,
    "total_tested": 56113
   },
