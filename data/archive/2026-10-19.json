@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-20T08:50:07+00:00",
+  "generated_on": "2026-10-20T13:31:35+00:00",
   "session_date": "2026-10-19",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -14,7 +14,7 @@
     "min_turnover_crore": 10,
     "min_history_years": 1,
     "skipped": [],
-    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_19102026.csv"
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_20102026.csv"
   },
   "order": [
     "UNIONBANK.NS",
@@ -40,7 +40,7 @@
         "turnover_crore": 821.84
       },
       "latest_close": 180.7,
-      "trailing_pe": 6.680222,
+      "trailing_pe": 6.2699513,
       "market_cap": 1379392552960,
       "history": {
         "first_date": "2021-10-12",
@@ -706,7 +706,7 @@
         95.19,
         99.45,
         97.89,
-        99.59,
+        99.58,
         107.23,
         117.43,
         108.23,
@@ -1979,7 +1979,7 @@
         840.57,
         737.58,
         772.23,
-        769.82,
+        769.83,
         761.41,
         788.81,
         612.38,
@@ -2030,7 +2030,7 @@
         589.5,
         602.46,
         597.28,
-        587.93,
+        587.94,
         613.32,
         631.13,
         643.95,
