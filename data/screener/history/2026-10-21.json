@@ -1440,9 +1440,9 @@
    1.11053
   ]
  },
- "generated_utc": "2026-10-21T02:03:51+00:00",
- "generated_ist": "21 Oct 2026, 07:33 AM IST",
- "screened_ist": "21 Oct 2026, 07:33 AM IST",
+ "generated_utc": "2026-10-21T03:33:26+00:00",
+ "generated_ist": "21 Oct 2026, 09:03 AM IST",
+ "screened_ist": "21 Oct 2026, 09:03 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1472,7 +1472,7 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 278
+   "count": 276
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
@@ -1489,7 +1489,7 @@
   "2": 3,
   "3": 18,
   "4": 35,
-  "5": 64,
+  "5": 62,
   "6": 70,
   "7": 45,
   "8": 28,
@@ -1510,6 +1510,8 @@
    "INFY"
   ],
   "download failed (YFRateLimitError)": [
+   "SUMICHEM",
+   "SUNPHARMA",
    "SUPREMEIND",
    "SWANCORP",
    "SWIGGY",
