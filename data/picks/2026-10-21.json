@@ -1,0 +1,149 @@
+{
+  "session_date": "2026-10-21",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_21102026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 495,
+  "eligible_count": 442,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "INDIACEM",
+      "yahoo_ticker": "INDIACEM.NS",
+      "name": "India Cements Ltd.",
+      "industry": "Construction Materials",
+      "prev_close": 294.35,
+      "open": 298.4,
+      "high": 348.7,
+      "low": 296.55,
+      "close": 329.8,
+      "pct_change": 12.0435,
+      "volume": 28533954,
+      "turnover_crore": 914.32
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "LTTS",
+      "yahoo_ticker": "LTTS.NS",
+      "name": "L&T Technology Services Ltd.",
+      "industry": "Information Technology",
+      "prev_close": 3611.3,
+      "open": 3830.7,
+      "high": 4143.0,
+      "low": 3787.5,
+      "close": 3996.3,
+      "pct_change": 10.661,
+      "volume": 8208436,
+      "turnover_crore": 3273.01
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "IPCALAB",
+      "yahoo_ticker": "IPCALAB.NS",
+      "name": "Ipca Laboratories Ltd.",
+      "industry": "Healthcare",
+      "prev_close": 1814.5,
+      "open": 1810.0,
+      "high": 1949.9,
+      "low": 1797.6,
+      "close": 1918.9,
+      "pct_change": 5.7537,
+      "volume": 511090,
+      "turnover_crore": 96.25
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "HSCL",
+      "yahoo_ticker": "HSCL.NS",
+      "name": "Himadri Speciality Chemical Ltd.",
+      "industry": "Chemicals",
+      "prev_close": 605.85,
+      "open": 605.9,
+      "high": 608.7,
+      "low": 534.05,
+      "close": 539.25,
+      "pct_change": -10.9928,
+      "volume": 8755273,
+      "turnover_crore": 487.24
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "JINDALSAW",
+      "yahoo_ticker": "JINDALSAW.NS",
+      "name": "Jindal Saw Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 295.6,
+      "open": 295.2,
+      "high": 298.0,
+      "low": 269.4,
+      "close": 270.4,
+      "pct_change": -8.525,
+      "volume": 3187225,
+      "turnover_crore": 87.67
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "RKFORGE",
+      "yahoo_ticker": "RKFORGE.NS",
+      "name": "Ramkrishna Forgings Ltd.",
+      "industry": "Automobile and Auto Components",
+      "prev_close": 685.0,
+      "open": 680.0,
+      "high": 681.7,
+      "low": 628.1,
+      "close": 635.75,
+      "pct_change": -7.1898,
+      "volume": 1010214,
+      "turnover_crore": 65.33
+    }
+  ],
+  "skipped": [
+    {
+      "symbol": "FRACTAL",
+      "group": "gainer",
+      "pct_change": 10.1549,
+      "history_years": 0.68,
+      "would_have_been": "Top Gainer #3",
+      "reason": "only 0.7 years of price history (minimum 1)"
+    }
+  ],
+  "fetched_at_utc": "2026-10-21T13:30:45+00:00",
+  "fetched_at_ist": "21 Oct 2026, 07:00 PM IST"
+}
