@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-21T13:30:54+00:00",
+  "generated_on": "2026-10-21T18:09:45+00:00",
   "session_date": "2026-10-21",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -116,7 +116,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.099986,
-      "total_return": 0.61325,
+      "total_return": 0.613249,
       "annualised_volatility": 0.282608,
       "max_drawdown": -0.437912,
       "beta": 0.3997
@@ -202,7 +202,7 @@
         "years": 5.02,
         "session_price_from": "Yahoo"
       },
-      "annualised_return": 0.226104,
+      "annualised_return": 0.226105,
       "total_return": 1.781464,
       "annualised_volatility": 0.399308,
       "max_drawdown": -0.557227,
@@ -296,14 +296,14 @@
     "LTTS.NS": {
       "INDIACEM.NS": 0.03194,
       "LTTS.NS": 0.108595,
-      "IPCALAB.NS": 0.015556,
+      "IPCALAB.NS": 0.015555,
       "HSCL.NS": 0.023731,
       "JINDALSAW.NS": 0.034429,
       "RKFORGE.NS": 0.029999
     },
     "IPCALAB.NS": {
       "INDIACEM.NS": 0.014574,
-      "LTTS.NS": 0.015556,
+      "LTTS.NS": 0.015555,
       "IPCALAB.NS": 0.079867,
       "HSCL.NS": 0.016239,
       "JINDALSAW.NS": 0.018345,
@@ -965,7 +965,7 @@
         4090.95,
         4109.04,
         4179.04,
-        4282.82,
+        4282.83,
         4478.65,
         4545.77,
         4475.86,
@@ -979,7 +979,7 @@
         4303.39,
         4414.36,
         4639.83,
-        4772.36,
+        4772.35,
         5085.81,
         5028.89,
         5077.59,
@@ -1669,7 +1669,7 @@
         51.43,
         49.17,
         47.57,
-        48.89,
+        48.88,
         49.66,
         45.87,
         47.87,
