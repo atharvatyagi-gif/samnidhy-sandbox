@@ -1,1 +1,1 @@
-{"generated_utc":"2026-10-21T09:36:20Z","as_of":"2026-10-21","min_abs_dr_pct":3.0,"shocks":[{"focal":"HINDPETRO","cp":"FACT","rel":"supplies","w":0.594,"conf":0.8,"dr":-4.15,"edge":"e431","cp_ret":-0.0263,"focal_ret":-0.0176}]}
+{"generated_utc":"2026-10-21T14:03:57Z","as_of":"2026-10-21","min_abs_dr_pct":3.0,"shocks":[{"focal":"HINDPETRO","cp":"FACT","rel":"supplies","w":0.594,"conf":0.8,"dr":-5.23,"edge":"e461","cp_ret":-0.0296,"focal_ret":-0.0034}]}
