@@ -220,8 +220,21 @@
     "out_cr": 15981.58,
     "net_cr": 1022.32
    }
+  },
+  {
+   "date": "2026-10-22",
+   "dii": {
+    "in_cr": 16242.83,
+    "out_cr": 13351.51,
+    "net_cr": 2891.32
+   },
+   "fii": {
+    "in_cr": 13627.54,
+    "out_cr": 17086.24,
+    "net_cr": -3458.7
+   }
   }
  ],
  "source": "NSE FII/DII report (provisional, cash market, Rs crore)",
- "updated_ist": "22 Oct 2026, 02:25 PM IST"
+ "updated_ist": "22 Oct 2026, 07:03 PM IST"
 }

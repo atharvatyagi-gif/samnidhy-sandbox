@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-10-22",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_22102026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 495,
+  "eligible_count": 435,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "IGIL",
+      "yahoo_ticker": "IGIL.NS",
+      "name": "International Gemological Institute Ltd.",
+      "industry": "Services",
+      "prev_close": 321.1,
+      "open": 339.0,
+      "high": 353.2,
+      "low": 333.7,
+      "close": 353.2,
+      "pct_change": 9.9969,
+      "volume": 7582399,
+      "turnover_crore": 265.89
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "CRISIL",
+      "yahoo_ticker": "CRISIL.NS",
+      "name": "CRISIL Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 4586.4,
+      "open": 4563.0,
+      "high": 4805.0,
+      "low": 4485.0,
+      "close": 4777.2,
+      "pct_change": 4.1601,
+      "volume": 161447,
+      "turnover_crore": 75.87
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "KAYNES",
+      "yahoo_ticker": "KAYNES.NS",
+      "name": "Kaynes Technology India Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 3165.1,
+      "open": 3155.0,
+      "high": 3307.7,
+      "low": 3130.0,
+      "close": 3294.0,
+      "pct_change": 4.0725,
+      "volume": 1044388,
+      "turnover_crore": 340.14
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "KEI",
+      "yahoo_ticker": "KEI.NS",
+      "name": "KEI Industries Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 4230.4,
+      "open": 4099.8,
+      "high": 4099.8,
+      "low": 3744.8,
+      "close": 3873.0,
+      "pct_change": -8.4484,
+      "volume": 3434360,
+      "turnover_crore": 1334.92
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "JINDALSAW",
+      "yahoo_ticker": "JINDALSAW.NS",
+      "name": "Jindal Saw Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 270.4,
+      "open": 266.4,
+      "high": 266.4,
+      "low": 247.25,
+      "close": 249.6,
+      "pct_change": -7.6923,
+      "volume": 3192074,
+      "turnover_crore": 81.1
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "CUPID",
+      "yahoo_ticker": "CUPID.NS",
+      "name": "Cupid Ltd.",
+      "industry": "Fast Moving Consumer Goods",
+      "prev_close": 340.75,
+      "open": 338.7,
+      "high": 341.4,
+      "low": 316.0,
+      "close": 320.05,
+      "pct_change": -6.0748,
+      "volume": 21315264,
+      "turnover_crore": 696.39
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-10-22T13:30:56+00:00",
+  "fetched_at_ist": "22 Oct 2026, 07:00 PM IST"
+}
