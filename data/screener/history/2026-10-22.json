@@ -671,7 +671,7 @@
    0.72409,
    0.72422,
    0.72707,
-   0.72783,
+   0.72782,
    0.72877,
    0.72884,
    0.72913,
@@ -964,7 +964,7 @@
   ],
   "vol_1y": [
    0.13372,
-   0.16083,
+   0.16082,
    0.17179,
    0.18524,
    0.19295,
@@ -1443,9 +1443,9 @@
    1.11079
   ]
  },
- "generated_utc": "2026-10-22T13:33:39+00:00",
- "generated_ist": "22 Oct 2026, 07:03 PM IST",
- "screened_ist": "22 Oct 2026, 07:03 PM IST",
+ "generated_utc": "2026-10-22T18:08:49+00:00",
+ "generated_ist": "22 Oct 2026, 11:38 PM IST",
+ "screened_ist": "22 Oct 2026, 11:38 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1475,11 +1475,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 280
+   "count": 285
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 158
+   "count": 160
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1490,11 +1490,11 @@
   "0": 0,
   "1": 0,
   "2": 3,
-  "3": 19,
-  "4": 35,
+  "3": 21,
+  "4": 36,
   "5": 65,
-  "6": 70,
-  "7": 45,
+  "6": 71,
+  "7": 46,
   "8": 28,
   "9": 15
  },
@@ -1513,11 +1513,6 @@
    "INFY"
   ],
   "download failed (YFRateLimitError)": [
-   "SWIGGY",
-   "SYNGENE",
-   "SYRMA",
-   "TARIL",
-   "TATACHEM",
    "TATACOMM",
    "TATACONSUM",
    "TATAELXSI",
@@ -1619,7 +1614,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 17,
-   "of": 158
+   "of": 160
   },
   {
    "symbol": "SIGNATURE",
@@ -1672,7 +1667,7 @@
    "magic_rank": 2,
    "rank_roc": 9,
    "rank_ey": 10,
-   "of": 158
+   "of": 160
   },
   {
    "symbol": "BLS",
@@ -1725,7 +1720,7 @@
    "magic_rank": 3,
    "rank_roc": 11,
    "rank_ey": 14,
-   "of": 158
+   "of": 160
   },
   {
    "symbol": "NBCC",
@@ -1763,8 +1758,8 @@
    "held_institutions": 0.14418,
    "held_insiders": 0.61754,
    "analysts": 1,
-   "consensus": "strongly_positive",
-   "consensus_score": 1.0,
+   "consensus": null,
+   "consensus_score": null,
    "estimate_mean": 133.0,
    "estimate_high": 133.0,
    "estimate_low": 133.0,
@@ -1778,7 +1773,7 @@
    "magic_rank": 4,
    "rank_roc": 10,
    "rank_ey": 20,
-   "of": 158
+   "of": 160
   },
   {
    "symbol": "CASTROLIND",
@@ -1831,7 +1826,7 @@
    "magic_rank": 5,
    "rank_roc": 5,
    "rank_ey": 33,
-   "of": 158
+   "of": 160
   },
   {
    "symbol": "ENGINERSIN",
@@ -1884,7 +1879,7 @@
    "magic_rank": 6,
    "rank_roc": 6,
    "rank_ey": 32,
-   "of": 158
+   "of": 160
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1937,7 +1932,7 @@
    "magic_rank": 7,
    "rank_roc": 18,
    "rank_ey": 22,
-   "of": 158
+   "of": 160
   },
   {
    "symbol": "HINDZINC",
@@ -1990,7 +1985,7 @@
    "magic_rank": 8,
    "rank_roc": 29,
    "rank_ey": 19,
-   "of": 158
+   "of": 160
   },
   {
    "symbol": "NATIONALUM",
@@ -2029,7 +2024,7 @@
    "held_insiders": 0.51278,
    "analysts": 14,
    "consensus": "positive",
-   "consensus_score": 2.46154,
+   "consensus_score": 2.5,
    "estimate_mean": 403.57144,
    "estimate_high": 480.0,
    "estimate_low": 320.0,
@@ -2043,7 +2038,7 @@
    "magic_rank": 9,
    "rank_roc": 41,
    "rank_ey": 7,
-   "of": 158
+   "of": 160
   },
   {
    "symbol": "FORCEMOT",
@@ -2096,7 +2091,7 @@
    "magic_rank": 10,
    "rank_roc": 27,
    "rank_ey": 27,
-   "of": 158
+   "of": 160
   }
  ]
 }
