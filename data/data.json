@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-22T18:06:11+00:00",
+  "generated_on": "2026-10-23T02:01:25+00:00",
   "session_date": "2026-10-22",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -46,7 +46,7 @@
         "first_date": "2024-12-30",
         "trading_days": 447,
         "years": 1.81,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": -0.208133,
       "total_return": -0.344476,
@@ -75,7 +75,7 @@
         "first_date": "2021-10-18",
         "trading_days": 1238,
         "years": 5.01,
-        "session_price_from": "Yahoo"
+        "session_price_from": "NSE"
       },
       "annualised_return": -0.105682,
       "total_return": -0.183014,
@@ -156,7 +156,7 @@
         "turnover_crore": 81.1
       },
       "latest_close": 249.6,
-      "trailing_pe": 29.057043,
+      "trailing_pe": 31.47541,
       "market_cap": 159150227456,
       "history": {
         "first_date": "2021-10-18",
@@ -185,7 +185,7 @@
         "turnover_crore": 696.39
       },
       "latest_close": 320.05,
-      "trailing_pe": 320.05,
+      "trailing_pe": 340.4787,
       "market_cap": 430358659072,
       "history": {
         "first_date": "2021-10-18",
@@ -315,7 +315,7 @@
       "CRISIL.NS": 0.034594,
       "KAYNES.NS": 0.082476,
       "KEI.NS": 0.052842,
-      "JINDALSAW.NS": 0.231577,
+      "JINDALSAW.NS": 0.231576,
       "CUPID.NS": 0.01659
     },
     "CUPID.NS": {
@@ -911,7 +911,7 @@
         3003.88,
         2979.57,
         2774.17,
-        2816.77,
+        2816.78,
         2778.5,
         2837.61,
         2839.85,
@@ -941,7 +941,7 @@
         3366.89,
         3445.25,
         3405.66,
-        3552.44,
+        3552.45,
         3619.86,
         3771.54,
         3727.83,
@@ -964,9 +964,9 @@
         3732.16,
         4033.45,
         3760.72,
-        4038.55,
+        4038.54,
         3942.72,
-        4072.45,
+        4072.44,
         4151.62,
         4069.28,
         4083.36,
@@ -979,7 +979,7 @@
         3680.48,
         4026.04,
         4380.66,
-        4444.06,
+        4444.05,
         4729.5,
         4725.98,
         4751.29,
@@ -1020,7 +1020,7 @@
         5358.28,
         5064.91,
         5351.01,
-        5234.11,
+        5234.12,
         5181.67,
         5676.88,
         5613.21,
@@ -1067,7 +1067,7 @@
         4540.51,
         4614.59,
         4644.24,
-        4888.66,
+        4888.65,
         4871.66,
         4668.26,
         4585.04,
