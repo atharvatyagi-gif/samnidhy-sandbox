@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-10-23",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_23102026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 494,
+  "eligible_count": 462,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "IGIL",
+      "yahoo_ticker": "IGIL.NS",
+      "name": "International Gemological Institute Ltd.",
+      "industry": "Services",
+      "prev_close": 353.2,
+      "open": 357.0,
+      "high": 388.5,
+      "low": 350.2,
+      "close": 381.15,
+      "pct_change": 7.9134,
+      "volume": 20608368,
+      "turnover_crore": 759.08
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "CYIENT",
+      "yahoo_ticker": "CYIENT.NS",
+      "name": "Cyient Ltd.",
+      "industry": "Information Technology",
+      "prev_close": 1143.7,
+      "open": 1200.7,
+      "high": 1268.0,
+      "low": 1200.1,
+      "close": 1233.0,
+      "pct_change": 7.808,
+      "volume": 19888724,
+      "turnover_crore": 2455.95
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "ETERNAL",
+      "yahoo_ticker": "ETERNAL.NS",
+      "name": "Eternal Ltd.",
+      "industry": "Consumer Services",
+      "prev_close": 304.45,
+      "open": 306.1,
+      "high": 318.0,
+      "low": 301.75,
+      "close": 317.4,
+      "pct_change": 4.2536,
+      "volume": 55091712,
+      "turnover_crore": 1714.79
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "SWIGGY",
+      "yahoo_ticker": "SWIGGY.NS",
+      "name": "Swiggy Ltd.",
+      "industry": "Consumer Services",
+      "prev_close": 211.4,
+      "open": 204.95,
+      "high": 206.0,
+      "low": 174.95,
+      "close": 176.0,
+      "pct_change": -16.7455,
+      "volume": 137428526,
+      "turnover_crore": 2536.47
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "J&KBANK",
+      "yahoo_ticker": "J&KBANK.NS",
+      "name": "Jammu & Kashmir Bank Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 135.08,
+      "open": 135.08,
+      "high": 135.87,
+      "low": 111.6,
+      "close": 113.09,
+      "pct_change": -16.2792,
+      "volume": 23192355,
+      "turnover_crore": 271.66
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "BBOX",
+      "yahoo_ticker": "BBOX.NS",
+      "name": "Black Box Ltd.",
+      "industry": "Information Technology",
+      "prev_close": 885.0,
+      "open": 877.95,
+      "high": 880.45,
+      "low": 801.9,
+      "close": 805.1,
+      "pct_change": -9.0282,
+      "volume": 1620366,
+      "turnover_crore": 133.31
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-10-23T13:30:58+00:00",
+  "fetched_at_ist": "23 Oct 2026, 07:00 PM IST"
+}
