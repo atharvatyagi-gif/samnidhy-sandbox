@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-24T13:31:24+00:00",
+  "generated_on": "2026-10-24T16:47:33+00:00",
   "session_date": "2026-10-23",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
