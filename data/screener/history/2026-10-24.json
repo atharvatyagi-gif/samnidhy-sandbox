@@ -1428,7 +1428,7 @@
    0.53225,
    0.5328,
    0.53579,
-   0.54328,
+   0.54327,
    0.54663,
    0.5473,
    0.54758,
@@ -1446,9 +1446,9 @@
    1.11129
   ]
  },
- "generated_utc": "2026-10-24T02:03:53+00:00",
- "generated_ist": "24 Oct 2026, 07:33 AM IST",
- "screened_ist": "24 Oct 2026, 07:33 AM IST",
+ "generated_utc": "2026-10-24T03:33:38+00:00",
+ "generated_ist": "24 Oct 2026, 09:03 AM IST",
+ "screened_ist": "24 Oct 2026, 09:03 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1478,11 +1478,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 284
+   "count": 274
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 160
+   "count": 157
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1493,11 +1493,11 @@
   "0": 0,
   "1": 0,
   "2": 3,
-  "3": 20,
-  "4": 36,
-  "5": 65,
-  "6": 71,
-  "7": 46,
+  "3": 18,
+  "4": 35,
+  "5": 61,
+  "6": 70,
+  "7": 44,
   "8": 28,
   "9": 15
  },
@@ -1519,6 +1519,16 @@
    "LGEINDIA"
   ],
   "download failed (YFRateLimitError)": [
+   "STLTECH",
+   "SUMICHEM",
+   "SUNPHARMA",
+   "SUNTV",
+   "SUPREMEIND",
+   "SWANCORP",
+   "SWIGGY",
+   "SYNGENE",
+   "SYRMA",
+   "TARIL",
    "TATACHEM",
    "TATACOMM",
    "TATACONSUM",
@@ -1621,7 +1631,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 17,
-   "of": 160
+   "of": 157
   },
   {
    "symbol": "SIGNATURE",
@@ -1674,7 +1684,7 @@
    "magic_rank": 2,
    "rank_roc": 9,
    "rank_ey": 10,
-   "of": 160
+   "of": 157
   },
   {
    "symbol": "BLS",
@@ -1727,7 +1737,7 @@
    "magic_rank": 3,
    "rank_roc": 11,
    "rank_ey": 13,
-   "of": 160
+   "of": 157
   },
   {
    "symbol": "NBCC",
@@ -1780,7 +1790,7 @@
    "magic_rank": 4,
    "rank_roc": 10,
    "rank_ey": 19,
-   "of": 160
+   "of": 157
   },
   {
    "symbol": "ENGINERSIN",
@@ -1833,7 +1843,7 @@
    "magic_rank": 5,
    "rank_roc": 6,
    "rank_ey": 32,
-   "of": 160
+   "of": 157
   },
   {
    "symbol": "CASTROLIND",
@@ -1886,7 +1896,7 @@
    "magic_rank": 6,
    "rank_roc": 5,
    "rank_ey": 34,
-   "of": 160
+   "of": 157
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1939,7 +1949,7 @@
    "magic_rank": 7,
    "rank_roc": 18,
    "rank_ey": 22,
-   "of": 160
+   "of": 157
   },
   {
    "symbol": "NATIONALUM",
@@ -1992,7 +2002,7 @@
    "magic_rank": 8,
    "rank_roc": 41,
    "rank_ey": 7,
-   "of": 160
+   "of": 157
   },
   {
    "symbol": "HINDZINC",
@@ -2045,7 +2055,7 @@
    "magic_rank": 9,
    "rank_roc": 29,
    "rank_ey": 20,
-   "of": 160
+   "of": 157
   },
   {
    "symbol": "FORCEMOT",
@@ -2098,7 +2108,7 @@
    "magic_rank": 10,
    "rank_roc": 27,
    "rank_ey": 27,
-   "of": 160
+   "of": 157
   }
  ]
 }
