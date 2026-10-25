@@ -1,6 +1,6 @@
 {
  "as_of": "2026-10-23",
- "created_utc": "2026-10-25T04:20:40.671615+00:00",
+ "created_utc": "2026-10-25T05:08:26.563650+00:00",
  "stocks_forecast": 1397,
  "horizons": [
   1,
@@ -57,7 +57,7 @@
      "95": 0.9092
     },
     "p_up_n": 7117,
-    "ece": 0.1838
+    "ece": 0.1866
    },
    "5": {
     "n": 4712,
@@ -67,7 +67,7 @@
      "95": 0.9174
     },
     "p_up_n": 4712,
-    "ece": 0.2024
+    "ece": 0.1962
    },
    "10": {
     "n": 477,
@@ -81,7 +81,7 @@
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.184 is above 0.05 (n = 7117)",
+  "live calibration error 0.187 is above 0.05 (n = 7117)",
   "live 50% band covered 41.7%, more than 4% from nominal (n = 7117)",
   "live 80% band covered 72.7%, more than 4% from nominal (n = 7117)",
   "live 95% band covered 90.9%, more than 4% from nominal (n = 7117)"
@@ -91,7 +91,7 @@
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   30.7,
+   63.3,
    931289
   ],
   [
@@ -101,37 +101,37 @@
   ],
   [
    "fit + predict H=1",
-   12.5,
+   20.1,
    1397
   ],
   [
    "fit + predict H=5",
-   12.7,
+   19.8,
    1397
   ],
   [
    "fit + predict H=10",
-   12.9,
+   19.9,
    1397
   ],
   [
    "fit + predict H=20",
-   12.8,
+   20.3,
    1397
   ],
   [
    "fit + predict H=60",
-   12.8,
+   19.8,
    1397
   ],
   [
    "ledger forecast batch (already in the ledger, not rewritten)",
-   0.1,
+   0.2,
    1397
   ],
   [
    "resolve matured forecasts",
-   0.1,
+   0.2,
    0
   ],
   [
@@ -140,5 +140,5 @@
    1397
   ]
  ],
- "total_s": 95
+ "total_s": 164
 }
