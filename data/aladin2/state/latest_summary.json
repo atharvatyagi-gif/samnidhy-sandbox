@@ -1,7 +1,7 @@
 {
  "as_of": "2026-10-26",
- "created_utc": "2026-10-26T08:43:52.016271+00:00",
- "stocks_forecast": 1333,
+ "created_utc": "2026-10-26T10:29:16.243645+00:00",
+ "stocks_forecast": 1334,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1333
+  "Suspended": 1334
  },
  "active_strategies": [
   "disc_dc449b4b",
@@ -57,7 +57,7 @@
      "95": 0.9157
     },
     "p_up_n": 8453,
-    "ece": 0.1894
+    "ece": 0.1913
    },
    "5": {
     "n": 6048,
@@ -67,7 +67,7 @@
      "95": 0.8601
     },
     "p_up_n": 6048,
-    "ece": 0.2482
+    "ece": 0.2485
    },
    "10": {
     "n": 1833,
@@ -81,63 +81,63 @@
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.189 is above 0.05 (n = 8453)",
+  "live calibration error 0.191 is above 0.05 (n = 8453)",
   "live 50% band covered 43.4%, more than 4% from nominal (n = 8453)",
   "live 80% band covered 74.4%, more than 4% from nominal (n = 8453)"
  ],
- "ledger_status": "written",
+ "ledger_status": "already in the ledger, not rewritten",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   55.2,
-   931098
+   45.0,
+   931094
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1333
+   1334
   ],
   [
    "fit + predict H=1",
-   20.2,
-   1333
+   16.1,
+   1334
   ],
   [
    "fit + predict H=5",
-   20.2,
-   1333
+   16.4,
+   1334
   ],
   [
    "fit + predict H=10",
-   20.3,
-   1333
+   16.3,
+   1334
   ],
   [
    "fit + predict H=20",
-   20.4,
-   1333
+   16.4,
+   1334
   ],
   [
    "fit + predict H=60",
-   20.4,
-   1333
+   16.4,
+   1334
   ],
   [
-   "ledger forecast batch (written)",
-   0.3,
-   1333
+   "ledger forecast batch (already in the ledger, not rewritten)",
+   0.2,
+   1334
   ],
   [
    "resolve matured forecasts",
-   0.2,
+   0.1,
    0
   ],
   [
    "states, signals, kill switches",
-   0.3,
-   1333
+   0.2,
+   1334
   ]
  ],
- "total_s": 158
+ "total_s": 127
 }
