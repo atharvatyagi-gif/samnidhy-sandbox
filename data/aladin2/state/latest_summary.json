@@ -1,6 +1,6 @@
 {
  "as_of": "2026-10-26",
- "created_utc": "2026-10-26T10:29:16.243645+00:00",
+ "created_utc": "2026-10-26T14:42:17.956754+00:00",
  "stocks_forecast": 1334,
  "horizons": [
   1,
@@ -90,8 +90,8 @@
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   45.0,
-   931094
+   38.3,
+   931154
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
@@ -100,27 +100,27 @@
   ],
   [
    "fit + predict H=1",
-   16.1,
+   13.2,
    1334
   ],
   [
    "fit + predict H=5",
-   16.4,
+   13.8,
    1334
   ],
   [
    "fit + predict H=10",
-   16.3,
+   13.7,
    1334
   ],
   [
    "fit + predict H=20",
-   16.4,
+   13.4,
    1334
   ],
   [
    "fit + predict H=60",
-   16.4,
+   13.2,
    1334
   ],
   [
@@ -135,9 +135,9 @@
   ],
   [
    "states, signals, kill switches",
-   0.2,
+   0.1,
    1334
   ]
  ],
- "total_s": 127
+ "total_s": 106
 }
