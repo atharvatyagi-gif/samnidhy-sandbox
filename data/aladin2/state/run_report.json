@@ -3,11 +3,11 @@
  "weekday": "Monday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 196,
+ "total_s": 194,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 3.5,
+   "seconds": 3.4,
    "note": "latest price bar 2026-10-23; delivery / F&O / macro refreshed"
   },
   {
@@ -22,7 +22,7 @@
   },
   {
    "step": "drift",
-   "seconds": 5.8,
+   "seconds": 5.5,
    "note": "28 strategies checked, 0 alarms"
   },
   {
@@ -32,17 +32,17 @@
   },
   {
    "step": "forecast",
-   "seconds": 163.3,
+   "seconds": 162.6,
    "note": "as of 2026-10-23, 1396 stocks, states {'Suspended': 1396}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 18.2,
+   "seconds": 17.4,
    "note": "as of 2026-10-23: bull 13, bear 26, hold 1247; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 3.0,
+   "seconds": 2.9,
    "note": "live paper account: 3 book(s); equity 972,476 (-2.75%), 6 closed trades, 5 open"
   },
   {
