@@ -1428,7 +1428,7 @@
    0.53225,
    0.5328,
    0.53562,
-   0.54328,
+   0.54327,
    0.54663,
    0.54719,
    0.54758,
@@ -1446,9 +1446,9 @@
    1.11129
   ]
  },
- "generated_utc": "2026-10-25T17:11:17+00:00",
- "generated_ist": "25 Oct 2026, 10:41 PM IST",
- "screened_ist": "25 Oct 2026, 10:41 PM IST",
+ "generated_utc": "2026-10-26T02:03:33+00:00",
+ "generated_ist": "26 Oct 2026, 07:33 AM IST",
+ "screened_ist": "26 Oct 2026, 07:33 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1478,11 +1478,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 278
+   "count": 277
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 160
+   "count": 159
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1496,7 +1496,7 @@
   "3": 18,
   "4": 36,
   "5": 61,
-  "6": 72,
+  "6": 71,
   "7": 45,
   "8": 28,
   "9": 15
@@ -1513,6 +1513,7 @@
    "NESTLEIND"
   ],
   "download failed (YFRateLimitError)": [
+   "SOLARINDS",
    "SONACOMS",
    "SRF",
    "STLTECH",
@@ -1586,7 +1587,7 @@
    "price": 1572.8,
    "avg_turnover_cr": 11.5,
    "roc": 30.1703,
-   "earnings_yield": 0.1023,
+   "earnings_yield": 0.0999,
    "fscore": 6,
    "fscore_known": 9,
    "checks": {
@@ -1602,10 +1603,10 @@
    },
    "ebit_cr": 650.9,
    "capital_cr": 21.6,
-   "ev_cr": 6361.4,
-   "market_cap_cr": 9458.5,
-   "pe": 19.217987,
-   "pb": 4.2610493,
+   "ev_cr": 6518.9,
+   "market_cap_cr": 9616.1,
+   "pe": 19.538124,
+   "pb": 4.3320303,
    "roe": 0.23146,
    "debt_to_equity": 0.974,
    "dividend_yield": 1.91,
@@ -1627,7 +1628,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 18,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "SIGNATURE",
@@ -1639,7 +1640,7 @@
    "price": 710.75,
    "avg_turnover_cr": 16.2,
    "roc": 2.0553,
-   "earnings_yield": 0.1322,
+   "earnings_yield": 0.1299,
    "fscore": 6,
    "fscore_known": 9,
    "checks": {
@@ -1655,10 +1656,10 @@
    },
    "ebit_cr": 1365.1,
    "capital_cr": 664.2,
-   "ev_cr": 10326.4,
-   "market_cap_cr": 9999.3,
-   "pe": 9.578841,
-   "pb": 5.3998513,
+   "ev_cr": 10508.6,
+   "market_cap_cr": 10181.4,
+   "pe": 9.75337,
+   "pb": 5.4982376,
    "roe": null,
    "debt_to_equity": 161.04,
    "dividend_yield": 0.0,
@@ -1680,7 +1681,7 @@
    "magic_rank": 2,
    "rank_roc": 10,
    "rank_ey": 11,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "BLS",
@@ -1692,7 +1693,7 @@
    "price": 208.22,
    "avg_turnover_cr": 19.9,
    "roc": 1.7924,
-   "earnings_yield": 0.1096,
+   "earnings_yield": 0.1099,
    "fscore": 8,
    "fscore_known": 9,
    "checks": {
@@ -1708,10 +1709,10 @@
    },
    "ebit_cr": 820.4,
    "capital_cr": 457.7,
-   "ev_cr": 7485.0,
-   "market_cap_cr": 8568.2,
-   "pe": 12.169491,
-   "pb": 3.4786823,
+   "ev_cr": 7461.6,
+   "market_cap_cr": 8544.8,
+   "pe": 12.136177,
+   "pb": 3.4691594,
    "roe": null,
    "debt_to_equity": 15.468,
    "dividend_yield": 1.2,
@@ -1733,7 +1734,7 @@
    "magic_rank": 3,
    "rank_roc": 12,
    "rank_ey": 14,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "NBCC",
@@ -1786,7 +1787,7 @@
    "magic_rank": 4,
    "rank_roc": 11,
    "rank_ey": 20,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "ENGINERSIN",
@@ -1798,7 +1799,7 @@
    "price": 242.5,
    "avg_turnover_cr": 73.0,
    "roc": 2.6912,
-   "earnings_yield": 0.0735,
+   "earnings_yield": 0.0737,
    "fscore": 7,
    "fscore_known": 9,
    "checks": {
@@ -1814,10 +1815,10 @@
    },
    "ebit_cr": 896.6,
    "capital_cr": 333.2,
-   "ev_cr": 12191.8,
-   "market_cap_cr": 13629.5,
-   "pe": 17.383512,
-   "pb": 4.3439317,
+   "ev_cr": 12163.7,
+   "market_cap_cr": 13601.4,
+   "pe": 17.34767,
+   "pb": 4.3349752,
    "roe": null,
    "debt_to_equity": 0.534,
    "dividend_yield": 2.06,
@@ -1839,7 +1840,7 @@
    "magic_rank": 5,
    "rank_roc": 6,
    "rank_ey": 34,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "CASTROLIND",
@@ -1851,7 +1852,7 @@
    "price": 194.64,
    "avg_turnover_cr": 40.1,
    "roc": 3.1909,
-   "earnings_yield": 0.071,
+   "earnings_yield": 0.0711,
    "fscore": 8,
    "fscore_known": 9,
    "checks": {
@@ -1867,10 +1868,10 @@
    },
    "ebit_cr": 1291.6,
    "capital_cr": 404.8,
-   "ev_cr": 18192.0,
-   "market_cap_cr": 19252.3,
-   "pe": 18.139795,
-   "pb": 10.131168,
+   "ev_cr": 18158.3,
+   "market_cap_cr": 19218.6,
+   "pe": 18.108109,
+   "pb": 10.113471,
    "roe": 0.56996,
    "debt_to_equity": 2.784,
    "dividend_yield": 6.42,
@@ -1892,7 +1893,7 @@
    "magic_rank": 6,
    "rank_roc": 5,
    "rank_ey": 36,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1945,7 +1946,7 @@
    "magic_rank": 7,
    "rank_roc": 19,
    "rank_ey": 24,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "NATIONALUM",
@@ -1998,7 +1999,7 @@
    "magic_rank": 8,
    "rank_roc": 42,
    "rank_ey": 8,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "HINDZINC",
@@ -2051,7 +2052,7 @@
    "magic_rank": 9,
    "rank_roc": 30,
    "rank_ey": 21,
-   "of": 160
+   "of": 159
   },
   {
    "symbol": "FORCEMOT",
@@ -2104,7 +2105,7 @@
    "magic_rank": 10,
    "rank_roc": 28,
    "rank_ey": 29,
-   "of": 160
+   "of": 159
   }
  ]
 }
