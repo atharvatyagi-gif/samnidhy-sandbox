@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-10-26",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_26102026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 494,
+  "eligible_count": 438,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "ATHERENERG",
+      "yahoo_ticker": "ATHERENERG.NS",
+      "name": "Ather Energy Ltd.",
+      "industry": "Automobile and Auto Components",
+      "prev_close": 1380.0,
+      "open": 1365.6,
+      "high": 1623.0,
+      "low": 1345.7,
+      "close": 1575.0,
+      "pct_change": 14.1304,
+      "volume": 9130811,
+      "turnover_crore": 1372.26
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "MRPL",
+      "yahoo_ticker": "MRPL.NS",
+      "name": "Mangalore Refinery & Petrochemicals Ltd.",
+      "industry": "Oil Gas & Consumable Fuels",
+      "prev_close": 162.25,
+      "open": 161.0,
+      "high": 185.0,
+      "low": 159.0,
+      "close": 182.61,
+      "pct_change": 12.5485,
+      "volume": 113992434,
+      "turnover_crore": 2041.9
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "CARBORUNIV",
+      "yahoo_ticker": "CARBORUNIV.NS",
+      "name": "Carborundum Universal Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 1028.8,
+      "open": 1026.0,
+      "high": 1204.8,
+      "low": 1005.6,
+      "close": 1129.2,
+      "pct_change": 9.7589,
+      "volume": 646123,
+      "turnover_crore": 71.37
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "FIVESTAR",
+      "yahoo_ticker": "FIVESTAR.NS",
+      "name": "Five-Star Business Finance Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 448.4,
+      "open": 448.0,
+      "high": 448.0,
+      "low": 409.0,
+      "close": 414.85,
+      "pct_change": -7.4822,
+      "volume": 2096511,
+      "turnover_crore": 88.51
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "AUBANK",
+      "yahoo_ticker": "AUBANK.NS",
+      "name": "AU Small Finance Bank Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 932.9,
+      "open": 884.0,
+      "high": 899.3,
+      "low": 845.4,
+      "close": 869.0,
+      "pct_change": -6.8496,
+      "volume": 8689891,
+      "turnover_crore": 754.77
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "CUB",
+      "yahoo_ticker": "CUB.NS",
+      "name": "City Union Bank Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 222.02,
+      "open": 219.67,
+      "high": 219.8,
+      "low": 206.8,
+      "close": 207.98,
+      "pct_change": -6.3238,
+      "volume": 4317846,
+      "turnover_crore": 90.43
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-10-26T13:30:42+00:00",
+  "fetched_at_ist": "26 Oct 2026, 07:00 PM IST"
+}
