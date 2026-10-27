@@ -1,7 +1,7 @@
 {
- "as_of": "2026-10-27",
- "created_utc": "2026-10-27T14:47:40.113429+00:00",
- "stocks_forecast": 1392,
+ "as_of": "2026-10-26",
+ "created_utc": "2026-10-27T20:02:11.970655+00:00",
+ "stocks_forecast": 1,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1392
+  "Suspended": 1
  },
  "active_strategies": [
   "disc_e56ce610",
@@ -90,43 +90,43 @@
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   53.1,
-   928965
+   61.1,
+   927573
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1392
+   1
   ],
   [
    "fit + predict H=1",
-   20.2,
-   1392
+   19.4,
+   1
   ],
   [
    "fit + predict H=5",
-   20.6,
-   1392
+   20.1,
+   1
   ],
   [
    "fit + predict H=10",
-   20.7,
-   1392
+   19.7,
+   1
   ],
   [
    "fit + predict H=20",
-   20.8,
-   1392
+   19.7,
+   1
   ],
   [
    "fit + predict H=60",
-   20.8,
-   1392
+   19.9,
+   1
   ],
   [
    "ledger forecast batch (already in the ledger, not rewritten)",
-   0.3,
-   1392
+   0.1,
+   1
   ],
   [
    "resolve matured forecasts",
@@ -136,8 +136,8 @@
   [
    "states, signals, kill switches",
    0.2,
-   1392
+   1
   ]
  ],
- "total_s": 157
+ "total_s": 161
 }
