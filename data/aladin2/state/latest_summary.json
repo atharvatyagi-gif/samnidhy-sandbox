@@ -1,7 +1,7 @@
 {
- "as_of": "2026-10-27",
- "created_utc": "2026-10-28T04:33:34.077840+00:00",
- "stocks_forecast": 1392,
+ "as_of": "2026-10-28",
+ "created_utc": "2026-10-28T09:05:54.535132+00:00",
+ "stocks_forecast": 1393,
  "horizons": [
   1,
   5,
@@ -11,133 +11,133 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1392
+  "Suspended": 1393
  },
  "active_strategies": [
-  "disc_e56ce610",
-  "disc_59aad73b",
-  "disc_f2958149",
-  "disc_d2734315",
-  "disc_f1303479",
-  "disc_de46d8da",
-  "disc_fc511ddb",
   "disc_5dd07bc9",
-  "disc_9206642a",
   "disc_c2ca1f6e",
-  "disc_c57140f1",
-  "disc_280912c0",
-  "disc_f3a0927e",
-  "disc_116ec236",
-  "disc_cec157da",
-  "disc_1d36382a",
-  "disc_4d9bd6ed",
+  "disc_e56ce610",
   "disc_dc449b4b",
+  "disc_d2734315",
+  "disc_de46d8da",
+  "disc_f2958149",
+  "disc_f1303479",
+  "disc_9206642a",
+  "disc_cec157da",
+  "disc_f3a0927e",
+  "disc_c57140f1",
+  "disc_1d36382a",
+  "disc_116ec236",
+  "disc_4d9bd6ed",
+  "disc_280912c0",
+  "disc_59aad73b",
+  "disc_fc511ddb",
+  "disc_146a0748",
+  "disc_f166572b",
   "disc_7c0b5a66",
   "disc_b9d63934",
   "disc_85c76631",
-  "disc_146a0748",
-  "disc_f166572b",
-  "disc_bd1271ac",
   "disc_c50d4fbc",
-  "disc_c16d1e13",
-  "disc_297cd4fe"
+  "disc_bd1271ac",
+  "disc_297cd4fe",
+  "disc_c16d1e13"
  ],
  "probation_strategies": [
   "ma_cross_50_200"
  ],
  "bullish_signals": 0,
  "live_stats": {
-  "forecast_batches": 13,
+  "forecast_batches": 14,
   "outcomes": {
    "1": {
-    "n": 9786,
+    "n": 11181,
     "coverage": {
-     "50": 0.4222,
-     "80": 0.7387,
-     "95": 0.9147
+     "50": 0.4361,
+     "80": 0.7464,
+     "95": 0.9172
     },
-    "p_up_n": 9786,
-    "ece": 0.1689
+    "p_up_n": 11181,
+    "ece": 0.1496
    },
    "5": {
-    "n": 6161,
+    "n": 7500,
     "coverage": {
-     "50": 0.3894,
-     "80": 0.6281,
-     "95": 0.8601
+     "50": 0.4009,
+     "80": 0.6583,
+     "95": 0.8757
     },
-    "p_up_n": 6161,
-    "ece": 0.2498
+    "p_up_n": 7500,
+    "ece": 0.2413
    },
    "10": {
-    "n": 3186,
+    "n": 4526,
     "coverage": {
-     "50": 0.3785,
-     "80": 0.6949,
-     "95": 0.9121
+     "50": 0.3873,
+     "80": 0.703,
+     "95": 0.9176
     }
    }
   }
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.169 is above 0.05 (n = 9786)",
-  "live 50% band covered 42.2%, more than 4% from nominal (n = 9786)",
-  "live 80% band covered 73.9%, more than 4% from nominal (n = 9786)"
+  "live calibration error 0.150 is above 0.05 (n = 11181)",
+  "live 50% band covered 43.6%, more than 4% from nominal (n = 11181)",
+  "live 80% band covered 74.6%, more than 4% from nominal (n = 11181)"
  ],
- "ledger_status": "already in the ledger, not rewritten",
+ "ledger_status": "written",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   60.4,
-   928965
+   31.0,
+   929108
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1392
+   1393
   ],
   [
    "fit + predict H=1",
-   19.6,
-   1392
+   12.3,
+   1393
   ],
   [
    "fit + predict H=5",
-   19.9,
-   1392
+   12.5,
+   1393
   ],
   [
    "fit + predict H=10",
-   20.1,
-   1392
+   12.5,
+   1393
   ],
   [
    "fit + predict H=20",
-   19.8,
-   1392
+   12.5,
+   1393
   ],
   [
    "fit + predict H=60",
-   19.8,
-   1392
+   12.5,
+   1393
   ],
   [
-   "ledger forecast batch (already in the ledger, not rewritten)",
+   "ledger forecast batch (written)",
    0.2,
-   1392
+   1393
   ],
   [
    "resolve matured forecasts",
-   0.2,
+   0.1,
    0
   ],
   [
    "states, signals, kill switches",
    0.2,
-   1392
+   1393
   ]
  ],
- "total_s": 160
+ "total_s": 94
 }
