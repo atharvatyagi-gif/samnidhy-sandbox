@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-10-28",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_28102026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 495,
+  "eligible_count": 419,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "PPLPHARMA",
+      "yahoo_ticker": "PPLPHARMA.NS",
+      "name": "Piramal Pharma Ltd.",
+      "industry": "Healthcare",
+      "prev_close": 198.72,
+      "open": 214.1,
+      "high": 235.64,
+      "low": 209.04,
+      "close": 232.8,
+      "pct_change": 17.1498,
+      "volume": 118072228,
+      "turnover_crore": 2684.57
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "SYNGENE",
+      "yahoo_ticker": "SYNGENE.NS",
+      "name": "Syngene International Ltd.",
+      "industry": "Healthcare",
+      "prev_close": 366.2,
+      "open": 386.0,
+      "high": 418.85,
+      "low": 374.25,
+      "close": 410.85,
+      "pct_change": 12.1928,
+      "volume": 32965479,
+      "turnover_crore": 1326.75
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "PGEL",
+      "yahoo_ticker": "PGEL.NS",
+      "name": "PG Electroplast Ltd.",
+      "industry": "Consumer Durables",
+      "prev_close": 500.55,
+      "open": 510.0,
+      "high": 543.0,
+      "low": 506.4,
+      "close": 536.4,
+      "pct_change": 7.1621,
+      "volume": 12380304,
+      "turnover_crore": 655.59
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "CARTRADE",
+      "yahoo_ticker": "CARTRADE.NS",
+      "name": "Cartrade Tech Ltd.",
+      "industry": "Consumer Services",
+      "prev_close": 2821.2,
+      "open": 2812.5,
+      "high": 2912.3,
+      "low": 2301.1,
+      "close": 2464.5,
+      "pct_change": -12.6436,
+      "volume": 4862612,
+      "turnover_crore": 1200.33
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "MRPL",
+      "yahoo_ticker": "MRPL.NS",
+      "name": "Mangalore Refinery & Petrochemicals Ltd.",
+      "industry": "Oil Gas & Consumable Fuels",
+      "prev_close": 189.44,
+      "open": 186.75,
+      "high": 190.72,
+      "low": 171.53,
+      "close": 172.9,
+      "pct_change": -8.731,
+      "volume": 26322403,
+      "turnover_crore": 459.7
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "CONCORDBIO",
+      "yahoo_ticker": "CONCORDBIO.NS",
+      "name": "Concord Biotech Ltd.",
+      "industry": "Healthcare",
+      "prev_close": 1375.3,
+      "open": 1319.9,
+      "high": 1333.0,
+      "low": 1262.6,
+      "close": 1268.5,
+      "pct_change": -7.7656,
+      "volume": 380222,
+      "turnover_crore": 49.27
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-10-28T13:31:22+00:00",
+  "fetched_at_ist": "28 Oct 2026, 07:01 PM IST"
+}
