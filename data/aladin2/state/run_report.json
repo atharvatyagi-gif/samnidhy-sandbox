@@ -3,11 +3,11 @@
  "weekday": "Wednesday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 878,
+ "total_s": 621,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 3.5,
+   "seconds": 5.1,
    "note": "latest price bar 2026-10-28; delivery / F&O / macro refreshed"
   },
   {
@@ -22,28 +22,28 @@
   },
   {
    "step": "drift",
-   "seconds": 4.8,
+   "seconds": 2.9,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 716.8,
-   "note": "50 generations, 1200 new rules, 0 passed, 93146 tested in total"
+   "seconds": 499.5,
+   "note": "50 generations, 1200 new rules, 0 passed, 94346 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 132.1,
-   "note": "as of 2026-10-28, 1393 stocks, states {'Suspended': 1393}, ledger already in the ledger, not rewritten"
+   "seconds": 98.4,
+   "note": "as of 2026-10-28, 1392 stocks, states {'Suspended': 1392}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 17.7,
-   "note": "as of 2026-10-28: bull 13, bear 26, hold 1249; ledger already in the ledger; 0 outcome lines"
+   "seconds": 12.5,
+   "note": "as of 2026-10-28: bull 13, bear 26, hold 1247; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 2.8,
-   "note": "live paper account: 3 book(s); equity 987,223 (-1.28%), 11 closed trades, 3 open"
+   "seconds": 1.9,
+   "note": "live paper account: 3 book(s); equity 987,284 (-1.27%), 11 closed trades, 3 open"
   },
   {
    "step": "bot",
@@ -65,20 +65,20 @@
    "generations": 50,
    "new_rules": 1200,
    "passed": 0,
-   "total_tested": 93146
+   "total_tested": 94346
   },
   "forecast": {
    "as_of": "2026-10-28",
-   "stocks_forecast": 1393,
+   "stocks_forecast": 1392,
    "product_state_counts": {
-    "Suspended": 1393
+    "Suspended": 1392
    },
    "ledger_status": "already in the ledger, not rewritten"
   },
   "weekly": {
    "bull": 13,
    "bear": 26,
-   "hold": 1249
+   "hold": 1247
   }
  },
  "within_budget": true
