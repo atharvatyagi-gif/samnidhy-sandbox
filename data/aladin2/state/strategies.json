@@ -1,189 +1,51 @@
 {
- "as_of": "2026-10-29",
+ "as_of": "2026-10-30",
  "universe": "pit",
  "strategies": {
-  "disc_11f11be1": {
-   "state": "Retired",
-   "since": "2026-08-26 00:00:00",
-   "retired_on": "2026-08-26 00:00:00",
+  "disc_f3a0927e": {
+   "state": "Active",
+   "since": "2020-09-30 00:00:00",
+   "retired_on": "2018-12-12 00:00:00",
    "last_events": [
     {
-     "date": "2018-03-07 00:00:00",
+     "date": "2020-03-30 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_11f11be1",
+     "strategy": "disc_f3a0927e",
      "from": "Probation",
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 1462,
-      "mean_bps": 73.0,
-      "p": 0.00067,
-      "lb_bps": 30.6,
-      "years_positive": "7/8",
-      "live_trades": 902,
-      "live_mean_bps": 52.3,
-      "live_p": 0.0313
+      "n": 2105,
+      "mean_bps": 42.5,
+      "p": 0.00167,
+      "lb_bps": 13.4,
+      "years_positive": "5/8",
+      "live_trades": 1571,
+      "live_mean_bps": 42.1,
+      "live_p": 0.0067
      }
     },
     {
-     "date": "2026-05-27 00:00:00",
+     "date": "2020-07-03 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_11f11be1",
+     "strategy": "disc_f3a0927e",
      "from": "Active",
      "to": "Demoted",
      "why": "no longer passes the evaluation protocol",
      "evidence": {}
     },
     {
-     "date": "2026-08-26 00:00:00",
+     "date": "2020-09-30 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_11f11be1",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    }
-   ]
-  },
-  "disc_280912c0": {
-   "state": "Active",
-   "since": "2018-06-07 00:00:00",
-   "retired_on": "2017-06-01 00:00:00",
-   "last_events": [
-    {
-     "date": "2017-06-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_280912c0",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2018-03-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_280912c0",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 4418,
-      "mean_bps": 29.0,
-      "p": 0.00966,
-      "lb_bps": 2.2,
-      "years_positive": "6/9"
-     }
-    },
-    {
-     "date": "2018-06-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_280912c0",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 4230,
-      "mean_bps": 29.7,
-      "p": 0.00866,
-      "lb_bps": 5.8,
-      "years_positive": "6/9",
-      "live_trades": 2616,
-      "live_mean_bps": 31.8,
-      "live_p": 0.0093
-     }
-    }
-   ]
-  },
-  "disc_fc511ddb": {
-   "state": "Active",
-   "since": "2018-03-07 00:00:00",
-   "retired_on": "2017-09-01 00:00:00",
-   "last_events": [
-    {
-     "date": "2017-09-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_fc511ddb",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2017-12-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_fc511ddb",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 2302,
-      "mean_bps": 57.5,
-      "p": 0.00133,
-      "lb_bps": 24.2,
-      "years_positive": "8/9"
-     }
-    },
-    {
-     "date": "2018-03-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_fc511ddb",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 2071,
-      "mean_bps": 61.8,
-      "p": 0.00167,
-      "lb_bps": 23.8,
-      "years_positive": "8/9",
-      "live_trades": 1416,
-      "live_mean_bps": 51.1,
-      "live_p": 0.01
-     }
-    }
-   ]
-  },
-  "disc_5dd07bc9": {
-   "state": "Active",
-   "since": "2017-12-01 00:00:00",
-   "retired_on": "",
-   "last_events": [
-    {
-     "date": "2016-11-29 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_5dd07bc9",
+     "strategy": "disc_f3a0927e",
      "from": "Demoted",
      "to": "Active",
      "why": "recovered: passes the evaluation protocol again",
      "evidence": {
-      "n": 2660,
-      "mean_bps": 38.0,
-      "p": 0.004,
-      "lb_bps": 8.6,
-      "years_positive": "6/9"
-     }
-    },
-    {
-     "date": "2017-09-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_5dd07bc9",
-     "from": "Active",
-     "to": "Demoted",
-     "why": "no longer passes the evaluation protocol",
-     "evidence": {}
-    },
-    {
-     "date": "2017-12-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_5dd07bc9",
-     "from": "Demoted",
-     "to": "Active",
-     "why": "recovered: passes the evaluation protocol again",
-     "evidence": {
-      "n": 2300,
-      "mean_bps": 38.8,
-      "p": 0.00167,
-      "lb_bps": 13.6,
+      "n": 2089,
+      "mean_bps": 49.7,
+      "p": 0.00033,
+      "lb_bps": 19.3,
       "years_positive": "6/9"
      }
     }
@@ -202,14 +64,14 @@
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 2106,
-      "mean_bps": 42.6,
-      "p": 0.00267,
-      "lb_bps": 13.8,
+      "n": 2105,
+      "mean_bps": 42.5,
+      "p": 0.002,
+      "lb_bps": 13.2,
       "years_positive": "5/8",
-      "live_trades": 1526,
-      "live_mean_bps": 42.7,
-      "live_p": 0.0047
+      "live_trades": 1571,
+      "live_mean_bps": 42.1,
+      "live_p": 0.008
      }
     },
     {
@@ -229,12 +91,190 @@
      "to": "Active",
      "why": "recovered: passes the evaluation protocol again",
      "evidence": {
-      "n": 2092,
-      "mean_bps": 49.3,
-      "p": 0.00033,
-      "lb_bps": 21.9,
+      "n": 2089,
+      "mean_bps": 49.7,
+      "p": 0.00067,
+      "lb_bps": 21.6,
       "years_positive": "6/9"
      }
+    }
+   ]
+  },
+  "disc_4d9bd6ed": {
+   "state": "Active",
+   "since": "2020-09-30 00:00:00",
+   "retired_on": "2017-06-01 00:00:00",
+   "last_events": [
+    {
+     "date": "2019-03-15 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_4d9bd6ed",
+     "from": "Demoted",
+     "to": "Active",
+     "why": "recovered: passes the evaluation protocol again",
+     "evidence": {
+      "n": 1557,
+      "mean_bps": 52.2,
+      "p": 0.02033,
+      "lb_bps": 5.8,
+      "years_positive": "7/8"
+     }
+    },
+    {
+     "date": "2020-07-03 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_4d9bd6ed",
+     "from": "Active",
+     "to": "Demoted",
+     "why": "no longer passes the evaluation protocol",
+     "evidence": {}
+    },
+    {
+     "date": "2020-09-30 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_4d9bd6ed",
+     "from": "Demoted",
+     "to": "Active",
+     "why": "recovered: passes the evaluation protocol again",
+     "evidence": {
+      "n": 1607,
+      "mean_bps": 46.6,
+      "p": 0.02832,
+      "lb_bps": 0.1,
+      "years_positive": "8/9"
+     }
+    }
+   ]
+  },
+  "disc_f2958149": {
+   "state": "Active",
+   "since": "2014-01-17 00:00:00",
+   "retired_on": "",
+   "last_events": [
+    {
+     "date": "2012-07-02 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_f2958149",
+     "from": "Candidate",
+     "to": "Probation",
+     "why": "passed the evaluation protocol on past data",
+     "evidence": {
+      "n": 2330,
+      "mean_bps": 63.8,
+      "p": 0.001,
+      "lb_bps": 18.1,
+      "years_positive": "6/6"
+     }
+    },
+    {
+     "date": "2014-01-17 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_f2958149",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 2526,
+      "mean_bps": 64.8,
+      "p": 0.00233,
+      "lb_bps": 21.9,
+      "years_positive": "7/7",
+      "live_trades": 193,
+      "live_mean_bps": 86.4,
+      "live_p": 0.044
+     }
+    }
+   ]
+  },
+  "disc_c2ca1f6e": {
+   "state": "Active",
+   "since": "2020-09-30 00:00:00",
+   "retired_on": "2017-06-01 00:00:00",
+   "last_events": [
+    {
+     "date": "2017-06-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_c2ca1f6e",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    },
+    {
+     "date": "2018-03-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_c2ca1f6e",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 4212,
+      "mean_bps": 29.3,
+      "p": 0.01066,
+      "lb_bps": 2.5,
+      "years_positive": "7/10"
+     }
+    },
+    {
+     "date": "2020-09-30 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_c2ca1f6e",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 3733,
+      "mean_bps": 37.6,
+      "p": 0.005,
+      "lb_bps": 8.4,
+      "years_positive": "7/9",
+      "live_trades": 3080,
+      "live_mean_bps": 28.9,
+      "live_p": 0.036
+     }
+    }
+   ]
+  },
+  "disc_11f11be1": {
+   "state": "Retired",
+   "since": "2026-08-27 00:00:00",
+   "retired_on": "2026-08-27 00:00:00",
+   "last_events": [
+    {
+     "date": "2018-03-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_11f11be1",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 1461,
+      "mean_bps": 70.8,
+      "p": 0.00033,
+      "lb_bps": 27.9,
+      "years_positive": "7/8",
+      "live_trades": 902,
+      "live_mean_bps": 51.5,
+      "live_p": 0.0386
+     }
+    },
+    {
+     "date": "2026-05-29 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_11f11be1",
+     "from": "Active",
+     "to": "Demoted",
+     "why": "no longer passes the evaluation protocol",
+     "evidence": {}
+    },
+    {
+     "date": "2026-08-27 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_11f11be1",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
     }
    ]
   },
@@ -251,11 +291,11 @@
      "to": "Probation",
      "why": "passed the evaluation protocol on past data",
      "evidence": {
-      "n": 2231,
-      "mean_bps": 53.6,
-      "p": 0.00766,
-      "lb_bps": 4.3,
-      "years_positive": "3/4"
+      "n": 2222,
+      "mean_bps": 55.6,
+      "p": 0.00533,
+      "lb_bps": 8.0,
+      "years_positive": "4/4"
      }
     },
     {
@@ -266,14 +306,63 @@
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 2408,
-      "mean_bps": 57.4,
-      "p": 0.005,
-      "lb_bps": 10.0,
-      "years_positive": "5/6",
+      "n": 2399,
+      "mean_bps": 59.3,
+      "p": 0.00367,
+      "lb_bps": 12.8,
+      "years_positive": "6/6",
       "live_trades": 172,
-      "live_mean_bps": 118.5,
-      "live_p": 0.0127
+      "live_mean_bps": 118.6,
+      "live_p": 0.008
+     }
+    }
+   ]
+  },
+  "disc_cec157da": {
+   "state": "Active",
+   "since": "2021-01-01 00:00:00",
+   "retired_on": "2017-06-01 00:00:00",
+   "last_events": [
+    {
+     "date": "2017-06-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_cec157da",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    },
+    {
+     "date": "2018-03-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_cec157da",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 2456,
+      "mean_bps": 45.2,
+      "p": 0.005,
+      "lb_bps": 8.3,
+      "years_positive": "7/8"
+     }
+    },
+    {
+     "date": "2021-01-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_cec157da",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 2705,
+      "mean_bps": 49.5,
+      "p": 0.00167,
+      "lb_bps": 13.4,
+      "years_positive": "8/9",
+      "live_trades": 2373,
+      "live_mean_bps": 40.4,
+      "live_p": 0.038
      }
     }
    ]
@@ -291,10 +380,10 @@
      "to": "Active",
      "why": "recovered: passes the evaluation protocol again",
      "evidence": {
-      "n": 2660,
-      "mean_bps": 38.0,
-      "p": 0.00467,
-      "lb_bps": 7.3,
+      "n": 2654,
+      "mean_bps": 36.3,
+      "p": 0.007,
+      "lb_bps": 6.2,
       "years_positive": "6/9"
      }
     },
@@ -315,10 +404,10 @@
      "to": "Active",
      "why": "recovered: passes the evaluation protocol again",
      "evidence": {
-      "n": 2300,
-      "mean_bps": 38.8,
-      "p": 0.00067,
-      "lb_bps": 12.6,
+      "n": 2295,
+      "mean_bps": 36.6,
+      "p": 0.005,
+      "lb_bps": 10.7,
       "years_positive": "6/9"
      }
     }
@@ -346,10 +435,10 @@
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 4790,
-      "mean_bps": 39.9,
-      "p": 0.004,
-      "lb_bps": 11.9,
+      "n": 4780,
+      "mean_bps": 40.4,
+      "p": 0.003,
+      "lb_bps": 12.0,
       "years_positive": "8/9"
      }
     },
@@ -361,388 +450,14 @@
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 4760,
-      "mean_bps": 44.5,
-      "p": 0.00133,
-      "lb_bps": 13.3,
-      "years_positive": "8/9",
-      "live_trades": 3250,
-      "live_mean_bps": 38.8,
-      "live_p": 0.0426
-     }
-    }
-   ]
-  },
-  "disc_f3a0927e": {
-   "state": "Active",
-   "since": "2020-09-30 00:00:00",
-   "retired_on": "2018-12-12 00:00:00",
-   "last_events": [
-    {
-     "date": "2020-03-30 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_f3a0927e",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 2106,
-      "mean_bps": 42.6,
-      "p": 0.00167,
-      "lb_bps": 13.2,
-      "years_positive": "5/8",
-      "live_trades": 1526,
-      "live_mean_bps": 42.7,
-      "live_p": 0.004
-     }
-    },
-    {
-     "date": "2020-07-03 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_f3a0927e",
-     "from": "Active",
-     "to": "Demoted",
-     "why": "no longer passes the evaluation protocol",
-     "evidence": {}
-    },
-    {
-     "date": "2020-09-30 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_f3a0927e",
-     "from": "Demoted",
-     "to": "Active",
-     "why": "recovered: passes the evaluation protocol again",
-     "evidence": {
-      "n": 2092,
-      "mean_bps": 49.3,
-      "p": 0.00033,
-      "lb_bps": 19.8,
-      "years_positive": "6/9"
-     }
-    }
-   ]
-  },
-  "disc_4d9bd6ed": {
-   "state": "Active",
-   "since": "2020-09-30 00:00:00",
-   "retired_on": "2017-06-01 00:00:00",
-   "last_events": [
-    {
-     "date": "2019-03-15 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_4d9bd6ed",
-     "from": "Demoted",
-     "to": "Active",
-     "why": "recovered: passes the evaluation protocol again",
-     "evidence": {
-      "n": 1556,
-      "mean_bps": 52.4,
-      "p": 0.011,
-      "lb_bps": 4.1,
-      "years_positive": "7/8"
-     }
-    },
-    {
-     "date": "2020-07-03 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_4d9bd6ed",
-     "from": "Active",
-     "to": "Demoted",
-     "why": "no longer passes the evaluation protocol",
-     "evidence": {}
-    },
-    {
-     "date": "2020-09-30 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_4d9bd6ed",
-     "from": "Demoted",
-     "to": "Active",
-     "why": "recovered: passes the evaluation protocol again",
-     "evidence": {
-      "n": 1606,
-      "mean_bps": 46.4,
-      "p": 0.02766,
-      "lb_bps": 1.3,
-      "years_positive": "8/9"
-     }
-    }
-   ]
-  },
-  "disc_f2958149": {
-   "state": "Active",
-   "since": "2014-01-17 00:00:00",
-   "retired_on": "",
-   "last_events": [
-    {
-     "date": "2012-07-02 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_f2958149",
-     "from": "Candidate",
-     "to": "Probation",
-     "why": "passed the evaluation protocol on past data",
-     "evidence": {
-      "n": 2342,
-      "mean_bps": 62.7,
-      "p": 0.00167,
-      "lb_bps": 17.3,
-      "years_positive": "5/6"
-     }
-    },
-    {
-     "date": "2014-01-17 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_f2958149",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 2538,
-      "mean_bps": 63.8,
-      "p": 0.003,
-      "lb_bps": 20.3,
-      "years_positive": "6/7",
-      "live_trades": 193,
-      "live_mean_bps": 86.5,
-      "live_p": 0.0473
-     }
-    }
-   ]
-  },
-  "disc_c579d989": {
-   "state": "Retired",
-   "since": "2026-08-26 00:00:00",
-   "retired_on": "2026-08-26 00:00:00",
-   "last_events": [
-    {
-     "date": "2018-03-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_c579d989",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 1462,
-      "mean_bps": 73.0,
+      "n": 4755,
+      "mean_bps": 45.0,
       "p": 0.001,
-      "lb_bps": 31.2,
-      "years_positive": "7/8",
-      "live_trades": 902,
-      "live_mean_bps": 52.3,
-      "live_p": 0.028
-     }
-    },
-    {
-     "date": "2026-05-27 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_c579d989",
-     "from": "Active",
-     "to": "Demoted",
-     "why": "no longer passes the evaluation protocol",
-     "evidence": {}
-    },
-    {
-     "date": "2026-08-26 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_c579d989",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    }
-   ]
-  },
-  "disc_de46d8da": {
-   "state": "Active",
-   "since": "2020-09-30 00:00:00",
-   "retired_on": "2017-06-01 00:00:00",
-   "last_events": [
-    {
-     "date": "2017-06-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_de46d8da",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2018-03-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_de46d8da",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 4225,
-      "mean_bps": 28.8,
-      "p": 0.01633,
-      "lb_bps": 3.0,
-      "years_positive": "7/10"
-     }
-    },
-    {
-     "date": "2020-09-30 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_de46d8da",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 3739,
-      "mean_bps": 36.4,
-      "p": 0.005,
-      "lb_bps": 8.3,
-      "years_positive": "7/9",
-      "live_trades": 3103,
-      "live_mean_bps": 27.7,
-      "live_p": 0.0426
-     }
-    }
-   ]
-  },
-  "disc_d2734315": {
-   "state": "Active",
-   "since": "2018-06-07 00:00:00",
-   "retired_on": "2017-06-01 00:00:00",
-   "last_events": [
-    {
-     "date": "2017-06-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_d2734315",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2018-03-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_d2734315",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 4418,
-      "mean_bps": 29.0,
-      "p": 0.01466,
-      "lb_bps": 3.0,
-      "years_positive": "6/9"
-     }
-    },
-    {
-     "date": "2018-06-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_d2734315",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 4230,
-      "mean_bps": 29.7,
-      "p": 0.00666,
-      "lb_bps": 5.9,
-      "years_positive": "6/9",
-      "live_trades": 2616,
-      "live_mean_bps": 31.8,
-      "live_p": 0.0067
-     }
-    }
-   ]
-  },
-  "disc_dc449b4b": {
-   "state": "Active",
-   "since": "2021-01-01 00:00:00",
-   "retired_on": "2017-06-01 00:00:00",
-   "last_events": [
-    {
-     "date": "2017-06-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_dc449b4b",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2018-03-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_dc449b4b",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 2457,
-      "mean_bps": 45.3,
-      "p": 0.00666,
-      "lb_bps": 8.4,
-      "years_positive": "7/8"
-     }
-    },
-    {
-     "date": "2021-01-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_dc449b4b",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 2705,
-      "mean_bps": 49.8,
-      "p": 0.00167,
-      "lb_bps": 12.6,
+      "lb_bps": 15.7,
       "years_positive": "8/9",
-      "live_trades": 2373,
-      "live_mean_bps": 40.7,
-      "live_p": 0.0353
-     }
-    }
-   ]
-  },
-  "disc_cec157da": {
-   "state": "Active",
-   "since": "2021-01-01 00:00:00",
-   "retired_on": "2017-06-01 00:00:00",
-   "last_events": [
-    {
-     "date": "2017-06-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_cec157da",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2018-03-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_cec157da",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 2457,
-      "mean_bps": 45.3,
-      "p": 0.00866,
-      "lb_bps": 9.2,
-      "years_positive": "7/8"
-     }
-    },
-    {
-     "date": "2021-01-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_cec157da",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 2705,
-      "mean_bps": 49.8,
-      "p": 0.00267,
-      "lb_bps": 12.1,
-      "years_positive": "8/9",
-      "live_trades": 2373,
-      "live_mean_bps": 40.7,
-      "live_p": 0.036
+      "live_trades": 3264,
+      "live_mean_bps": 39.1,
+      "live_p": 0.04
      }
     }
    ]
@@ -760,11 +475,11 @@
      "to": "Probation",
      "why": "passed the evaluation protocol on past data",
      "evidence": {
-      "n": 2342,
-      "mean_bps": 62.7,
-      "p": 0.00267,
-      "lb_bps": 14.4,
-      "years_positive": "5/6"
+      "n": 2330,
+      "mean_bps": 63.8,
+      "p": 0.00133,
+      "lb_bps": 15.0,
+      "years_positive": "6/6"
      }
     },
     {
@@ -775,13 +490,13 @@
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 2604,
-      "mean_bps": 65.8,
-      "p": 0.00133,
-      "lb_bps": 24.7,
-      "years_positive": "7/8",
-      "live_trades": 259,
-      "live_mean_bps": 101.0,
+      "n": 2591,
+      "mean_bps": 66.8,
+      "p": 0.001,
+      "lb_bps": 26.1,
+      "years_positive": "8/8",
+      "live_trades": 258,
+      "live_mean_bps": 100.6,
       "live_p": 0.0053
      }
     }
@@ -809,10 +524,10 @@
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 2457,
-      "mean_bps": 45.0,
-      "p": 0.005,
-      "lb_bps": 8.9,
+      "n": 2456,
+      "mean_bps": 44.9,
+      "p": 0.00633,
+      "lb_bps": 10.6,
       "years_positive": "7/8"
      }
     },
@@ -825,67 +540,18 @@
      "why": "paper-forward evidence holds up",
      "evidence": {
       "n": 2616,
-      "mean_bps": 49.1,
-      "p": 0.00333,
-      "lb_bps": 12.7,
+      "mean_bps": 48.8,
+      "p": 0.00267,
+      "lb_bps": 12.4,
       "years_positive": "8/9",
       "live_trades": 2256,
-      "live_mean_bps": 39.6,
-      "live_p": 0.0373
+      "live_mean_bps": 39.2,
+      "live_p": 0.048
      }
     }
    ]
   },
-  "disc_116ec236": {
-   "state": "Active",
-   "since": "2021-07-07 00:00:00",
-   "retired_on": "2020-09-30 00:00:00",
-   "last_events": [
-    {
-     "date": "2020-09-30 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_116ec236",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2021-01-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_116ec236",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 1677,
-      "mean_bps": 49.7,
-      "p": 0.01333,
-      "lb_bps": 5.3,
-      "years_positive": "7/8"
-     }
-    },
-    {
-     "date": "2021-07-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_116ec236",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 1693,
-      "mean_bps": 56.0,
-      "p": 0.01,
-      "lb_bps": 11.1,
-      "years_positive": "8/9",
-      "live_trades": 1420,
-      "live_mean_bps": 43.6,
-      "live_p": 0.05
-     }
-    }
-   ]
-  },
-  "disc_c2ca1f6e": {
+  "disc_de46d8da": {
    "state": "Active",
    "since": "2020-09-30 00:00:00",
    "retired_on": "2017-06-01 00:00:00",
@@ -893,7 +559,7 @@
     {
      "date": "2017-06-01 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_c2ca1f6e",
+     "strategy": "disc_de46d8da",
      "from": "Demoted",
      "to": "Retired",
      "why": "did not recover within 40 days",
@@ -902,47 +568,47 @@
     {
      "date": "2018-03-07 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_c2ca1f6e",
+     "strategy": "disc_de46d8da",
      "from": "Retired",
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 4225,
-      "mean_bps": 28.8,
-      "p": 0.01133,
-      "lb_bps": 2.6,
+      "n": 4212,
+      "mean_bps": 29.3,
+      "p": 0.01533,
+      "lb_bps": 2.2,
       "years_positive": "7/10"
      }
     },
     {
      "date": "2020-09-30 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_c2ca1f6e",
+     "strategy": "disc_de46d8da",
      "from": "Probation",
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 3739,
-      "mean_bps": 36.4,
-      "p": 0.00533,
-      "lb_bps": 6.6,
+      "n": 3733,
+      "mean_bps": 37.6,
+      "p": 0.00333,
+      "lb_bps": 8.6,
       "years_positive": "7/9",
-      "live_trades": 3103,
-      "live_mean_bps": 27.7,
-      "live_p": 0.0413
+      "live_trades": 3080,
+      "live_mean_bps": 28.9,
+      "live_p": 0.034
      }
     }
    ]
   },
-  "disc_146a0748": {
+  "disc_d2734315": {
    "state": "Active",
-   "since": "2018-09-06 00:00:00",
+   "since": "2018-06-07 00:00:00",
    "retired_on": "2017-06-01 00:00:00",
    "last_events": [
     {
      "date": "2017-06-01 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_146a0748",
+     "strategy": "disc_d2734315",
      "from": "Demoted",
      "to": "Retired",
      "why": "did not recover within 40 days",
@@ -951,34 +617,316 @@
     {
      "date": "2018-03-07 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_146a0748",
+     "strategy": "disc_d2734315",
      "from": "Retired",
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 3074,
-      "mean_bps": 34.3,
-      "p": 0.006,
-      "lb_bps": 8.4,
-      "years_positive": "7/9"
+      "n": 4404,
+      "mean_bps": 29.3,
+      "p": 0.01033,
+      "lb_bps": 3.8,
+      "years_positive": "6/9"
      }
     },
     {
-     "date": "2018-09-06 00:00:00",
+     "date": "2018-06-07 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_146a0748",
+     "strategy": "disc_d2734315",
      "from": "Probation",
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 2878,
-      "mean_bps": 36.5,
-      "p": 0.003,
-      "lb_bps": 8.8,
-      "years_positive": "7/9",
-      "live_trades": 1877,
-      "live_mean_bps": 31.1,
-      "live_p": 0.0406
+      "n": 4221,
+      "mean_bps": 30.6,
+      "p": 0.00566,
+      "lb_bps": 5.4,
+      "years_positive": "6/9",
+      "live_trades": 2594,
+      "live_mean_bps": 34.3,
+      "live_p": 0.0047
+     }
+    }
+   ]
+  },
+  "disc_280912c0": {
+   "state": "Active",
+   "since": "2018-06-07 00:00:00",
+   "retired_on": "2017-06-01 00:00:00",
+   "last_events": [
+    {
+     "date": "2017-06-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_280912c0",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    },
+    {
+     "date": "2018-03-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_280912c0",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 4404,
+      "mean_bps": 29.3,
+      "p": 0.01166,
+      "lb_bps": 3.2,
+      "years_positive": "6/9"
+     }
+    },
+    {
+     "date": "2018-06-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_280912c0",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 4221,
+      "mean_bps": 30.6,
+      "p": 0.007,
+      "lb_bps": 6.0,
+      "years_positive": "6/9",
+      "live_trades": 2594,
+      "live_mean_bps": 34.3,
+      "live_p": 0.0027
+     }
+    }
+   ]
+  },
+  "disc_116ec236": {
+   "state": "Active",
+   "since": "2020-09-30 00:00:00",
+   "retired_on": "2017-06-01 00:00:00",
+   "last_events": [
+    {
+     "date": "2019-03-15 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_116ec236",
+     "from": "Demoted",
+     "to": "Active",
+     "why": "recovered: passes the evaluation protocol again",
+     "evidence": {
+      "n": 1557,
+      "mean_bps": 52.2,
+      "p": 0.01466,
+      "lb_bps": 3.7,
+      "years_positive": "7/8"
+     }
+    },
+    {
+     "date": "2020-07-03 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_116ec236",
+     "from": "Active",
+     "to": "Demoted",
+     "why": "no longer passes the evaluation protocol",
+     "evidence": {}
+    },
+    {
+     "date": "2020-09-30 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_116ec236",
+     "from": "Demoted",
+     "to": "Active",
+     "why": "recovered: passes the evaluation protocol again",
+     "evidence": {
+      "n": 1607,
+      "mean_bps": 46.6,
+      "p": 0.02799,
+      "lb_bps": 0.8,
+      "years_positive": "8/9"
+     }
+    }
+   ]
+  },
+  "disc_c579d989": {
+   "state": "Retired",
+   "since": "2026-08-27 00:00:00",
+   "retired_on": "2026-08-27 00:00:00",
+   "last_events": [
+    {
+     "date": "2018-03-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_c579d989",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 1461,
+      "mean_bps": 70.8,
+      "p": 0.00167,
+      "lb_bps": 27.2,
+      "years_positive": "7/8",
+      "live_trades": 902,
+      "live_mean_bps": 51.5,
+      "live_p": 0.038
+     }
+    },
+    {
+     "date": "2026-05-29 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_c579d989",
+     "from": "Active",
+     "to": "Demoted",
+     "why": "no longer passes the evaluation protocol",
+     "evidence": {}
+    },
+    {
+     "date": "2026-08-27 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_c579d989",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    }
+   ]
+  },
+  "disc_dc449b4b": {
+   "state": "Active",
+   "since": "2020-09-30 00:00:00",
+   "retired_on": "2017-06-01 00:00:00",
+   "last_events": [
+    {
+     "date": "2017-06-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_dc449b4b",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    },
+    {
+     "date": "2018-03-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_dc449b4b",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 2456,
+      "mean_bps": 45.2,
+      "p": 0.007,
+      "lb_bps": 10.4,
+      "years_positive": "7/8"
+     }
+    },
+    {
+     "date": "2020-09-30 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_dc449b4b",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 2617,
+      "mean_bps": 48.1,
+      "p": 0.00333,
+      "lb_bps": 12.7,
+      "years_positive": "8/9",
+      "live_trades": 2267,
+      "live_mean_bps": 36.9,
+      "live_p": 0.046
+     }
+    }
+   ]
+  },
+  "disc_5dd07bc9": {
+   "state": "Active",
+   "since": "2017-12-01 00:00:00",
+   "retired_on": "",
+   "last_events": [
+    {
+     "date": "2016-11-29 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_5dd07bc9",
+     "from": "Demoted",
+     "to": "Active",
+     "why": "recovered: passes the evaluation protocol again",
+     "evidence": {
+      "n": 2654,
+      "mean_bps": 36.3,
+      "p": 0.00666,
+      "lb_bps": 6.6,
+      "years_positive": "6/9"
+     }
+    },
+    {
+     "date": "2017-09-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_5dd07bc9",
+     "from": "Active",
+     "to": "Demoted",
+     "why": "no longer passes the evaluation protocol",
+     "evidence": {}
+    },
+    {
+     "date": "2017-12-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_5dd07bc9",
+     "from": "Demoted",
+     "to": "Active",
+     "why": "recovered: passes the evaluation protocol again",
+     "evidence": {
+      "n": 2295,
+      "mean_bps": 36.6,
+      "p": 0.00333,
+      "lb_bps": 10.6,
+      "years_positive": "6/9"
+     }
+    }
+   ]
+  },
+  "disc_fc511ddb": {
+   "state": "Active",
+   "since": "2018-03-07 00:00:00",
+   "retired_on": "2017-09-01 00:00:00",
+   "last_events": [
+    {
+     "date": "2017-09-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_fc511ddb",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    },
+    {
+     "date": "2017-12-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_fc511ddb",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 2294,
+      "mean_bps": 56.0,
+      "p": 0.004,
+      "lb_bps": 19.5,
+      "years_positive": "8/9"
+     }
+    },
+    {
+     "date": "2018-03-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_fc511ddb",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 2063,
+      "mean_bps": 62.7,
+      "p": 0.002,
+      "lb_bps": 23.6,
+      "years_positive": "8/9",
+      "live_trades": 1412,
+      "live_mean_bps": 52.0,
+      "live_p": 0.008
      }
     }
    ]
@@ -1005,10 +953,10 @@
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 2404,
-      "mean_bps": 37.8,
-      "p": 0.01166,
-      "lb_bps": 5.7,
+      "n": 2397,
+      "mean_bps": 34.8,
+      "p": 0.01633,
+      "lb_bps": 3.8,
       "years_positive": "7/9"
      }
     },
@@ -1020,112 +968,14 @@
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 2160,
-      "mean_bps": 46.4,
-      "p": 0.00267,
-      "lb_bps": 13.5,
+      "n": 2153,
+      "mean_bps": 45.5,
+      "p": 0.00333,
+      "lb_bps": 11.8,
       "years_positive": "7/9",
-      "live_trades": 1368,
-      "live_mean_bps": 49.7,
-      "live_p": 0.008
-     }
-    }
-   ]
-  },
-  "disc_85c76631": {
-   "state": "Active",
-   "since": "2022-01-20 00:00:00",
-   "retired_on": "2020-09-30 00:00:00",
-   "last_events": [
-    {
-     "date": "2020-09-30 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_85c76631",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2021-01-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_85c76631",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 2171,
-      "mean_bps": 42.3,
-      "p": 0.02832,
-      "lb_bps": 0.4,
-      "years_positive": "8/9"
-     }
-    },
-    {
-     "date": "2022-01-20 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_85c76631",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 2401,
-      "mean_bps": 60.4,
-      "p": 0.00367,
-      "lb_bps": 17.5,
-      "years_positive": "7/8",
-      "live_trades": 1812,
-      "live_mean_bps": 48.4,
-      "live_p": 0.0253
-     }
-    }
-   ]
-  },
-  "disc_f166572b": {
-   "state": "Active",
-   "since": "2018-03-07 00:00:00",
-   "retired_on": "2017-06-01 00:00:00",
-   "last_events": [
-    {
-     "date": "2017-06-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_f166572b",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2017-12-01 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_f166572b",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 3332,
-      "mean_bps": 25.9,
-      "p": 0.02532,
-      "lb_bps": 1.1,
-      "years_positive": "7/9"
-     }
-    },
-    {
-     "date": "2018-03-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_f166572b",
-     "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 3074,
-      "mean_bps": 34.3,
-      "p": 0.00633,
-      "lb_bps": 7.5,
-      "years_positive": "7/9",
-      "live_trades": 1888,
-      "live_mean_bps": 34.8,
-      "live_p": 0.0173
+      "live_trades": 1366,
+      "live_mean_bps": 50.3,
+      "live_p": 0.0073
      }
     }
    ]
@@ -1152,10 +1002,10 @@
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 2404,
-      "mean_bps": 37.8,
-      "p": 0.01166,
-      "lb_bps": 7.3,
+      "n": 2397,
+      "mean_bps": 34.8,
+      "p": 0.01966,
+      "lb_bps": 3.7,
       "years_positive": "7/9"
      }
     },
@@ -1167,102 +1017,68 @@
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 2160,
-      "mean_bps": 46.4,
-      "p": 0.002,
-      "lb_bps": 12.2,
+      "n": 2153,
+      "mean_bps": 45.5,
+      "p": 0.00367,
+      "lb_bps": 12.1,
       "years_positive": "7/9",
-      "live_trades": 1368,
-      "live_mean_bps": 49.7,
-      "live_p": 0.0047
+      "live_trades": 1366,
+      "live_mean_bps": 50.3,
+      "live_p": 0.0053
      }
     }
    ]
   },
-  "ma_cross_50_200": {
-   "state": "Probation",
-   "since": "2026-08-26 00:00:00",
-   "retired_on": "2026-02-19 00:00:00",
+  "disc_85c76631": {
+   "state": "Active",
+   "since": "2022-01-21 00:00:00",
+   "retired_on": "2020-09-30 00:00:00",
    "last_events": [
     {
-     "date": "2025-11-19 00:00:00",
+     "date": "2020-09-30 00:00:00",
      "sym": "*POOL*",
-     "strategy": "ma_cross_50_200",
-     "from": "Active",
-     "to": "Demoted",
-     "why": "no longer passes the evaluation protocol",
-     "evidence": {}
-    },
-    {
-     "date": "2026-02-19 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "ma_cross_50_200",
+     "strategy": "disc_85c76631",
      "from": "Demoted",
      "to": "Retired",
      "why": "did not recover within 40 days",
      "evidence": {}
     },
     {
-     "date": "2026-08-26 00:00:00",
+     "date": "2021-01-01 00:00:00",
      "sym": "*POOL*",
-     "strategy": "ma_cross_50_200",
+     "strategy": "disc_85c76631",
      "from": "Retired",
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 3620,
-      "mean_bps": 526.4,
-      "p": 0.02233,
-      "lb_bps": 65.9,
-      "years_positive": "5/8"
+      "n": 2171,
+      "mean_bps": 42.0,
+      "p": 0.02966,
+      "lb_bps": 0.2,
+      "years_positive": "8/9"
      }
-    }
-   ]
-  },
-  "tsmom_250_skip21": {
-   "state": "Retired",
-   "since": "2025-08-18 00:00:00",
-   "retired_on": "2025-08-18 00:00:00",
-   "last_events": [
+    },
     {
-     "date": "2024-05-13 00:00:00",
+     "date": "2022-01-21 00:00:00",
      "sym": "*POOL*",
-     "strategy": "tsmom_250_skip21",
+     "strategy": "disc_85c76631",
      "from": "Probation",
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 12286,
-      "mean_bps": 104.7,
-      "p": 0.01333,
-      "lb_bps": 15.1,
-      "years_positive": "6/9",
-      "live_trades": 8429,
-      "live_mean_bps": 129.6,
-      "live_p": 0.0233
+      "n": 2397,
+      "mean_bps": 59.7,
+      "p": 0.002,
+      "lb_bps": 17.6,
+      "years_positive": "7/8",
+      "live_trades": 1707,
+      "live_mean_bps": 47.8,
+      "live_p": 0.036
      }
-    },
-    {
-     "date": "2025-05-20 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "tsmom_250_skip21",
-     "from": "Active",
-     "to": "Demoted",
-     "why": "no longer passes the evaluation protocol",
-     "evidence": {}
-    },
-    {
-     "date": "2025-08-18 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "tsmom_250_skip21",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
     }
    ]
   },
-  "disc_c50d4fbc": {
+  "disc_146a0748": {
    "state": "Active",
    "since": "2019-06-21 00:00:00",
    "retired_on": "2017-06-01 00:00:00",
@@ -1270,6 +1086,236 @@
     {
      "date": "2017-06-01 00:00:00",
      "sym": "*POOL*",
+     "strategy": "disc_146a0748",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    },
+    {
+     "date": "2018-03-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_146a0748",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 3064,
+      "mean_bps": 34.4,
+      "p": 0.00533,
+      "lb_bps": 7.6,
+      "years_positive": "7/9"
+     }
+    },
+    {
+     "date": "2019-06-21 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_146a0748",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 2659,
+      "mean_bps": 41.6,
+      "p": 0.002,
+      "lb_bps": 12.4,
+      "years_positive": "7/8",
+      "live_trades": 1706,
+      "live_mean_bps": 30.9,
+      "live_p": 0.0473
+     }
+    }
+   ]
+  },
+  "ma_cross_50_200": {
+   "state": "Probation",
+   "since": "2026-08-27 00:00:00",
+   "retired_on": "2026-02-20 00:00:00",
+   "last_events": [
+    {
+     "date": "2025-11-20 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "ma_cross_50_200",
+     "from": "Active",
+     "to": "Demoted",
+     "why": "no longer passes the evaluation protocol",
+     "evidence": {}
+    },
+    {
+     "date": "2026-02-20 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "ma_cross_50_200",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    },
+    {
+     "date": "2026-08-27 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "ma_cross_50_200",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 3624,
+      "mean_bps": 526.4,
+      "p": 0.02033,
+      "lb_bps": 57.9,
+      "years_positive": "5/8"
+     }
+    }
+   ]
+  },
+  "tsmom_250_skip21": {
+   "state": "Retired",
+   "since": "2025-08-19 00:00:00",
+   "retired_on": "2025-08-19 00:00:00",
+   "last_events": [
+    {
+     "date": "2024-05-14 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "tsmom_250_skip21",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 12306,
+      "mean_bps": 103.8,
+      "p": 0.01433,
+      "lb_bps": 14.6,
+      "years_positive": "6/9",
+      "live_trades": 8424,
+      "live_mean_bps": 127.5,
+      "live_p": 0.016
+     }
+    },
+    {
+     "date": "2025-05-21 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "tsmom_250_skip21",
+     "from": "Active",
+     "to": "Demoted",
+     "why": "no longer passes the evaluation protocol",
+     "evidence": {}
+    },
+    {
+     "date": "2025-08-19 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "tsmom_250_skip21",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    }
+   ]
+  },
+  "disc_f166572b": {
+   "state": "Active",
+   "since": "2020-03-30 00:00:00",
+   "retired_on": "2017-06-01 00:00:00",
+   "last_events": [
+    {
+     "date": "2017-06-01 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_f166572b",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    },
+    {
+     "date": "2018-03-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_f166572b",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 3064,
+      "mean_bps": 34.4,
+      "p": 0.007,
+      "lb_bps": 6.6,
+      "years_positive": "7/9"
+     }
+    },
+    {
+     "date": "2020-03-30 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_f166572b",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 2656,
+      "mean_bps": 43.7,
+      "p": 0.00133,
+      "lb_bps": 15.3,
+      "years_positive": "7/8",
+      "live_trades": 1755,
+      "live_mean_bps": 32.7,
+      "live_p": 0.048
+     }
+    }
+   ]
+  },
+  "disc_c16d1e13": {
+   "state": "Active",
+   "since": "2022-01-21 00:00:00",
+   "retired_on": "2019-06-21 00:00:00",
+   "last_events": [
+    {
+     "date": "2019-06-21 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_c16d1e13",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    },
+    {
+     "date": "2021-10-07 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_c16d1e13",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 4089,
+      "mean_bps": 29.5,
+      "p": 0.01233,
+      "lb_bps": 2.5,
+      "years_positive": "6/9"
+     }
+    },
+    {
+     "date": "2022-01-21 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "disc_c16d1e13",
+     "from": "Probation",
+     "to": "Active",
+     "why": "paper-forward evidence holds up",
+     "evidence": {
+      "n": 4255,
+      "mean_bps": 32.8,
+      "p": 0.00333,
+      "lb_bps": 7.2,
+      "years_positive": "6/8",
+      "live_trades": 1394,
+      "live_mean_bps": 43.9,
+      "live_p": 0.0247
+     }
+    }
+   ]
+  },
+  "disc_c50d4fbc": {
+   "state": "Active",
+   "since": "2019-12-30 00:00:00",
+   "retired_on": "2016-08-24 00:00:00",
+   "last_events": [
+    {
+     "date": "2016-08-24 00:00:00",
+     "sym": "*POOL*",
      "strategy": "disc_c50d4fbc",
      "from": "Demoted",
      "to": "Retired",
@@ -1285,39 +1331,39 @@
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
       "n": 2189,
-      "mean_bps": 39.9,
-      "p": 0.003,
-      "lb_bps": 10.4,
+      "mean_bps": 39.7,
+      "p": 0.00367,
+      "lb_bps": 9.9,
       "years_positive": "6/9"
      }
     },
     {
-     "date": "2019-06-21 00:00:00",
+     "date": "2019-12-30 00:00:00",
      "sym": "*POOL*",
      "strategy": "disc_c50d4fbc",
      "from": "Probation",
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 2048,
-      "mean_bps": 42.6,
-      "p": 0.004,
-      "lb_bps": 11.1,
+      "n": 2046,
+      "mean_bps": 47.2,
+      "p": 0.00133,
+      "lb_bps": 14.3,
       "years_positive": "5/7",
-      "live_trades": 1086,
-      "live_mean_bps": 32.7,
-      "live_p": 0.0466
+      "live_trades": 770,
+      "live_mean_bps": 42.6,
+      "live_p": 0.0426
      }
     }
    ]
   },
   "disc_bd1271ac": {
    "state": "Active",
-   "since": "2019-09-24 00:00:00",
-   "retired_on": "2017-06-01 00:00:00",
+   "since": "2019-12-30 00:00:00",
+   "retired_on": "2016-08-24 00:00:00",
    "last_events": [
     {
-     "date": "2017-06-01 00:00:00",
+     "date": "2016-08-24 00:00:00",
      "sym": "*POOL*",
      "strategy": "disc_bd1271ac",
      "from": "Demoted",
@@ -1334,75 +1380,35 @@
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
       "n": 2189,
-      "mean_bps": 39.9,
-      "p": 0.00367,
-      "lb_bps": 10.3,
+      "mean_bps": 39.7,
+      "p": 0.00133,
+      "lb_bps": 7.9,
       "years_positive": "6/9"
      }
     },
     {
-     "date": "2019-09-24 00:00:00",
+     "date": "2019-12-30 00:00:00",
      "sym": "*POOL*",
      "strategy": "disc_bd1271ac",
      "from": "Probation",
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 2055,
-      "mean_bps": 43.6,
-      "p": 0.00167,
-      "lb_bps": 12.3,
+      "n": 2046,
+      "mean_bps": 47.2,
+      "p": 0.001,
+      "lb_bps": 16.0,
       "years_positive": "5/7",
-      "live_trades": 811,
-      "live_mean_bps": 38.8,
-      "live_p": 0.0406
+      "live_trades": 770,
+      "live_mean_bps": 42.6,
+      "live_p": 0.0426
      }
-    }
-   ]
-  },
-  "ma_cross_20_100": {
-   "state": "Retired",
-   "since": "2025-11-19 00:00:00",
-   "retired_on": "2025-11-19 00:00:00",
-   "last_events": [
-    {
-     "date": "2025-05-20 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "ma_cross_20_100",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 6350,
-      "mean_bps": 313.9,
-      "p": 0.05032,
-      "lb_bps": 8.0,
-      "years_positive": "6/9"
-     }
-    },
-    {
-     "date": "2025-08-18 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "ma_cross_20_100",
-     "from": "Probation",
-     "to": "Demoted",
-     "why": "no longer passes the evaluation protocol",
-     "evidence": {}
-    },
-    {
-     "date": "2025-11-19 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "ma_cross_20_100",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
     }
    ]
   },
   "disc_297cd4fe": {
    "state": "Active",
-   "since": "2023-05-03 00:00:00",
+   "since": "2023-05-04 00:00:00",
    "retired_on": "2019-09-24 00:00:00",
    "last_events": [
     {
@@ -1422,79 +1428,70 @@
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 4093,
-      "mean_bps": 29.9,
-      "p": 0.01166,
-      "lb_bps": 2.6,
+      "n": 4089,
+      "mean_bps": 29.5,
+      "p": 0.01266,
+      "lb_bps": 3.0,
       "years_positive": "6/9"
      }
     },
     {
-     "date": "2023-05-03 00:00:00",
+     "date": "2023-05-04 00:00:00",
      "sym": "*POOL*",
      "strategy": "disc_297cd4fe",
      "from": "Probation",
      "to": "Active",
      "why": "paper-forward evidence holds up",
      "evidence": {
-      "n": 4215,
-      "mean_bps": 33.1,
-      "p": 0.01033,
-      "lb_bps": 5.4,
+      "n": 4209,
+      "mean_bps": 32.0,
+      "p": 0.01433,
+      "lb_bps": 4.3,
       "years_positive": "6/9",
-      "live_trades": 2103,
-      "live_mean_bps": 36.4,
-      "live_p": 0.0286
+      "live_trades": 2061,
+      "live_mean_bps": 38.0,
+      "live_p": 0.0486
      }
     }
    ]
   },
-  "disc_c16d1e13": {
-   "state": "Active",
-   "since": "2022-07-25 00:00:00",
-   "retired_on": "2017-06-01 00:00:00",
+  "ma_cross_20_100": {
+   "state": "Retired",
+   "since": "2025-11-20 00:00:00",
+   "retired_on": "2025-11-20 00:00:00",
    "last_events": [
     {
-     "date": "2017-06-01 00:00:00",
+     "date": "2025-02-12 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_c16d1e13",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    },
-    {
-     "date": "2021-10-07 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "disc_c16d1e13",
+     "strategy": "ma_cross_20_100",
      "from": "Retired",
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 4093,
-      "mean_bps": 29.9,
-      "p": 0.01599,
-      "lb_bps": 3.6,
-      "years_positive": "6/9"
+      "n": 6424,
+      "mean_bps": 315.1,
+      "p": 0.04499,
+      "lb_bps": 5.0,
+      "years_positive": "7/9"
      }
     },
     {
-     "date": "2022-07-25 00:00:00",
+     "date": "2025-08-19 00:00:00",
      "sym": "*POOL*",
-     "strategy": "disc_c16d1e13",
+     "strategy": "ma_cross_20_100",
      "from": "Probation",
-     "to": "Active",
-     "why": "paper-forward evidence holds up",
-     "evidence": {
-      "n": 4701,
-      "mean_bps": 33.7,
-      "p": 0.00433,
-      "lb_bps": 8.8,
-      "years_positive": "7/9",
-      "live_trades": 1709,
-      "live_mean_bps": 39.1,
-      "live_p": 0.044
-     }
+     "to": "Demoted",
+     "why": "no longer passes the evaluation protocol",
+     "evidence": {}
+    },
+    {
+     "date": "2025-11-20 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "ma_cross_20_100",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
     }
    ]
   },
@@ -1511,10 +1508,10 @@
      "to": "Active",
      "why": "recovered: passes the evaluation protocol again",
      "evidence": {
-      "n": 12835,
-      "mean_bps": 99.7,
-      "p": 0.04199,
-      "lb_bps": 16.8,
+      "n": 12847,
+      "mean_bps": 99.9,
+      "p": 0.04598,
+      "lb_bps": 16.7,
       "years_positive": "6/9"
      }
     },
@@ -1538,10 +1535,50 @@
     }
    ]
   },
+  "donchian_100": {
+   "state": "Retired",
+   "since": "2026-02-20 00:00:00",
+   "retired_on": "2026-02-20 00:00:00",
+   "last_events": [
+    {
+     "date": "2025-05-21 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "donchian_100",
+     "from": "Retired",
+     "to": "Probation",
+     "why": "re-entered with fresh out-of-sample evidence",
+     "evidence": {
+      "n": 3628,
+      "mean_bps": 404.8,
+      "p": 0.02966,
+      "lb_bps": 15.8,
+      "years_positive": "6/8"
+     }
+    },
+    {
+     "date": "2025-11-20 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "donchian_100",
+     "from": "Probation",
+     "to": "Demoted",
+     "why": "no longer passes the evaluation protocol",
+     "evidence": {}
+    },
+    {
+     "date": "2026-02-20 00:00:00",
+     "sym": "*POOL*",
+     "strategy": "donchian_100",
+     "from": "Demoted",
+     "to": "Retired",
+     "why": "did not recover within 40 days",
+     "evidence": {}
+    }
+   ]
+  },
   "donchian_55": {
    "state": "Retired",
-   "since": "2022-04-26 00:00:00",
-   "retired_on": "2022-04-26 00:00:00",
+   "since": "2022-04-27 00:00:00",
+   "retired_on": "2022-04-27 00:00:00",
    "last_events": [
     {
      "date": "2021-10-07 00:00:00",
@@ -1551,15 +1588,15 @@
      "to": "Probation",
      "why": "re-entered with fresh out-of-sample evidence",
      "evidence": {
-      "n": 5553,
-      "mean_bps": 262.6,
-      "p": 0.02732,
-      "lb_bps": 17.1,
+      "n": 5545,
+      "mean_bps": 248.8,
+      "p": 0.02599,
+      "lb_bps": 14.1,
       "years_positive": "7/9"
      }
     },
     {
-     "date": "2022-01-20 00:00:00",
+     "date": "2022-01-21 00:00:00",
      "sym": "*POOL*",
      "strategy": "donchian_55",
      "from": "Probation",
@@ -1568,7 +1605,7 @@
      "evidence": {}
     },
     {
-     "date": "2022-04-26 00:00:00",
+     "date": "2022-04-27 00:00:00",
      "sym": "*POOL*",
      "strategy": "donchian_55",
      "from": "Demoted",
@@ -1591,10 +1628,10 @@
      "to": "Active",
      "why": "recovered: passes the evaluation protocol again",
      "evidence": {
-      "n": 19164,
-      "mean_bps": 70.7,
-      "p": 0.04932,
-      "lb_bps": 4.6,
+      "n": 19157,
+      "mean_bps": 71.1,
+      "p": 0.04832,
+      "lb_bps": 6.1,
       "years_positive": "6/9"
      }
     },
@@ -1618,68 +1655,28 @@
     }
    ]
   },
-  "donchian_100": {
-   "state": "Retired",
-   "since": "2025-11-19 00:00:00",
-   "retired_on": "2025-11-19 00:00:00",
-   "last_events": [
-    {
-     "date": "2025-05-20 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "donchian_100",
-     "from": "Retired",
-     "to": "Probation",
-     "why": "re-entered with fresh out-of-sample evidence",
-     "evidence": {
-      "n": 3630,
-      "mean_bps": 407.3,
-      "p": 0.02999,
-      "lb_bps": 10.0,
-      "years_positive": "6/8"
-     }
-    },
-    {
-     "date": "2025-08-18 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "donchian_100",
-     "from": "Probation",
-     "to": "Demoted",
-     "why": "no longer passes the evaluation protocol",
-     "evidence": {}
-    },
-    {
-     "date": "2025-11-19 00:00:00",
-     "sym": "*POOL*",
-     "strategy": "donchian_100",
-     "from": "Demoted",
-     "to": "Retired",
-     "why": "did not recover within 40 days",
-     "evidence": {}
-    }
-   ]
-  },
   "reversal5_vol_2.0": {
    "state": "Retired",
-   "since": "2026-08-26 00:00:00",
-   "retired_on": "2026-08-26 00:00:00",
+   "since": "2026-08-27 00:00:00",
+   "retired_on": "2026-08-27 00:00:00",
    "last_events": [
     {
-     "date": "2025-05-20 00:00:00",
+     "date": "2025-05-21 00:00:00",
      "sym": "*POOL*",
      "strategy": "reversal5_vol_2.0",
      "from": "Candidate",
      "to": "Probation",
      "why": "passed the evaluation protocol on past data",
      "evidence": {
-      "n": 4241,
-      "mean_bps": 64.5,
-      "p": 0.02999,
-      "lb_bps": 3.9,
+      "n": 4249,
+      "mean_bps": 63.2,
+      "p": 0.02966,
+      "lb_bps": 2.2,
       "years_positive": "6/9"
      }
     },
     {
-     "date": "2026-05-27 00:00:00",
+     "date": "2026-05-29 00:00:00",
      "sym": "*POOL*",
      "strategy": "reversal5_vol_2.0",
      "from": "Probation",
@@ -1688,7 +1685,7 @@
      "evidence": {}
     },
     {
-     "date": "2026-08-26 00:00:00",
+     "date": "2026-08-27 00:00:00",
      "sym": "*POOL*",
      "strategy": "reversal5_vol_2.0",
      "from": "Demoted",
