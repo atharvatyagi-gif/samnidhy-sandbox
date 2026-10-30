@@ -3,11 +3,11 @@
  "weekday": "Friday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 1099,
+ "total_s": 1101,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 4.0,
+   "seconds": 2.0,
    "note": "latest price bar 2026-10-30; delivery / F&O / macro refreshed"
   },
   {
@@ -22,27 +22,27 @@
   },
   {
    "step": "drift",
-   "seconds": 5.2,
+   "seconds": 4.9,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 911.7,
-   "note": "50 generations, 1200 new rules, 0 passed, 109824 tested in total"
+   "seconds": 919.2,
+   "note": "50 generations, 1166 new rules, 0 passed, 110990 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 157.8,
-   "note": "as of 2026-10-30, 1378 stocks, states {'Suspended': 1378}, ledger already in the ledger, not rewritten"
+   "seconds": 154.2,
+   "note": "as of 2026-10-29, 12 stocks, states {'Suspended': 12}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 16.2,
-   "note": "as of 2026-10-30: bull 13, bear 26, hold 1237; ledger already in the ledger; 0 outcome lines"
+   "seconds": 16.9,
+   "note": "as of 2026-10-29: bull 13, bear 25, hold 1220; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 3.4,
+   "seconds": 3.3,
    "note": "live paper account: 4 book(s); equity 987,512 (-1.25%), 11 closed trades, 3 open"
   },
   {
@@ -63,22 +63,22 @@
   "drift_alarms": 0,
   "discovery": {
    "generations": 50,
-   "new_rules": 1200,
+   "new_rules": 1166,
    "passed": 0,
-   "total_tested": 109824
+   "total_tested": 110990
   },
   "forecast": {
-   "as_of": "2026-10-30",
-   "stocks_forecast": 1378,
+   "as_of": "2026-10-29",
+   "stocks_forecast": 12,
    "product_state_counts": {
-    "Suspended": 1378
+    "Suspended": 12
    },
    "ledger_status": "already in the ledger, not rewritten"
   },
   "weekly": {
    "bull": 13,
-   "bear": 26,
-   "hold": 1237
+   "bear": 25,
+   "hold": 1220
   }
  },
  "within_budget": true
