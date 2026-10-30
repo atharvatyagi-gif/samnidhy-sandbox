@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-29T19:05:14+00:00",
+  "generated_on": "2026-10-30T02:01:01+00:00",
   "session_date": "2026-10-29",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -185,7 +185,7 @@
         "turnover_crore": 343.46
       },
       "latest_close": 2325.0,
-      "trailing_pe": 50.259407,
+      "trailing_pe": 50.3029,
       "market_cap": 113031929856,
       "history": {
         "first_date": "2021-10-22",
@@ -218,7 +218,7 @@
       "start": "2021-10-22",
       "end": "2026-10-29",
       "years": 5.02,
-      "session_price_from": "NSE"
+      "session_price_from": "Yahoo"
     },
     "latest_close": 22936.75,
     "session_pct_change": 1.0481,
@@ -308,7 +308,7 @@
       "ZENSARTECH.NS": 0.06736,
       "ECLERX.NS": 0.20964,
       "HEXT.NS": 0.051911,
-      "CARTRADE.NS": 0.049917
+      "CARTRADE.NS": 0.049916
     },
     "HEXT.NS": {
       "BSOFT.NS": 0.034905,
@@ -322,7 +322,7 @@
       "BSOFT.NS": 0.017123,
       "POONAWALLA.NS": 0.044341,
       "ZENSARTECH.NS": 0.015846,
-      "ECLERX.NS": 0.049917,
+      "ECLERX.NS": 0.049916,
       "HEXT.NS": 0.030421,
       "CARTRADE.NS": 0.302794
     }
