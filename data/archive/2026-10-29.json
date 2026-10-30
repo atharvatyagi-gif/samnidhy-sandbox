@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-10-30T04:35:23+00:00",
+  "generated_on": "2026-10-30T08:00:19+00:00",
   "session_date": "2026-10-29",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,8 +40,8 @@
         "turnover_crore": 2160.39
       },
       "latest_close": 342.5,
-      "trailing_pe": 13.572597,
-      "market_cap": 92807520256,
+      "trailing_pe": 14.883295,
+      "market_cap": 90947731456,
       "history": {
         "first_date": "2021-10-22",
         "trading_days": 1239,
@@ -69,8 +69,8 @@
         "turnover_crore": 925.63
       },
       "latest_close": 441.5,
-      "trailing_pe": 31.90357,
-      "market_cap": 393320726528,
+      "trailing_pe": 34.538704,
+      "market_cap": 389005770752,
       "history": {
         "first_date": "2021-10-22",
         "trading_days": 1238,
@@ -98,8 +98,8 @@
         "turnover_crore": 463.14
       },
       "latest_close": 537.3,
-      "trailing_pe": 14.742325,
-      "market_cap": 122060201984,
+      "trailing_pe": 15.781844,
+      "market_cap": 122321215488,
       "history": {
         "first_date": "2021-10-22",
         "trading_days": 1239,
@@ -127,8 +127,8 @@
         "turnover_crore": 205.76
       },
       "latest_close": 1660.6,
-      "trailing_pe": 22.17913,
-      "market_cap": 139464294400,
+      "trailing_pe": 20.045586,
+      "market_cap": 141636091904,
       "history": {
         "first_date": "2021-10-22",
         "trading_days": 1239,
@@ -156,8 +156,8 @@
         "turnover_crore": 48.24
       },
       "latest_close": 538.45,
-      "trailing_pe": 23.845438,
-      "market_cap": 311892115456,
+      "trailing_pe": 22.038984,
+      "market_cap": 306381324288,
       "history": {
         "first_date": "2025-02-19",
         "trading_days": 415,
@@ -185,8 +185,8 @@
         "turnover_crore": 343.46
       },
       "latest_close": 2325.0,
-      "trailing_pe": 49.31631,
-      "market_cap": 110815043584,
+      "trailing_pe": 49.881004,
+      "market_cap": 112083918848,
       "history": {
         "first_date": "2021-10-22",
         "trading_days": 1238,
@@ -308,7 +308,7 @@
       "ZENSARTECH.NS": 0.06736,
       "ECLERX.NS": 0.20964,
       "HEXT.NS": 0.051911,
-      "CARTRADE.NS": 0.049916
+      "CARTRADE.NS": 0.049917
     },
     "HEXT.NS": {
       "BSOFT.NS": 0.034905,
@@ -322,7 +322,7 @@
       "BSOFT.NS": 0.017123,
       "POONAWALLA.NS": 0.044341,
       "ZENSARTECH.NS": 0.015846,
-      "ECLERX.NS": 0.049916,
+      "ECLERX.NS": 0.049917,
       "HEXT.NS": 0.030421,
       "CARTRADE.NS": 0.302794
     }
@@ -742,7 +742,7 @@
         703.06,
         584.73,
         558.03,
-        580.19,
+        580.2,
         580.77,
         647.71,
         631.34,
