@@ -1,7 +1,7 @@
 {
  "as_of": "2026-10-30",
- "created_utc": "2026-10-30T11:20:25.552477+00:00",
- "stocks_forecast": 1383,
+ "created_utc": "2026-10-30T14:37:02.046458+00:00",
+ "stocks_forecast": 1378,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1383
+  "Suspended": 1378
  },
  "active_strategies": [
   "disc_f3a0927e",
@@ -57,7 +57,7 @@
      "95": 0.9242
     },
     "p_up_n": 13831,
-    "ece": 0.1461
+    "ece": 0.1479
    },
    "5": {
     "n": 10155,
@@ -67,7 +67,7 @@
      "95": 0.896
     },
     "p_up_n": 10155,
-    "ece": 0.1642
+    "ece": 0.1636
    },
    "10": {
     "n": 5956,
@@ -81,61 +81,61 @@
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.146 is above 0.05 (n = 13831)"
+  "live calibration error 0.148 is above 0.05 (n = 13831)"
  ],
  "ledger_status": "already in the ledger, not rewritten",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   37.8,
-   929962
+   58.4,
+   927244
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1383
+   1378
   ],
   [
    "fit + predict H=1",
-   13.5,
-   1383
+   19.5,
+   1378
   ],
   [
    "fit + predict H=5",
-   13.6,
-   1383
+   19.8,
+   1378
   ],
   [
    "fit + predict H=10",
-   13.5,
-   1383
+   19.7,
+   1378
   ],
   [
    "fit + predict H=20",
-   13.4,
-   1383
+   19.6,
+   1378
   ],
   [
    "fit + predict H=60",
-   13.3,
-   1383
+   19.9,
+   1378
   ],
   [
    "ledger forecast batch (already in the ledger, not rewritten)",
-   0.1,
-   1383
+   0.3,
+   1378
   ],
   [
    "resolve matured forecasts",
-   0.2,
+   0.3,
    0
   ],
   [
    "states, signals, kill switches",
-   0.2,
-   1383
+   0.3,
+   1378
   ]
  ],
- "total_s": 106
+ "total_s": 158
 }

@@ -3,16 +3,16 @@
  "weekday": "Friday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 643,
+ "total_s": 1099,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 4.9,
+   "seconds": 4.0,
    "note": "latest price bar 2026-10-30; delivery / F&O / macro refreshed"
   },
   {
    "step": "resolve",
-   "seconds": 0.2,
+   "seconds": 0.3,
    "note": "0 outcome lines"
   },
   {
@@ -22,27 +22,27 @@
   },
   {
    "step": "drift",
-   "seconds": 3.1,
+   "seconds": 5.2,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 514.0,
-   "note": "50 generations, 1200 new rules, 0 passed, 108624 tested in total"
+   "seconds": 911.7,
+   "note": "50 generations, 1200 new rules, 0 passed, 109824 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 105.7,
-   "note": "as of 2026-10-30, 1383 stocks, states {'Suspended': 1383}, ledger already in the ledger, not rewritten"
+   "seconds": 157.8,
+   "note": "as of 2026-10-30, 1378 stocks, states {'Suspended': 1378}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 12.6,
-   "note": "as of 2026-10-30: bull 13, bear 26, hold 1243; ledger already in the ledger; 0 outcome lines"
+   "seconds": 16.2,
+   "note": "as of 2026-10-30: bull 13, bear 26, hold 1237; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 2.2,
+   "seconds": 3.4,
    "note": "live paper account: 4 book(s); equity 987,512 (-1.25%), 11 closed trades, 3 open"
   },
   {
@@ -65,20 +65,20 @@
    "generations": 50,
    "new_rules": 1200,
    "passed": 0,
-   "total_tested": 108624
+   "total_tested": 109824
   },
   "forecast": {
    "as_of": "2026-10-30",
-   "stocks_forecast": 1383,
+   "stocks_forecast": 1378,
    "product_state_counts": {
-    "Suspended": 1383
+    "Suspended": 1378
    },
    "ledger_status": "already in the ledger, not rewritten"
   },
   "weekly": {
    "bull": 13,
    "bear": 26,
-   "hold": 1243
+   "hold": 1237
   }
  },
  "within_budget": true
