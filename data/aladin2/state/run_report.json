@@ -3,11 +3,11 @@
  "weekday": "Saturday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 194,
+ "total_s": 207,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 3.2,
+   "seconds": 13.3,
    "note": "latest price bar 2026-10-30; delivery / F&O / macro refreshed"
   },
   {
@@ -22,22 +22,22 @@
   },
   {
    "step": "drift",
-   "seconds": 5.5,
+   "seconds": 5.9,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 3.0,
+   "seconds": 2.9,
    "note": "0 generations, 0 new rules, 0 passed, 113368 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 161.0,
+   "seconds": 163.3,
    "note": "as of 2026-10-30, 1390 stocks, states {'Suspended': 1390}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 17.5,
+   "seconds": 18.0,
    "note": "as of 2026-10-30: bull 13, bear 26, hold 1244; ledger already in the ledger; 0 outcome lines"
   },
   {
