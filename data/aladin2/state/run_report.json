@@ -7,7 +7,7 @@
  "steps": [
   {
    "step": "ingest",
-   "seconds": 2.4,
+   "seconds": 3.2,
    "note": "latest price bar 2026-10-30; delivery / F&O / macro refreshed"
   },
   {
@@ -22,23 +22,23 @@
   },
   {
    "step": "drift",
-   "seconds": 5.4,
+   "seconds": 5.5,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 2.9,
+   "seconds": 3.0,
    "note": "0 generations, 0 new rules, 0 passed, 113368 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 161.9,
-   "note": "as of 2026-10-30, 1378 stocks, states {'Suspended': 1378}, ledger already in the ledger, not rewritten"
+   "seconds": 161.0,
+   "note": "as of 2026-10-30, 1390 stocks, states {'Suspended': 1390}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 17.4,
-   "note": "as of 2026-10-30: bull 13, bear 26, hold 1237; ledger already in the ledger; 0 outcome lines"
+   "seconds": 17.5,
+   "note": "as of 2026-10-30: bull 13, bear 26, hold 1244; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
@@ -69,16 +69,16 @@
   },
   "forecast": {
    "as_of": "2026-10-30",
-   "stocks_forecast": 1378,
+   "stocks_forecast": 1390,
    "product_state_counts": {
-    "Suspended": 1378
+    "Suspended": 1390
    },
    "ledger_status": "already in the ledger, not rewritten"
   },
   "weekly": {
    "bull": 13,
    "bear": 26,
-   "hold": 1237
+   "hold": 1244
   }
  },
  "within_budget": true
