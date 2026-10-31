@@ -166,7 +166,7 @@
    -0.15269,
    -0.14949,
    -0.14949,
-   -0.14722,
+   -0.14723,
    -0.14665,
    -0.14325,
    -0.1431,
@@ -1452,9 +1452,9 @@
    1.11196
   ]
  },
- "generated_utc": "2026-10-31T03:33:43+00:00",
- "generated_ist": "31 Oct 2026, 09:03 AM IST",
- "screened_ist": "31 Oct 2026, 09:03 AM IST",
+ "generated_utc": "2026-10-31T08:00:10+00:00",
+ "generated_ist": "31 Oct 2026, 01:30 PM IST",
+ "screened_ist": "31 Oct 2026, 01:30 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,11 +1484,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 276
+   "count": 271
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 157
+   "count": 153
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1500,14 +1500,23 @@
   "1": 0,
   "2": 3,
   "3": 18,
-  "4": 37,
+  "4": 36,
   "5": 61,
-  "6": 70,
-  "7": 44,
+  "6": 68,
+  "7": 42,
   "8": 28,
   "9": 15
  },
  "skipped": {
+  "missing EBIT, balance-sheet items or market value": [
+   "AIAENG",
+   "ASHOKLEY",
+   "BOSCHLTD",
+   "IOC",
+   "JUBLFOOD",
+   "NESTLEIND",
+   "RELIANCE"
+  ],
   "accounts in USD": [
    "HCLTECH",
    "INFY"
@@ -1516,13 +1525,9 @@
    "LGEINDIA",
    "RUBICON"
   ],
-  "missing EBIT, balance-sheet items or market value": [
-   "NESTLEIND"
-  ],
   "download failed (YFRateLimitError)": [
    "SIGNATURE",
    "SOBHA",
-   "SOLARINDS",
    "SONACOMS",
    "SRF",
    "STLTECH",
@@ -1614,12 +1619,12 @@
    "capital_cr": 21.6,
    "ev_cr": 5846.6,
    "market_cap_cr": 8943.8,
-   "pe": 18.566792,
+   "pe": 17.881447,
    "pb": 3.861092,
    "roe": 0.22517,
    "debt_to_equity": 0.868,
-   "dividend_yield": 1.94,
-   "held_institutions": 0.13487001,
+   "dividend_yield": 2.02,
+   "held_institutions": 0.13512999,
    "held_insiders": 0.58072,
    "analysts": 18,
    "consensus": "positive",
@@ -1627,7 +1632,7 @@
    "estimate_mean": 1939.0,
    "estimate_high": 2637.0,
    "estimate_low": 1500.0,
-   "eps": 80.1,
+   "eps": 83.17,
    "shares_out": 60138224.0,
    "employees": null,
    "website": "https://www.indiamart.com",
@@ -1636,8 +1641,8 @@
    "summary": "IndiaMART InterMESH Limited operates an online business-to-business (B2B) marketplace for business products and services in India and internationally. The company provides an online marketplace that enables listings and discovery of businesses, products, and services; buyer-supplier matchmaking; product search and discovery; request for quotation and BuyLead services; CRM Lead Manager; web storefront solutions; cloud telephony and Premium Number Service (PNS); AI-driven matchmaking; conversational commerce; multimodal search; product specifications and price discovery tools; reviews and ratings services; business enablement software; accounting solutions; and logistics SaaS solutions. The company also offers BUSY accounting software, including financial accounting, inventory management, billing and e-invoicing, GST compliance, taxation, analytics and reporting, production and job work, e-way bill, and scheme management solutions; Livekeeping, a mobile and web-based accounting platform; and credit facilitation, logistics and tracking, inventory management, distributor management, HRMS, procurement management, order management, compliance, and receivables management solutions. In add",
    "magic_rank": 1,
    "rank_roc": 1,
-   "rank_ey": 12,
-   "of": 157
+   "rank_ey": 11,
+   "of": 153
   },
   {
    "symbol": "BLS",
@@ -1667,20 +1672,20 @@
    "capital_cr": 457.7,
    "ev_cr": 7526.2,
    "market_cap_cr": 8609.4,
-   "pe": 12.819853,
+   "pe": 12.227937,
    "pb": 3.495389,
    "roe": null,
    "debt_to_equity": 15.468,
-   "dividend_yield": 1.14,
+   "dividend_yield": 1.19,
    "held_institutions": 0.05212,
    "held_insiders": 0.70611,
    "analysts": 1,
-   "consensus": "strongly_positive",
-   "consensus_score": 1.0,
+   "consensus": null,
+   "consensus_score": null,
    "estimate_mean": 330.0,
    "estimate_high": 330.0,
    "estimate_low": 330.0,
-   "eps": 16.32,
+   "eps": 17.11,
    "shares_out": 411499336.0,
    "employees": 63000.0,
    "website": "https://www.blsinternational.com",
@@ -1688,9 +1693,9 @@
    "beta": -0.126,
    "summary": "BLS International Services Limited provides outsourcing and administrative tasks of visa, passport, and consular services to diplomatic missions in the Middle East, Asia-Pacific, North America, Europe, Africa, South America, China, and India. It operates in two segments, Rendering of Visa and Other Allied Services; and Digital Services. The company offers visa processing, such as end-to-end outsourced visa application intake and processing; appointment scheduling and queue management; document completeness verification and quality checks; biometric data collection, including fingerprints and photographs; and secure transmission of application data to embassy/consulate systems. It also provides retrieval, consolidation, and dispatch of processed applications; and day-end reconciliation and reporting at Visa Application Centres. In addition, the company offers value-added services comprising courier and document delivery, form filling assistance, travel insurance, SMS and email alerts, lounge access, photocopy and print services, internet access facility, translation services, home biometrics collection, document attestation services, and applicant assistance. BLS International Servi",
    "magic_rank": 2,
-   "rank_roc": 11,
-   "rank_ey": 14,
-   "of": 157
+   "rank_roc": 10,
+   "rank_ey": 13,
+   "of": 153
   },
   {
    "symbol": "NBCC",
@@ -1724,8 +1729,8 @@
    "pb": 6.2615733,
    "roe": null,
    "debt_to_equity": 0.008,
-   "dividend_yield": 1.31,
-   "held_institutions": 0.14415,
+   "dividend_yield": 1.35,
+   "held_institutions": 0.14446999,
    "held_insiders": 0.61754,
    "analysts": 1,
    "consensus": null,
@@ -1741,9 +1746,9 @@
    "beta": 0.706,
    "summary": "NBCC (India) Limited engages in project management consultancy, engineering procurement and construction, and real estate development businesses in India and internationally. The company operates through three segments: PMC; EPC; and Real Estate. It offers services for various civil construction projects, including residential and commercial complexes, re-development of old government colonies, education and medical institutions, infrastructure project roads, water supply systems, storm water systems, and water storage solutions. The company executes various projects, which include high-rise chimneys, cooling towers, coal handling plants, etc.; project conceptualization, feasibility studies, detailed project reports, tender specifications and various packages, basic and detailed engineering, review of projects, procurement, construction, drawings, commissioning & testing, and handing it over. In addition, the company undertakes real estate projects, which include residential and commercial projects, such as corporate office buildings and commercial complexes; develops real estate projects including residential, commercial and institutional projects. Further, it is also involved in ",
    "magic_rank": 3,
-   "rank_roc": 10,
-   "rank_ey": 20,
-   "of": 157
+   "rank_roc": 9,
+   "rank_ey": 19,
+   "of": 153
   },
   {
    "symbol": "CASTROLIND",
@@ -1773,11 +1778,11 @@
    "capital_cr": 404.8,
    "ev_cr": 17535.2,
    "market_cap_cr": 18595.5,
-   "pe": 18.41332,
+   "pe": 18.449461,
    "pb": 9.756098,
    "roe": null,
    "debt_to_equity": 2.784,
-   "dividend_yield": 6.66,
+   "dividend_yield": 6.65,
    "held_institutions": 0.16933,
    "held_insiders": 0.51304,
    "analysts": 5,
@@ -1786,7 +1791,7 @@
    "estimate_mean": 212.2,
    "estimate_high": 220.0,
    "estimate_low": 205.0,
-   "eps": 10.21,
+   "eps": 10.19,
    "shares_out": 989122384.0,
    "employees": 632.0,
    "website": "https://www.castrol.com/en_in/india/home.html",
@@ -1795,8 +1800,8 @@
    "summary": "Castrol India Limited manufactures and markets automotive and industrial lubricants in India and internationally. The company offers engine and transmission oils, brake fluids, coolants, cleaners, and greases; EV transmission fluids, thermal fluids, and greases; and brake fluid chain lubricants, fork oils, gear oils, coolants, diesel exhaust fluids, hydraulic fluids, rust preventives, cleaners, and forming oils. The company offers its products under the Castor EDGE, Castrol's MAGNATEC, Castrol GTX, Castrol ON, Castrol Activ, Castrol POWER1, Castrol GO!, Castrol VECTON, Castrol CRB, and Castrol RX brands. It serves automotive, aerospace, Data centre and IT cooling, machinery manufacturing, power generation, oil and gas, robotics, wind, marine, and other industries. The company was founded in 1910 and is based in Mumbai, India. Castrol India Limited operates as a subsidiary of Castrol Limited.",
    "magic_rank": 4,
    "rank_roc": 5,
-   "rank_ey": 33,
-   "of": 157
+   "rank_ey": 31,
+   "of": 153
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1826,20 +1831,20 @@
    "capital_cr": 5919.9,
    "ev_cr": 91261.0,
    "market_cap_cr": 103423.6,
-   "pe": 18.99074,
-   "pb": 4.7839274,
+   "pe": 17.24345,
+   "pb": 4.41815,
    "roe": 0.26927,
    "debt_to_equity": 6.007,
-   "dividend_yield": 3.62,
-   "held_institutions": 0.36933997,
+   "dividend_yield": 3.58,
+   "held_institutions": 0.3703,
    "held_insiders": 0.37236,
    "analysts": 37,
    "consensus": "positive",
    "consensus_score": 2.13158,
-   "estimate_mean": 6145.838,
-   "estimate_high": 7760.0,
+   "estimate_mean": 6102.189,
+   "estimate_high": 7554.0,
    "estimate_low": 4350.0,
-   "eps": 272.08,
+   "eps": 299.65,
    "shares_out": 200161822.0,
    "employees": 9177.0,
    "website": "https://www.heromotocorp.com",
@@ -1847,9 +1852,9 @@
    "beta": 0.486,
    "summary": "Hero MotoCorp Limited primarily engages in the manufacture and sale of motorised two wheelers, spare parts and related services in India, Germany, Asia, Central and Latin America, Africa, and the Middle East. The company offers motorcycles and scooters, as well as electric scooters. It provides engines and accessories, as well as non-banking financial and other related services. The company is also involved in merchandise business. The company was formerly known as Hero Honda Motors Ltd. and changed its name to Hero MotoCorp Limited in July 2011. Hero MotoCorp Limited was incorporated in 1984 and is based in New Delhi, India.",
    "magic_rank": 5,
-   "rank_roc": 18,
-   "rank_ey": 24,
-   "of": 157
+   "rank_roc": 17,
+   "rank_ey": 22,
+   "of": 153
   },
   {
    "symbol": "ENGINERSIN",
@@ -1879,12 +1884,12 @@
    "capital_cr": 333.2,
    "ev_cr": 12717.3,
    "market_cap_cr": 14155.0,
-   "pe": 18.053764,
+   "pe": 15.780075,
    "pb": 4.51142,
    "roe": null,
    "debt_to_equity": 0.534,
-   "dividend_yield": 1.91,
-   "held_institutions": 0.18794,
+   "dividend_yield": 1.99,
+   "held_institutions": 0.19570999,
    "held_insiders": 0.51366,
    "analysts": 6,
    "consensus": null,
@@ -1892,7 +1897,7 @@
    "estimate_mean": 299.0,
    "estimate_high": 373.0,
    "estimate_low": 240.0,
-   "eps": 13.95,
+   "eps": 15.96,
    "shares_out": 562042373.0,
    "employees": 2747.0,
    "website": "https://www.engineersindia.com",
@@ -1901,8 +1906,8 @@
    "summary": "Engineers India Limited, an engineering consultancy company, provides design, engineering, procurement, construction, and integrated project management services for oil, gas, fertilizers, steel, railways, power, infrastructure, and petrochemical industries worldwide. The company operates through two segments, Consultancy & Engineering Projects, and Turnkey Projects. It offers supply chain management services, such as supplier/contractor registration, contracting and purchase of goods/services/works, expediting, inspection, and supplier/contractor performance review; and develops process technologies for various industries. In addition, the company provides construction services comprising pre-construction activities, including bid management process, plot plan review/heavy lift study, etc.; and construction services comprising site construction management, liaison with statutory authorities, construction quality and warehouse management, HSE management, contracts administration, pre commissioning and commissioning assistance, and contract and site closing services. Further, it offers heat and mass transfer equipment design, environment engineering, specialist materials and maintena",
    "magic_rank": 6,
    "rank_roc": 6,
-   "rank_ey": 37,
-   "of": 157
+   "rank_ey": 35,
+   "of": 153
   },
   {
    "symbol": "HINDZINC",
@@ -1932,11 +1937,11 @@
    "capital_cr": 24069.0,
    "ev_cr": 208898.6,
    "market_cap_cr": 213716.6,
-   "pe": 10.476388,
+   "pe": 10.259635,
    "pb": 7.1314764,
    "roe": 0.95413,
    "debt_to_equity": 22.209,
-   "dividend_yield": 2.13,
+   "dividend_yield": 2.17,
    "held_institutions": 0.05709,
    "held_insiders": 0.88629997,
    "analysts": 14,
@@ -1945,7 +1950,7 @@
    "estimate_mean": 642.6429,
    "estimate_high": 770.0,
    "estimate_low": 495.0,
-   "eps": 48.28,
+   "eps": 49.3,
    "shares_out": 4225319000.0,
    "employees": 3303.0,
    "website": "https://www.hzlindia.com",
@@ -1953,9 +1958,9 @@
    "beta": 0.673,
    "summary": "Hindustan Zinc Limited explores for, extracts, and processes minerals in India, rest of Asia, and internationally. The company operates through two segments, Zinc, Lead, Silver & Others; and Wind Energy. The company produces refined zinc and lead, precious metals, and silver; sulphuric acid; rock-phosphate; and metals and related alloys. It also operates captive thermal with a capacity of 550.00 megawatt, wind power plant with a capacity of 273.50 megawatt, and solar power with capacity of 40.70 megawatt, and waste heat recovery boiler power plants of capacity 63.10 megawatt. In addition, the company offers di ammonium phosphate/nitrogen, phosphorus, and potassium fertilizers. The company was incorporated in 1966 and is based in Udaipur, India. Hindustan Zinc Limited operates as a subsidiary of Vedanta Limited.",
    "magic_rank": 7,
-   "rank_roc": 29,
-   "rank_ey": 19,
-   "of": 157
+   "rank_roc": 28,
+   "rank_ey": 18,
+   "of": 153
   },
   {
    "symbol": "NATIONALUM",
@@ -1989,8 +1994,8 @@
    "pb": 2.6736307,
    "roe": null,
    "debt_to_equity": 0.277,
-   "dividend_yield": 1.24,
-   "held_institutions": 0.21666001,
+   "dividend_yield": 1.27,
+   "held_institutions": 0.21738,
    "held_insiders": 0.51278,
    "analysts": 14,
    "consensus": "positive",
@@ -2006,9 +2011,9 @@
    "beta": 0.736,
    "summary": "National Aluminium Company Limited engages in the manufacture and sale of alumina and aluminum products in India and internationally. The company operates through Chemical and Aluminum segments. It offers aluminum metal products, such as ingots, alloy ingots, T-ingots, sows, billets, and wire rods; alumina and hydrate products, including calcined alumina and alumina hydrate; zeolite-A products; specialty alumina and hydrate products; and aluminum rolled and chequered sheets products. The company also owns and operates Coal Mine covering an area of 824.316 hectors situated in Chhendipada Tehsil of Angul District; an opencast mine covering an area of 16 square kilometers on Panchpatmali hills of Koraput district in Odisha; a wind power plant with 50.4 MW of generation capacity in Gandikota, Andhra Pradesh; a wind power plant with 47.6 MW of generation capacity at Jaisalmer, Rajasthan; a wind power plant with 50 MW of generation capacity at Devikot, Rajasthan; a wind power plant with 50.4 MW of generation capacity at Sangli, Maharashtra; and a solar power plants, as well as alumina refinery, aluminum smelter plants, and captive power plant. In addition, it provides testing services. N",
    "magic_rank": 8,
-   "rank_roc": 41,
-   "rank_ey": 8,
-   "of": 157
+   "rank_roc": 40,
+   "rank_ey": 7,
+   "of": 153
   },
   {
    "symbol": "ESCORTS",
@@ -2038,11 +2043,11 @@
    "capital_cr": 2562.1,
    "ev_cr": 21783.8,
    "market_cap_cr": 28351.2,
-   "pe": 20.502943,
+   "pe": 20.154892,
    "pb": 2.3296356,
    "roe": null,
    "debt_to_equity": 1.309,
-   "dividend_yield": 1.26,
+   "dividend_yield": 1.28,
    "held_institutions": 0.13828,
    "held_insiders": 0.74504,
    "analysts": 17,
@@ -2051,7 +2056,7 @@
    "estimate_mean": 3288.647,
    "estimate_high": 4000.0,
    "estimate_low": 2640.0,
-   "eps": 125.66,
+   "eps": 127.83,
    "shares_out": 110041919.0,
    "employees": 4323.0,
    "website": "https://www.escortskubota.com",
@@ -2059,9 +2064,9 @@
    "beta": 0.318,
    "summary": "Escorts Kubota Limited manufactures and sells agricultural and construction equipment in India and internationally. The company offers rotavators, straw reapers, super seeders, MB ploughs, orchard sprayers, paddy harvesters, seed drills, and rice transplanters; filters, pumps, engine assemblies, gear parts, clutch systems, hydraulic pumps, cylinders, lubricants, oils, and service kits; and generator and diesel engines; and cranes, soil compactors, backhoe loaders, tandem rollers, and mini excavators. It also provides agricultural tractors; construction, earth moving, and material handling equipment; and round and flat tubes, heating elements, center buffer couplers, automobile shock absorbers, telescopic front fork and Mcpherson struts, internal combustion engines, and brake blocks. In addition, the company develops, produces, and imports parts and accessories, as well as provides maintenance and warranty, crop, and financing services. It offer its products under the Farmtrac, Powertrac, Digitrac, Steeltrac, Farmpower, and Kubota brands. The company was formerly known as Escorts Limited and changed its name to Escorts Kubota Limited in June 2022. Escorts Kubota Limited was incorpor",
    "magic_rank": 9,
-   "rank_roc": 34,
-   "rank_ey": 23,
-   "of": 157
+   "rank_roc": 33,
+   "rank_ey": 21,
+   "of": 153
   },
   {
    "symbol": "NMDC",
@@ -2095,8 +2100,8 @@
    "pb": 1.7349409,
    "roe": null,
    "debt_to_equity": 18.802,
-   "dividend_yield": 2.96,
-   "held_institutions": 0.20138,
+   "dividend_yield": 2.97,
+   "held_institutions": 0.20128,
    "held_insiders": 0.60797,
    "analysts": 23,
    "consensus": null,
@@ -2112,9 +2117,9 @@
    "beta": 0.636,
    "summary": "NMDC Limited, together with its subsidiaries, explores for and produces iron ore in India and internationally. It operates through Iron Ore, Trading of HR Coil, and All Other Segments (Pellets, Other Mineral, Products, Services & Others). The company also explores for lithium, copper, rock phosphate, limestone, beach sand, coking and non-coking coal, magnesite, diamond, tungsten, nickel, gold, base metals, and rare earth metals. In addition, it produces and sells hot rolled coil and pellets; and generates and distributes solar and wind power. The company exports its products. NMDC Limited was incorporated in 1958 and is headquartered in Hyderabad, India.",
    "magic_rank": 10,
-   "rank_roc": 55,
-   "rank_ey": 5,
-   "of": 157
+   "rank_roc": 53,
+   "rank_ey": 4,
+   "of": 153
   }
  ]
 }
