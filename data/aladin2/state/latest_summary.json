@@ -1,7 +1,7 @@
 {
  "as_of": "2026-10-30",
- "created_utc": "2026-11-01T11:26:31.196914+00:00",
- "stocks_forecast": 1390,
+ "created_utc": "2026-11-01T14:14:47.847329+00:00",
+ "stocks_forecast": 1392,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1390
+  "Suspended": 1392
  },
  "active_strategies": [
   "disc_f3a0927e",
@@ -57,7 +57,7 @@
      "95": 0.9242
     },
     "p_up_n": 13831,
-    "ece": 0.1461
+    "ece": 0.1479
    },
    "5": {
     "n": 10155,
@@ -67,7 +67,7 @@
      "95": 0.896
     },
     "p_up_n": 10155,
-    "ece": 0.1642
+    "ece": 0.1636
    },
    "10": {
     "n": 5956,
@@ -81,61 +81,61 @@
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.146 is above 0.05 (n = 13831)"
+  "live calibration error 0.148 is above 0.05 (n = 13831)"
  ],
  "ledger_status": "already in the ledger, not rewritten",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   31.6,
-   926813
+   60.7,
+   927154
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1390
+   1392
   ],
   [
    "fit + predict H=1",
-   12.7,
-   1390
+   20.0,
+   1392
   ],
   [
    "fit + predict H=5",
-   12.9,
-   1390
+   19.8,
+   1392
   ],
   [
    "fit + predict H=10",
-   13.1,
-   1390
+   19.9,
+   1392
   ],
   [
    "fit + predict H=20",
-   12.9,
-   1390
+   20.1,
+   1392
   ],
   [
    "fit + predict H=60",
-   13.3,
-   1390
+   20.0,
+   1392
   ],
   [
    "ledger forecast batch (already in the ledger, not rewritten)",
-   0.2,
-   1390
+   0.3,
+   1392
   ],
   [
    "resolve matured forecasts",
-   0.2,
+   0.3,
    0
   ],
   [
    "states, signals, kill switches",
-   0.2,
-   1390
+   0.3,
+   1392
   ]
  ],
- "total_s": 97
+ "total_s": 161
 }
