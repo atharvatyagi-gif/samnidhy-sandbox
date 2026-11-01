@@ -3,7 +3,7 @@
  "weekday": "Sunday",
  "full_refit_day": true,
  "budget_min": 110,
- "total_s": 194,
+ "total_s": 196,
  "steps": [
   {
    "step": "ingest",
@@ -22,7 +22,7 @@
   },
   {
    "step": "drift",
-   "seconds": 5.4,
+   "seconds": 5.5,
    "note": "28 strategies checked, 0 alarms"
   },
   {
@@ -32,7 +32,7 @@
   },
   {
    "step": "forecast",
-   "seconds": 161.5,
+   "seconds": 163.9,
    "note": "as of 2026-10-30, 1392 stocks, states {'Suspended': 1392}, ledger already in the ledger, not rewritten"
   },
   {
