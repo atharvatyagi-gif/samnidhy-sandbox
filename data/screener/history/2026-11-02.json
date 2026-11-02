@@ -1452,9 +1452,9 @@
    1.11196
   ]
  },
- "generated_utc": "2026-11-01T18:31:43+00:00",
- "generated_ist": "02 Nov 2026, 12:01 AM IST",
- "screened_ist": "02 Nov 2026, 12:01 AM IST",
+ "generated_utc": "2026-11-02T02:04:03+00:00",
+ "generated_ist": "02 Nov 2026, 07:34 AM IST",
+ "screened_ist": "02 Nov 2026, 07:34 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,11 +1484,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 267
+   "count": 269
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 150
+   "count": 151
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1500,10 +1500,10 @@
   "1": 0,
   "2": 3,
   "3": 18,
-  "4": 35,
+  "4": 36,
   "5": 61,
   "6": 66,
-  "7": 41,
+  "7": 42,
   "8": 28,
   "9": 15
  },
@@ -1526,9 +1526,7 @@
    "RUBICON"
   ],
   "download failed (YFRateLimitError)": [
-   "SHRIPISTON",
    "SHYAMMETL",
-   "SIEMENS",
    "SIGNATURE",
    "SOBHA",
    "SOLARINDS",
@@ -1646,7 +1644,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 11,
-   "of": 150
+   "of": 151
   },
   {
    "symbol": "BLS",
@@ -1699,7 +1697,7 @@
    "magic_rank": 2,
    "rank_roc": 10,
    "rank_ey": 13,
-   "of": 150
+   "of": 151
   },
   {
    "symbol": "NBCC",
@@ -1752,7 +1750,7 @@
    "magic_rank": 3,
    "rank_roc": 9,
    "rank_ey": 19,
-   "of": 150
+   "of": 151
   },
   {
    "symbol": "CASTROLIND",
@@ -1805,7 +1803,7 @@
    "magic_rank": 4,
    "rank_roc": 5,
    "rank_ey": 31,
-   "of": 150
+   "of": 151
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1858,7 +1856,7 @@
    "magic_rank": 5,
    "rank_roc": 17,
    "rank_ey": 22,
-   "of": 150
+   "of": 151
   },
   {
    "symbol": "ENGINERSIN",
@@ -1911,7 +1909,7 @@
    "magic_rank": 6,
    "rank_roc": 6,
    "rank_ey": 35,
-   "of": 150
+   "of": 151
   },
   {
    "symbol": "HINDZINC",
@@ -1964,7 +1962,7 @@
    "magic_rank": 7,
    "rank_roc": 28,
    "rank_ey": 18,
-   "of": 150
+   "of": 151
   },
   {
    "symbol": "NATIONALUM",
@@ -2015,9 +2013,9 @@
    "beta": 0.736,
    "summary": "National Aluminium Company Limited engages in the manufacture and sale of alumina and aluminum products in India and internationally. The company operates through Chemical and Aluminum segments. It offers aluminum metal products, such as ingots, alloy ingots, T-ingots, sows, billets, and wire rods; alumina and hydrate products, including calcined alumina and alumina hydrate; zeolite-A products; specialty alumina and hydrate products; and aluminum rolled and chequered sheets products. The company also owns and operates Coal Mine covering an area of 824.316 hectors situated in Chhendipada Tehsil of Angul District; an opencast mine covering an area of 16 square kilometers on Panchpatmali hills of Koraput district in Odisha; a wind power plant with 50.4 MW of generation capacity in Gandikota, Andhra Pradesh; a wind power plant with 47.6 MW of generation capacity at Jaisalmer, Rajasthan; a wind power plant with 50 MW of generation capacity at Devikot, Rajasthan; a wind power plant with 50.4 MW of generation capacity at Sangli, Maharashtra; and a solar power plants, as well as alumina refinery, aluminum smelter plants, and captive power plant. In addition, it provides testing services. N",
    "magic_rank": 8,
-   "rank_roc": 39,
+   "rank_roc": 40,
    "rank_ey": 7,
-   "of": 150
+   "of": 151
   },
   {
    "symbol": "ESCORTS",
@@ -2070,7 +2068,7 @@
    "magic_rank": 9,
    "rank_roc": 33,
    "rank_ey": 21,
-   "of": 150
+   "of": 151
   },
   {
    "symbol": "NMDC",
@@ -2121,9 +2119,9 @@
    "beta": 0.636,
    "summary": "NMDC Limited, together with its subsidiaries, explores for and produces iron ore in India and internationally. It operates through Iron Ore, Trading of HR Coil, and All Other Segments (Pellets, Other Mineral, Products, Services & Others). The company also explores for lithium, copper, rock phosphate, limestone, beach sand, coking and non-coking coal, magnesite, diamond, tungsten, nickel, gold, base metals, and rare earth metals. In addition, it produces and sells hot rolled coil and pellets; and generates and distributes solar and wind power. The company exports its products. NMDC Limited was incorporated in 1958 and is headquartered in Hyderabad, India.",
    "magic_rank": 10,
-   "rank_roc": 52,
+   "rank_roc": 53,
    "rank_ey": 4,
-   "of": 150
+   "of": 151
   }
  ]
 }
