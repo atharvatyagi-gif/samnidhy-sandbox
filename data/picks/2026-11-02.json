@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-11-02",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_02112026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 495,
+  "eligible_count": 451,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "ITI",
+      "yahoo_ticker": "ITI.NS",
+      "name": "ITI Ltd.",
+      "industry": "Telecommunication",
+      "prev_close": 215.95,
+      "open": 216.25,
+      "high": 259.14,
+      "low": 214.39,
+      "close": 259.14,
+      "pct_change": 20.0,
+      "volume": 17199121,
+      "turnover_crore": 431.65
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "ENGINERSIN",
+      "yahoo_ticker": "ENGINERSIN.NS",
+      "name": "Engineers India Ltd.",
+      "industry": "Construction",
+      "prev_close": 251.85,
+      "open": 260.1,
+      "high": 293.9,
+      "low": 260.0,
+      "close": 289.65,
+      "pct_change": 15.0089,
+      "volume": 35882204,
+      "turnover_crore": 1025.09
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "AFFLE",
+      "yahoo_ticker": "AFFLE.NS",
+      "name": "Affle 3i Ltd.",
+      "industry": "Information Technology",
+      "prev_close": 1341.8,
+      "open": 1349.9,
+      "high": 1529.1,
+      "low": 1333.8,
+      "close": 1506.5,
+      "pct_change": 12.2746,
+      "volume": 4210126,
+      "turnover_crore": 624.51
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "GALLANTT",
+      "yahoo_ticker": "GALLANTT.NS",
+      "name": "Gallantt Ispat Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 558.05,
+      "open": 551.35,
+      "high": 574.7,
+      "low": 505.1,
+      "close": 516.35,
+      "pct_change": -7.4724,
+      "volume": 1199553,
+      "turnover_crore": 63.65
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "CLEAN",
+      "yahoo_ticker": "CLEAN.NS",
+      "name": "Clean Science and Technology Ltd.",
+      "industry": "Chemicals",
+      "prev_close": 715.6,
+      "open": 706.0,
+      "high": 714.95,
+      "low": 655.4,
+      "close": 662.6,
+      "pct_change": -7.4064,
+      "volume": 1152106,
+      "turnover_crore": 76.88
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "ZEEL",
+      "yahoo_ticker": "ZEEL.NS",
+      "name": "Zee Entertainment Enterprises Ltd.",
+      "industry": "Media Entertainment & Publication",
+      "prev_close": 66.4,
+      "open": 65.85,
+      "high": 66.6,
+      "low": 61.06,
+      "close": 61.58,
+      "pct_change": -7.259,
+      "volume": 35675591,
+      "turnover_crore": 225.3
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-11-02T11:37:03+00:00",
+  "fetched_at_ist": "02 Nov 2026, 05:07 PM IST"
+}
