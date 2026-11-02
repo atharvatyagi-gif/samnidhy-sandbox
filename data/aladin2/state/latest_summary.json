@@ -1,7 +1,7 @@
 {
  "as_of": "2026-10-30",
- "created_utc": "2026-11-01T19:11:03.848936+00:00",
- "stocks_forecast": 1392,
+ "created_utc": "2026-11-02T02:51:43.312702+00:00",
+ "stocks_forecast": 1391,
  "horizons": [
   1,
   5,
@@ -11,40 +11,39 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1392
+  "Suspended": 1391
  },
  "active_strategies": [
+  "disc_f1303479",
+  "disc_116ec236",
   "disc_f3a0927e",
-  "disc_c57140f1",
+  "disc_9206642a",
+  "disc_59aad73b",
+  "disc_d2734315",
   "disc_4d9bd6ed",
-  "disc_f2958149",
   "disc_c2ca1f6e",
+  "disc_fc511ddb",
+  "disc_5dd07bc9",
+  "disc_280912c0",
+  "disc_1d36382a",
+  "disc_f2958149",
+  "disc_de46d8da",
+  "disc_dc449b4b",
+  "disc_c57140f1",
   "disc_e56ce610",
   "disc_cec157da",
-  "disc_9206642a",
-  "disc_1d36382a",
-  "disc_59aad73b",
-  "disc_f1303479",
-  "disc_de46d8da",
-  "disc_d2734315",
-  "disc_280912c0",
-  "disc_116ec236",
-  "disc_dc449b4b",
-  "disc_5dd07bc9",
-  "disc_fc511ddb",
-  "disc_7c0b5a66",
   "disc_b9d63934",
+  "disc_7c0b5a66",
+  "disc_297cd4fe",
   "disc_85c76631",
   "disc_146a0748",
   "disc_f166572b",
-  "disc_c16d1e13",
-  "disc_c50d4fbc",
+  "ma_cross_50_200",
   "disc_bd1271ac",
-  "disc_297cd4fe"
+  "disc_c50d4fbc",
+  "disc_c16d1e13"
  ],
- "probation_strategies": [
-  "ma_cross_50_200"
- ],
+ "probation_strategies": [],
  "bullish_signals": 0,
  "live_stats": {
   "forecast_batches": 16,
@@ -57,7 +56,7 @@
      "95": 0.9242
     },
     "p_up_n": 13831,
-    "ece": 0.1479
+    "ece": 0.1461
    },
    "5": {
     "n": 10155,
@@ -67,7 +66,7 @@
      "95": 0.896
     },
     "p_up_n": 10155,
-    "ece": 0.1636
+    "ece": 0.1642
    },
    "10": {
     "n": 5956,
@@ -81,61 +80,61 @@
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.148 is above 0.05 (n = 13831)"
+  "live calibration error 0.146 is above 0.05 (n = 13831)"
  ],
  "ledger_status": "already in the ledger, not rewritten",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   61.5,
-   927154
+   37.5,
+   930933
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1392
+   1391
   ],
   [
    "fit + predict H=1",
-   20.2,
-   1392
+   13.4,
+   1391
   ],
   [
    "fit + predict H=5",
-   20.1,
-   1392
+   13.5,
+   1391
   ],
   [
    "fit + predict H=10",
-   20.2,
-   1392
+   13.5,
+   1391
   ],
   [
    "fit + predict H=20",
-   20.6,
-   1392
+   13.4,
+   1391
   ],
   [
    "fit + predict H=60",
-   20.4,
-   1392
+   13.5,
+   1391
   ],
   [
    "ledger forecast batch (already in the ledger, not rewritten)",
    0.3,
-   1392
+   1391
   ],
   [
    "resolve matured forecasts",
-   0.3,
+   0.2,
    0
   ],
   [
    "states, signals, kill switches",
-   0.3,
-   1392
+   0.2,
+   1391
   ]
  ],
- "total_s": 164
+ "total_s": 105
 }
