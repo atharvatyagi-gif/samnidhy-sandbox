@@ -1,6 +1,6 @@
 {
  "as_of": "2026-10-30",
- "created_utc": "2026-11-02T23:17:12.273130+00:00",
+ "created_utc": "2026-11-03T02:57:38.456896+00:00",
  "stocks_forecast": 1384,
  "horizons": [
   1,
@@ -89,7 +89,7 @@
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   59.8,
+   61.4,
    925573
   ],
   [
@@ -99,37 +99,37 @@
   ],
   [
    "fit + predict H=1",
-   19.5,
-   1384
-  ],
-  [
-   "fit + predict H=5",
-   20.0,
-   1384
-  ],
-  [
-   "fit + predict H=10",
-   19.8,
-   1384
-  ],
-  [
-   "fit + predict H=20",
    19.6,
    1384
   ],
   [
+   "fit + predict H=5",
+   19.9,
+   1384
+  ],
+  [
+   "fit + predict H=10",
+   19.9,
+   1384
+  ],
+  [
+   "fit + predict H=20",
+   19.7,
+   1384
+  ],
+  [
    "fit + predict H=60",
-   20.0,
+   19.9,
    1384
   ],
   [
    "ledger forecast batch (already in the ledger, not rewritten)",
-   0.2,
+   0.3,
    1384
   ],
   [
    "resolve matured forecasts",
-   0.3,
+   0.4,
    0
   ],
   [
@@ -138,5 +138,5 @@
    1384
   ]
  ],
- "total_s": 160
+ "total_s": 161
 }
