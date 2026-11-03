@@ -1,7 +1,7 @@
 {
- "as_of": "2026-11-02",
- "created_utc": "2026-11-03T04:39:28.822043+00:00",
- "stocks_forecast": 1319,
+ "as_of": "2026-11-03",
+ "created_utc": "2026-11-03T09:57:06.437802+00:00",
+ "stocks_forecast": 1378,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1319
+  "Suspended": 1378
  },
  "active_strategies": [
   "disc_f1303479",
@@ -46,97 +46,97 @@
  "probation_strategies": [],
  "bullish_signals": 0,
  "live_stats": {
-  "forecast_batches": 17,
+  "forecast_batches": 18,
   "outcomes": {
    "1": {
-    "n": 15144,
+    "n": 16468,
     "coverage": {
-     "50": 0.452,
-     "80": 0.7509,
-     "95": 0.9192
+     "50": 0.4586,
+     "80": 0.7576,
+     "95": 0.922
     },
-    "p_up_n": 15144,
-    "ece": 0.1368
+    "p_up_n": 16468,
+    "ece": 0.1513
    },
    "5": {
-    "n": 11484,
+    "n": 12878,
     "coverage": {
-     "50": 0.451,
-     "80": 0.7195,
-     "95": 0.9017
+     "50": 0.4591,
+     "80": 0.7268,
+     "95": 0.9053
     },
-    "p_up_n": 11484,
-    "ece": 0.1395
+    "p_up_n": 12878,
+    "ece": 0.0928
    },
    "10": {
-    "n": 7288,
+    "n": 7401,
     "coverage": {
-     "50": 0.3624,
-     "80": 0.6814,
-     "95": 0.907
+     "50": 0.3616,
+     "80": 0.68,
+     "95": 0.9068
     }
    }
   }
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.137 is above 0.05 (n = 15144)",
-  "live 50% band covered 45.2%, more than 4% from nominal (n = 15144)",
-  "live 80% band covered 75.1%, more than 4% from nominal (n = 15144)"
+  "live calibration error 0.151 is above 0.05 (n = 16468)",
+  "live 50% band covered 45.9%, more than 4% from nominal (n = 16468)",
+  "live 80% band covered 75.8%, more than 4% from nominal (n = 16468)"
  ],
- "ledger_status": "already in the ledger, not rewritten",
+ "ledger_status": "written",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   58.9,
-   926892
+   30.5,
+   926952
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1319
+   1378
   ],
   [
    "fit + predict H=1",
-   19.7,
-   1319
+   12.4,
+   1378
   ],
   [
    "fit + predict H=5",
-   19.7,
-   1319
+   12.6,
+   1378
   ],
   [
    "fit + predict H=10",
-   19.6,
-   1319
+   12.6,
+   1378
   ],
   [
    "fit + predict H=20",
-   19.9,
-   1319
+   12.5,
+   1378
   ],
   [
    "fit + predict H=60",
-   19.6,
-   1319
+   12.8,
+   1378
   ],
   [
-   "ledger forecast batch (already in the ledger, not rewritten)",
+   "ledger forecast batch (written)",
    0.3,
-   1319
+   1378
   ],
   [
    "resolve matured forecasts",
-   0.3,
+   0.2,
    0
   ],
   [
    "states, signals, kill switches",
    0.3,
-   1319
+   1378
   ]
  ],
- "total_s": 158
+ "total_s": 94
 }
