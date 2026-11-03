@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-11-03T08:57:53+00:00",
+  "generated_on": "2026-11-03T11:15:32+00:00",
   "session_date": "2026-11-02",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,8 +40,8 @@
         "turnover_crore": 431.65
       },
       "latest_close": 259.14,
-      "trailing_pe": 144.23912,
-      "market_cap": 255540903936,
+      "trailing_pe": 142.36414,
+      "market_cap": 252219080704,
       "history": {
         "first_date": "2021-10-26",
         "trading_days": 1239,
@@ -69,8 +69,8 @@
         "turnover_crore": 1025.09
       },
       "latest_close": 289.65,
-      "trailing_pe": 15.718954,
-      "market_cap": 162205433856,
+      "trailing_pe": 15.754356,
+      "market_cap": 162570747904,
       "history": {
         "first_date": "2021-10-26",
         "trading_days": 1236,
@@ -78,7 +78,7 @@
         "session_price_from": "Yahoo"
       },
       "annualised_return": 0.348845,
-      "total_return": 3.489637,
+      "total_return": 3.489638,
       "annualised_volatility": 0.439419,
       "max_drawdown": -0.485502,
       "beta": 1.2231
@@ -98,8 +98,8 @@
         "turnover_crore": 624.51
       },
       "latest_close": 1506.5,
-      "trailing_pe": 44.593437,
-      "market_cap": 224558710784,
+      "trailing_pe": 45.1612,
+      "market_cap": 227417784320,
       "history": {
         "first_date": "2021-10-26",
         "trading_days": 1239,
@@ -127,8 +127,8 @@
         "turnover_crore": 63.65
       },
       "latest_close": 516.35,
-      "trailing_pe": 31.143368,
-      "market_cap": 126841397248,
+      "trailing_pe": 31.1641,
+      "market_cap": 126925840384,
       "history": {
         "first_date": "2021-10-26",
         "trading_days": 1239,
@@ -156,8 +156,8 @@
         "turnover_crore": 76.88
       },
       "latest_close": 662.6,
-      "trailing_pe": 30.134642,
-      "market_cap": 70174089216,
+      "trailing_pe": 30.068462,
+      "market_cap": 70019973120,
       "history": {
         "first_date": "2021-10-26",
         "trading_days": 1238,
@@ -185,8 +185,8 @@
         "turnover_crore": 225.3
       },
       "latest_close": 61.58,
-      "trailing_pe": 33.546448,
-      "market_cap": 58966286336,
+      "trailing_pe": 33.69945,
+      "market_cap": 59235229696,
       "history": {
         "first_date": "2021-10-26",
         "trading_days": 1239,
@@ -297,7 +297,7 @@
       "ENGINERSIN.NS": 0.040545,
       "AFFLE.NS": 0.126819,
       "GALLANTT.NS": 0.037625,
-      "CLEAN.NS": 0.028442,
+      "CLEAN.NS": 0.028443,
       "ZEEL.NS": 0.043913
     },
     "GALLANTT.NS": {
@@ -306,12 +306,12 @@
       "AFFLE.NS": 0.037625,
       "GALLANTT.NS": 0.261533,
       "CLEAN.NS": 0.030741,
-      "ZEEL.NS": 0.045974
+      "ZEEL.NS": 0.045975
     },
     "CLEAN.NS": {
       "ITI.NS": 0.025875,
       "ENGINERSIN.NS": 0.031832,
-      "AFFLE.NS": 0.028442,
+      "AFFLE.NS": 0.028443,
       "GALLANTT.NS": 0.030741,
       "CLEAN.NS": 0.102561,
       "ZEEL.NS": 0.039169
@@ -320,7 +320,7 @@
       "ITI.NS": 0.044178,
       "ENGINERSIN.NS": 0.05819,
       "AFFLE.NS": 0.043913,
-      "GALLANTT.NS": 0.045974,
+      "GALLANTT.NS": 0.045975,
       "CLEAN.NS": 0.039169,
       "ZEEL.NS": 0.227806
     }
@@ -1662,7 +1662,7 @@
         2397.86,
         2338.37,
         2351.0,
-        2441.73,
+        2441.74,
         2539.66,
         2489.97,
         2333.52,
