@@ -1,7 +1,7 @@
 {
- "as_of": "2026-11-03",
- "created_utc": "2026-11-03T14:46:46.151792+00:00",
- "stocks_forecast": 1382,
+ "as_of": "2026-11-02",
+ "created_utc": "2026-11-03T21:24:02.012058+00:00",
+ "stocks_forecast": 6,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1382
+  "Suspended": 6
  },
  "active_strategies": [
   "disc_f1303479",
@@ -56,7 +56,7 @@
      "95": 0.922
     },
     "p_up_n": 16468,
-    "ece": 0.1484
+    "ece": 0.1513
    },
    "5": {
     "n": 12878,
@@ -66,7 +66,7 @@
      "95": 0.9053
     },
     "p_up_n": 12878,
-    "ece": 0.0913
+    "ece": 0.0928
    },
    "10": {
     "n": 7401,
@@ -80,7 +80,7 @@
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.148 is above 0.05 (n = 16468)",
+  "live calibration error 0.151 is above 0.05 (n = 16468)",
   "live 50% band covered 45.9%, more than 4% from nominal (n = 16468)",
   "live 80% band covered 75.8%, more than 4% from nominal (n = 16468)"
  ],
@@ -89,54 +89,54 @@
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   67.6,
-   929144
+   43.5,
+   927762
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1382
+   6
   ],
   [
    "fit + predict H=1",
-   21.4,
-   1382
+   15.9,
+   6
   ],
   [
    "fit + predict H=5",
-   21.8,
-   1382
+   16.0,
+   6
   ],
   [
    "fit + predict H=10",
-   23.5,
-   1382
+   16.1,
+   6
   ],
   [
    "fit + predict H=20",
-   23.0,
-   1382
+   16.2,
+   6
   ],
   [
    "fit + predict H=60",
-   22.2,
-   1382
+   16.2,
+   6
   ],
   [
    "ledger forecast batch (already in the ledger, not rewritten)",
-   0.3,
-   1382
+   0.2,
+   6
   ],
   [
    "resolve matured forecasts",
-   0.4,
+   0.3,
    0
   ],
   [
    "states, signals, kill switches",
-   0.4,
-   1382
+   0.3,
+   6
   ]
  ],
- "total_s": 181
+ "total_s": 125
 }
