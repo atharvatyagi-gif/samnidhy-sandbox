@@ -1452,9 +1452,9 @@
    1.11272
   ]
  },
- "generated_utc": "2026-11-04T11:30:59+00:00",
- "generated_ist": "04 Nov 2026, 05:00 PM IST",
- "screened_ist": "04 Nov 2026, 05:00 PM IST",
+ "generated_utc": "2026-11-04T13:34:01+00:00",
+ "generated_ist": "04 Nov 2026, 07:04 PM IST",
+ "screened_ist": "04 Nov 2026, 07:04 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,11 +1484,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 271
+   "count": 277
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 153
+   "count": 158
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1501,9 +1501,9 @@
   "2": 3,
   "3": 18,
   "4": 36,
-  "5": 61,
-  "6": 68,
-  "7": 42,
+  "5": 62,
+  "6": 70,
+  "7": 45,
   "8": 28,
   "9": 15
  },
@@ -1526,12 +1526,6 @@
    "RUBICON"
   ],
   "download failed (YFRateLimitError)": [
-   "SOBHA",
-   "SOLARINDS",
-   "SONACOMS",
-   "SRF",
-   "STLTECH",
-   "SUMICHEM",
    "SUNPHARMA",
    "SUNTV",
    "SUPREMEIND",
@@ -1641,7 +1635,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 16,
-   "of": 153
+   "of": 158
   },
   {
    "symbol": "SIGNATURE",
@@ -1694,7 +1688,7 @@
    "magic_rank": 2,
    "rank_roc": 9,
    "rank_ey": 9,
-   "of": 153
+   "of": 158
   },
   {
    "symbol": "BLS",
@@ -1722,8 +1716,8 @@
    },
    "ebit_cr": 820.4,
    "capital_cr": 457.7,
-   "ev_cr": 7835.2,
-   "market_cap_cr": 8918.4,
+   "ev_cr": 7836.6,
+   "market_cap_cr": 8919.8,
    "pe": 12.470081,
    "pb": 3.6204937,
    "roe": null,
@@ -1738,7 +1732,7 @@
    "estimate_high": 330.0,
    "estimate_low": 330.0,
    "eps": 17.38,
-   "shares_out": 411499336.0,
+   "shares_out": 411564253.0,
    "employees": 63000.0,
    "website": "https://www.blsinternational.com",
    "city": "New Delhi",
@@ -1747,7 +1741,7 @@
    "magic_rank": 3,
    "rank_roc": 11,
    "rank_ey": 13,
-   "of": 153
+   "of": 158
   },
   {
    "symbol": "NBCC",
@@ -1800,7 +1794,7 @@
    "magic_rank": 4,
    "rank_roc": 10,
    "rank_ey": 25,
-   "of": 153
+   "of": 158
   },
   {
    "symbol": "CASTROLIND",
@@ -1853,7 +1847,7 @@
    "magic_rank": 5,
    "rank_roc": 5,
    "rank_ey": 32,
-   "of": 153
+   "of": 158
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1906,7 +1900,7 @@
    "magic_rank": 6,
    "rank_roc": 18,
    "rank_ey": 23,
-   "of": 153
+   "of": 158
   },
   {
    "symbol": "ENGINERSIN",
@@ -1959,7 +1953,7 @@
    "magic_rank": 7,
    "rank_roc": 6,
    "rank_ey": 41,
-   "of": 153
+   "of": 158
   },
   {
    "symbol": "NATIONALUM",
@@ -1998,10 +1992,10 @@
    "held_insiders": 0.51278,
    "analysts": 14,
    "consensus": "positive",
-   "consensus_score": 2.5,
-   "estimate_mean": 402.5,
+   "consensus_score": 2.28571,
+   "estimate_mean": 401.7857,
    "estimate_high": 480.0,
-   "estimate_low": 320.0,
+   "estimate_low": 315.0,
    "eps": 38.96,
    "shares_out": 1836631787.0,
    "employees": 4864.0,
@@ -2012,7 +2006,7 @@
    "magic_rank": 8,
    "rank_roc": 41,
    "rank_ey": 7,
-   "of": 153
+   "of": 158
   },
   {
    "symbol": "HINDZINC",
@@ -2065,7 +2059,7 @@
    "magic_rank": 9,
    "rank_roc": 29,
    "rank_ey": 20,
-   "of": 153
+   "of": 158
   },
   {
    "symbol": "ESCORTS",
@@ -2102,11 +2096,11 @@
    "dividend_yield": 1.35,
    "held_institutions": 0.13834,
    "held_insiders": 0.74504,
-   "analysts": 17,
+   "analysts": 18,
    "consensus": "neutral",
-   "consensus_score": 2.89474,
-   "estimate_mean": 2905.2942,
-   "estimate_high": 3713.0,
+   "consensus_score": 2.73684,
+   "estimate_mean": 2826.1667,
+   "estimate_high": 3541.0,
    "estimate_low": 2100.0,
    "eps": 119.49,
    "shares_out": 110041919.0,
@@ -2118,7 +2112,7 @@
    "magic_rank": 10,
    "rank_roc": 34,
    "rank_ey": 19,
-   "of": 153
+   "of": 158
   }
  ]
 }
