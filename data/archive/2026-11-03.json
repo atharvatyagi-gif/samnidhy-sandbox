@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-11-04T02:00:43+00:00",
+  "generated_on": "2026-11-04T03:31:26+00:00",
   "session_date": "2026-11-03",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -46,7 +46,7 @@
         "first_date": "2021-10-27",
         "trading_days": 1238,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.147691,
       "total_return": 0.996324,
@@ -75,7 +75,7 @@
         "first_date": "2021-10-27",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.102112,
       "total_return": 0.628955,
@@ -104,7 +104,7 @@
         "first_date": "2021-10-27",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.155884,
       "total_return": 1.068876,
@@ -133,7 +133,7 @@
         "first_date": "2021-10-27",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.08667,
       "total_return": -0.365531,
@@ -157,12 +157,12 @@
       },
       "latest_close": 3389.7,
       "trailing_pe": 24.981207,
-      "market_cap": null,
+      "market_cap": 316328050688,
       "history": {
         "first_date": "2021-10-27",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.123122,
       "total_return": 0.790881,
@@ -191,7 +191,7 @@
         "first_date": "2021-10-27",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.411132,
       "total_return": 4.631223,
@@ -216,7 +216,7 @@
       "start": "2021-10-27",
       "end": "2026-11-03",
       "years": 5.02,
-      "session_price_from": "NSE"
+      "session_price_from": "Yahoo"
     },
     "latest_close": 23810.85,
     "session_pct_change": 1.5787,
@@ -282,7 +282,7 @@
       "BALRAMCHIN.NS": 0.036186,
       "KEC.NS": 0.025977,
       "AIAENG.NS": 0.019256,
-      "GESHIP.NS": 0.018706
+      "GESHIP.NS": 0.018707
     },
     "MARICO.NS": {
       "CARTRADE.NS": 0.017252,
@@ -317,7 +317,7 @@
       "GESHIP.NS": 0.015646
     },
     "GESHIP.NS": {
-      "CARTRADE.NS": 0.018706,
+      "CARTRADE.NS": 0.018707,
       "MARICO.NS": 0.007284,
       "BALRAMCHIN.NS": 0.032668,
       "KEC.NS": 0.024127,
@@ -2066,7 +2066,7 @@
         1247.13,
         1299.99,
         1241.07,
-        1254.72,
+        1254.73,
         1219.68,
         1186.76,
         1152.75,
@@ -2076,7 +2076,7 @@
         1194.53,
         1174.61,
         1209.7,
-        1134.0,
+        1134.01,
         1047.62,
         1032.4,
         1044.06,
