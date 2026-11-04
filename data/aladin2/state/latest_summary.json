@@ -1,7 +1,7 @@
 {
- "as_of": "2026-11-03",
- "created_utc": "2026-11-04T04:39:27.654295+00:00",
- "stocks_forecast": 1382,
+ "as_of": "2026-11-04",
+ "created_utc": "2026-11-04T09:36:03.590990+00:00",
+ "stocks_forecast": 1326,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 1382
+  "Suspended": 1326
  },
  "active_strategies": [
   "disc_f1303479",
@@ -46,86 +46,94 @@
  "probation_strategies": [],
  "bullish_signals": 0,
  "live_stats": {
-  "forecast_batches": 18,
+  "forecast_batches": 19,
   "outcomes": {
    "1": {
-    "n": 16468,
+    "n": 17789,
     "coverage": {
-     "50": 0.4586,
-     "80": 0.7576,
-     "95": 0.922
+     "50": 0.4521,
+     "80": 0.7546,
+     "95": 0.923
     },
-    "p_up_n": 16468,
-    "ece": 0.1484
+    "p_up_n": 17789,
+    "ece": 0.1685
    },
    "5": {
-    "n": 12878,
+    "n": 14210,
     "coverage": {
-     "50": 0.4591,
-     "80": 0.7268,
-     "95": 0.9053
+     "50": 0.4632,
+     "80": 0.732,
+     "95": 0.9075
     },
-    "p_up_n": 12878,
-    "ece": 0.0913
+    "p_up_n": 14210,
+    "ece": 0.1139
    },
    "10": {
-    "n": 7401,
+    "n": 8738,
     "coverage": {
-     "50": 0.3616,
-     "80": 0.68,
-     "95": 0.9068
+     "50": 0.3957,
+     "80": 0.7046,
+     "95": 0.9141
+    }
+   },
+   "20": {
+    "n": 475,
+    "coverage": {
+     "50": 0.4842,
+     "80": 0.7726,
+     "95": 0.9242
     }
    }
   }
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.148 is above 0.05 (n = 16468)",
-  "live 50% band covered 45.9%, more than 4% from nominal (n = 16468)",
-  "live 80% band covered 75.8%, more than 4% from nominal (n = 16468)"
+  "live calibration error 0.169 is above 0.05 (n = 17789)",
+  "live 50% band covered 45.2%, more than 4% from nominal (n = 17789)",
+  "live 80% band covered 75.5%, more than 4% from nominal (n = 17789)"
  ],
- "ledger_status": "already in the ledger, not rewritten",
+ "ledger_status": "written",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   60.9,
+   59.9,
    929144
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   1382
+   1326
   ],
   [
    "fit + predict H=1",
-   19.6,
-   1382
+   19.7,
+   1326
   ],
   [
    "fit + predict H=5",
-   19.8,
-   1382
+   19.6,
+   1326
   ],
   [
    "fit + predict H=10",
    19.7,
-   1382
+   1326
   ],
   [
    "fit + predict H=20",
-   19.8,
-   1382
+   20.1,
+   1326
   ],
   [
    "fit + predict H=60",
-   19.9,
-   1382
+   19.5,
+   1326
   ],
   [
-   "ledger forecast batch (already in the ledger, not rewritten)",
-   0.3,
-   1382
+   "ledger forecast batch (written)",
+   0.5,
+   1326
   ],
   [
    "resolve matured forecasts",
@@ -134,9 +142,9 @@
   ],
   [
    "states, signals, kill switches",
-   0.4,
-   1382
+   0.5,
+   1326
   ]
  ],
- "total_s": 161
+ "total_s": 160
 }
