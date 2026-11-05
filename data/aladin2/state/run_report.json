@@ -3,11 +3,11 @@
  "weekday": "Thursday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 630,
+ "total_s": 674,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 2.7,
+   "seconds": 2.9,
    "note": "latest price bar 2026-11-05; delivery / F&O / macro refreshed"
   },
   {
@@ -17,7 +17,7 @@
   },
   {
    "step": "learn",
-   "seconds": 0.0,
+   "seconds": 0.1,
    "note": "cache hit: no new block since 2026-08-13 and the same strategies; states unchanged"
   },
   {
@@ -27,22 +27,22 @@
   },
   {
    "step": "discover",
-   "seconds": 505.8,
-   "note": "50 generations, 1200 new rules, 0 passed, 137178 tested in total"
+   "seconds": 539.5,
+   "note": "50 generations, 1191 new rules, 0 passed, 138369 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 103.1,
-   "note": "as of 2026-11-05, 1389 stocks, states {'Suspended': 1389}, ledger already in the ledger, not rewritten"
+   "seconds": 109.9,
+   "note": "as of 2026-11-04, 6 stocks, states {'Suspended': 6}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 12.1,
-   "note": "as of 2026-11-05: bull 13, bear 26, hold 1249; ledger already in the ledger; 0 outcome lines"
+   "seconds": 15.1,
+   "note": "as of 2026-11-04: bull 13, bear 25, hold 1233; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 2.6,
+   "seconds": 2.9,
    "note": "live paper account: 4 book(s); equity 1,027,753 (2.78%), 14 closed trades, 6 open"
   },
   {
@@ -63,22 +63,22 @@
   "drift_alarms": 0,
   "discovery": {
    "generations": 50,
-   "new_rules": 1200,
+   "new_rules": 1191,
    "passed": 0,
-   "total_tested": 137178
+   "total_tested": 138369
   },
   "forecast": {
-   "as_of": "2026-11-05",
-   "stocks_forecast": 1389,
+   "as_of": "2026-11-04",
+   "stocks_forecast": 6,
    "product_state_counts": {
-    "Suspended": 1389
+    "Suspended": 6
    },
    "ledger_status": "already in the ledger, not rewritten"
   },
   "weekly": {
    "bull": 13,
-   "bear": 26,
-   "hold": 1249
+   "bear": 25,
+   "hold": 1233
   }
  },
  "within_budget": true
