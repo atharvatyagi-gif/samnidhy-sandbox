@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-11-05T03:30:49+00:00",
+  "generated_on": "2026-11-05T04:38:22+00:00",
   "session_date": "2026-11-04",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -49,8 +49,8 @@
         "turnover_crore": 583.41
       },
       "latest_close": 288.18,
-      "trailing_pe": 15.721767,
-      "market_cap": 95041445888,
+      "trailing_pe": 13.663325,
+      "market_cap": 98909995008,
       "history": {
         "first_date": "2021-10-28",
         "trading_days": 1239,
@@ -78,8 +78,8 @@
         "turnover_crore": 1219.96
       },
       "latest_close": 469.2,
-      "trailing_pe": 22.568542,
-      "market_cap": 149205598208,
+      "trailing_pe": 22.722462,
+      "market_cap": 150223192064,
       "history": {
         "first_date": "2021-10-28",
         "trading_days": 1239,
@@ -107,7 +107,7 @@
         "turnover_crore": 514.42
       },
       "latest_close": 67.87,
-      "trailing_pe": 37.087433,
+      "trailing_pe": 33.76617,
       "market_cap": 65190457344,
       "history": {
         "first_date": "2021-10-28",
@@ -136,8 +136,8 @@
         "turnover_crore": 146.72
       },
       "latest_close": 4285.9,
-      "trailing_pe": 34.069157,
-      "market_cap": 133214429184,
+      "trailing_pe": 37.506516,
+      "market_cap": 138669326336,
       "history": {
         "first_date": "2021-10-28",
         "trading_days": 1239,
@@ -165,7 +165,7 @@
         "turnover_crore": 2081.25
       },
       "latest_close": 3315.0,
-      "trailing_pe": 57.18475,
+      "trailing_pe": 60.359604,
       "market_cap": null,
       "history": {
         "first_date": "2021-10-28",
@@ -194,7 +194,7 @@
         "turnover_crore": 140.26
       },
       "latest_close": 3219.8,
-      "trailing_pe": 24.260098,
+      "trailing_pe": 24.248795,
       "market_cap": null,
       "history": {
         "first_date": "2021-10-28",
@@ -202,7 +202,7 @@
         "years": 5.02,
         "session_price_from": "Yahoo"
       },
-      "annualised_return": 0.109619,
+      "annualised_return": 0.10962,
       "total_return": 0.685409,
       "annualised_volatility": 0.276229,
       "max_drawdown": -0.370928,
@@ -305,14 +305,14 @@
       "HEGAM.NS": 0.062713,
       "GMDCLTD.NS": 0.070681,
       "ZEEL.NS": 0.229075,
-      "THANGAMAYL.NS": 0.037916,
+      "THANGAMAYL.NS": 0.037915,
       "MCX.NS": 0.045826,
       "AIAENG.NS": 0.018225
     },
     "THANGAMAYL.NS": {
       "HEGAM.NS": 0.023969,
       "GMDCLTD.NS": 0.040035,
-      "ZEEL.NS": 0.037916,
+      "ZEEL.NS": 0.037915,
       "THANGAMAYL.NS": 0.219513,
       "MCX.NS": 0.033407,
       "AIAENG.NS": 0.016735
@@ -1433,7 +1433,7 @@
         481.12,
         452.79,
         470.78,
-        502.82,
+        502.83,
         530.14,
         530.96,
         513.12,
@@ -1936,7 +1936,7 @@
         1826.75,
         1789.89,
         1767.21,
-        1835.17,
+        1835.18,
         1803.37,
         1833.17,
         1861.2,
@@ -2005,7 +2005,7 @@
         2885.44,
         2834.89,
         2733.84,
-        2673.79,
+        2673.8,
         2701.97,
         2697.94,
         2777.89,
