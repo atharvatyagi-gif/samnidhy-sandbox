@@ -3,17 +3,17 @@
  "weekday": "Friday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 873,
+ "total_s": 804,
  "steps": [
   {
    "step": "ingest",
    "seconds": 4.0,
-   "note": "latest price bar 2026-11-05; delivery / F&O / macro refreshed"
+   "note": "latest price bar 2026-11-06; delivery / F&O / macro refreshed"
   },
   {
    "step": "resolve",
-   "seconds": 16.7,
-   "note": "3 outcome lines"
+   "seconds": 0.4,
+   "note": "0 outcome lines"
   },
   {
    "step": "learn",
@@ -22,28 +22,28 @@
   },
   {
    "step": "drift",
-   "seconds": 4.2,
+   "seconds": 4.1,
    "note": "28 strategies checked, 0 alarms"
   },
   {
    "step": "discover",
-   "seconds": 702.9,
-   "note": "50 generations, 1200 new rules, 0 passed, 140675 tested in total"
+   "seconds": 663.2,
+   "note": "50 generations, 1200 new rules, 0 passed, 141875 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 127.9,
-   "note": "as of 2026-11-06, 61 stocks, states {'Suspended': 61}, ledger written"
+   "seconds": 116.9,
+   "note": "as of 2026-11-06, 1322 stocks, states {'Suspended': 1322}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 14.3,
-   "note": "as of 2026-11-06: bull 1, bear 1, hold 56; ledger written; 0 outcome lines"
+   "seconds": 12.6,
+   "note": "as of 2026-11-06: bull 12, bear 24, hold 1189; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 3.4,
-   "note": "live paper account: 5 book(s); equity 1,027,821 (2.78%), 14 closed trades, 6 open"
+   "seconds": 2.9,
+   "note": "live paper account: 5 book(s); equity 988,511 (-1.15%), 14 closed trades, 6 open"
   },
   {
    "step": "bot",
@@ -58,27 +58,27 @@
  ],
  "errors": [],
  "counts": {
-  "outcomes_written": 3,
+  "outcomes_written": 0,
   "learn_cached": true,
   "drift_alarms": 0,
   "discovery": {
    "generations": 50,
    "new_rules": 1200,
    "passed": 0,
-   "total_tested": 140675
+   "total_tested": 141875
   },
   "forecast": {
    "as_of": "2026-11-06",
-   "stocks_forecast": 61,
+   "stocks_forecast": 1322,
    "product_state_counts": {
-    "Suspended": 61
+    "Suspended": 1322
    },
-   "ledger_status": "written"
+   "ledger_status": "already in the ledger, not rewritten"
   },
   "weekly": {
-   "bull": 1,
-   "bear": 1,
-   "hold": 56
+   "bull": 12,
+   "bear": 24,
+   "hold": 1189
   }
  },
  "within_budget": true
