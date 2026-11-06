@@ -1,7 +1,7 @@
 {
- "as_of": "2026-11-04",
- "created_utc": "2026-11-06T03:03:42.967377+00:00",
- "stocks_forecast": 6,
+ "as_of": "2026-11-06",
+ "created_utc": "2026-11-06T04:35:59.431049+00:00",
+ "stocks_forecast": 61,
  "horizons": [
   1,
   5,
@@ -11,7 +11,7 @@
  ],
  "model_version": "har-cqr-1",
  "product_state_counts": {
-  "Suspended": 6
+  "Suspended": 61
  },
  "active_strategies": [
   "disc_f1303479",
@@ -46,34 +46,34 @@
  "probation_strategies": [],
  "bullish_signals": 0,
  "live_stats": {
-  "forecast_batches": 20,
+  "forecast_batches": 21,
   "outcomes": {
    "1": {
-    "n": 19113,
+    "n": 19172,
     "coverage": {
-     "50": 0.4446,
-     "80": 0.7521,
-     "95": 0.9241
+     "50": 0.4451,
+     "80": 0.7522,
+     "95": 0.9242
     },
-    "p_up_n": 19113,
-    "ece": 0.1467
+    "p_up_n": 19172,
+    "ece": 0.1474
    },
    "5": {
-    "n": 15539,
+    "n": 15597,
     "coverage": {
-     "50": 0.4554,
-     "80": 0.7282,
-     "95": 0.9064
+     "50": 0.4553,
+     "80": 0.7285,
+     "95": 0.9065
     },
-    "p_up_n": 15539,
-    "ece": 0.138
+    "p_up_n": 15597,
+    "ece": 0.1418
    },
    "10": {
-    "n": 10070,
+    "n": 10127,
     "coverage": {
-     "50": 0.4164,
-     "80": 0.715,
-     "95": 0.9151
+     "50": 0.4162,
+     "80": 0.7153,
+     "95": 0.9152
     }
    },
    "20": {
@@ -88,52 +88,52 @@
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.147 is above 0.05 (n = 19113)",
-  "live 50% band covered 44.5%, more than 4% from nominal (n = 19113)",
-  "live 80% band covered 75.2%, more than 4% from nominal (n = 19113)"
+  "live calibration error 0.147 is above 0.05 (n = 19172)",
+  "live 50% band covered 44.5%, more than 4% from nominal (n = 19172)",
+  "live 80% band covered 75.2%, more than 4% from nominal (n = 19172)"
  ],
- "ledger_status": "already in the ledger, not rewritten",
+ "ledger_status": "written",
  "disclaimer": "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.",
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   60.3,
-   935140
+   45.7,
+   936699
   ],
   [
    "select today's rows (the configured liquid universe, forecast.universe_top)",
    0.0,
-   6
+   61
   ],
   [
    "fit + predict H=1",
-   19.9,
-   6
+   16.0,
+   61
   ],
   [
    "fit + predict H=5",
-   19.9,
-   6
+   16.3,
+   61
   ],
   [
    "fit + predict H=10",
-   20.3,
-   6
+   16.3,
+   61
   ],
   [
    "fit + predict H=20",
-   19.8,
-   6
+   16.3,
+   61
   ],
   [
    "fit + predict H=60",
-   19.7,
-   6
+   16.1,
+   61
   ],
   [
-   "ledger forecast batch (already in the ledger, not rewritten)",
-   0.2,
-   6
+   "ledger forecast batch (written)",
+   0.3,
+   61
   ],
   [
    "resolve matured forecasts",
@@ -142,9 +142,9 @@
   ],
   [
    "states, signals, kill switches",
-   0.4,
-   6
+   0.5,
+   61
   ]
  ],
- "total_s": 161
+ "total_s": 128
 }
