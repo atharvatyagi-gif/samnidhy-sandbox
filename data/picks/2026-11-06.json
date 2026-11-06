@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-11-06",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_06112026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 495,
+  "eligible_count": 447,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "SAILIFE",
+      "yahoo_ticker": "SAILIFE.NS",
+      "name": "Sai Life Sciences Ltd.",
+      "industry": "Healthcare",
+      "prev_close": 1594.5,
+      "open": 1655.1,
+      "high": 1814.9,
+      "low": 1614.9,
+      "close": 1785.1,
+      "pct_change": 11.9536,
+      "volume": 13228347,
+      "turnover_crore": 2341.29
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "LINDEINDIA",
+      "yahoo_ticker": "LINDEINDIA.NS",
+      "name": "Linde India Ltd.",
+      "industry": "Chemicals",
+      "prev_close": 6308.0,
+      "open": 6291.0,
+      "high": 7090.0,
+      "low": 6106.5,
+      "close": 6859.0,
+      "pct_change": 8.7349,
+      "volume": 300621,
+      "turnover_crore": 202.4
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "HAVELLS",
+      "yahoo_ticker": "HAVELLS.NS",
+      "name": "Havells India Ltd.",
+      "industry": "Consumer Durables",
+      "prev_close": 1068.1,
+      "open": 1068.7,
+      "high": 1129.8,
+      "low": 1048.2,
+      "close": 1128.0,
+      "pct_change": 5.6081,
+      "volume": 2639019,
+      "turnover_crore": 289.41
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "THERMAX",
+      "yahoo_ticker": "THERMAX.NS",
+      "name": "Thermax Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 3319.7,
+      "open": 3010.0,
+      "high": 3048.5,
+      "low": 2666.6,
+      "close": 2746.3,
+      "pct_change": -17.2726,
+      "volume": 2896155,
+      "turnover_crore": 800.62
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "TDPOWERSYS",
+      "yahoo_ticker": "TDPOWERSYS.NS",
+      "name": "TD Power Systems Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 669.2,
+      "open": 620.0,
+      "high": 626.95,
+      "low": 557.05,
+      "close": 576.5,
+      "pct_change": -13.8524,
+      "volume": 19405017,
+      "turnover_crore": 1113.3
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "ASTRAL",
+      "yahoo_ticker": "ASTRAL.NS",
+      "name": "Astral Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 1388.0,
+      "open": 1369.6,
+      "high": 1369.6,
+      "low": 1215.5,
+      "close": 1253.6,
+      "pct_change": -9.683,
+      "volume": 4860138,
+      "turnover_crore": 604.83
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-11-06T13:31:32+00:00",
+  "fetched_at_ist": "06 Nov 2026, 07:01 PM IST"
+}
