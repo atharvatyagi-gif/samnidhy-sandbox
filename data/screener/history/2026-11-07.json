@@ -105,7 +105,7 @@
    -0.23585,
    -0.23397,
    -0.23362,
-   -0.23262,
+   -0.23263,
    -0.23246,
    -0.23215,
    -0.23113,
@@ -947,7 +947,7 @@
    0.98111,
    0.98112,
    0.98121,
-   0.9824,
+   0.98241,
    0.9846,
    0.98471,
    0.98749,
@@ -1039,7 +1039,7 @@
    0.26028,
    0.26058,
    0.26146,
-   0.26173,
+   0.26172,
    0.26241,
    0.26329,
    0.26393,
@@ -1452,9 +1452,9 @@
    1.11305
   ]
  },
- "generated_utc": "2026-11-06T20:03:41+00:00",
- "generated_ist": "07 Nov 2026, 01:33 AM IST",
- "screened_ist": "07 Nov 2026, 01:33 AM IST",
+ "generated_utc": "2026-11-07T02:03:05+00:00",
+ "generated_ist": "07 Nov 2026, 07:33 AM IST",
+ "screened_ist": "07 Nov 2026, 07:33 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,11 +1484,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 298
+   "count": 300
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 166
+   "count": 167
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1500,10 +1500,10 @@
   "1": 0,
   "2": 4,
   "3": 23,
-  "4": 38,
+  "4": 39,
   "5": 67,
   "6": 73,
-  "7": 50,
+  "7": 51,
   "8": 28,
   "9": 15
  },
@@ -1527,8 +1527,6 @@
    "RUBICON"
   ],
   "download failed (YFRateLimitError)": [
-   "THERMAX",
-   "TIINDIA",
    "TIMKEN",
    "TITAGARH",
    "TITAN",
@@ -1614,7 +1612,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 14,
-   "of": 166
+   "of": 167
   },
   {
    "symbol": "SIGNATURE",
@@ -1667,7 +1665,7 @@
    "magic_rank": 2,
    "rank_roc": 9,
    "rank_ey": 10,
-   "of": 166
+   "of": 167
   },
   {
    "symbol": "BLS",
@@ -1720,7 +1718,7 @@
    "magic_rank": 3,
    "rank_roc": 11,
    "rank_ey": 15,
-   "of": 166
+   "of": 167
   },
   {
    "symbol": "NBCC",
@@ -1773,7 +1771,7 @@
    "magic_rank": 4,
    "rank_roc": 10,
    "rank_ey": 22,
-   "of": 166
+   "of": 167
   },
   {
    "symbol": "CASTROLIND",
@@ -1826,7 +1824,7 @@
    "magic_rank": 5,
    "rank_roc": 5,
    "rank_ey": 30,
-   "of": 166
+   "of": 167
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1879,7 +1877,7 @@
    "magic_rank": 6,
    "rank_roc": 18,
    "rank_ey": 23,
-   "of": 166
+   "of": 167
   },
   {
    "symbol": "ENGINERSIN",
@@ -1932,7 +1930,7 @@
    "magic_rank": 7,
    "rank_roc": 6,
    "rank_ey": 41,
-   "of": 166
+   "of": 167
   },
   {
    "symbol": "HINDZINC",
@@ -1985,7 +1983,7 @@
    "magic_rank": 8,
    "rank_roc": 29,
    "rank_ey": 20,
-   "of": 166
+   "of": 167
   },
   {
    "symbol": "NATIONALUM",
@@ -2038,7 +2036,7 @@
    "magic_rank": 9,
    "rank_roc": 42,
    "rank_ey": 7,
-   "of": 166
+   "of": 167
   },
   {
    "symbol": "ESCORTS",
@@ -2091,7 +2089,7 @@
    "magic_rank": 10,
    "rank_roc": 35,
    "rank_ey": 19,
-   "of": 166
+   "of": 167
   }
  ]
 }
