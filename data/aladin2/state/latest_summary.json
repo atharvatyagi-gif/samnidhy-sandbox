@@ -1,6 +1,6 @@
 {
  "as_of": "2026-11-06",
- "created_utc": "2026-11-07T02:49:51.028451+00:00",
+ "created_utc": "2026-11-07T03:32:55.175035+00:00",
  "stocks_forecast": 1327,
  "horizons": [
   1,
@@ -56,7 +56,7 @@
      "95": 0.9242
     },
     "p_up_n": 19172,
-    "ece": 0.1474
+    "ece": 0.1479
    },
    "5": {
     "n": 15597,
@@ -66,7 +66,7 @@
      "95": 0.9065
     },
     "p_up_n": 15597,
-    "ece": 0.1418
+    "ece": 0.1395
    },
    "10": {
     "n": 10127,
@@ -88,7 +88,7 @@
  },
  "engine_suspended": true,
  "kill_reasons": [
-  "live calibration error 0.147 is above 0.05 (n = 19172)",
+  "live calibration error 0.148 is above 0.05 (n = 19172)",
   "live 50% band covered 44.5%, more than 4% from nominal (n = 19172)",
   "live 80% band covered 75.2%, more than 4% from nominal (n = 19172)"
  ],
@@ -97,7 +97,7 @@
  "timings_s": [
   [
    "panel (prices, features, 1,100+ stocks)",
-   43.1,
+   59.1,
    930544
   ],
   [
@@ -107,27 +107,27 @@
   ],
   [
    "fit + predict H=1",
-   15.7,
+   19.4,
    1327
   ],
   [
    "fit + predict H=5",
-   15.8,
+   19.6,
    1327
   ],
   [
    "fit + predict H=10",
-   15.8,
+   20.0,
    1327
   ],
   [
    "fit + predict H=20",
-   15.8,
+   19.6,
    1327
   ],
   [
    "fit + predict H=60",
-   15.7,
+   19.5,
    1327
   ],
   [
@@ -137,14 +137,14 @@
   ],
   [
    "resolve matured forecasts",
-   0.3,
+   0.4,
    0
   ],
   [
    "states, signals, kill switches",
-   0.3,
+   0.4,
    1327
   ]
  ],
- "total_s": 123
+ "total_s": 158
 }
