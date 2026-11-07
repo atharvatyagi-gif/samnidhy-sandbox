@@ -1410,7 +1410,7 @@
    0.47933,
    0.48046,
    0.48119,
-   0.4823,
+   0.48231,
    0.48703,
    0.48814,
    0.49007,
@@ -1452,9 +1452,9 @@
    1.11267
   ]
  },
- "generated_utc": "2026-11-07T13:33:44+00:00",
- "generated_ist": "07 Nov 2026, 07:03 PM IST",
- "screened_ist": "07 Nov 2026, 07:03 PM IST",
+ "generated_utc": "2026-11-07T18:11:26+00:00",
+ "generated_ist": "07 Nov 2026, 11:41 PM IST",
+ "screened_ist": "07 Nov 2026, 11:41 PM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,7 +1484,7 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 282
+   "count": 279
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
@@ -1499,9 +1499,9 @@
   "0": 0,
   "1": 0,
   "2": 3,
-  "3": 19,
-  "4": 37,
-  "5": 65,
+  "3": 18,
+  "4": 36,
+  "5": 64,
   "6": 70,
   "7": 45,
   "8": 28,
@@ -1526,7 +1526,10 @@
    "RUBICON"
   ],
   "download failed (YFRateLimitError)": [
+   "SUPREMEIND",
+   "SWANCORP",
    "SWIGGY",
+   "SYNGENE",
    "SYRMA",
    "TARIL",
    "TATACHEM",
@@ -2091,10 +2094,10 @@
    "dividend_yield": 1.35,
    "held_institutions": 0.13836999,
    "held_insiders": 0.74504,
-   "analysts": 18,
+   "analysts": 19,
    "consensus": "neutral",
-   "consensus_score": 2.73684,
-   "estimate_mean": 2826.1667,
+   "consensus_score": 2.75,
+   "estimate_mean": 2766.2104,
    "estimate_high": 3541.0,
    "estimate_low": 2100.0,
    "eps": 119.49,
