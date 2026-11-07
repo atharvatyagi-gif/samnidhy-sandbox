@@ -18,7 +18,7 @@ import { MAP_COLORS, hotspotColor, hotspotRadius, isStale, ageMin, ageText, coun
 const D3 = { geo: "https://cdn.jsdelivr.net/npm/d3-geo@3.1.1/+esm", topo: "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm", qt: "https://cdn.jsdelivr.net/npm/d3-quadtree@3.0.1/+esm",
   world: "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json" };
 const LS = "blab.globe.layers";
-const LAYERS = [["hot", "Geopolitical news attention", true], ["choke", "Chokepoints", true], ["cargo", "Cargo flights", true], ["air", "Other flights", true], ["ship", "Vessels", true], ["plant", "Plants (filings)", true], ["lane", "Trade lanes", true], ...GL.EXTRA];
+const LAYERS = [["hot", "Geopolitical news attention", true], ["choke", "Chokepoints", true], ["cargo", "Cargo flights", true], ["air", "Other flights", true], ["ship", "Vessels", true], ["plant", "Plants (filings)", false], ["lane", "Trade lanes", true], ...GL.EXTRA];
 const DEFAULTS = Object.fromEntries(LAYERS.map(([k, , d]) => [k, d]));
 const MAX_LIST = 300, RAD = Math.PI / 180;
 

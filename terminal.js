@@ -1532,8 +1532,9 @@ function renderGlobeBrief(G) {
     cards.push(bcard("neutral", "Most covered in the news", `${esc(mostNews.name)} · ${mostNews.news.length} real headline${mostNews.news.length === 1 ? "" : "s"}`,
       esc((mostNews.news[0] || {}).title || ""), "Open chokepoint", `data-choke="${esc(mostNews.id)}"`));
   }
-  const allNews = [...pts.flatMap(p => (p.news || []).map(n => ({ ...n, choke: p.name }))), ...(G.events || []).map(n => ({ ...n, choke: "World events" }))];
-  const fresh = allNews.filter(n => n.seen_utc).sort((a, b) => new Date(b.seen_utc) - new Date(a.seen_utc))[0];
+  const newest = list => list.filter(n => n.seen_utc).sort((a, b) => new Date(b.seen_utc) - new Date(a.seen_utc))[0];
+  const fresh = newest(pts.flatMap(p => (p.news || []).map(n => ({ ...n, choke: p.name }))))        // a chokepoint's own news first: this is the chokepoint map
+    || newest((G.events || []).map(n => ({ ...n, choke: "World events" })));                       // the general world-events feed only when there is none
   if (fresh) cards.push(`<a class="bcard neutral" href="${esc(fresh.url)}" target="_blank" rel="noopener noreferrer"><span class="lbl">Freshest real headline</span><span class="ttl">${esc(fresh.title)}</span><span class="sub">${esc(fresh.source || "")} · ${esc(fresh.choke)} · ${esc(newsTimeAgo(fresh.seen_utc))}</span><span class="go">Read the article →</span></a>`);
   el.innerHTML = cards.join("") || '<p class="empty">Not enough data yet for a brief - check back after the next hourly refresh.</p>';
   $$("#globe-brief [data-choke]").forEach(bt => bt.onclick = () => { selectChoke(bt.dataset.choke); $("#globe-map").scrollIntoView({ behavior: "smooth", block: "center" }); });

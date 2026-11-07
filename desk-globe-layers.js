@@ -4,7 +4,7 @@
    other Globe views the same layers and base maps, from the same published files (globe.json and globe/layers/*.json). Nothing here is invented: a layer with
    no data simply has no markers, and the legend says so. Positions are only drawn from the files; hazards older than 7 days were already dropped by freshGlobe(). */
 export const EXTRA = [["disr", "Disruptions (PortWatch)", true], ["quake", "Earthquakes M4.5+ (USGS)", true], ["nat", "Natural events, 7d (NASA EONET)", true], ["alert", "Disaster alerts (GDACS)", true],
-  ["slane", "Shipping lanes", true], ["cable", "Submarine cables", true], ["power", "Power plants, India ≥100MW", false], ["asset", "Company facilities (Wikidata)", false], ["border", "Country borders", true]];
+  ["slane", "Shipping lanes", true], ["cable", "Submarine cables", false], ["power", "Power plants, India ≥100MW", false], ["asset", "Company facilities (Wikidata)", false], ["border", "Country borders", true]];
 export const BASES = [["dark", "Dark (default)"], ["sat", "Satellite"], ["street", "Streets"]];
 export const TILE = {
   sat: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",

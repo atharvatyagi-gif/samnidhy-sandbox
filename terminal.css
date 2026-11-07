@@ -671,11 +671,14 @@ kbd { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule-
 .globe-dot.grey { background: var(--ink-4); }
 /* custom Leaflet controls: zoom presets, fullscreen, lat/lon readout - styled to match the icon-btn/btn-line language */
 .globe-presets, .globe-fs { background: none; border: none; }
+#globe-map .leaflet-container { background: var(--sunken); }   /* Leaflet's default light grey showed through the dark base map's semi-transparent tiles as a pale rectangle */
+.leaflet-container .leaflet-bar.globe-presets a, .leaflet-container .leaflet-bar.globe-fs a, .leaflet-touch .leaflet-bar.globe-presets a, .leaflet-touch .leaflet-bar.globe-fs a { width: auto; min-width: 30px; padding: 0 9px; background: var(--card); color: var(--ink-2); }   /* Leaflet's own sheet loads later and would force 26px white boxes ("Wor | India") */
 .globe-presets a, .globe-fs a { width: auto; line-height: 1; display: flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 8px; background: var(--card); color: var(--ink-2); border: 1px solid var(--rule-2); font: 600 10.5px var(--mono); text-decoration: none; }
 .globe-presets a:hover, .globe-fs a:hover { background: var(--acc-soft); color: var(--acc); }
 .globe-presets { display: flex; }
 .globe-coord { background: var(--card); color: var(--ink-3); font: 11px var(--mono); padding: 2px 8px; border: 1px solid var(--rule-2); }
 .globe-legend { position: absolute; left: 8px; bottom: 8px; z-index: 450; display: flex; flex-wrap: wrap; gap: 8px; max-width: 70%; pointer-events: none; }
+@media (max-width: 700px) { #globe-map .globe-legend { flex-wrap: nowrap; overflow-x: auto; max-width: calc(100% - 16px); right: 8px; bottom: 30px; pointer-events: auto; scrollbar-width: none; } #globe-map .globe-legend > * { flex: 0 0 auto; } #globe-map .leaflet-control-scale { display: none; } }   /* phones: one row you can swipe, so the legend no longer covers a third of the map */
 .gl-item { display: inline-flex; align-items: center; gap: 4px; font: 10px var(--mono); color: var(--ink-3); background: var(--card); padding: 2px 6px; border-radius: 9px; }
 .gl-item i { width: 8px; height: 8px; display: inline-block; border-radius: 50%; }
 .gl-acc { background: var(--acc); } .gl-plane { background: var(--warn); }

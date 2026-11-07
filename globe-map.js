@@ -137,7 +137,7 @@ const BASEMAPS = {
   street: { name: "Streets", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
     attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, FAO, NOAA, USGS, and the GIS user community' },
 };
-const ZOOM_PRESETS = { world: [[20, 25], 2], india: [[22, 80], 5] };
+const ZOOM_PRESETS = { world: [[25, 20], 2], india: [[22, 80], 5] };   // centred at 20E: at zoom 3 all 8 chokepoints, Panama to Taiwan, still fit
 
 /* FRESHNESS RULE for everything the Globe shows: nothing older than 7 days, undated items are dropped, and flight positions are only used while the
    snapshot they came from is under 2 hours old. Applied in the browser every time the page checks for new data, so an item that turns 8 days old
@@ -178,6 +178,16 @@ export class GlobeMap {
       await loadLeaflet();
       const L = window.L;
       this.map = L.map(this.el, { worldCopyJump: true, minZoom: 2, maxZoom: 12 }).setView(...ZOOM_PRESETS.world);
+      const fitWorld = () => {                                 // never zoomed out further than the box is wide: at zoom 2 the world is only 1,024 px wide, so a wider box
+        const z = this.el.clientWidth > 1024 ? 3 : 2;          // showed an empty, line-less copy of the Pacific on the right. Whole zoom levels only: an in-between zoom
+        this.map.setMinZoom(z); if (this.map.getZoom() < z) this.map.setZoom(z, { animate: false });   // scaled the tiles and left a pale band over Europe and Asia
+        return z;
+      };
+      this.fitWorld = fitWorld; fitWorld();
+      if (window.ResizeObserver) {                             // Leaflet only measures its box when told to: re-measure whenever the box changes size
+        let raf = 0;                                           // (tab switches, the layer panel hiding, scrollbars, window resizes)
+        new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (this.map) { this.map.invalidateSize({ pan: false }); fitWorld(); } }); }).observe(this.el);
+      }
       this.baseLayers = {};
       for (const [key, b] of Object.entries(BASEMAPS)) this.baseLayers[b.name] = L.tileLayer(b.url, { attribution: b.attribution, maxZoom: 16 });
       this.baseLayers[BASEMAPS.dark.name].addTo(this.map);
@@ -194,14 +204,14 @@ export class GlobeMap {
         "Disruptions (PortWatch)": this.disruptionLayer, "Earthquakes M4.5+ (USGS)": this.quakeLayer,
         "Natural events, 7d (NASA EONET)": this.naturalLayer, "Disaster alerts (GDACS)": this.alertLayer,
       }, { collapsed: true, position: "topright" }).addTo(this.map);
-      L.control.scale({ metric: true, imperial: false, position: "bottomleft" }).addTo(this.map);
+      L.control.scale({ metric: true, imperial: false, position: "bottomright" }).addTo(this.map);   // bottom-left is the legend's place
 
       const presets = L.control({ position: "topleft" });
       presets.onAdd = () => {
         const d = L.DomUtil.create("div", "globe-presets leaflet-bar");
         d.innerHTML = '<a href="#" data-z="world" title="Zoom to world view">World</a><a href="#" data-z="india" title="Zoom to India">India</a>';
         L.DomEvent.disableClickPropagation(d);
-        d.querySelectorAll("a").forEach(a => a.onclick = e => { e.preventDefault(); this.map.setView(...ZOOM_PRESETS[a.dataset.z]); });
+        d.querySelectorAll("a").forEach(a => a.onclick = e => { e.preventDefault(); const [c, z] = ZOOM_PRESETS[a.dataset.z]; this.map.setView(c, Math.max(z, this.fitWorld ? this.fitWorld() : z)); });
         return d;
       };
       presets.addTo(this.map);
@@ -292,7 +302,8 @@ export class GlobeMap {
         countryBorders().then(g => window.L.geoJSON(g, { style: { color: "#a1a1aa", weight: 0.9, opacity: 0.75, fill: false }, interactive: false }).addTo(this.borderLayer)).catch(() => { bordersLoaded = false; });
       });
       this.map.on("baselayerchange", e => { if (e.name === BASEMAPS.sat.name) this.borderLayer.addTo(this.map); });
-      this.laneLayer.addTo(this.map); this.cableLayer.addTo(this.map);   // on by default so the map shows them without a click
+      this.laneLayer.addTo(this.map);                              // shipping lanes on by default (they are what the chokepoints sit on); submarine cables
+                                                                   // and their landing points are one tick away in the layer control: on by default they buried the map
     }
   }
   /* Called from terminal.js when a stock is opened: flies to and highlights that company's real mapped
