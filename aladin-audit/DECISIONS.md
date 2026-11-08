@@ -1,1 +1,2 @@
 - 2026-11-08: owner's goal: change the prediction method, lower filters, accept more risk for more profit. Risk limit chosen: worst drop ₹25,000 on ₹1,00,000 (−25%). Phase 4 tests every option at tight/medium/loose filters and sizes; the owner picks inside this limit.
+- 2026-11-08: owner approved phase 2 ('go'); display fixes 1-4 applied and merged to main (commit on main), models unchanged.
