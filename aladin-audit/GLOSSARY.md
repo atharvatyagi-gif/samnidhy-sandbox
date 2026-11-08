@@ -33,3 +33,9 @@ Every term used in the audit, in plain words. Added to in each phase.
 | Kill switch | An automatic stop that hides signals when live results break preset limits. |
 | Point in time | Using only what was known on that date (for example the stocks that were liquid then, not today). |
 | Rank-average / percentile rank | Ordering all stocks by a score and expressing each one's place from 0 (worst) to 1 (best). |
+| Population stability index (PSI) | A score of how much a spread of values has shifted from a reference: under 0.1 stable, 0.1–0.25 moving, over 0.25 shifted. |
+| Correlation | How closely two series move together, from −1 (opposite) through 0 (no link) to +1 (in step). |
+| Breadth | The share of stocks doing something, for example the share above their 200-day average. |
+| Net excess (vs the market) | A trade's return minus the average stock's return on the same days, after costs. |
+| Event study | Looking at what happened around a list of dated events (Budgets, elections) to see if there is a pattern. |
+| Drawdown | The fall from a high point of an account to its later low point. |
