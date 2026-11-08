@@ -39,3 +39,11 @@ Every term used in the audit, in plain words. Added to in each phase.
 | Net excess (vs the market) | A trade's return minus the average stock's return on the same days, after costs. |
 | Event study | Looking at what happened around a list of dated events (Budgets, elections) to see if there is a pattern. |
 | Drawdown | The fall from a high point of an account to its later low point. |
+| Momentum | Stocks that rose most over the past year (skipping the last month) tend to keep doing better for a while. |
+| Winners minus losers (WML) | A momentum portfolio that owns past winners and shorts past losers; long-only versions own just the winners. |
+| Momentum crash | A sudden large loss for momentum, usually when a falling market rebounds sharply. |
+| Quality factor | Favouring profitable, stable, low-debt companies. |
+| Low-volatility anomaly | The finding in some markets that calmer stocks earn as much or more than jumpy ones. |
+| PEAD (post-earnings-announcement drift) | Prices keep drifting in the direction of a results surprise for weeks after the announcement. |
+| Statistical arbitrage / pairs trading | Trading the gap between two related stocks when it stretches, expecting it to close. |
+| Abstract | The short summary the authors write at the top of a paper. |
