@@ -480,6 +480,13 @@ export function stockView(sym) {
 }
 
 /* ---------- Details rail and Brief card ---------- */
+let rankSorted = null, rankFor = null;
+function rankOf(h, p) {                                 // share of scored stocks with a lower combined chance at horizon h (the published comb values)
+  const A = ctx.S.aladin; if (!A || !A.stocks) return null;
+  if (rankFor !== A || !rankSorted || rankSorted.h !== h) { rankSorted = Object.values(A.stocks).map(x => x.comb && x.comb[h] && x.comb[h][0]).filter(x => x != null).sort((x, y) => x - y); rankSorted.h = h; rankFor = A; }
+  let lo = 0, hi = rankSorted.length; while (lo < hi) { const m = (lo + hi) >> 1; if (rankSorted[m] < p) lo = m + 1; else hi = m; }
+  return rankSorted.length ? Math.round(100 * lo / rankSorted.length) : null;
+}
 export function renderAladinMini(sym) {
   if (!ctx) return "";
   const A = ctx.S.aladin, ph = (ctx.S.aladin || {}).primary || 10;
@@ -488,8 +495,9 @@ export function renderAladinMini(sym) {
   const u = ctx.S.map.get(sym), c = calc(sym, ph);
   if (!c) return head + `<p class="note">${ctx.esc(sym)}: ${ctx.esc(reasonNoProb(u || {}))}.</p>`;
   const a = A.stocks[sym], ft = fundText(u || {}, a);
-  const pct = Math.round(c.p * 100);
+  const pct = Math.round(c.p * 100), rk = rankOf(ph, c.p);
   return head + `<div class="ol-mini"><div class="tg-top"><span class="mut">P(up) in ${ph} trading days</span><b class="${c.p >= 0.55 ? "up" : c.p <= 0.45 ? "down" : ""}">${pct}%</b></div>
+    ${rk != null ? `<p class="note">Higher than ${rk}% of the stocks scored. The order of stocks is more reliable than the exact percentage.</p>` : ""}
     <div class="tg-bar"><i style="left:calc(${pct}% - 2px)"></i></div>
     <div class="al-mini-g"><span>Fundamental ${ft ? `<span class="mut" title="${ctx.esc(ft.why)}">${ft.t}</span>` : c.I != null ? `<span title="F ${Math.round(c.F ?? 0)}">${gauge(c.Fadj)}</span>` : gauge(a.f.sc)}</span><span>Technical ${gauge(c.T)}</span>${a.x ? `<span>Impact ${igauge(a.x.i, a.x.asof)}</span>` : ""}</div>
     <div class="al-mini-s">${sentHtml(sym, true)}</div>

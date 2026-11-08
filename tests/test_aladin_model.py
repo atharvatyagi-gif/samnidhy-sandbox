@@ -441,3 +441,17 @@ def test_lstm_verdict_is_read_from_its_result_file_and_defaults_to_not_tried(tmp
     assert not any(x[0] == "LSTM" for x in am.not_measured(d)) and any(x[0] == "Heston calibration" for x in am.not_measured(d))
     (tmp_path / "lstm_test.json").write_text("junk", encoding="utf-8")
     assert am.load_lstm()["tested"] is False
+
+
+def test_calendar_inputs_are_never_shown_as_a_stocks_own_reason():
+    """Day of month and month are the same for every stock on a date (audit 2026-11-08: 'day of month' was the top reason for all 2,458 stocks)."""
+    import lightgbm as lgb
+    rng = np.random.default_rng(0)
+    n = 3000
+    D = pd.DataFrame({"dom": rng.integers(1, 29, n), "moy": rng.integers(1, 13, n), "r20": rng.normal(0, 0.1, n), "m_r20": rng.normal(0, 0.05, n)})
+    y = ((D["dom"] > 14).astype(int) ^ (rng.random(n) < 0.2)).astype(int)            # the calendar is made the strongest input on purpose
+    clf = lgb.LGBMClassifier(n_estimators=30, verbose=-1).fit(D, y)
+    out = am.drivers(clf, D.head(5), list(D.columns), k=4)
+    for row in out:
+        named = {name: v for name, v in row}
+        assert named.get("dom", 0.0) == 0.0 and named.get("moy", 0.0) == 0.0

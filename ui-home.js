@@ -410,9 +410,12 @@ function peersCard(e, f, sym) {
 function modelCard(a, sym) {
   const el = $("#st-model"), s = a && a.stocks && a.stocks[sym], p = s && s.t && s.t.p;
   if (!p) { el.innerHTML = `<h3>What our models see ${help("model")}</h3><p class="mt-3 text-sm text-zinc-400">Not scored: the model needs 250 days of trading history and recent activity.</p>`; return; }
-  const bar = v => `<div class="mt-1 h-1.5 rounded-full bg-zinc-800"><div class="h-1.5 rounded-full ${v >= 0.5 ? "bg-emerald-400" : "bg-red-400"}" style="width:${(v * 100).toFixed(0)}%"></div></div>`;
+  const bar = v => `<div class="mt-1 h-1.5 rounded-full bg-zinc-800"><div class="h-1.5 rounded-full ${v >= 0.55 ? "bg-emerald-400" : v <= 0.45 ? "bg-red-400" : "bg-zinc-500"}" style="width:${(v * 100).toFixed(0)}%"></div></div>`;
+  const all = h => S.rankCache && S.rankCache[h] || ((S.rankCache = S.rankCache || {})[h] = Object.values(a.stocks).map(x => x.t && x.t.p && x.t.p[h]).filter(x => x != null).sort((x, y) => x - y));
+  const rank = (h, v) => { const xs = all(h); let lo = 0, hi = xs.length; while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < v) lo = m + 1; else hi = m; } return xs.length ? Math.round(100 * lo / xs.length) : null; };
   el.innerHTML = `<h3>What our models see ${help("model")}</h3><p class="mt-3 text-sm text-zinc-400">Chance the price is higher after… (as of ${esc(a.as_of || "--")})</p>
-    <dl class="mt-3 space-y-3">${["5", "10", "20"].filter(h => p[h] != null).map(h => `<div><div class="flex justify-between text-sm"><dt>${h} trading days</dt><dd class="font-mono font-semibold">${(p[h] * 100).toFixed(0)}%</dd></div>${bar(p[h])}</div>`).join("")}</dl>`;
+    <dl class="mt-3 space-y-3">${["5", "10", "20"].filter(h => p[h] != null).map(h => `<div><div class="flex justify-between text-sm"><dt>${h} trading days</dt><dd class="font-mono font-semibold">${(p[h] * 100).toFixed(0)}%</dd></div>${bar(p[h])}${rank(h, p[h]) != null ? `<p class="mt-1 text-xs text-zinc-500">Higher than ${rank(h, p[h])}% of the stocks scored</p>` : ""}</div>`).join("")}</dl>
+    <p class="mt-3 text-xs text-zinc-500">Grey between 45% and 55%: close to a coin flip. The order of stocks is more reliable than the exact percentage.</p>`;
 }
 
 /* ---------------- What if I had invested? (HyperUI range-inputs/1) ---------------- */

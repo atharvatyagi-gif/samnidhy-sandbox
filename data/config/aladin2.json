@@ -162,7 +162,7 @@
       "level": "price target probability",
       "plan_level": "price target",
       "goal": "Target price",
-      "stop": "Stop loss",
+      "stop": "Exit level",
       "signal": "Signal",
       "bear_note": "exit if you hold it, do not buy it; a short is possible only through futures",
       "weekly": "weekly signal"

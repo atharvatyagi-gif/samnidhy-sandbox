@@ -510,7 +510,7 @@ def fit_stacker(rows, min_days=120, test_frac=0.3):
 def drivers(clf, D, feats, k=5):
     contrib = clf.predict(D[feats], pred_contrib=True)
     out = []
-    market = np.array([f.startswith("m_") or f == "hmm_p_highvol" for f in feats])        # market-wide inputs are identical for every stock that day: not a reason specific to this stock
+    market = np.array([f.startswith("m_") or f in ("hmm_p_highvol", "dom", "moy") for f in feats])   # market-wide and calendar inputs are identical for every stock that day: not a reason specific to this stock (audit 2026-11-08)
     for row in contrib:
         v = np.where(market, 0.0, row[:-1])
         top = np.argsort(-np.abs(v))[:k]
