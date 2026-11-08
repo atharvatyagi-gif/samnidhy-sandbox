@@ -1410,7 +1410,7 @@
    0.47933,
    0.48046,
    0.48119,
-   0.48231,
+   0.4823,
    0.48703,
    0.48814,
    0.49007,
@@ -1452,9 +1452,9 @@
    1.11267
   ]
  },
- "generated_utc": "2026-11-08T01:49:50+00:00",
- "generated_ist": "08 Nov 2026, 07:19 AM IST",
- "screened_ist": "08 Nov 2026, 07:19 AM IST",
+ "generated_utc": "2026-11-08T03:33:27+00:00",
+ "generated_ist": "08 Nov 2026, 09:03 AM IST",
+ "screened_ist": "08 Nov 2026, 09:03 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,11 +1484,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 281
+   "count": 289
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 162
+   "count": 163
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1499,11 +1499,11 @@
   "0": 0,
   "1": 0,
   "2": 3,
-  "3": 18,
-  "4": 37,
-  "5": 61,
+  "3": 20,
+  "4": 38,
+  "5": 65,
   "6": 73,
-  "7": 46,
+  "7": 47,
   "8": 28,
   "9": 15
  },
@@ -1520,14 +1520,6 @@
    "NESTLEIND"
   ],
   "download failed (YFRateLimitError)": [
-   "STLTECH",
-   "SUMICHEM",
-   "SUNPHARMA",
-   "SUNTV",
-   "SUPREMEIND",
-   "SWANCORP",
-   "SWIGGY",
-   "SYNGENE",
    "SYRMA",
    "TARIL",
    "TATACHEM",
@@ -1631,7 +1623,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 15,
-   "of": 162
+   "of": 163
   },
   {
    "symbol": "SIGNATURE",
@@ -1684,7 +1676,7 @@
    "magic_rank": 2,
    "rank_roc": 10,
    "rank_ey": 11,
-   "of": 162
+   "of": 163
   },
   {
    "symbol": "BLS",
@@ -1737,7 +1729,7 @@
    "magic_rank": 3,
    "rank_roc": 12,
    "rank_ey": 16,
-   "of": 162
+   "of": 163
   },
   {
    "symbol": "NBCC",
@@ -1790,7 +1782,7 @@
    "magic_rank": 4,
    "rank_roc": 11,
    "rank_ey": 23,
-   "of": 162
+   "of": 163
   },
   {
    "symbol": "CASTROLIND",
@@ -1843,7 +1835,7 @@
    "magic_rank": 5,
    "rank_roc": 5,
    "rank_ey": 31,
-   "of": 162
+   "of": 163
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1896,7 +1888,7 @@
    "magic_rank": 6,
    "rank_roc": 19,
    "rank_ey": 25,
-   "of": 162
+   "of": 163
   },
   {
    "symbol": "ENGINERSIN",
@@ -1949,7 +1941,7 @@
    "magic_rank": 7,
    "rank_roc": 6,
    "rank_ey": 43,
-   "of": 162
+   "of": 163
   },
   {
    "symbol": "NATIONALUM",
@@ -2002,7 +1994,7 @@
    "magic_rank": 8,
    "rank_roc": 42,
    "rank_ey": 8,
-   "of": 162
+   "of": 163
   },
   {
    "symbol": "HINDZINC",
@@ -2055,7 +2047,7 @@
    "magic_rank": 9,
    "rank_roc": 30,
    "rank_ey": 21,
-   "of": 162
+   "of": 163
   },
   {
    "symbol": "ESCORTS",
@@ -2108,7 +2100,7 @@
    "magic_rank": 10,
    "rank_roc": 35,
    "rank_ey": 20,
-   "of": 162
+   "of": 163
   }
  ]
 }
