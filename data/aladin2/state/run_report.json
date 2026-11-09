@@ -3,12 +3,12 @@
  "weekday": "Monday",
  "full_refit_day": false,
  "budget_min": 110,
- "total_s": 1024,
+ "total_s": 194,
  "steps": [
   {
    "step": "ingest",
-   "seconds": 5.0,
-   "note": "latest price bar 2026-11-08; delivery / F&O / macro refreshed"
+   "seconds": 3.2,
+   "note": "latest price bar 2026-11-09; delivery / F&O / macro refreshed"
   },
   {
    "step": "resolve",
@@ -27,23 +27,23 @@
   },
   {
    "step": "discover",
-   "seconds": 823.9,
-   "note": "50 generations, 1200 new rules, 0 passed, 152615 tested in total"
+   "seconds": 3.6,
+   "note": "0 generations, 0 new rules, 0 passed, 152615 tested in total"
   },
   {
    "step": "forecast",
-   "seconds": 165.4,
-   "note": "as of 2026-11-08, 1382 stocks, states {'Suspended': 1382}, ledger already in the ledger, not rewritten"
+   "seconds": 159.9,
+   "note": "as of 2026-11-06, 1386 stocks, states {'Suspended': 1386}, ledger already in the ledger, not rewritten"
   },
   {
    "step": "weekly",
-   "seconds": 19.5,
-   "note": "as of 2026-11-08: bull 13, bear 26, hold 1244; ledger already in the ledger; 0 outcome lines"
+   "seconds": 17.6,
+   "note": "as of 2026-11-06: bull 13, bear 25, hold 1226; ledger already in the ledger; 0 outcome lines"
   },
   {
    "step": "paper",
-   "seconds": 4.5,
-   "note": "live paper account: 5 book(s); equity 1,003,036 (0.3%), 20 closed trades, 1 open"
+   "seconds": 4.0,
+   "note": "live paper account: 5 book(s); equity 999,563 (-0.04%), 19 closed trades, 1 open"
   },
   {
    "step": "bot",
@@ -62,23 +62,23 @@
   "learn_cached": true,
   "drift_alarms": 0,
   "discovery": {
-   "generations": 50,
-   "new_rules": 1200,
+   "generations": 0,
+   "new_rules": 0,
    "passed": 0,
    "total_tested": 152615
   },
   "forecast": {
-   "as_of": "2026-11-08",
-   "stocks_forecast": 1382,
+   "as_of": "2026-11-06",
+   "stocks_forecast": 1386,
    "product_state_counts": {
-    "Suspended": 1382
+    "Suspended": 1386
    },
    "ledger_status": "already in the ledger, not rewritten"
   },
   "weekly": {
    "bull": 13,
-   "bear": 26,
-   "hold": 1244
+   "bear": 25,
+   "hold": 1226
   }
  },
  "within_budget": true
