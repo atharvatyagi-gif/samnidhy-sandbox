@@ -1452,9 +1452,9 @@
    1.11256
   ]
  },
- "generated_utc": "2026-11-09T13:33:50+00:00",
- "generated_ist": "09 Nov 2026, 07:03 PM IST",
- "screened_ist": "09 Nov 2026, 07:03 PM IST",
+ "generated_utc": "2026-11-09T23:07:23+00:00",
+ "generated_ist": "10 Nov 2026, 04:37 AM IST",
+ "screened_ist": "10 Nov 2026, 04:37 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,11 +1484,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 269
+   "count": 266
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 152
+   "count": 149
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1502,9 +1502,9 @@
   "3": 18,
   "4": 35,
   "5": 61,
-  "6": 67,
-  "7": 43,
-  "8": 28,
+  "6": 66,
+  "7": 42,
+  "8": 27,
   "9": 14
  },
  "skipped": {
@@ -1520,9 +1520,12 @@
    "NESTLEIND"
   ],
   "download failed (YFRateLimitError)": [
+   "SANSERA",
    "SARDAEN",
+   "SCHAEFFLER",
    "SCHNEIDER",
    "SCI",
+   "SHREECEM",
    "SHRIPISTON",
    "SHYAMMETL",
    "SIEMENS",
@@ -1642,7 +1645,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 12,
-   "of": 152
+   "of": 149
   },
   {
    "symbol": "BLS",
@@ -1695,7 +1698,7 @@
    "magic_rank": 2,
    "rank_roc": 11,
    "rank_ey": 13,
-   "of": 152
+   "of": 149
   },
   {
    "symbol": "CASTROLIND",
@@ -1748,7 +1751,7 @@
    "magic_rank": 3,
    "rank_roc": 5,
    "rank_ey": 28,
-   "of": 152
+   "of": 149
   },
   {
    "symbol": "NBCC",
@@ -1801,7 +1804,7 @@
    "magic_rank": 4,
    "rank_roc": 10,
    "rank_ey": 25,
-   "of": 152
+   "of": 149
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1854,7 +1857,7 @@
    "magic_rank": 5,
    "rank_roc": 18,
    "rank_ey": 20,
-   "of": 152
+   "of": 149
   },
   {
    "symbol": "ENGINERSIN",
@@ -1894,9 +1897,9 @@
    "analysts": 6,
    "consensus": "strongly_positive",
    "consensus_score": 1.0,
-   "estimate_mean": 313.16666,
-   "estimate_high": 373.0,
-   "estimate_low": 284.0,
+   "estimate_mean": 322.66666,
+   "estimate_high": 388.0,
+   "estimate_low": 290.0,
    "eps": 15.85,
    "shares_out": 562042373.0,
    "employees": 2747.0,
@@ -1907,7 +1910,7 @@
    "magic_rank": 6,
    "rank_roc": 6,
    "rank_ey": 41,
-   "of": 152
+   "of": 149
   },
   {
    "symbol": "HINDZINC",
@@ -1960,7 +1963,7 @@
    "magic_rank": 7,
    "rank_roc": 29,
    "rank_ey": 18,
-   "of": 152
+   "of": 149
   },
   {
    "symbol": "NATIONALUM",
@@ -2013,7 +2016,7 @@
    "magic_rank": 8,
    "rank_roc": 40,
    "rank_ey": 8,
-   "of": 152
+   "of": 149
   },
   {
    "symbol": "ESCORTS",
@@ -2066,7 +2069,7 @@
    "magic_rank": 9,
    "rank_roc": 34,
    "rank_ey": 17,
-   "of": 152
+   "of": 149
   },
   {
    "symbol": "IRCTC",
@@ -2119,7 +2122,7 @@
    "magic_rank": 10,
    "rank_roc": 17,
    "rank_ey": 42,
-   "of": 152
+   "of": 149
   }
  ]
 }

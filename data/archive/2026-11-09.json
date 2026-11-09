@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-11-09T13:31:04+00:00",
+  "generated_on": "2026-11-09T23:04:35+00:00",
   "session_date": "2026-11-09",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -156,7 +156,7 @@
         "turnover_crore": 656.34
       },
       "latest_close": 571.65,
-      "trailing_pe": 68.79061,
+      "trailing_pe": 64.96023,
       "market_cap": 183756210176,
       "history": {
         "first_date": "2021-11-02",
@@ -218,7 +218,7 @@
       "start": "2021-11-02",
       "end": "2026-11-09",
       "years": 5.02,
-      "session_price_from": "Yahoo"
+      "session_price_from": "NSE"
     },
     "latest_close": 25044.65,
     "session_pct_change": 0.2331,
@@ -297,7 +297,7 @@
     "GLAXO.NS": {
       "DATAPATTNS.NS": 0.038444,
       "IREDA.NS": 0.028269,
-      "GLAXO.NS": 0.122484,
+      "GLAXO.NS": 0.122483,
       "RRKABEL.NS": 0.020247,
       "TDPOWERSYS.NS": 0.032822,
       "FINCABLES.NS": 0.02332
@@ -634,7 +634,7 @@
         707.02,
         740.97,
         766.04,
-        809.51,
+        809.52,
         827.63,
         852.3,
         945.27,
@@ -2040,7 +2040,7 @@
         1041.34,
         1035.23,
         977.13,
-        959.29,
+        959.28,
         894.78,
         886.52,
         858.69,
