@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-11-09",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_09112026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 495,
+  "eligible_count": 433,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "DATAPATTNS",
+      "yahoo_ticker": "DATAPATTNS.NS",
+      "name": "Data Patterns (India) Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 3704.0,
+      "open": 3660.0,
+      "high": 4073.0,
+      "low": 3630.5,
+      "close": 4025.0,
+      "pct_change": 8.6663,
+      "volume": 3663560,
+      "turnover_crore": 1449.73
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "IREDA",
+      "yahoo_ticker": "IREDA.NS",
+      "name": "Indian Renewable Energy Development Agency Ltd.",
+      "industry": "Financial Services",
+      "prev_close": 111.33,
+      "open": 111.62,
+      "high": 120.7,
+      "low": 110.4,
+      "close": 119.65,
+      "pct_change": 7.4733,
+      "volume": 46171717,
+      "turnover_crore": 546.04
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "GLAXO",
+      "yahoo_ticker": "GLAXO.NS",
+      "name": "Glaxosmithkline Pharmaceuticals Ltd.",
+      "industry": "Healthcare",
+      "prev_close": 2539.6,
+      "open": 2560.0,
+      "high": 2755.0,
+      "low": 2547.8,
+      "close": 2710.0,
+      "pct_change": 6.7097,
+      "volume": 800450,
+      "turnover_crore": 215.68
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "RRKABEL",
+      "yahoo_ticker": "RRKABEL.NS",
+      "name": "R R Kabel Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 2115.4,
+      "open": 2073.0,
+      "high": 2073.0,
+      "low": 1951.0,
+      "close": 1969.4,
+      "pct_change": -6.9018,
+      "volume": 1160714,
+      "turnover_crore": 232.37
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "TDPOWERSYS",
+      "yahoo_ticker": "TDPOWERSYS.NS",
+      "name": "TD Power Systems Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 609.85,
+      "open": 604.7,
+      "high": 604.7,
+      "low": 560.8,
+      "close": 571.65,
+      "pct_change": -6.2638,
+      "volume": 11460079,
+      "turnover_crore": 656.34
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "FINCABLES",
+      "yahoo_ticker": "FINCABLES.NS",
+      "name": "Finolex Cables Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 1309.0,
+      "open": 1323.0,
+      "high": 1324.0,
+      "low": 1218.1,
+      "close": 1232.4,
+      "pct_change": -5.8518,
+      "volume": 6829626,
+      "turnover_crore": 851.61
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-11-09T11:59:44+00:00",
+  "fetched_at_ist": "09 Nov 2026, 05:29 PM IST"
+}
