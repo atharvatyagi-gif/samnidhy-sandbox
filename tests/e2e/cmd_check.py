@@ -102,7 +102,7 @@ def run():
         run_cmd(pg, "MOVERS SHOCK", 800)
         check("MOVERS SHOCK opens the Supply-chain shocks view", pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "shock")
         run_cmd(pg, "MOVERS ALADIN", 1500)
-        check("MOVERS ALADIN opens the ALADIN probability view", pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "aladin")
+        check("MOVERS ALADIN while ALADIN BOT is locked stays on Price & volume (the probability view is an earlier model; unlocked case: movers_check)", pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "price")
         run_cmd(pg, "MOVERS", 800)
         run_cmd(pg, "MAP", 800)
         check("MAP: Globe tab", view_on(pg) == "v-map")
