@@ -47,3 +47,10 @@ Every term used in the audit, in plain words. Added to in each phase.
 | PEAD (post-earnings-announcement drift) | Prices keep drifting in the direction of a results surprise for weeks after the announcement. |
 | Statistical arbitrage / pairs trading | Trading the gap between two related stocks when it stretches, expecting it to close. |
 | Abstract | The short summary the authors write at the top of a paper. |
+| Sharpe ratio | Return per unit of risk (average return divided by how much it swings), per year. Above 1 is good for a stock strategy. |
+| Deflated Sharpe ratio (DSR) | The chance a result is real after discounting for how many settings were tried; 0.95 is the usual bar. |
+| Purged cross-validation with an embargo | Testing on one block of time with settings chosen on the others, leaving a gap around the test block so nothing leaks in. |
+| Hold-out | A recent stretch of data kept untouched until the very end and used once. |
+| CAGR | Compound annual growth rate: the steady yearly growth that gives the same end result. |
+| Liquid fund | A low-risk debt mutual fund used to park cash; its return is modest and not guaranteed. |
+| Position sizing | Choosing how much of the money to put into the strategy, to control how deep losses can go. |

@@ -1,0 +1,25 @@
+{
+  "_about": "Indian trading costs used by every Phase 4 test. Percent values are % of traded value. Rates follow the owner's brief (Part A2) where it gives them; I am not sure every rate matches the latest NSE/SEBI circulars: check https://www.nseindia.com and your broker's charges page before relying on them.",
+  "capital_inr": 100000,
+  "delivery": {
+    "brokerage_pct": 0.0,
+    "brokerage_note": "discount broker: zero brokerage on delivery",
+    "stt_buy_pct": 0.1,
+    "stt_sell_pct": 0.1,
+    "exchange_txn_pct": 0.00297,
+    "sebi_fee_pct": 0.0001,
+    "stamp_duty_buy_pct": 0.015,
+    "gst_pct_on_brokerage_and_charges": 18.0,
+    "dp_charge_per_scrip_sell_inr": 15.93,
+    "dp_note": "charged once per stock per day it is sold from demat (about Rs 13.5 + GST)"
+  },
+  "intraday": {"brokerage_pct": 0.03, "brokerage_cap_inr": 20, "stt_sell_pct": 0.025, "exchange_txn_pct": 0.00297, "sebi_fee_pct": 0.0001, "stamp_duty_buy_pct": 0.003, "gst_pct_on_brokerage_and_charges": 18.0},
+  "futures": {"brokerage_pct": 0.03, "brokerage_cap_inr": 20, "stt_sell_pct": 0.05, "exchange_txn_pct": 0.00173, "sebi_fee_pct": 0.0001, "stamp_duty_buy_pct": 0.002, "gst_pct_on_brokerage_and_charges": 18.0},
+  "options": {"stt_sell_pct_of_premium": 0.15},
+  "slippage_pct_per_side": {
+    "adv_ge_100cr": 0.05,
+    "adv_ge_20cr": 0.10,
+    "below": 0.20,
+    "note": "ADV = average daily traded value over the last 60 sessions; orders fill at the next open plus this slippage"
+  }
+}

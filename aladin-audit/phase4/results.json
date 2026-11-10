@@ -1,0 +1,2099 @@
+{
+ "n_trials": 409,
+ "sharpe_variance_daily": 0.0003502752392017928,
+ "ranked": [
+  {
+   "option": "A momentum",
+   "filter": "loose 10%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 28.6,
+   "sharpe": 1.12,
+   "max_dd_pct": -39.5,
+   "max_dd_inr_on_1L": -39537,
+   "random_same_rules_cagr_pct": 1.6,
+   "excess_cagr_vs_random_pct": 27.0,
+   "excess_sharpe": 1.94,
+   "years_beating_random": "14/14",
+   "deflated_sharpe": 0.792,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 82.2,
+    "down_market": -49.8,
+    "sideways": 25.7,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 24.8,
+   "post_2020_cagr": 32.9,
+   "choices": {
+    "2013": "L252 skip21 step21",
+    "2014": "L126 skip0 step63",
+    "2015": "L126 skip0 step63",
+    "2016": "L126 skip0 step63",
+    "2017": "L126 skip0 step63",
+    "2018": "L126 skip0 step63",
+    "2019": "L126 skip0 step63",
+    "2020": "L126 skip0 step63",
+    "2021": "L126 skip0 step63",
+    "2022": "L126 skip0 step63",
+    "2023": "L126 skip0 step63",
+    "2024": "L126 skip0 step63",
+    "2025": "L126 skip0 step63",
+    "2026": "L126 skip0 step63"
+   },
+   "by_year": {
+    "2013": 6.7,
+    "2014": 77.3,
+    "2015": 28.3,
+    "2016": -4.2,
+    "2017": 103.7,
+    "2018": -17.4,
+    "2019": 15.9,
+    "2020": 84.3,
+    "2021": 59.7,
+    "2022": -2.9,
+    "2023": 76.1,
+    "2024": 19.0,
+    "2025": -3.4,
+    "2026": 1.8
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "L126 skip0 step63",
+     "sharpe_on_block": 0.4
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "L126 skip21 step63",
+     "sharpe_on_block": 1.02
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "L126 skip21 step63",
+     "sharpe_on_block": 0.22
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "L126 skip0 step63",
+     "sharpe_on_block": 1.84
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "L126 skip0 step63",
+     "sharpe_on_block": 1.18
+    }
+   ]
+  },
+  {
+   "option": "C machine learning (ALADIN 1 model)",
+   "filter": "loose 10%",
+   "from": "2017-01-02",
+   "to": "2026-05-07",
+   "cagr_pct": 18.6,
+   "sharpe": 1.04,
+   "max_dd_pct": -31.2,
+   "max_dd_inr_on_1L": -31189,
+   "random_same_rules_cagr_pct": 0.9,
+   "excess_cagr_vs_random_pct": 17.6,
+   "excess_sharpe": 1.62,
+   "years_beating_random": "9/10",
+   "deflated_sharpe": 0.676,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 44.6,
+    "down_market": -20.3,
+    "sideways": 9.9,
+    "days": [
+     1038,
+     341,
+     930
+    ]
+   },
+   "pre_2020_cagr": 8.4,
+   "post_2020_cagr": 23.6,
+   "choices": {
+    "2017": "10-day model, hold 10",
+    "2018": "20-day model, hold 20",
+    "2019": "20-day model, hold 20",
+    "2020": "20-day model, hold 20",
+    "2021": "20-day model, hold 20",
+    "2022": "20-day model, hold 20",
+    "2023": "20-day model, hold 20",
+    "2024": "20-day model, hold 20",
+    "2025": "20-day model, hold 20",
+    "2026": "20-day model, hold 20"
+   },
+   "by_year": {
+    "2017": 27.7,
+    "2018": -11.1,
+    "2019": 11.5,
+    "2020": 35.2,
+    "2021": 47.4,
+    "2022": -6.0,
+    "2023": 41.5,
+    "2024": 19.8,
+    "2025": 1.9,
+    "2026": 16.0
+   },
+   "purged_cv": [
+    {
+     "block": "2015-01-05..2017-04-13",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 0.77
+    },
+    {
+     "block": "2017-04-17..2019-07-22",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 0.44
+    },
+    {
+     "block": "2019-07-23..2021-10-26",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 1.69
+    },
+    {
+     "block": "2021-10-27..2024-01-31",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 1.04
+    },
+    {
+     "block": "2024-02-01..2026-05-07",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 0.87
+    }
+   ]
+  },
+  {
+   "option": "E momentum + risk",
+   "filter": "loose 10%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 22.3,
+   "sharpe": 1.01,
+   "max_dd_pct": -41.1,
+   "max_dd_inr_on_1L": -41142,
+   "random_same_rules_cagr_pct": 1.6,
+   "excess_cagr_vs_random_pct": 20.7,
+   "excess_sharpe": 1.61,
+   "years_beating_random": "13/14",
+   "deflated_sharpe": 0.658,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 62.9,
+    "down_market": -48.5,
+    "sideways": 24.2,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 17.6,
+   "post_2020_cagr": 27.7,
+   "choices": {
+    "2013": "L252 skip21 step21 vix",
+    "2014": "L126 skip0 step63 dd brake 12%",
+    "2015": "L126 skip0 step63 dd brake 12%",
+    "2016": "L126 skip0 step63 dd brake 12%",
+    "2017": "L126 skip0 step63 trend half",
+    "2018": "L126 skip0 step63 trend half",
+    "2019": "L126 skip0 step63 trend half",
+    "2020": "L126 skip0 step63 trend half",
+    "2021": "L126 skip0 step63 trend half",
+    "2022": "L126 skip0 step63 dd brake 12%",
+    "2023": "L126 skip0 step63 dd brake 12%",
+    "2024": "L126 skip0 step63 dd brake 12%",
+    "2025": "L126 skip0 step63 dd brake 12%",
+    "2026": "L126 skip0 step63 trend half"
+   },
+   "by_year": {
+    "2013": -7.9,
+    "2014": 67.7,
+    "2015": 22.6,
+    "2016": -12.3,
+    "2017": 95.2,
+    "2018": -15.0,
+    "2019": 9.8,
+    "2020": 55.3,
+    "2021": 47.3,
+    "2022": -2.4,
+    "2023": 62.0,
+    "2024": 29.7,
+    "2025": -8.1,
+    "2026": 6.9
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "L126 skip0 step63 trend half",
+     "sharpe_on_block": 0.34
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 0.94
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "L126 skip0 step63 trend half",
+     "sharpe_on_block": 0.41
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "L126 skip0 step63 trend half",
+     "sharpe_on_block": 1.65
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 1.25
+    }
+   ]
+  },
+  {
+   "option": "x first try: risk checked on rebalance days only",
+   "filter": "loose 10%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 20.1,
+   "sharpe": 0.91,
+   "max_dd_pct": -42.5,
+   "max_dd_inr_on_1L": -42486,
+   "random_same_rules_cagr_pct": 1.6,
+   "excess_cagr_vs_random_pct": 18.5,
+   "excess_sharpe": 1.39,
+   "years_beating_random": "12/14",
+   "deflated_sharpe": 0.526,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 73.4,
+    "down_market": -50.1,
+    "sideways": 12.3,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 13.5,
+   "post_2020_cagr": 27.7,
+   "choices": {
+    "2013": "L126 skip0 step63 trend",
+    "2014": "L126 skip0 step63 trend",
+    "2015": "L252 skip0 step63 trend",
+    "2016": "L126 skip0 step63 trend half",
+    "2017": "L126 skip0 step63 trend",
+    "2018": "L126 skip0 step63 trend",
+    "2019": "L126 skip0 step63 trend half",
+    "2020": "L126 skip0 step63 trend half",
+    "2021": "L126 skip0 step63 vix",
+    "2022": "L126 skip0 step63 vix",
+    "2023": "L126 skip0 step63 vix",
+    "2024": "L126 skip0 step63 vix",
+    "2025": "L126 skip0 step63 vix",
+    "2026": "L126 skip0 step63 vix"
+   },
+   "by_year": {
+    "2013": -3.9,
+    "2014": 77.8,
+    "2015": -9.5,
+    "2016": -0.9,
+    "2017": 76.2,
+    "2018": -17.2,
+    "2019": 6.1,
+    "2020": 48.8,
+    "2021": 58.1,
+    "2022": -2.9,
+    "2023": 76.0,
+    "2024": 19.0,
+    "2025": -4.0,
+    "2026": 0.1
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 0.02
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "L126 skip21 step63 vix",
+     "sharpe_on_block": 0.82
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "L126 skip0 step63 vol 15%",
+     "sharpe_on_block": 0.15
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "L126 skip0 step63 trend half",
+     "sharpe_on_block": 1.57
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "L126 skip0 step63 vix",
+     "sharpe_on_block": 1.23
+    }
+   ]
+  },
+  {
+   "option": "E momentum + risk",
+   "filter": "medium 5%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 30.0,
+   "sharpe": 1.16,
+   "max_dd_pct": -36.0,
+   "max_dd_inr_on_1L": -36045,
+   "random_same_rules_cagr_pct": 7.7,
+   "excess_cagr_vs_random_pct": 22.3,
+   "excess_sharpe": 1.26,
+   "years_beating_random": "12/14",
+   "deflated_sharpe": 0.833,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 81.2,
+    "down_market": -37.6,
+    "sideways": 19.8,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 27.0,
+   "post_2020_cagr": 33.5,
+   "choices": {
+    "2013": "L252 skip21 step21 vix",
+    "2014": "L126 skip0 step63 trend half",
+    "2015": "L252 skip21 step21 dd brake 12%",
+    "2016": "L126 skip0 step63 trend half",
+    "2017": "L126 skip0 step63 trend half",
+    "2018": "L126 skip0 step63 trend half",
+    "2019": "L126 skip0 step63 trend half",
+    "2020": "L126 skip0 step63 trend half",
+    "2021": "L126 skip0 step63 trend half",
+    "2022": "L126 skip0 step63 trend half",
+    "2023": "L126 skip0 step63 trend half",
+    "2024": "L126 skip0 step63 trend half",
+    "2025": "L126 skip0 step63 trend half",
+    "2026": "L126 skip0 step63 trend half"
+   },
+   "by_year": {
+    "2013": -9.8,
+    "2014": 91.0,
+    "2015": 16.1,
+    "2016": 0.9,
+    "2017": 144.8,
+    "2018": -11.3,
+    "2019": 16.4,
+    "2020": 100.4,
+    "2021": 39.7,
+    "2022": -9.7,
+    "2023": 65.9,
+    "2024": 43.9,
+    "2025": -3.9,
+    "2026": 4.5
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "L126 skip0 step63 trend half",
+     "sharpe_on_block": 0.53
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "L126 skip0 step63 trend half",
+     "sharpe_on_block": 1.45
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "L126 skip0 step63 trend half",
+     "sharpe_on_block": 0.85
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "L126 skip0 step63 trend half",
+     "sharpe_on_block": 1.59
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "L126 skip0 step63 trend half",
+     "sharpe_on_block": 1.41
+    }
+   ]
+  },
+  {
+   "option": "C machine learning (ALADIN 1 model)",
+   "filter": "medium 5%",
+   "from": "2017-01-02",
+   "to": "2026-05-07",
+   "cagr_pct": 22.5,
+   "sharpe": 1.16,
+   "max_dd_pct": -31.3,
+   "max_dd_inr_on_1L": -31299,
+   "random_same_rules_cagr_pct": 6.5,
+   "excess_cagr_vs_random_pct": 16.0,
+   "excess_sharpe": 1.21,
+   "years_beating_random": "9/10",
+   "deflated_sharpe": 0.787,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 51.0,
+    "down_market": -18.3,
+    "sideways": 12.6,
+    "days": [
+     1038,
+     341,
+     930
+    ]
+   },
+   "pre_2020_cagr": 21.4,
+   "post_2020_cagr": 23.0,
+   "choices": {
+    "2017": "20-day model, hold 20",
+    "2018": "20-day model, hold 20",
+    "2019": "20-day model, hold 20",
+    "2020": "20-day model, hold 20",
+    "2021": "20-day model, hold 20",
+    "2022": "20-day model, hold 20",
+    "2023": "20-day model, hold 20",
+    "2024": "20-day model, hold 20",
+    "2025": "20-day model, hold 20",
+    "2026": "20-day model, hold 20"
+   },
+   "by_year": {
+    "2017": 54.1,
+    "2018": -0.7,
+    "2019": 15.2,
+    "2020": 39.4,
+    "2021": 37.1,
+    "2022": -1.5,
+    "2023": 42.6,
+    "2024": 23.7,
+    "2025": 5.1,
+    "2026": 4.5
+   },
+   "purged_cv": [
+    {
+     "block": "2015-01-05..2017-04-13",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 1.16
+    },
+    {
+     "block": "2017-04-17..2019-07-22",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 0.78
+    },
+    {
+     "block": "2019-07-23..2021-10-26",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 1.61
+    },
+    {
+     "block": "2021-10-27..2024-01-31",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 1.13
+    },
+    {
+     "block": "2024-02-01..2026-05-07",
+     "chosen": "20-day model, hold 20",
+     "sharpe_on_block": 0.73
+    }
+   ]
+  },
+  {
+   "option": "D regime blend",
+   "filter": "loose 10%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 15.6,
+   "sharpe": 1.02,
+   "max_dd_pct": -31.9,
+   "max_dd_inr_on_1L": -31892,
+   "random_same_rules_cagr_pct": 1.6,
+   "excess_cagr_vs_random_pct": 14.0,
+   "excess_sharpe": 1.18,
+   "years_beating_random": "13/14",
+   "deflated_sharpe": 0.669,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 47.2,
+    "down_market": -40.6,
+    "sideways": 14.3,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 15.0,
+   "post_2020_cagr": 16.2,
+   "choices": {
+    "2013": "calm(0.4, 0.4, 0.2) stress(0.2, 0.6, 0.2)",
+    "2014": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2015": "calm(0.8, 0.2, 0.0) stress(0.2, 0.8, 0.0)",
+    "2016": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2017": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2018": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2019": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2020": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2021": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2022": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2023": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2024": "calm(0.8, 0.2, 0.0) stress(0.4, 0.6, 0.0)",
+    "2025": "calm(0.8, 0.2, 0.0) stress(0.4, 0.6, 0.0)",
+    "2026": "calm(0.8, 0.2, 0.0) stress(0.4, 0.6, 0.0)"
+   },
+   "by_year": {
+    "2013": 10.7,
+    "2014": 37.6,
+    "2015": -4.3,
+    "2016": 9.1,
+    "2017": 44.9,
+    "2018": -2.9,
+    "2019": 16.5,
+    "2020": 10.5,
+    "2021": 35.2,
+    "2022": 4.0,
+    "2023": 30.9,
+    "2024": 24.9,
+    "2025": 4.9,
+    "2026": -4.2
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "calm(0.8, 0.2, 0.0) stress(0.4, 0.6, 0.0)",
+     "sharpe_on_block": 0.41
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "calm(0.8, 0.2, 0.0) stress(0.4, 0.6, 0.0)",
+     "sharpe_on_block": 1.11
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+     "sharpe_on_block": 0.3
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+     "sharpe_on_block": 1.68
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+     "sharpe_on_block": 1.24
+    }
+   ]
+  },
+  {
+   "option": "A momentum",
+   "filter": "medium 5%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 27.8,
+   "sharpe": 1.02,
+   "max_dd_pct": -57.2,
+   "max_dd_inr_on_1L": -57173,
+   "random_same_rules_cagr_pct": 7.7,
+   "excess_cagr_vs_random_pct": 20.1,
+   "excess_sharpe": 1.17,
+   "years_beating_random": "10/14",
+   "deflated_sharpe": 0.678,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 78.2,
+    "down_market": -49.8,
+    "sideways": 26.8,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 23.9,
+   "post_2020_cagr": 32.2,
+   "choices": {
+    "2013": "L252 skip21 step63",
+    "2014": "L252 skip0 step63",
+    "2015": "L252 skip0 step63",
+    "2016": "L252 skip0 step63",
+    "2017": "L252 skip0 step63",
+    "2018": "L252 skip0 step63",
+    "2019": "L252 skip0 step63",
+    "2020": "L252 skip0 step63",
+    "2021": "L126 skip0 step63",
+    "2022": "L126 skip0 step63",
+    "2023": "L126 skip0 step63",
+    "2024": "L126 skip0 step63",
+    "2025": "L126 skip0 step63",
+    "2026": "L126 skip0 step63"
+   },
+   "by_year": {
+    "2013": -4.6,
+    "2014": 119.8,
+    "2015": 26.2,
+    "2016": -12.8,
+    "2017": 154.2,
+    "2018": -20.3,
+    "2019": -7.7,
+    "2020": 102.7,
+    "2021": 49.9,
+    "2022": -2.4,
+    "2023": 79.9,
+    "2024": 4.6,
+    "2025": 3.1,
+    "2026": -0.7
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "L126 skip0 step63",
+     "sharpe_on_block": 0.37
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "L126 skip0 step21",
+     "sharpe_on_block": 0.75
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "L189 skip0 step63",
+     "sharpe_on_block": 0.16
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "L189 skip0 step63",
+     "sharpe_on_block": 1.71
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "L126 skip0 step63",
+     "sharpe_on_block": 1.07
+    }
+   ]
+  },
+  {
+   "option": "G low volatility",
+   "filter": "loose 10%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 14.4,
+   "sharpe": 1.17,
+   "max_dd_pct": -26.8,
+   "max_dd_inr_on_1L": -26793,
+   "random_same_rules_cagr_pct": 1.6,
+   "excess_cagr_vs_random_pct": 12.8,
+   "excess_sharpe": 0.88,
+   "years_beating_random": "11/14",
+   "deflated_sharpe": 0.835,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 38.3,
+    "down_market": -26.1,
+    "sideways": 9.8,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 15.8,
+   "post_2020_cagr": 12.9,
+   "choices": {
+    "2013": "step21",
+    "2014": "step63",
+    "2015": "step63",
+    "2016": "step63",
+    "2017": "step21",
+    "2018": "step21",
+    "2019": "step21",
+    "2020": "step21",
+    "2021": "step21",
+    "2022": "step21",
+    "2023": "step21",
+    "2024": "step21",
+    "2025": "step21",
+    "2026": "step21"
+   },
+   "by_year": {
+    "2013": 10.0,
+    "2014": 46.4,
+    "2015": 11.1,
+    "2016": -1.2,
+    "2017": 32.6,
+    "2018": 7.4,
+    "2019": 8.1,
+    "2020": 19.6,
+    "2021": 16.9,
+    "2022": 2.1,
+    "2023": 28.3,
+    "2024": 11.2,
+    "2025": 5.7,
+    "2026": -1.3
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "step21",
+     "sharpe_on_block": 0.4
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "step21",
+     "sharpe_on_block": 1.61
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "step21",
+     "sharpe_on_block": 0.3
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "step21",
+     "sharpe_on_block": 1.64
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "step21",
+     "sharpe_on_block": 1.3
+    }
+   ]
+  },
+  {
+   "option": "D regime blend",
+   "filter": "medium 5%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 17.6,
+   "sharpe": 1.14,
+   "max_dd_pct": -32.0,
+   "max_dd_inr_on_1L": -32049,
+   "random_same_rules_cagr_pct": 7.7,
+   "excess_cagr_vs_random_pct": 9.8,
+   "excess_sharpe": 0.66,
+   "years_beating_random": "10/14",
+   "deflated_sharpe": 0.809,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 46.8,
+    "down_market": -35.9,
+    "sideways": 16.2,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 19.6,
+   "post_2020_cagr": 15.4,
+   "choices": {
+    "2013": "calm(0.4, 0.4, 0.2) stress(0.2, 0.6, 0.2)",
+    "2014": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2015": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2016": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2017": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2018": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2019": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2020": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2021": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2022": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2023": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2024": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2025": "calm(0.8, 0.2, 0.0) stress(0.4, 0.6, 0.0)",
+    "2026": "calm(0.8, 0.2, 0.0) stress(0.4, 0.6, 0.0)"
+   },
+   "by_year": {
+    "2013": 12.1,
+    "2014": 43.2,
+    "2015": 16.0,
+    "2016": 5.0,
+    "2017": 44.0,
+    "2018": 4.8,
+    "2019": 14.9,
+    "2020": 6.3,
+    "2021": 37.0,
+    "2022": 7.0,
+    "2023": 33.8,
+    "2024": 14.4,
+    "2025": 7.9,
+    "2026": -5.1
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "calm(0.8, 0.2, 0.0) stress(0.4, 0.6, 0.0)",
+     "sharpe_on_block": 0.65
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "calm(0.8, 0.2, 0.0) stress(0.2, 0.6, 0.2)",
+     "sharpe_on_block": 1.07
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+     "sharpe_on_block": 0.46
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+     "sharpe_on_block": 1.77
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+     "sharpe_on_block": 0.97
+    }
+   ]
+  },
+  {
+   "option": "C machine learning (ALADIN 1 model)",
+   "filter": "tight 2%",
+   "from": "2017-01-02",
+   "to": "2026-05-07",
+   "cagr_pct": 22.4,
+   "sharpe": 1.08,
+   "max_dd_pct": -31.7,
+   "max_dd_inr_on_1L": -31739,
+   "random_same_rules_cagr_pct": 10.9,
+   "excess_cagr_vs_random_pct": 11.5,
+   "excess_sharpe": 0.66,
+   "years_beating_random": "6/10",
+   "deflated_sharpe": 0.713,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 53.0,
+    "down_market": -23.1,
+    "sideways": 13.2,
+    "days": [
+     1038,
+     341,
+     930
+    ]
+   },
+   "pre_2020_cagr": 25.5,
+   "post_2020_cagr": 21.0,
+   "choices": {
+    "2017": "10-day model, hold 10",
+    "2018": "10-day model, hold 10",
+    "2019": "10-day model, hold 10",
+    "2020": "10-day model, hold 10",
+    "2021": "10-day model, hold 10",
+    "2022": "10-day model, hold 10",
+    "2023": "10-day model, hold 10",
+    "2024": "10-day model, hold 10",
+    "2025": "10-day model, hold 10",
+    "2026": "10-day model, hold 10"
+   },
+   "by_year": {
+    "2017": 51.0,
+    "2018": 10.7,
+    "2019": 16.1,
+    "2020": 37.2,
+    "2021": 39.4,
+    "2022": -0.4,
+    "2023": 25.3,
+    "2024": 56.5,
+    "2025": -6.4,
+    "2026": -6.0
+   },
+   "purged_cv": [
+    {
+     "block": "2015-01-05..2017-04-13",
+     "chosen": "10-day model, hold 10",
+     "sharpe_on_block": 0.65
+    },
+    {
+     "block": "2017-04-17..2019-07-22",
+     "chosen": "10-day model, hold 10",
+     "sharpe_on_block": 1.08
+    },
+    {
+     "block": "2019-07-23..2021-10-26",
+     "chosen": "10-day model, hold 10",
+     "sharpe_on_block": 1.57
+    },
+    {
+     "block": "2021-10-27..2024-01-31",
+     "chosen": "10-day model, hold 10",
+     "sharpe_on_block": 0.77
+    },
+    {
+     "block": "2024-02-01..2026-05-07",
+     "chosen": "10-day model, hold 10",
+     "sharpe_on_block": 0.69
+    }
+   ]
+  },
+  {
+   "option": "x first try: risk checked on rebalance days only",
+   "filter": "tight 2%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 25.1,
+   "sharpe": 0.91,
+   "max_dd_pct": -56.1,
+   "max_dd_inr_on_1L": -56081,
+   "random_same_rules_cagr_pct": 10.9,
+   "excess_cagr_vs_random_pct": 14.2,
+   "excess_sharpe": 0.64,
+   "years_beating_random": "10/14",
+   "deflated_sharpe": 0.527,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 72.2,
+    "down_market": -33.5,
+    "sideways": 12.3,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 15.8,
+   "post_2020_cagr": 36.1,
+   "choices": {
+    "2013": "L252 skip0 step63 trend",
+    "2014": "L252 skip0 step63 trend",
+    "2015": "L252 skip0 step63 trend",
+    "2016": "L252 skip0 step63 trend",
+    "2017": "L252 skip0 step63 trend",
+    "2018": "L252 skip0 step63 trend",
+    "2019": "L252 skip0 step63 trend",
+    "2020": "L126 skip0 step63 vix",
+    "2021": "L126 skip0 step63 vix",
+    "2022": "L126 skip0 step63 vix",
+    "2023": "L126 skip0 step63 vix",
+    "2024": "L126 skip0 step63 vix",
+    "2025": "L126 skip0 step63 vix",
+    "2026": "L126 skip0 step63 vix"
+   },
+   "by_year": {
+    "2013": 1.5,
+    "2014": 156.1,
+    "2015": -0.0,
+    "2016": -10.8,
+    "2017": 48.5,
+    "2018": -22.0,
+    "2019": 1.3,
+    "2020": 189.4,
+    "2021": 47.6,
+    "2022": -27.9,
+    "2023": 61.9,
+    "2024": 8.3,
+    "2025": 14.1,
+    "2026": 10.8
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "L126 skip0 step63 vix",
+     "sharpe_on_block": 0.77
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "L126 skip0 step63 vix",
+     "sharpe_on_block": 0.86
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "L252 skip0 step21 dd brake 12%",
+     "sharpe_on_block": -0.13
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "L126 skip0 step63 vix",
+     "sharpe_on_block": 1.6
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "L126 skip0 step63 vix",
+     "sharpe_on_block": 1.24
+    }
+   ]
+  },
+  {
+   "option": "x first try: risk checked on rebalance days only",
+   "filter": "medium 5%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 17.3,
+   "sharpe": 0.81,
+   "max_dd_pct": -54.0,
+   "max_dd_inr_on_1L": -54002,
+   "random_same_rules_cagr_pct": 7.7,
+   "excess_cagr_vs_random_pct": 9.6,
+   "excess_sharpe": 0.57,
+   "years_beating_random": "10/14",
+   "deflated_sharpe": 0.39,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 60.5,
+    "down_market": -52.3,
+    "sideways": 17.2,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 19.8,
+   "post_2020_cagr": 14.7,
+   "choices": {
+    "2013": "L126 skip0 step63 trend",
+    "2014": "L126 skip0 step63 trend",
+    "2015": "L252 skip0 step63 trend",
+    "2016": "L252 skip0 step63 trend",
+    "2017": "L252 skip0 step63 trend",
+    "2018": "L252 skip0 step63 trend",
+    "2019": "L252 skip0 step63 trend",
+    "2020": "L252 skip0 step63 trend",
+    "2021": "L126 skip0 step63 dd brake 12%",
+    "2022": "L126 skip0 step63 dd brake 12%",
+    "2023": "L126 skip0 step63 dd brake 12%",
+    "2024": "L126 skip0 step63 dd brake 12%",
+    "2025": "L126 skip0 step63 dd brake 12%",
+    "2026": "L126 skip0 step63 dd brake 12%"
+   },
+   "by_year": {
+    "2013": 4.8,
+    "2014": 93.9,
+    "2015": 0.4,
+    "2016": -1.0,
+    "2017": 113.2,
+    "2018": -20.1,
+    "2019": -0.4,
+    "2020": -9.6,
+    "2021": 52.3,
+    "2022": -3.5,
+    "2023": 62.2,
+    "2024": 7.6,
+    "2025": 1.3,
+    "2026": -0.2
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 0.3
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 1.08
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "L252 skip0 step21 vix",
+     "sharpe_on_block": 0.15
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 1.83
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 1.15
+    }
+   ]
+  },
+  {
+   "option": "D regime blend",
+   "filter": "tight 2%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 21.3,
+   "sharpe": 1.25,
+   "max_dd_pct": -30.8,
+   "max_dd_inr_on_1L": -30816,
+   "random_same_rules_cagr_pct": 10.9,
+   "excess_cagr_vs_random_pct": 10.5,
+   "excess_sharpe": 0.53,
+   "years_beating_random": "10/14",
+   "deflated_sharpe": 0.903,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 55.2,
+    "down_market": -32.3,
+    "sideways": 15.8,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 25.4,
+   "post_2020_cagr": 17.0,
+   "choices": {
+    "2013": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2014": "calm(0.4, 0.4, 0.2) stress(0.4, 0.6, 0.0)",
+    "2015": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2016": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2017": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2018": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2019": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2020": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2021": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2022": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2023": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2024": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2025": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+    "2026": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)"
+   },
+   "by_year": {
+    "2013": 14.2,
+    "2014": 70.1,
+    "2015": 25.9,
+    "2016": 2.6,
+    "2017": 60.8,
+    "2018": 1.2,
+    "2019": 15.3,
+    "2020": 18.0,
+    "2021": 31.0,
+    "2022": 7.3,
+    "2023": 42.9,
+    "2024": 17.9,
+    "2025": 1.1,
+    "2026": -5.8
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.2, 0.6, 0.2)",
+     "sharpe_on_block": 0.37
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+     "sharpe_on_block": 1.72
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+     "sharpe_on_block": 0.7
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+     "sharpe_on_block": 1.73
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "calm(0.4, 0.4, 0.2) stress(0.2, 0.8, 0.0)",
+     "sharpe_on_block": 1.01
+    }
+   ]
+  },
+  {
+   "option": "E momentum + risk",
+   "filter": "tight 2%",
+   "from": "2013-01-01",
+   "to": "2023-12-21",
+   "cagr_pct": 22.0,
+   "sharpe": 0.86,
+   "max_dd_pct": -53.1,
+   "max_dd_inr_on_1L": -53097,
+   "random_same_rules_cagr_pct": 11.6,
+   "excess_cagr_vs_random_pct": 10.4,
+   "excess_sharpe": 0.5,
+   "years_beating_random": "7/11",
+   "deflated_sharpe": 0.468,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 58.9,
+    "down_market": -50.6,
+    "sideways": 27.8,
+    "days": [
+     1214,
+     412,
+     1082
+    ]
+   },
+   "pre_2020_cagr": 22.9,
+   "post_2020_cagr": 20.3,
+   "choices": {
+    "2013": "L252 skip0 step21 dd brake 12%",
+    "2014": "L252 skip0 step21 dd brake 12%",
+    "2015": "L126 skip21 step63 dd brake 12%",
+    "2016": "L126 skip21 step63 dd brake 12%",
+    "2017": "L252 skip0 step63 dd brake 12%",
+    "2018": "L252 skip0 step63 dd brake 12%",
+    "2019": "L252 skip0 step63 dd brake 12%",
+    "2020": "L252 skip0 step63 dd brake 12%",
+    "2021": "L126 skip0 step63 dd brake 12%",
+    "2022": "L252 skip0 step21 dd brake 12%",
+    "2023": "L126 skip0 step63 dd brake 12%",
+    "2024": "L126 skip0 step63 dd brake 12%",
+    "2025": "L126 skip0 step63 dd brake 12%",
+    "2026": "L126 skip0 step63 dd brake 12%"
+   },
+   "by_year": {
+    "2013": 14.6,
+    "2014": 104.0,
+    "2015": 34.8,
+    "2016": -28.4,
+    "2017": 138.0,
+    "2018": -0.9,
+    "2019": -23.0,
+    "2020": 84.1,
+    "2021": 10.6,
+    "2022": -34.0,
+    "2023": 53.1
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 0.76
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 0.91
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 0.56
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 2.19
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "L126 skip0 step63 dd brake 12%",
+     "sharpe_on_block": 3.75
+    }
+   ]
+  },
+  {
+   "option": "A momentum",
+   "filter": "tight 2%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 17.7,
+   "sharpe": 0.72,
+   "max_dd_pct": -61.7,
+   "max_dd_inr_on_1L": -61685,
+   "random_same_rules_cagr_pct": 10.9,
+   "excess_cagr_vs_random_pct": 6.8,
+   "excess_sharpe": 0.41,
+   "years_beating_random": "10/14",
+   "deflated_sharpe": 0.273,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 66.0,
+    "down_market": -49.1,
+    "sideways": 11.2,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 8.9,
+   "post_2020_cagr": 28.1,
+   "choices": {
+    "2013": "L252 skip0 step21",
+    "2014": "L252 skip0 step21",
+    "2015": "L252 skip0 step21",
+    "2016": "L252 skip0 step21",
+    "2017": "L252 skip0 step63",
+    "2018": "L252 skip0 step63 sector",
+    "2019": "L252 skip0 step21",
+    "2020": "L126 skip0 step63 sector",
+    "2021": "L126 skip0 step63",
+    "2022": "L126 skip21 step63 sector",
+    "2023": "L126 skip0 step63 sector",
+    "2024": "L126 skip0 step63 sector",
+    "2025": "L126 skip0 step63 sector",
+    "2026": "L126 skip0 step63 sector"
+   },
+   "by_year": {
+    "2013": 19.8,
+    "2014": 123.1,
+    "2015": 11.1,
+    "2016": -41.3,
+    "2017": 86.5,
+    "2018": -32.5,
+    "2019": -18.3,
+    "2020": 62.9,
+    "2021": 45.9,
+    "2022": -19.4,
+    "2023": 60.5,
+    "2024": 44.0,
+    "2025": 1.6,
+    "2026": 4.3
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "L126 skip0 step63 sector",
+     "sharpe_on_block": 0.19
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "L126 skip0 step63 sector",
+     "sharpe_on_block": 1.34
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "L126 skip21 step63 sector",
+     "sharpe_on_block": -0.05
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "L126 skip0 step63 sector",
+     "sharpe_on_block": 1.82
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "L126 skip0 step63 sector",
+     "sharpe_on_block": 1.32
+    }
+   ]
+  },
+  {
+   "option": "G low volatility",
+   "filter": "medium 5%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 12.3,
+   "sharpe": 1.02,
+   "max_dd_pct": -23.8,
+   "max_dd_inr_on_1L": -23757,
+   "random_same_rules_cagr_pct": 7.7,
+   "excess_cagr_vs_random_pct": 4.6,
+   "excess_sharpe": 0.21,
+   "years_beating_random": "7/14",
+   "deflated_sharpe": 0.681,
+   "within_risk_limit": true,
+   "regimes": {
+    "up_market": 32.1,
+    "down_market": -23.0,
+    "sideways": 8.7,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 13.6,
+   "post_2020_cagr": 11.0,
+   "choices": {
+    "2013": "step63",
+    "2014": "step63",
+    "2015": "step63",
+    "2016": "step63",
+    "2017": "step63",
+    "2018": "step63",
+    "2019": "step63",
+    "2020": "step63",
+    "2021": "step21",
+    "2022": "step21",
+    "2023": "step21",
+    "2024": "step21",
+    "2025": "step21",
+    "2026": "step21"
+   },
+   "by_year": {
+    "2013": 7.4,
+    "2014": 41.6,
+    "2015": 10.3,
+    "2016": -0.2,
+    "2017": 33.1,
+    "2018": 5.5,
+    "2019": 1.4,
+    "2020": 11.3,
+    "2021": 18.4,
+    "2022": 4.0,
+    "2023": 24.1,
+    "2024": 7.6,
+    "2025": 9.4,
+    "2026": -4.0
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "step21",
+     "sharpe_on_block": 0.18
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "step63",
+     "sharpe_on_block": 1.46
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "step63",
+     "sharpe_on_block": 0.26
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "step63",
+     "sharpe_on_block": 1.44
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "step21",
+     "sharpe_on_block": 1.17
+    }
+   ]
+  },
+  {
+   "option": "Current ALADIN (weekly BUY rule)",
+   "filter": "top 1% (as live)",
+   "from": "2017-01-02",
+   "to": "2026-05-07",
+   "cagr_pct": 7.1,
+   "sharpe": 0.4,
+   "max_dd_pct": -47.2,
+   "max_dd_inr_on_1L": -47209,
+   "random_same_rules_cagr_pct": 8.4,
+   "excess_cagr_vs_random_pct": -1.3,
+   "excess_sharpe": -0.0,
+   "years_beating_random": "4/10",
+   "deflated_sharpe": 0.071,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 34.7,
+    "down_market": -30.5,
+    "sideways": -2.8,
+    "days": [
+     1038,
+     341,
+     930
+    ]
+   },
+   "pre_2020_cagr": 16.9,
+   "post_2020_cagr": 2.8,
+   "choices": {
+    "2017": "5-day model, hold 5",
+    "2018": "5-day model, hold 5",
+    "2019": "5-day model, hold 5",
+    "2020": "5-day model, hold 5",
+    "2021": "5-day model, hold 5",
+    "2022": "5-day model, hold 5",
+    "2023": "5-day model, hold 5",
+    "2024": "5-day model, hold 5",
+    "2025": "5-day model, hold 5",
+    "2026": "5-day model, hold 5"
+   },
+   "by_year": {
+    "2017": 24.8,
+    "2018": -7.8,
+    "2019": 37.1,
+    "2020": -18.3,
+    "2021": 33.4,
+    "2022": -8.0,
+    "2023": 18.3,
+    "2024": 26.6,
+    "2025": -12.0,
+    "2026": -10.0
+   },
+   "purged_cv": null
+  },
+  {
+   "option": "G low volatility",
+   "filter": "tight 2%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": 10.0,
+   "sharpe": 0.82,
+   "max_dd_pct": -30.2,
+   "max_dd_inr_on_1L": -30188,
+   "random_same_rules_cagr_pct": 10.9,
+   "excess_cagr_vs_random_pct": -0.9,
+   "excess_sharpe": -0.13,
+   "years_beating_random": "5/14",
+   "deflated_sharpe": 0.401,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 30.1,
+    "down_market": -23.1,
+    "sideways": 4.9,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": 17.3,
+   "post_2020_cagr": 2.4,
+   "choices": {
+    "2013": "step21",
+    "2014": "step21",
+    "2015": "step21",
+    "2016": "step21",
+    "2017": "step21",
+    "2018": "step21",
+    "2019": "step21",
+    "2020": "step21",
+    "2021": "step21",
+    "2022": "step63",
+    "2023": "step63",
+    "2024": "step21",
+    "2025": "step21",
+    "2026": "step21"
+   },
+   "by_year": {
+    "2013": 19.0,
+    "2014": 37.0,
+    "2015": 11.6,
+    "2016": 4.5,
+    "2017": 43.4,
+    "2018": 7.5,
+    "2019": 1.5,
+    "2020": -13.0,
+    "2021": 15.0,
+    "2022": -5.3,
+    "2023": 18.8,
+    "2024": 4.1,
+    "2025": 4.4,
+    "2026": -5.1
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "step21",
+     "sharpe_on_block": 0.7
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "step21",
+     "sharpe_on_block": 1.42
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "step21",
+     "sharpe_on_block": 0.31
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "step21",
+     "sharpe_on_block": 0.79
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "step63",
+     "sharpe_on_block": 0.49
+    }
+   ]
+  },
+  {
+   "option": "G reversal",
+   "filter": "medium 5%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": -5.4,
+   "sharpe": -0.09,
+   "max_dd_pct": -75.9,
+   "max_dd_inr_on_1L": -75943,
+   "random_same_rules_cagr_pct": 7.7,
+   "excess_cagr_vs_random_pct": -13.1,
+   "excess_sharpe": -0.83,
+   "years_beating_random": "1/14",
+   "deflated_sharpe": 0.0,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 23.2,
+    "down_market": -45.8,
+    "sideways": -12.2,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": -6.1,
+   "post_2020_cagr": -4.6,
+   "choices": {
+    "2013": "1 month, monthly",
+    "2014": "1 month, monthly",
+    "2015": "1 month, monthly",
+    "2016": "1 month, monthly",
+    "2017": "1 month, monthly",
+    "2018": "1 month, monthly",
+    "2019": "1 month, monthly",
+    "2020": "1 month, monthly",
+    "2021": "1 month, monthly",
+    "2022": "1 month, monthly",
+    "2023": "1 month, monthly",
+    "2024": "1 month, monthly",
+    "2025": "1 month, monthly",
+    "2026": "1 month, monthly"
+   },
+   "by_year": {
+    "2013": -10.0,
+    "2014": 28.4,
+    "2015": -7.6,
+    "2016": -3.2,
+    "2017": 25.2,
+    "2018": -31.9,
+    "2019": -26.0,
+    "2020": -19.1,
+    "2021": 17.4,
+    "2022": -18.0,
+    "2023": 21.0,
+    "2024": -7.7,
+    "2025": -19.7,
+    "2026": 6.9
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": -0.11
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": 0.39
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": -1.2
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": 0.58
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": 0.19
+    }
+   ]
+  },
+  {
+   "option": "G reversal",
+   "filter": "tight 2%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": -12.5,
+   "sharpe": -0.3,
+   "max_dd_pct": -88.8,
+   "max_dd_inr_on_1L": -88805,
+   "random_same_rules_cagr_pct": 10.9,
+   "excess_cagr_vs_random_pct": -23.3,
+   "excess_sharpe": -0.97,
+   "years_beating_random": "1/14",
+   "deflated_sharpe": 0.0,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 13.9,
+    "down_market": -51.9,
+    "sideways": -17.6,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": -19.7,
+   "post_2020_cagr": -3.8,
+   "choices": {
+    "2013": "1 month, monthly",
+    "2014": "1 month, monthly",
+    "2015": "1 month, monthly",
+    "2016": "1 month, monthly",
+    "2017": "1 month, monthly",
+    "2018": "1 month, monthly",
+    "2019": "1 month, monthly",
+    "2020": "1 month, monthly",
+    "2021": "1 month, monthly",
+    "2022": "1 month, monthly",
+    "2023": "1 month, monthly",
+    "2024": "1 month, monthly",
+    "2025": "1 month, monthly",
+    "2026": "1 month, monthly"
+   },
+   "by_year": {
+    "2013": -18.1,
+    "2014": 16.9,
+    "2015": -28.7,
+    "2016": -1.2,
+    "2017": 5.8,
+    "2018": -50.7,
+    "2019": -36.3,
+    "2020": -15.6,
+    "2021": 14.5,
+    "2022": -18.0,
+    "2023": 19.3,
+    "2024": -2.5,
+    "2025": -22.7,
+    "2026": 10.1
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": -0.21
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": -0.0
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": -1.45
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": 0.65
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": 0.12
+    }
+   ]
+  },
+  {
+   "option": "G reversal",
+   "filter": "loose 10%",
+   "from": "2013-01-01",
+   "to": "2026-05-07",
+   "cagr_pct": -10.6,
+   "sharpe": -0.39,
+   "max_dd_pct": -81.5,
+   "max_dd_inr_on_1L": -81522,
+   "random_same_rules_cagr_pct": 1.6,
+   "excess_cagr_vs_random_pct": -12.2,
+   "excess_sharpe": -1.15,
+   "years_beating_random": "0/14",
+   "deflated_sharpe": 0.0,
+   "within_risk_limit": false,
+   "regimes": {
+    "up_market": 15.3,
+    "down_market": -47.6,
+    "sideways": -17.0,
+    "days": [
+     1446,
+     503,
+     1344
+    ]
+   },
+   "pre_2020_cagr": -9.9,
+   "post_2020_cagr": -11.4,
+   "choices": {
+    "2013": "1 month, monthly",
+    "2014": "1 month, monthly",
+    "2015": "1 month, monthly",
+    "2016": "1 month, monthly",
+    "2017": "1 month, monthly",
+    "2018": "1 month, monthly",
+    "2019": "1 month, monthly",
+    "2020": "1 month, monthly",
+    "2021": "1 month, monthly",
+    "2022": "1 month, monthly",
+    "2023": "1 month, monthly",
+    "2024": "1 month, monthly",
+    "2025": "1 month, monthly",
+    "2026": "1 month, monthly"
+   },
+   "by_year": {
+    "2013": -19.9,
+    "2014": 24.6,
+    "2015": -9.7,
+    "2016": -13.6,
+    "2017": 24.5,
+    "2018": -31.6,
+    "2019": -26.1,
+    "2020": -16.8,
+    "2021": -0.6,
+    "2022": -16.8,
+    "2023": -1.1,
+    "2024": -9.3,
+    "2025": -22.6,
+    "2026": -1.3
+   },
+   "purged_cv": [
+    {
+     "block": "2011-01-03..2014-01-22",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": -0.3
+    },
+    {
+     "block": "2014-01-23..2017-02-23",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": 0.18
+    },
+    {
+     "block": "2017-02-27..2020-03-24",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": -1.33
+    },
+    {
+     "block": "2020-03-25..2023-04-12",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": 0.23
+    },
+    {
+     "block": "2023-04-13..2026-05-07",
+     "chosen": "1 month, monthly",
+     "sharpe_on_block": -0.44
+    }
+   ]
+  }
+ ],
+ "finalists": {
+  "A momentum": {
+   "setting": "L126 skip0 step63",
+   "full_report": {
+    "cagr_pct": 25.1,
+    "sharpe": 1.004,
+    "max_dd_pct": -39.5,
+    "max_dd_inr_on_1L": -39537.0,
+    "final_inr_from_1L": 3614924.0,
+    "trades": 1399,
+    "win_rate": 0.495,
+    "avg_win_pct": 38.81,
+    "avg_loss_pct": -16.06,
+    "net_per_trade_bps": 1108.1,
+    "net_per_trade_bps_without_best5": 826.2,
+    "costs_inr": 214542.0,
+    "costs_share_of_gross_gains": 0.487,
+    "time_in_market": 0.999,
+    "pre_2020_cagr": 20.4,
+    "post_2020_cagr": 32.9,
+    "regimes": {
+     "up_market": 79.4,
+     "down_market": -45.8,
+     "sideways": 21.9,
+     "days": [
+      1691,
+      678,
+      1668
+     ]
+    },
+    "by_year": {
+     "2010": 18.7,
+     "2011": -22.5,
+     "2012": 42.1,
+     "2013": 10.4,
+     "2014": 77.3,
+     "2015": 28.3,
+     "2016": -4.2,
+     "2017": 103.7,
+     "2018": -17.4,
+     "2019": 15.9,
+     "2020": 84.3,
+     "2021": 59.7,
+     "2022": -2.9,
+     "2023": 76.1,
+     "2024": 19.0,
+     "2025": -3.4,
+     "2026": 1.8
+    },
+    "from": "2010-01-05",
+    "to": "2026-05-07"
+   },
+   "robustness": {
+    "step -20%": {
+     "cagr_pct": 18.6,
+     "sharpe": 0.77,
+     "max_dd_pct": -53.1
+    },
+    "step +20%": {
+     "cagr_pct": 20.3,
+     "sharpe": 0.84,
+     "max_dd_pct": -43.9
+    },
+    "pick -20%": {
+     "cagr_pct": 27.1,
+     "sharpe": 1.02,
+     "max_dd_pct": -39.8
+    },
+    "pick +20%": {
+     "cagr_pct": 23.6,
+     "sharpe": 0.98,
+     "max_dd_pct": -43.2
+    },
+    "largest 100 stocks only": {
+     "cagr_pct": 13.5,
+     "sharpe": 0.59,
+     "max_dd_pct": -48.7
+    },
+    "largest 250": {
+     "cagr_pct": 25.2,
+     "sharpe": 0.99,
+     "max_dd_pct": -39.8
+    }
+   },
+   "holdout": {
+    "from": "2026-05-08",
+    "to": "2026-11-06",
+    "return_pct": -0.4,
+    "max_dd_pct": -19.1,
+    "trades": 29,
+    "random_return_pct": 0.4,
+    "nifty500_return_pct": 1.0
+   }
+  },
+  "C machine learning (ALADIN 1 model)": {
+   "setting": "20-day model, hold 20",
+   "full_report": {
+    "cagr_pct": 17.68,
+    "sharpe": 1.003,
+    "max_dd_pct": -31.2,
+    "max_dd_inr_on_1L": -31189.0,
+    "final_inr_from_1L": 610015.0,
+    "trades": 3273,
+    "win_rate": 0.543,
+    "avg_win_pct": 10.63,
+    "avg_loss_pct": -7.43,
+    "net_per_trade_bps": 237.6,
+    "net_per_trade_bps_without_best5": 219.7,
+    "costs_inr": 143921.0,
+    "costs_share_of_gross_gains": 0.98,
+    "time_in_market": 1.0,
+    "pre_2020_cagr": 10.5,
+    "post_2020_cagr": 23.6,
+    "regimes": {
+     "up_market": 51.4,
+     "down_market": -29.2,
+     "sideways": 10.3,
+     "days": [
+      1206,
+      453,
+      1140
+     ]
+    },
+    "by_year": {
+     "2015": -1.0,
+     "2016": 10.5,
+     "2017": 49.6,
+     "2018": -11.1,
+     "2019": 11.5,
+     "2020": 35.2,
+     "2021": 47.4,
+     "2022": -6.0,
+     "2023": 41.5,
+     "2024": 19.8,
+     "2025": 1.9,
+     "2026": 16.0
+    },
+    "from": "2015-01-05",
+    "to": "2026-05-07"
+   },
+   "robustness": {
+    "step -20%": {
+     "cagr_pct": 16.0,
+     "sharpe": 0.93,
+     "max_dd_pct": -34.2
+    },
+    "step +20%": {
+     "cagr_pct": 19.0,
+     "sharpe": 1.08,
+     "max_dd_pct": -34.3
+    },
+    "pick -20%": {
+     "cagr_pct": 19.1,
+     "sharpe": 1.05,
+     "max_dd_pct": -31.3
+    },
+    "pick +20%": {
+     "cagr_pct": 18.0,
+     "sharpe": 1.03,
+     "max_dd_pct": -32.5
+    },
+    "largest 100 stocks only": {
+     "cagr_pct": 9.1,
+     "sharpe": 0.53,
+     "max_dd_pct": -32.1
+    },
+    "largest 250": {
+     "cagr_pct": 14.1,
+     "sharpe": 0.8,
+     "max_dd_pct": -30.6
+    }
+   },
+   "holdout": "not possible: the ALADIN 1 unseen-year record ends in September 2026"
+  }
+ },
+ "baselines": {
+  "random, monthly | tight 2%": {
+   "cagr_pct": 7.5,
+   "sharpe": 0.46,
+   "max_dd_pct": -63.8,
+   "from": "2010-01-05"
+  },
+  "random, monthly, from 2015 | tight 2%": {
+   "cagr_pct": 7.6,
+   "sharpe": 0.46,
+   "max_dd_pct": -61.4,
+   "from": "2015-01-05"
+  },
+  "random, monthly | medium 5%": {
+   "cagr_pct": 4.7,
+   "sharpe": 0.33,
+   "max_dd_pct": -63.4,
+   "from": "2010-01-05"
+  },
+  "random, monthly, from 2015 | medium 5%": {
+   "cagr_pct": 4.0,
+   "sharpe": 0.3,
+   "max_dd_pct": -63.3,
+   "from": "2015-01-05"
+  },
+  "random, monthly | loose 10%": {
+   "cagr_pct": -0.7,
+   "sharpe": 0.06,
+   "max_dd_pct": -65.1,
+   "from": "2010-01-05"
+  },
+  "random, monthly, from 2015 | loose 10%": {
+   "cagr_pct": -0.9,
+   "sharpe": 0.05,
+   "max_dd_pct": -65.1,
+   "from": "2015-01-05"
+  },
+  "equal weight, whole universe | all": {
+   "cagr_pct": 11.0,
+   "sharpe": 0.65,
+   "max_dd_pct": -41.7,
+   "from": "2010-01-05"
+  },
+  "NIFTY 500 index (price only) | all": {
+   "cagr_pct": 11.0,
+   "sharpe": 0.73,
+   "max_dd_pct": -38.3,
+   "from": "2010-01-04"
+  }
+ },
+ "record_dates": {
+  "20": [
+   "2013-01-04",
+   "2026-08-31"
+  ],
+  "10": [
+   "2013-01-04",
+   "2026-09-15"
+  ],
+  "5": [
+   "2013-01-04",
+   "2026-09-22"
+  ]
+ },
+ "runtime_s": 155
+}
