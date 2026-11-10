@@ -1452,9 +1452,9 @@
    1.11256
   ]
  },
- "generated_utc": "2026-11-09T23:07:23+00:00",
- "generated_ist": "10 Nov 2026, 04:37 AM IST",
- "screened_ist": "10 Nov 2026, 04:37 AM IST",
+ "generated_utc": "2026-11-10T02:03:56+00:00",
+ "generated_ist": "10 Nov 2026, 07:33 AM IST",
+ "screened_ist": "10 Nov 2026, 07:33 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,11 +1484,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 266
+   "count": 268
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 149
+   "count": 151
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1502,12 +1502,21 @@
   "3": 18,
   "4": 35,
   "5": 61,
-  "6": 66,
-  "7": 42,
-  "8": 27,
-  "9": 14
+  "6": 67,
+  "7": 41,
+  "8": 28,
+  "9": 15
  },
  "skipped": {
+  "missing EBIT, balance-sheet items or market value": [
+   "AIAENG",
+   "ASHOKLEY",
+   "BOSCHLTD",
+   "IOC",
+   "JUBLFOOD",
+   "NESTLEIND",
+   "RELIANCE"
+  ],
   "accounts in USD": [
    "HCLTECH",
    "INFY"
@@ -1516,18 +1525,7 @@
    "LGEINDIA",
    "RUBICON"
   ],
-  "missing EBIT, balance-sheet items or market value": [
-   "NESTLEIND"
-  ],
   "download failed (YFRateLimitError)": [
-   "SANSERA",
-   "SARDAEN",
-   "SCHAEFFLER",
-   "SCHNEIDER",
-   "SCI",
-   "SHREECEM",
-   "SHRIPISTON",
-   "SHYAMMETL",
    "SIEMENS",
    "SIGNATURE",
    "SOBHA",
@@ -1644,8 +1642,8 @@
    "summary": "IndiaMART InterMESH Limited operates an online business-to-business (B2B) marketplace for business products and services in India and internationally. The company provides an online marketplace that enables listings and discovery of businesses, products, and services; buyer-supplier matchmaking; product search and discovery; request for quotation and BuyLead services; CRM Lead Manager; web storefront solutions; cloud telephony and Premium Number Service (PNS); AI-driven matchmaking; conversational commerce; multimodal search; product specifications and price discovery tools; reviews and ratings services; business enablement software; accounting solutions; and logistics SaaS solutions. The company also offers BUSY accounting software, including financial accounting, inventory management, billing and e-invoicing, GST compliance, taxation, analytics and reporting, production and job work, e-way bill, and scheme management solutions; Livekeeping, a mobile and web-based accounting platform; and credit facilitation, logistics and tracking, inventory management, distributor management, HRMS, procurement management, order management, compliance, and receivables management solutions. In add",
    "magic_rank": 1,
    "rank_roc": 1,
-   "rank_ey": 12,
-   "of": 149
+   "rank_ey": 13,
+   "of": 151
   },
   {
    "symbol": "BLS",
@@ -1696,9 +1694,9 @@
    "beta": -0.118,
    "summary": "BLS International Services Limited provides outsourcing and administrative tasks of visa, passport, and consular services to diplomatic missions in the Middle East, Asia-Pacific, North America, Europe, Africa, South America, China, and India. It operates in two segments, Rendering of Visa and Other Allied Services; and Digital Services. The company offers visa processing, such as end-to-end outsourced visa application intake and processing; appointment scheduling and queue management; document completeness verification and quality checks; biometric data collection, including fingerprints and photographs; and secure transmission of application data to embassy/consulate systems. It also provides retrieval, consolidation, and dispatch of processed applications; and day-end reconciliation and reporting at Visa Application Centres. In addition, the company offers value-added services comprising courier and document delivery, form filling assistance, travel insurance, SMS and email alerts, lounge access, photocopy and print services, internet access facility, translation services, home biometrics collection, document attestation services, and applicant assistance. BLS International Servi",
    "magic_rank": 2,
-   "rank_roc": 11,
-   "rank_ey": 13,
-   "of": 149
+   "rank_roc": 10,
+   "rank_ey": 14,
+   "of": 151
   },
   {
    "symbol": "CASTROLIND",
@@ -1751,7 +1749,7 @@
    "magic_rank": 3,
    "rank_roc": 5,
    "rank_ey": 28,
-   "of": 149
+   "of": 151
   },
   {
    "symbol": "NBCC",
@@ -1802,9 +1800,9 @@
    "beta": null,
    "summary": "NBCC (India) Limited engages in project management consultancy, engineering procurement and construction, and real estate development businesses in India and internationally. The company operates through three segments: PMC; EPC; and Real Estate. It offers services for various civil construction projects, including residential and commercial complexes, re-development of old government colonies, education and medical institutions, infrastructure project roads, water supply systems, storm water systems, and water storage solutions. The company executes various projects, which include high-rise chimneys, cooling towers, coal handling plants, etc.; project conceptualization, feasibility studies, detailed project reports, tender specifications and various packages, basic and detailed engineering, review of projects, procurement, construction, drawings, commissioning & testing, and handing it over. In addition, the company undertakes real estate projects, which include residential and commercial projects, such as corporate office buildings and commercial complexes; develops real estate projects including residential, commercial and institutional projects. Further, it is also involved in ",
    "magic_rank": 4,
-   "rank_roc": 10,
+   "rank_roc": 9,
    "rank_ey": 25,
-   "of": 149
+   "of": 151
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1855,9 +1853,9 @@
    "beta": 0.462,
    "summary": "Hero MotoCorp Limited primarily engages in the manufacture and sale of motorised two wheelers, spare parts and related services in India, Germany, Asia, Central and Latin America, Africa, and the Middle East. The company offers motorcycles and scooters, as well as electric scooters. It provides engines and accessories, as well as non-banking financial and other related services. The company is also involved in merchandise business. The company was formerly known as Hero Honda Motors Ltd. and changed its name to Hero MotoCorp Limited in July 2011. Hero MotoCorp Limited was incorporated in 1984 and is based in New Delhi, India.",
    "magic_rank": 5,
-   "rank_roc": 18,
-   "rank_ey": 20,
-   "of": 149
+   "rank_roc": 17,
+   "rank_ey": 21,
+   "of": 151
   },
   {
    "symbol": "ENGINERSIN",
@@ -1887,7 +1885,7 @@
    "capital_cr": 333.2,
    "ev_cr": 15387.0,
    "market_cap_cr": 16824.7,
-   "pe": 18.886435,
+   "pe": 18.756266,
    "pb": 5.034816,
    "roe": 0.29681,
    "debt_to_equity": 0.468,
@@ -1900,7 +1898,7 @@
    "estimate_mean": 322.66666,
    "estimate_high": 388.0,
    "estimate_low": 290.0,
-   "eps": 15.85,
+   "eps": 15.96,
    "shares_out": 562042373.0,
    "employees": 2747.0,
    "website": "https://www.engineersindia.com",
@@ -1909,61 +1907,8 @@
    "summary": "Engineers India Limited, an engineering consultancy company, provides design, engineering, procurement, construction, and integrated project management services for oil, gas, fertilizers, steel, railways, power, infrastructure, and petrochemical industries worldwide. The company operates through two segments, Consultancy & Engineering Projects, and Turnkey Projects. It offers supply chain management services, such as supplier/contractor registration, contracting and purchase of goods/services/works, expediting, inspection, and supplier/contractor performance review; and develops process technologies for various industries. In addition, the company provides construction services comprising pre-construction activities, including bid management process, plot plan review/heavy lift study, etc.; and construction services comprising site construction management, liaison with statutory authorities, construction quality and warehouse management, HSE management, contracts administration, pre commissioning and commissioning assistance, and contract and site closing services. Further, it offers heat and mass transfer equipment design, environment engineering, specialist materials and maintena",
    "magic_rank": 6,
    "rank_roc": 6,
-   "rank_ey": 41,
-   "of": 149
-  },
-  {
-   "symbol": "HINDZINC",
-   "yahoo_ticker": "HINDZINC.NS",
-   "name": "Hindustan Zinc Ltd.",
-   "industry": "Metals & Mining",
-   "sector": "Basic Materials",
-   "fy_end": "2026-03-31",
-   "price": 575.95,
-   "avg_turnover_cr": 230.0,
-   "roc": 0.8006,
-   "earnings_yield": 0.0808,
-   "fscore": 8,
-   "fscore_known": 9,
-   "checks": {
-    "Profitable (net income > 0)": true,
-    "Cash from operations > 0": true,
-    "Return on assets improved": true,
-    "Cash profit above book profit": true,
-    "Long-term debt ratio fell (or none)": true,
-    "Current ratio improved": true,
-    "No new shares issued": true,
-    "Gross margin improved": true,
-    "Asset turnover improved": false
-   },
-   "ebit_cr": 19270.0,
-   "capital_cr": 24069.0,
-   "ev_cr": 238539.2,
-   "market_cap_cr": 243357.2,
-   "pe": 11.682556,
-   "pb": 8.12055,
-   "roe": 0.95413,
-   "debt_to_equity": 22.209,
-   "dividend_yield": 1.94,
-   "held_institutions": 0.049510002,
-   "held_insiders": 0.88552004,
-   "analysts": 14,
-   "consensus": "positive",
-   "consensus_score": 2.21429,
-   "estimate_mean": 642.6429,
-   "estimate_high": 770.0,
-   "estimate_low": 495.0,
-   "eps": 49.3,
-   "shares_out": 4225319000.0,
-   "employees": 3303.0,
-   "website": "https://www.hzlindia.com",
-   "city": "Udaipur",
-   "beta": 0.73,
-   "summary": "Hindustan Zinc Limited explores for, extracts, and processes minerals in India, rest of Asia, and internationally. The company operates through two segments, Zinc, Lead, Silver & Others; and Wind Energy. The company produces refined zinc and lead, precious metals, and silver; sulphuric acid; rock-phosphate; and metals and related alloys. It also operates captive thermal with a capacity of 550.00 megawatt, wind power plant with a capacity of 273.50 megawatt, and solar power with capacity of 40.70 megawatt, and waste heat recovery boiler power plants of capacity 63.10 megawatt. In addition, the company offers di ammonium phosphate/nitrogen, phosphorus, and potassium fertilizers. The company was incorporated in 1966 and is based in Udaipur, India. Hindustan Zinc Limited operates as a subsidiary of Vedanta Limited.",
-   "magic_rank": 7,
-   "rank_roc": 29,
-   "rank_ey": 18,
-   "of": 149
+   "rank_ey": 40,
+   "of": 151
   },
   {
    "symbol": "NATIONALUM",
@@ -2013,10 +1958,63 @@
    "city": "Bhubaneswar",
    "beta": 0.735,
    "summary": "National Aluminium Company Limited engages in the manufacture and sale of alumina and aluminum products in India and internationally. The company operates through Chemical and Aluminum segments. It offers aluminum metal products, such as ingots, alloy ingots, T-ingots, sows, billets, and wire rods; alumina and hydrate products, including calcined alumina and alumina hydrate; zeolite-A products; specialty alumina and hydrate products; and aluminum rolled and chequered sheets products. The company also owns and operates Coal Mine covering an area of 824.316 hectors situated in Chhendipada Tehsil of Angul District; an opencast mine covering an area of 16 square kilometers on Panchpatmali hills of Koraput district in Odisha; a wind power plant with 50.4 MW of generation capacity in Gandikota, Andhra Pradesh; a wind power plant with 47.6 MW of generation capacity at Jaisalmer, Rajasthan; a wind power plant with 50 MW of generation capacity at Devikot, Rajasthan; a wind power plant with 50.4 MW of generation capacity at Sangli, Maharashtra; and a solar power plants, as well as alumina refinery, aluminum smelter plants, and captive power plant. In addition, it provides testing services. N",
+   "magic_rank": 7,
+   "rank_roc": 39,
+   "rank_ey": 7,
+   "of": 151
+  },
+  {
+   "symbol": "HINDZINC",
+   "yahoo_ticker": "HINDZINC.NS",
+   "name": "Hindustan Zinc Ltd.",
+   "industry": "Metals & Mining",
+   "sector": "Basic Materials",
+   "fy_end": "2026-03-31",
+   "price": 575.95,
+   "avg_turnover_cr": 230.0,
+   "roc": 0.8006,
+   "earnings_yield": 0.0808,
+   "fscore": 8,
+   "fscore_known": 9,
+   "checks": {
+    "Profitable (net income > 0)": true,
+    "Cash from operations > 0": true,
+    "Return on assets improved": true,
+    "Cash profit above book profit": true,
+    "Long-term debt ratio fell (or none)": true,
+    "Current ratio improved": true,
+    "No new shares issued": true,
+    "Gross margin improved": true,
+    "Asset turnover improved": false
+   },
+   "ebit_cr": 19270.0,
+   "capital_cr": 24069.0,
+   "ev_cr": 238539.2,
+   "market_cap_cr": 243357.2,
+   "pe": 11.682556,
+   "pb": 8.12055,
+   "roe": 0.95413,
+   "debt_to_equity": 22.209,
+   "dividend_yield": 1.94,
+   "held_institutions": 0.049510002,
+   "held_insiders": 0.88552004,
+   "analysts": 14,
+   "consensus": "positive",
+   "consensus_score": 2.21429,
+   "estimate_mean": 642.6429,
+   "estimate_high": 770.0,
+   "estimate_low": 495.0,
+   "eps": 49.3,
+   "shares_out": 4225319000.0,
+   "employees": 3303.0,
+   "website": "https://www.hzlindia.com",
+   "city": "Udaipur",
+   "beta": 0.73,
+   "summary": "Hindustan Zinc Limited explores for, extracts, and processes minerals in India, rest of Asia, and internationally. The company operates through two segments, Zinc, Lead, Silver & Others; and Wind Energy. The company produces refined zinc and lead, precious metals, and silver; sulphuric acid; rock-phosphate; and metals and related alloys. It also operates captive thermal with a capacity of 550.00 megawatt, wind power plant with a capacity of 273.50 megawatt, and solar power with capacity of 40.70 megawatt, and waste heat recovery boiler power plants of capacity 63.10 megawatt. In addition, the company offers di ammonium phosphate/nitrogen, phosphorus, and potassium fertilizers. The company was incorporated in 1966 and is based in Udaipur, India. Hindustan Zinc Limited operates as a subsidiary of Vedanta Limited.",
    "magic_rank": 8,
-   "rank_roc": 40,
-   "rank_ey": 8,
-   "of": 149
+   "rank_roc": 28,
+   "rank_ey": 19,
+   "of": 151
   },
   {
    "symbol": "ESCORTS",
@@ -2067,9 +2065,9 @@
    "beta": 0.386,
    "summary": "Escorts Kubota Limited manufactures and sells agricultural and construction equipment in India and internationally. The company offers rotavators, straw reapers, super seeders, MB ploughs, orchard sprayers, paddy harvesters, seed drills, and rice transplanters; filters, pumps, engine assemblies, gear parts, clutch systems, hydraulic pumps, cylinders, lubricants, oils, and service kits; and generator and diesel engines; and cranes, soil compactors, backhoe loaders, tandem rollers, and mini excavators. It also provides agricultural tractors; construction, earth moving, and material handling equipment; and round and flat tubes, heating elements, center buffer couplers, automobile shock absorbers, telescopic front fork and Mcpherson struts, internal combustion engines, and brake blocks. In addition, the company develops, produces, and imports parts and accessories, as well as provides maintenance and warranty, crop, and financing services. It offer its products under the Farmtrac, Powertrac, Digitrac, Steeltrac, Farmpower, and Kubota brands. The company was formerly known as Escorts Limited and changed its name to Escorts Kubota Limited in June 2022. Escorts Kubota Limited was incorpor",
    "magic_rank": 9,
-   "rank_roc": 34,
-   "rank_ey": 17,
-   "of": 149
+   "rank_roc": 33,
+   "rank_ey": 18,
+   "of": 151
   },
   {
    "symbol": "IRCTC",
@@ -2120,9 +2118,9 @@
    "beta": 0.279,
    "summary": "Indian Railway Catering & Tourism Corporation Limited engages in the provision of catering and hospitality, Internet ticketing, travel and tourism, and packaged drinking water services in India. The company operates through four segments: Catering, Railneer, Tourism & Train Operation, and Internet Ticketing. It provides mobile catering services for Vande Bharat, Rajdhani, Shatabdi, Duronto, Gatiman, Tejas, and mail/express trains as well as engages in the e-catering activities; and operates and maintains food plazas, fast food units, food courts, refreshment rooms, mini stores, base kitchens, executive lounges, retiring rooms, Rail Yatri Niwas/BNR hotels, and non-railway catering units. The company also offers tourism products and services comprising domestic tour packages, inbound tourist targeted tours, mass tourism, outbound tour packages, and air ticket and corporate travel; and other tourism activities, such as event management, booking of charter trains and coaches, hill and heritage charters, saloon tours and charters, online reservation and accommodation facilities, and cruise packages. In addition, it offers packaged drinking water under the Rail Neer name; and train ticke",
    "magic_rank": 10,
-   "rank_roc": 17,
-   "rank_ey": 42,
-   "of": 149
+   "rank_roc": 16,
+   "rank_ey": 41,
+   "of": 151
   }
  ]
 }
