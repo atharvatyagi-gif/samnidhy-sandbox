@@ -75,8 +75,8 @@ def run():
         exp = pg.locator(f'tr.mv-x[data-for="{sym}"]')
         t = exp.inner_text().lower() if exp.count() else ""
         check("the expander opens a row below it, without leaving Movers", exp.count() == 1 and pg.evaluate("document.querySelector('#v-movers').classList.contains('on')"))
-        check("the expansion has supply lineage, ALADIN (model E), sentiment & sweeps, each ending in Open in NEXUS",
-              "supply lineage" in t and "aladin" in t and "quant drivers" not in t and "sentiment & sweeps" in t and t.count("open in nexus") == 3, t[:200])
+        check("locked: the expansion has supply lineage, ALADIN (model E, heading once), sentiment & sweeps; Open in NEXUS for the two NEXUS tabs a visitor has",
+              "supply lineage" in t and t.count("\naladin\n") == 1 and "quant drivers" not in t and "sentiment & sweeps" in t and t.count("open in nexus") == 2, t[:300])
         check("locked: the ALADIN probability view (an earlier model) is not offered", not pg.locator('#mov-kind [data-k="aladin"]').is_visible())
         check("the supply-chain file is fetched only now", any("supply_graph.json" in u for u, _ in reqs))
         check("a company with no disclosed links says 'Not measured' and why", "not measured" in t or "none disclosed" in t, t[:160])
