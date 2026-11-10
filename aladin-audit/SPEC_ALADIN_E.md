@@ -49,11 +49,10 @@ as-of date, and the model version. No price target is ever shown.
 There is nothing to "train": the rule has three fixed settings (6 months, best 5%, every 63 days), chosen in Phase 4. They are
 re-checked once a year with the same walk-forward test; a change needs the owner's approval.
 
-## What happens to today's ALADIN
-After this is built and tested: ALADIN 1, the Outlook model, the ALADIN 2.0 engine, the weekly signal, the movers model and the old
-paper bots are moved to `archive/` with a note each, and removed from the nightly jobs and the pages. The current paper bot
-(v5.1) and its shadow keep running until this phase is approved, then are archived with their records saved. ALADIN 1's 20-day
-ranking (the Phase 4 runner-up) keeps a small hidden paper track for comparison only, if the owner agrees.
+## What happens to today's ALADIN (changed by the owner, 2026-11-10)
+Nothing is archived. ALADIN 1, the Outlook model, the ALADIN 2.0 engine, the weekly signal, the movers model and the paper bots
+**keep running and learning every night**. In Phase 6 they leave the public pages and move inside ALADIN BOT, behind the same
+access code, with their data encrypted like the bot's own (so the files are not readable without the code).
 
 ## Honest limits (shown on the page)
 Tested 2010–2026 on companies listed today (survivorship bias: about half the tested edge may be this). No result passed the

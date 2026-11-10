@@ -1,0 +1,47 @@
+{
+ "E as specified (70% invested)": {
+  "cagr": 25.2,
+  "worst_fall": -24.7,
+  "sharpe": 1.37,
+  "trades": 702,
+  "win_rate_after_costs": 0.467,
+  "net_per_trade_pct": 9.55,
+  "avg_holding_days": 98.0,
+  "final_from_1L": 784903
+ },
+ "E fully invested": {
+  "cagr": 33.1,
+  "worst_fall": -36.3,
+  "sharpe": 1.27,
+  "trades": 702,
+  "win_rate_after_costs": 0.467,
+  "net_per_trade_pct": 9.55,
+  "avg_holding_days": 98.0,
+  "final_from_1L": 1374662
+ },
+ "Old: weekly BUY rule (live until now)": {
+  "cagr": 13.2,
+  "worst_fall": -37.1,
+  "sharpe": 0.62,
+  "trades": 1746,
+  "win_rate_after_costs": 0.493,
+  "net_per_trade_pct": 0.34,
+  "avg_holding_days": 8.0,
+  "final_from_1L": 311759
+ },
+ "Old: ALADIN 1, 10-day, top tenth": {
+  "cagr": 9.4,
+  "worst_fall": -40.5,
+  "sharpe": 0.61,
+  "trades": 5253,
+  "win_rate_after_costs": 0.516,
+  "net_per_trade_pct": 0.59,
+  "avg_holding_days": 24.0,
+  "final_from_1L": 228347
+ },
+ "NIFTY 500 (price index)": {
+  "cagr": 14.0,
+  "worst_fall": -38.3,
+  "sharpe": 0.88
+ }
+}

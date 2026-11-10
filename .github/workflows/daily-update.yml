@@ -89,6 +89,11 @@ jobs:
         continue-on-error: true
         run: python scripts/indices_eod.py
 
+      - name: ALADIN model E (momentum with a daily risk check; ranks, the paper account's fills at the next open, data/aladin_e)
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python scripts/aladin_e.py
+
       - name: Fundamentals for the terminal (NIFTY 500 daily, rest of the main board 1/5 per run, business-house members always)
         continue-on-error: true
         run: python scripts/terminal_fund.py

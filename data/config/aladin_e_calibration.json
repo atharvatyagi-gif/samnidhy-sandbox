@@ -1,0 +1,157 @@
+{
+ "model": "aladin-e-1",
+ "what": "share of stocks in each rank group of the 126-day return that beat the average stock of the universe over the next 63 trading days (entry at the next open), and that closed higher",
+ "period": "signal dates 2010-01-04 to 2026-01-27, every 5 trading days",
+ "signal_dates": 792,
+ "caveats": [
+  "Momentum's edge is in the size of the wins, not how often: the best group beats the average stock less than half the time, yet by more on average.",
+  "Only companies listed today (survivorship): the best groups are likely flattered.",
+  "Before costs; a frequency over many stocks and dates, not a forecast for one stock."
+ ],
+ "buckets": [
+  {
+   "from": 0.95,
+   "to": 1.0,
+   "label": "best 5% (in the portfolio)",
+   "n_stock_quarters": 14471,
+   "dates": 792,
+   "beat_market": 0.4659,
+   "beat_market_ci95": [
+    0.4562,
+    0.4766
+   ],
+   "mean_excess_pct": 2.55,
+   "mean_excess_ci95_pct": [
+    1.94,
+    3.17
+   ],
+   "median_excess_pct": -2.0,
+   "sd_excess_pct": 28.29,
+   "closes_higher": 0.5228,
+   "closes_higher_ci95": [
+    0.5076,
+    0.5402
+   ]
+  },
+  {
+   "from": 0.9,
+   "to": 0.95,
+   "label": "next 5%",
+   "n_stock_quarters": 13978,
+   "dates": 792,
+   "beat_market": 0.477,
+   "beat_market_ci95": [
+    0.4676,
+    0.4871
+   ],
+   "mean_excess_pct": 1.89,
+   "mean_excess_ci95_pct": [
+    1.45,
+    2.36
+   ],
+   "median_excess_pct": -1.11,
+   "sd_excess_pct": 22.86,
+   "closes_higher": 0.5338,
+   "closes_higher_ci95": [
+    0.5163,
+    0.5514
+   ]
+  },
+  {
+   "from": 0.8,
+   "to": 0.9,
+   "label": "80th-90th percentile",
+   "n_stock_quarters": 27944,
+   "dates": 792,
+   "beat_market": 0.4772,
+   "beat_market_ci95": [
+    0.4697,
+    0.4848
+   ],
+   "mean_excess_pct": 1.25,
+   "mean_excess_ci95_pct": [
+    0.96,
+    1.53
+   ],
+   "median_excess_pct": -0.91,
+   "sd_excess_pct": 20.81,
+   "closes_higher": 0.5437,
+   "closes_higher_ci95": [
+    0.5267,
+    0.5598
+   ]
+  },
+  {
+   "from": 0.5,
+   "to": 0.8,
+   "label": "50th-80th",
+   "n_stock_quarters": 83792,
+   "dates": 792,
+   "beat_market": 0.4672,
+   "beat_market_ci95": [
+    0.4617,
+    0.4724
+   ],
+   "mean_excess_pct": 0.53,
+   "mean_excess_ci95_pct": [
+    0.35,
+    0.69
+   ],
+   "median_excess_pct": -1.25,
+   "sd_excess_pct": 18.47,
+   "closes_higher": 0.5482,
+   "closes_higher_ci95": [
+    0.5314,
+    0.5646
+   ]
+  },
+  {
+   "from": 0.2,
+   "to": 0.5,
+   "label": "20th-50th",
+   "n_stock_quarters": 83643,
+   "dates": 792,
+   "beat_market": 0.443,
+   "beat_market_ci95": [
+    0.4382,
+    0.4478
+   ],
+   "mean_excess_pct": -0.44,
+   "mean_excess_ci95_pct": [
+    -0.56,
+    -0.31
+   ],
+   "median_excess_pct": -1.98,
+   "sd_excess_pct": 17.19,
+   "closes_higher": 0.5294,
+   "closes_higher_ci95": [
+    0.5123,
+    0.5462
+   ]
+  },
+  {
+   "from": 0.0,
+   "to": 0.2,
+   "label": "worst 20%",
+   "n_stock_quarters": 55238,
+   "dates": 792,
+   "beat_market": 0.4007,
+   "beat_market_ci95": [
+    0.3932,
+    0.4082
+   ],
+   "mean_excess_pct": -1.92,
+   "mean_excess_ci95_pct": [
+    -2.22,
+    -1.6
+   ],
+   "median_excess_pct": -3.64,
+   "sd_excess_pct": 19.04,
+   "closes_higher": 0.4945,
+   "closes_higher_ci95": [
+    0.4755,
+    0.5144
+   ]
+  }
+ ]
+}

@@ -1,0 +1,26 @@
+{
+  "_doc": "Model E settings (aladin-audit/SPEC_ALADIN_E.md, approved 2026-11-10). Changing any number needs the owner's approval and a re-run of the Phase 4 walk-forward test.",
+  "version": "aladin-e-1",
+  "lookback_days": 126,
+  "pick_share": 0.05,
+  "rebalance_every_sessions": 63,
+  "universe_top": 500,
+  "min_adv_inr": 50000000,
+  "min_history_days": 250,
+  "invested_share": 0.70,
+  "invested_share_risk_off": 0.35,
+  "index_ma_days": 200,
+  "max_position_share": 0.05,
+  "kelly_fraction": 0.25,
+  "kill_drawdown": 0.25,
+  "daily_loss_no_buys": 0.04,
+  "stale_sessions": 2,
+  "capital_inr": 100000,
+  "alarm_trail_vs_nifty500_12m": 0.15,
+  "costs": {
+    "stt_buy_pct": 0.1, "stt_sell_pct": 0.1, "exchange_txn_pct": 0.00297, "sebi_fee_pct": 0.0001, "stamp_duty_buy_pct": 0.015,
+    "brokerage_pct": 0.0, "gst_pct_on_brokerage_and_charges": 18.0, "dp_charge_per_scrip_sell_inr": 15.93,
+    "slippage_pct": {"adv_ge_100cr": 0.05, "adv_ge_20cr": 0.10, "below": 0.20},
+    "_note": "Same as aladin-audit/costs.json (the owner's brief, Part A2). I am not sure every rate matches the latest circulars."
+  }
+}

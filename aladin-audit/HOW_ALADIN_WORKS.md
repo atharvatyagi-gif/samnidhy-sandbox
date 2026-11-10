@@ -1,4 +1,95 @@
-# How ALADIN works today
+# How ALADIN works (model E, version aladin-e-1)
+
+Rewritten 2026-11-10 for the rebuilt ALADIN. The earlier models are described further down under "Before the rebuild"; at the
+owner's request they keep running and learning every night, and move behind the ALADIN BOT access code in Phase 6.
+
+## The big picture
+
+```mermaid
+flowchart LR
+  P[NSE end-of-day prices, every stock] --> R[126-session return of the 500 most-traded stocks]
+  I[NIFTY 500 index close] --> K[Daily risk check: above or below its 200-day average]
+  R --> S[Best 5 percent = In the portfolio, others = No signal with their rank]
+  S --> Q[Every 63 sessions: sell leavers, buy newcomers]
+  K --> X[Invested share 70 percent, or 35 percent when below the average or after the kill switch]
+  Q --> O[Orders filled at the next open, after all costs]
+  X --> O
+  O --> A[Paper account, valued every close]
+  A --> H[Health: degraded if prices are stale, kill switch at -25 percent]
+```
+
+**Walkthrough.** Every evening the Daily update saves the day's NSE prices. Model E then (1) fills any orders queued the evening
+before at today's opening prices, after costs; (2) values the paper account at today's close; (3) checks the data is fresh and the
+account is within its limits; (4) ranks the 500 most-traded stocks by their 6-month return; (5) every 63 sessions queues orders to
+sell stocks that left the best 5% and buy the new ones; and (6) if the NIFTY 500 crossed its 200-day average, or the kill switch
+fired, queues orders to resize every position. Nothing is filled at the close that produced the signal.
+
+## Data
+| Source | Used for | Updates | When missing |
+|---|---|---|---|
+| NSE end-of-day files + split-adjusted daily candles (data/terminal) | the 6-month return, traded value, the fills at the open, the account's value | every evening | prices more than 2 sessions old: **degraded**, no new decisions, signals hidden |
+| NIFTY 500 index closes (data/terminal/idx) | the daily risk check | every evening | risk check not measured; no change of invested share |
+
+Nothing is filled with zeros or guesses. A stock whose price history has a one-day move above 45% (beyond any NSE price band) is
+left out as a likely unadjusted split or demerger.
+
+## Inputs
+| Name | Meaning | Formula in words | Look-back |
+|---|---|---|---|
+| r126 | 6-month return | close today ÷ close 126 sessions ago − 1 | 126 sessions |
+| adv60 | how much it trades | average of close × volume | 60 sessions |
+| rank | place among the 500 | 1 = highest r126 | – |
+| NIFTY 500 vs 200-day average | market trend | index close above or below the average of its last 200 closes | 200 sessions |
+
+## The model
+- **Type:** a fixed ranking rule (no machine learning, nothing to overfit beyond three settings chosen in Phase 4).
+- **What it expects:** the stocks that rose most over 6 months, as a group, to beat the average stock over the next quarter. It
+  does not predict any single stock; most single stocks in the best group trail the average, a minority win big.
+- **Settings and where they came from:** 126 sessions, best 5%, every 63 sessions, 70% invested (35% when risk is off), all chosen
+  in the Phase 4 walk-forward test and approved by the owner. Kill switch −25% (the owner's limit). Position cap 5% (a quarter of
+  the Kelly fraction implied by the measured edge is 8%, so 5% binds).
+
+## The measured chance (shown with every stock)
+
+From 2010–2026 signal dates, every 5 sessions, outcomes over the next 63 sessions, before costs, companies listed today only:
+
+| Rank group | Beat the average stock | Average lead (95% range) | Typical (median) lead | Closed higher |
+|---|---|---|---|---|
+| Best 5% (in the portfolio) | 46.6% | +2.55% (+1.94 to +3.17) | −2.0% | 52.3% |
+| Next 5% | 47.7% | +1.89% (+1.45 to +2.36) | −1.1% | 53.4% |
+| 80th–90th percentile | 47.7% | +1.25% | −0.9% | 54.4% |
+| 50th–80th | 46.7% | +0.53% | −1.3% | 54.8% |
+| 20th–50th | 44.3% | −0.44% | −2.0% | 52.9% |
+| Worst 20% | 40.1% | −1.92% | −3.6% | 49.5% |
+
+What this means: the ranking is in the right order on average, but even the best group's typical stock trails the average; the
+edge comes from a minority of large winners. That is why E holds a basket of about 25 and never relies on one stock.
+
+## Three worked examples (6 November 2026 close)
+
+| Step | RELIANCE (large-cap) | PERSISTENT (mid-cap) | SAILIFE (near its 52-week high on heavy volume) |
+|---|---|---|---|
+| 6-month return (r126) | −2.9% | +24.9% | +64.5% |
+| Traded value (60-day average) | ₹1,814 Cr a day | ₹322 Cr | ₹126 Cr |
+| Rank among the 500 | 322 (better than 36%) | 133 (better than 74%) | 35 (better than 93%) |
+| Cut-off for the portfolio | rank 25, a 6-month return of +76.7% | same | same |
+| State | No signal | No signal | No signal (just outside the best 25) |
+| Its group's measured result | 20th–50th: beat the average stock 44.3% of the time, average −0.4% a quarter | 50th–80th: 46.7%, +0.5% | next 5%: 47.7%, +1.9% |
+| Market risk check | NIFTY 500 23,457 above its 200-day average 22,763: risk on, 70% invested | same | same |
+
+What this means: SAILIFE, which the old ALADIN showed red, now ranks 35th of 500, near the top; it is not bought only because the
+basket takes the best 25. RELIANCE sits in the lower middle. No colour says "buy" or "sell": each stock shows its rank, its state
+and its group's measured record.
+
+## Health
+Runs in the Daily update (scripts/aladin_e.py); tests: tests/test_aladin_e.py (11, all passing: date alignment, next-open fills,
+running twice changes nothing, stale data, risk halving, kill switch, costs including DP, position cap, calibration order, no price
+target, data-error jumps). The paper account starts on its first run after the owner approves Phase 5.
+
+---
+
+# Before the rebuild (still running, moving behind ALADIN BOT in Phase 6)
+
 
 Written 2026-11-08 from the code on `main` and the data published for the 2026-11-06 close. Nothing was changed.
 Words in *italics* are explained in GLOSSARY.md.

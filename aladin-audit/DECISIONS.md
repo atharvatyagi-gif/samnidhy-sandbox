@@ -1,3 +1,4 @@
 - 2026-11-08: owner's goal: change the prediction method, lower filters, accept more risk for more profit. Risk limit chosen: worst drop ₹25,000 on ₹1,00,000 (−25%). Phase 4 tests every option at tight/medium/loose filters and sizes; the owner picks inside this limit.
 - 2026-11-08: owner approved phase 2 ('go'); display fixes 1-4 applied and merged to main (commit on main), models unchanged.
 - 2026-11-10: owner chose option E (momentum + daily risk check). Invested share not stated: spec uses the recommended 70%, pending the owner's OK.
+- 2026-11-10: owner approved the spec ('continue'), 70% invested. Changed: no archiving; every old model keeps running and self-learning, hidden from the public site and shown inside ALADIN BOT behind the same code (Phase 6).
