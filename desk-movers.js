@@ -183,7 +183,7 @@ function expansionHtml(sym) {
   if (rt) lin = `<p class="rd-line"><span class="rd-lv ${rt.tone}">${esc(rt.label)}</span> ${esc(RD.plainSentence(rp, sym) || rp.why || "")}</p>` + lin;
   let quant;
   const earlierOn = document.documentElement.classList.contains("legacy-on");
-  if (!earlierOn) quant = (ctx.aladinE ? ctx.aladinE(sym) : "") || '<p class="mut">The ALADIN tab shows this stock\'s rank.</p>';
+  if (!earlierOn) quant = (ctx.aladinE ? ctx.aladinE(sym) : "") || '<div class="sec-t">ALADIN</div><p class="mut">The ALADIN tab shows this stock\'s rank.</p>';
   else if (!a || !a.t) quant = `<p class="mut">${ctx.S.aladin ? "ALADIN 1 has no probability for this stock (not enough price history, or not covered)." : "Loading…"}</p>`;
   else {
     const t = a.t, d = a.f && a.f.dist, n = (v, k = 2) => v == null || !isFinite(v) ? "—" : Number(v).toFixed(k);
