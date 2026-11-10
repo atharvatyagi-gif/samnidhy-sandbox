@@ -1670,7 +1670,8 @@ function chooseQ(o) {
   else if (f === "LOGOFF") $("#logout").click();
   else if (f === "SETUP") openOnboard();
   else if (f === "WATCHLIST") { go("terminal"); setSide("watch"); }
-  else if (f === "TOOLS" || f === "ALADIN") { Aladin.setAladinFilter(null); go("lab"); }
+  else if (f === "ALADIN") openAladin(null);
+  else if (f === "TOOLS") { Aladin.setAladinFilter(null); go("lab"); }
   else go(f.toLowerCase());
 }
 $("#q").addEventListener("input", runSearch);
@@ -1710,7 +1711,7 @@ const FUNC_CODES = {
   MAP: { label: "World map: flights, chokepoints, real news", run: () => go("map") },
   HOUSES: { label: "Business houses", run: () => go("houses") },
   TOOLS: { label: "Tools (ALADIN)", run: () => { Aladin.setAladinFilter(null); go("lab"); } },
-  ALADIN: { label: "ALADIN probabilities (ALADIN SYMBOL or SYMBOL ALADIN to filter)", run: sym => { Aladin.setAladinFilter(sym || null); go("lab"); } },
+  ALADIN: { label: "ALADIN ranking, model E (ALADIN SYMBOL or SYMBOL ALADIN for one stock)", run: sym => openAladin(sym) },
   HELP: { label: "Function directory", run: () => openHelp() },
   SPLC: { label: "Supply chain: SYMBOL SPLC [TIER1|TIER2|TIER3]", run: sym => runText(`SPLC ${sym || ""}`) },
   SWEEP: { label: "Stocks with a liquidity sweep today (needs the local tick program)", run: () => runText("SWEEP") },
@@ -1753,11 +1754,12 @@ function focusHouse(id) {
     else if (++n > 40) clearInterval(t);
   }, 100);
 }
+function openAladin(sym) { AE.setQuery(sym || null); go("signals"); }   // phase 6: ALADIN is model E; the earlier models stay under TOOLS inside ALADIN BOT
 function execCmd(p) {
   const a = p.args || {};
   switch (p.action) {
     case "splc": openAndGo(a.sym, "terminal"); Nexus.openNexus({ type: "company", id: a.sym, tab: "chain", tier: a.tier }); break;
-    case "aladin": Aladin.setAladinFilter(a.sym || null); go("lab"); break;
+    case "aladin": openAladin(a.sym); break;
     case "sweep": Aladin.setAladinSweepOnly(true); go("lab"); break;
     case "house": go("houses"); focusHouse(a.id); break;
     case "sector": heatSel = a.name; go("sectors"); renderSectors(); break;

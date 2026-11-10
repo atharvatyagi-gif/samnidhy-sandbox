@@ -46,6 +46,7 @@ function paintSeg() {
 }
 export function setKind(k) {
   if (!KINDS[k] || !ctx) return;
+  if (k === "aladin" && !document.documentElement.classList.contains("legacy-on")) k = "price";   // ALADIN probability is an earlier model: only inside ALADIN BOT (phase 6)
   kind = k; paintSeg();
   if (k !== "price") renderAlt(); else restore();
 }

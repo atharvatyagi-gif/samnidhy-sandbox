@@ -17,6 +17,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from acceptance import BASE, check, ok, page_for  # noqa: E402
+from _bot import CODE, skip, unlock  # noqa: E402
 
 FRONTS = {"Technical", "Fundamental", "Supply-chain impact", "Sentiment"}
 
@@ -41,11 +42,14 @@ def tab(pg, name, wait=900):
     pg.wait_for_timeout(wait)
 
 
-def fresh(pw, **kw):
+def fresh(pw, legacy=False, **kw):
+    """legacy=True: unlock ALADIN BOT first with the TEST code (phase 6: the ALADIN probability view is an earlier model, shown only inside the bot)."""
     b, pg, errs, reqs = page_for(pw, **kw)
     pg.add_init_script("localStorage.setItem('mov-ess','0')")     # the calm desk hides secondary columns by default; these checks read them all
     pg._bad = []
     pg.on("response", lambda r: pg._bad.append((r.status, r.url)) if r.status >= 400 else None)
+    if legacy:
+        unlock(pg, BASE)
     pg.goto(BASE)
     pg.wait_for_timeout(5500)
     return b, pg, errs, reqs
@@ -71,8 +75,9 @@ def run():
         exp = pg.locator(f'tr.mv-x[data-for="{sym}"]')
         t = exp.inner_text().lower() if exp.count() else ""
         check("the expander opens a row below it, without leaving Movers", exp.count() == 1 and pg.evaluate("document.querySelector('#v-movers').classList.contains('on')"))
-        check("the expansion has supply lineage, quant drivers, sentiment & sweeps, each ending in Open in NEXUS",
-              "supply lineage" in t and "quant drivers" in t and "sentiment & sweeps" in t and t.count("open in nexus") == 3, t[:200])
+        check("the expansion has supply lineage, ALADIN (model E), sentiment & sweeps, each ending in Open in NEXUS",
+              "supply lineage" in t and "aladin" in t and "quant drivers" not in t and "sentiment & sweeps" in t and t.count("open in nexus") == 3, t[:200])
+        check("locked: the ALADIN probability view (an earlier model) is not offered", not pg.locator('#mov-kind [data-k="aladin"]').is_visible())
         check("the supply-chain file is fetched only now", any("supply_graph.json" in u for u, _ in reqs))
         check("a company with no disclosed links says 'Not measured' and why", "not measured" in t or "none disclosed" in t, t[:160])
 
@@ -100,8 +105,19 @@ def run():
         check("clicking the rest of a row still opens the chart", pg.evaluate("document.querySelector('#v-terminal').classList.contains('on')"))
         b.close()
 
-        # ---------- ALADIN probability ----------
-        b, pg, errs, reqs = fresh(pw)
+        # ---------- locked: the MOVERS ALADIN command stays on Price & volume ----------
+        b, pg, errs, _ = fresh(pw)
+        pg.fill("#cmd", "MOVERS ALADIN"); pg.press("#cmd", "Enter"); pg.wait_for_timeout(1800)
+        check("locked: MOVERS ALADIN opens Movers on Price & volume (the earlier model stays inside ALADIN BOT)",
+              pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "price")
+        b.close()
+        if not CODE:
+            skip("movers: ALADIN probability, commands, accessibility and phone (earlier model, inside ALADIN BOT)")
+            print("ALL OK" if all(ok) else f"{ok.count(False)} FAILED")
+            return 0 if all(ok) else 1
+
+        # ---------- ALADIN probability (unlocked with the test code) ----------
+        b, pg, errs, reqs = fresh(pw, legacy=True)
         tab(pg, "movers", 1500)
         tab(pg, "movers", 600)
         pg.click('#mov-kind [data-k="aladin"]')
@@ -185,7 +201,7 @@ def run():
         b.close()
 
         # ---------- commands ----------
-        b, pg, errs, _ = fresh(pw)
+        b, pg, errs, _ = fresh(pw, legacy=True)
         for text, want in (("MOVERS ALADIN", "aladin"), ("MOVERS SHOCK", "shock"), ("MOVERS", "price")):
             pg.fill("#cmd", text)
             pg.press("#cmd", "Enter")
@@ -197,7 +213,7 @@ def run():
         b.close()
 
         # ---------- accessibility and phone ----------
-        b, pg, errs, _ = fresh(pw)
+        b, pg, errs, _ = fresh(pw, legacy=True)
         tab(pg, "movers", 1500)
         pg.locator("#mov-table tbody tr[data-s] .mv-tg").first.click()
         pg.wait_for_timeout(2000)
@@ -210,7 +226,7 @@ def run():
         pg.keyboard.press("Tab")
         check("the expander is a real button reachable by keyboard", pg.locator("#mov-alt .mv-tg").first.evaluate("e => e.tagName") == "BUTTON")
         b.close()
-        b, pg, errs, _ = fresh(pw, size=(390, 844))
+        b, pg, errs, _ = fresh(pw, legacy=True, size=(390, 844))
         tab(pg, "movers", 1500)
         pg.click('#mov-kind [data-k="aladin"]')
         pg.wait_for_timeout(2500)

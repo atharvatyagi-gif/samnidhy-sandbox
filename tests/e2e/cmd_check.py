@@ -83,11 +83,11 @@ def run():
         check("VESSEL: with no AIS feed the layer is off; with one, an unknown name is 'not in the snapshot'", ("Not in the current snapshot" if has_ais else "Vessel layer off") in msg(pg), msg(pg)[:100])
 
         run_cmd(pg, "ALADIN INFY", 2500)
-        check("ALADIN SYM: Tools tab filtered to the symbol and its row expanded", view_on(pg) == "v-lab" and pg.locator('tr.al-r[data-s="INFY"]').count() == 1 and pg.locator("tr.al-x").count() >= 1)
+        check("ALADIN SYM: the ALADIN tab (model E) on that stock, its row opened", view_on(pg) == "v-signals" and pg.locator('#signals tr.ae-r[data-sym="INFY"]').count() == 1 and pg.locator("#signals tr.ae-x").count() == 1)
         run_cmd(pg, "TCS ALADIN", 2000)
-        check("SYM ALADIN (the older order) still works", view_on(pg) == "v-lab" and pg.locator('tr.al-r[data-s="TCS"]').count() == 1)
+        check("SYM ALADIN (the older order) still works", view_on(pg) == "v-signals" and pg.locator('#signals tr.ae-r[data-sym="TCS"]').count() == 1)
         run_cmd(pg, "ALADIN", 2000)
-        check("bare ALADIN opens the Tools tab", view_on(pg) == "v-lab")
+        check("bare ALADIN opens the ALADIN tab with the portfolio list", view_on(pg) == "v-signals" and pg.locator("#signals tr.ae-r").count() >= 5 and pg.locator("#signals tr.ae-x").count() == 0)
 
         run_cmd(pg, f"HOUSE {HOUSE['name'].split()[0]}", 3000)
         check("HOUSE <name>: Houses tab with that group expanded", view_on(pg) == "v-houses" and pg.locator(f'tr.hh-row[data-h="{HOUSE["id"]}"].on').count() == 1, [view_on(pg), HOUSE["id"]])

@@ -6,7 +6,7 @@
      SYM [<EQUITY>] SPLC [TIER1|TIER2|TIER3] [<GO>]   open SYM and its supply chain to that depth (default TIER1)
      SPLC [TIERn]                                     same for the symbol already selected
      SYM [<EQUITY>] [<GO>]                            open the symbol
-     ALADIN [SYM]    SYM ALADIN                       the ALADIN table, optionally on one symbol
+     ALADIN [SYM]    SYM ALADIN                       the ALADIN ranking (model E), optionally on one symbol
      SWEEP                                            ALADIN rows that have a liquidity sweep today (needs the local tick program)
      FLIGHT <callsign|digits>   VESSEL <name|MMSI>    exact match in the current snapshot only; nothing is ever guessed
      HOUSE <name>   SECTOR <name>   GEO <region>      jump to a business house / sector / Globe region

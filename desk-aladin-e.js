@@ -9,6 +9,7 @@ const st = { q: "", open: null, capital: null };
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis on paper only, not investment advice. Past results do not predict future results.";
 const CAP_KEY = "aladin.e.capital";
 
+export function setQuery(sym) { st.q = sym ? String(sym).toUpperCase() : ""; st.open = st.q || null; }   // ALADIN SYM from the command line: that stock's row, opened
 export function init(c) { ctx = c; try { st.capital = Number(localStorage.getItem(CAP_KEY)) || null; } catch { /* none */ } }
 
 /* ---------- pure helpers ---------- */
