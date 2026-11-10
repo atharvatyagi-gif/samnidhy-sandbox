@@ -13,13 +13,13 @@
   "max_position_share": 0.05,
   "kelly_fraction": 0.25,
   "kill_drawdown": 0.25,
-  "daily_loss_no_buys": 0.04,
+  "daily_loss_pause_entries": 0.04,
   "stale_sessions": 2,
   "capital_inr": 100000,
   "alarm_trail_vs_nifty500_12m": 0.15,
   "costs": {
-    "stt_buy_pct": 0.1, "stt_sell_pct": 0.1, "exchange_txn_pct": 0.00297, "sebi_fee_pct": 0.0001, "stamp_duty_buy_pct": 0.015,
-    "brokerage_pct": 0.0, "gst_pct_on_brokerage_and_charges": 18.0, "dp_charge_per_scrip_sell_inr": 15.93,
+    "stt_entry_pct": 0.1, "stt_exit_pct": 0.1, "exchange_txn_pct": 0.00297, "sebi_fee_pct": 0.0001, "stamp_duty_entry_pct": 0.015,
+    "brokerage_pct": 0.0, "gst_pct_on_brokerage_and_charges": 18.0, "dp_charge_per_scrip_exit_inr": 15.93,
     "slippage_pct": {"adv_ge_100cr": 0.05, "adv_ge_20cr": 0.10, "below": 0.20},
     "_note": "Same as aladin-audit/costs.json (the owner's brief, Part A2). I am not sure every rate matches the latest circulars."
   }

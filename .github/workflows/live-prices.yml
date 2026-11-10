@@ -93,6 +93,8 @@ jobs:
           python scripts/aladin_telemetry.py --once
 
       - name: Rebuild the site
+        env:
+          ALADIN_BOT_CODE: ${{ secrets.ALADIN_BOT_CODE }}      # encrypts the earlier ALADIN models for the bot (scripts/aladin2/legacy.py)
         run: python scripts/build_site.py
 
       - uses: actions/configure-pages@v5

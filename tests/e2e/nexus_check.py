@@ -12,6 +12,8 @@ import sys
 import time
 from pathlib import Path
 
+from _bot import CODE, skip, unlock
+unlock_code = lambda: CODE
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -26,13 +28,24 @@ FAC = next(iter(GRAPH["fac"]))
 
 
 def inject_impact(route):
+    """aladin.json is published encrypted (Phase 6): open it with the TEST code, add the TEST-ONLY score, close it again."""
+    import base64
+    import os
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    sys.path.insert(0, str(ROOT))
+    from scripts.aladin2 import bot
     r = route.fetch()
-    j = r.json()
+    meta = json.loads((ROOT / "site" / "legacy" / "meta.json").read_text(encoding="utf-8"))
+    d, e = base64.b64decode, lambda x: base64.b64encode(x).decode()
+    g = AESGCM(bot._key(os.environ["E2E_BOT_CODE"], d(meta["salt"]), meta["iter"]))
+    blob = r.json()
+    j = json.loads(g.decrypt(d(blob["iv"]), d(blob["ct"]), meta["aad"].encode()))
     st = j["stocks"].get(SYM)
     if st:
         st["x"] = {"i": 35.0, "n": 1, "top": [["TESTCP", "supplies", 0.3, -2.1, 0.9]], "asof": j["as_of"]}     # TEST-ONLY
     j["weights"]["impact_validated"] = False
-    route.fulfill(response=r, body=json.dumps(j))
+    iv = os.urandom(12)
+    route.fulfill(response=r, body=json.dumps({"iv": e(iv), "ct": e(g.encrypt(iv, json.dumps(j).encode(), meta["aad"].encode()))}))
 
 
 def open_panel(pg, hash_):
@@ -47,6 +60,8 @@ def run():
         pg.goto(BASE)
         pg.wait_for_timeout(5000)
         check("NEXUS: supply_graph.json is not requested before the panel opens", not any("supply_graph.json" in u for u, _ in reqs))
+        if not unlock(pg, BASE):  # Tools (ALADIN 1) is shown only inside ALADIN BOT (Phase 6)
+            skip("NEXUS panel from the Tools (ALADIN) row"); b.close(); return
         pg.dispatch_event('#tabs [data-go="lab"]', "click")
         pg.wait_for_timeout(2500)
         pg.fill("#al-q", SYM)
@@ -117,30 +132,35 @@ def run():
         b.close()
 
         # 5. impact column, block and combiner with a TEST-ONLY injected score
-        b, pg, errs, _ = page_for(pw, routes={"**/aladin.json*": inject_impact})
-        pg.goto(BASE)
-        pg.wait_for_timeout(5000)
-        pg.dispatch_event('#tabs [data-go="lab"]', "click")
-        pg.wait_for_timeout(2500)
-        pg.fill("#al-q", SYM)
-        pg.wait_for_timeout(700)
-        row = pg.inner_text(f'tr[data-s="{SYM}"]')
-        _x = json.loads((ROOT / "data" / "aladin" / "latest.json").read_text(encoding="utf-8"))["stocks"].get(SYM, {}).get("x")
-        if _x is None:
-            print("SKIP ALADIN Impact column: the local nightly file has no impact block for " + SYM + " (no usable listed-to-listed edge with a stated share yet)")
+        if not unlock_code():
+            skip("ALADIN Impact column with a TEST-ONLY score (Tools is inside ALADIN BOT)")
         else:
-            _ip = _x["ip"] if _x.get("ip") is not None else -_x["i"] / 25                         # files written before the estimate was stored: undo the scale
-            check("ALADIN: the Impact column shows the linked-move estimate in % pts (not the model-only score)", f"{_ip:+.1f}" in row, row[:120].replace("\n", " "))
-        check("ALADIN: Fundamental cell tooltip carries 'F x · I y'", pg.locator(f'tr[data-s="{SYM}"] [title^="F "]').count() >= 1 or pg.locator(f'tr[data-s="{SYM}"] .al-gc').count() >= 2)
-        pg.click(f'tr[data-s="{SYM}"] .al-tg')
-        pg.wait_for_timeout(400)
-        blk = pg.inner_text(".al-x")
-        check("ALADIN: expansion lists the impact edges and the 'prior, unvalidated' status", "TESTCP" in blk and ("prior, unvalidated" in blk or "cannot validate" in blk) and "association, not proof of cause" in blk.lower())
-        pg.click('.al-x [data-nexus="company:TESTCP"]')
-        pg.wait_for_timeout(800)
-        check("clicking a counterparty in the block opens its panel", "TESTCP" in pg.inner_text("#nx-title"))
-        check("impact injected: 0 console errors or warnings", not errs, errs[:3])
-        b.close()
+            b, pg, errs, _ = page_for(pw, routes={"**/legacy/aladin.json.enc*": inject_impact})
+            pg.goto(BASE)
+            pg.wait_for_timeout(5000)
+            unlock(pg, BASE)
+            pg.goto(BASE); pg.reload(); pg.wait_for_timeout(5000)
+            pg.dispatch_event('#tabs [data-go="lab"]', "click")
+            pg.wait_for_timeout(2500)
+            pg.fill("#al-q", SYM)
+            pg.wait_for_timeout(700)
+            row = pg.inner_text(f'tr[data-s="{SYM}"]')
+            _x = json.loads((ROOT / "data" / "aladin" / "latest.json").read_text(encoding="utf-8"))["stocks"].get(SYM, {}).get("x")
+            if _x is None:
+                print("SKIP ALADIN Impact column: the local nightly file has no impact block for " + SYM + " (no usable listed-to-listed edge with a stated share yet)")
+            else:
+                _ip = _x["ip"] if _x.get("ip") is not None else -_x["i"] / 25                         # files written before the estimate was stored: undo the scale
+                check("ALADIN: the Impact column shows the linked-move estimate in % pts (not the model-only score)", f"{_ip:+.1f}" in row, row[:120].replace("\n", " "))
+            check("ALADIN: Fundamental cell tooltip carries 'F x · I y'", pg.locator(f'tr[data-s="{SYM}"] [title^="F "]').count() >= 1 or pg.locator(f'tr[data-s="{SYM}"] .al-gc').count() >= 2)
+            pg.click(f'tr[data-s="{SYM}"] .al-tg')
+            pg.wait_for_timeout(400)
+            blk = pg.inner_text(".al-x")
+            check("ALADIN: expansion lists the impact edges and the 'prior, unvalidated' status", "TESTCP" in blk and ("prior, unvalidated" in blk or "cannot validate" in blk) and "association, not proof of cause" in blk.lower())
+            pg.click('.al-x [data-nexus="company:TESTCP"]')
+            pg.wait_for_timeout(800)
+            check("clicking a counterparty in the block opens its panel", "TESTCP" in pg.inner_text("#nx-title"))
+            check("impact injected: 0 console errors or warnings", not errs, errs[:3])
+            b.close()
 
         # 6. the graph file missing from the manifest: honest message, no errors
         def no_graph(route):

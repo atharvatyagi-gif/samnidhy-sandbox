@@ -20,6 +20,8 @@ import * as A2 from "./desk-aladin2.js";
 import * as A2V from "./desk-a2views.js";
 import * as A2B from "./desk-a2bot.js";
 import * as SG from "./desk-signals.js";
+import * as Legacy from "./desk-legacy.js";
+import * as AE from "./desk-aladin-e.js";
 import * as IX from "./desk-indices.js";
 import * as CX from "./desk-crypto.js";
 import { withOfficialClose } from "./intraday-close.js";
@@ -82,6 +84,7 @@ setInterval(() => { $("#clock").textContent = new Date().toLocaleTimeString("en-
 
 /* ---------------- data ---------------- */
 async function getJSON(url, bust = true) {
+  if (Legacy.isLegacy(url)) return Legacy.get(url);           // the earlier ALADIN models: only inside ALADIN BOT, decrypted with its access code
   const r = await fetch(url + (bust ? "?t=" + Date.now() : ""), { cache: bust ? "no-store" : "default" });
   if (!r.ok) throw new Error(url + " " + r.status);
   return r.json();
@@ -97,13 +100,15 @@ async function boot() {
       getJSON("live.json").catch(() => ({})), getJSON("screener.json").catch(() => ({})), getJSON("institutional.json").catch(() => ({}))]);
     S.news = await getJSON("news.json").catch(() => ({}));
     S.uni = uni; uni.stocks.forEach(s => S.map.set(s.s, s)); lastCheck = Date.now();
-    S.pred = await getJSON("predict.json").catch(() => null);
+    await Legacy.resume().catch(() => false);                       // the bot was unlocked earlier in this browser tab: show the earlier models again
+    S.pred = Legacy.unlocked() ? await getJSON("predict.json").catch(() => null) : null;
     S.globeRaw = await getJSON("globe.json").catch(() => null); S.globe = freshGlobe(S.globeRaw);          // 7-day freshness rule, see globe-map.js
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
     S.nseLive = await getJSON("nse_live.json").catch(() => null);
     applyNseLive();
     initDesk(); loadDeskData().then(() => Nexus.openFromHash(NX_HASH)).catch(() => {});                  // not awaited: the desk draws first, the desk files (tiny) fill in right after
-    setTimeout(() => Aladin.preload().then(a => { if (a) { renderBrief(); renderDetails(); } }).catch(() => {}), 5000);   // ALADIN data for the Details rail and Brief card: after start, never before it
+    setTimeout(() => { if (Legacy.unlocked()) Aladin.preload().then(a => { if (a) { renderBrief(); renderDetails(); } }).catch(() => {}); }, 5000);
+    Legacy.onChange(on => { if (on) { getJSON("predict.json").then(j => { S.pred = j; renderDetails(); renderOutlook(); }).catch(() => {}); Aladin.preload().then(() => { renderBrief(); renderDetails(); }).catch(() => {}); } else { S.pred = null; S.aladin = null; renderOutlook(); } renderDetails(); });   // ALADIN data for the Details rail and Brief card: after start, never before it
     // geo.json itself loads only when the Globe tab is opened; the regime strip and Brief read the tiny geo_summary.json instead
   } catch (e) {
     $("#st-data").textContent = "Data not available: the NSE stock list could not be loaded. Nothing is shown in its place.";
@@ -148,7 +153,7 @@ async function poll() {
   try {
     const [quotes, live, inst, news, screen, uni, pred] = await Promise.all([getJSON("t/quotes.json"), getJSON("live.json"),
       getJSON("institutional.json").catch(() => S.inst), getJSON("news.json").catch(() => null), getJSON("screener.json").catch(() => null),
-      getJSON("t/universe.json").catch(() => null), getJSON("predict.json").catch(() => null)]);
+      getJSON("t/universe.json").catch(() => null), Legacy.unlocked() ? getJSON("predict.json").catch(() => null) : null]);
     lastCheck = Date.now(); checkOk = true;
     loadDeskData().catch(() => {});
     if (news && news.generated_utc !== S.news.generated_utc) S.news = news;
@@ -238,7 +243,7 @@ const DESK_FILES = { deps: "dependencies.json", geo_summary: "geo_summary.json",
 const DESK_LAZY = new Set(["deps", "houses", "geo", "aladin", "sentiment", "paper", "method", "graph", "shocks", "lanes", "telemetry", "moves", "movers"]);   // big or tab-specific files: fetched by their own tab, never at page start
 function renderRegimeBrief() { renderRegime(); renderBrief(); }
 function deskCtx() { return { serverNow: Ticks.serverNow, renderRegimeBrief, loadWatch, toggleWatch, S, $, $$, esc, us, inr, sg, ud, big, dt, pct0, pct1, probBar, driversHtml, go, openSec, setSide, toast, getJSON, renderMast, q, istUtc, agoTxt, minsAgo, applyTicks, LIVE, openNexus: a => Nexus.openNexus(a), stockView: s => Aladin.stockView(s), geoDelta: s => Aladin.geoDelta(s), resizeGlobe: () => { const gm = ensureGlobeMap(); if (gm) gm.resize(); } }; }
-function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2V.init(c); A2B.init(c); SG.init(c); IX.init(c); CX.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); if (view === "terminal" && sec && (sym === sec || sym === "*") && !isIntra(iv)) drawChart(true); }); }
+function initDesk() { const c = deskCtx(); for (const m of [Houses, GeoDesk, Aladin, Ticks, Nexus, Globe, Movers, Sectors]) m.init(c); A2V.init(c); A2B.init(c); SG.init(c); AE.init(Object.assign(c, { onEReady: () => { if (side === "details") renderDetails(); }, aladinE: sym => AE.doc() ? AE.miniHtml(sym) : "" })); IX.init(c); CX.init(c); A2.init(c, sym => { if (side === "details" && (sym === null || sym === sec)) renderDetails(); if (view === "terminal" && sec && (sym === sec || sym === "*") && !isIntra(iv)) drawChart(true); }); }
 async function loadDeskData() {
   const man = await getJSON("desk_data.json").catch(() => null); if (!man) return;
   S.deskMan = man;
@@ -256,9 +261,11 @@ async function loadDeskData() {
 }
 
 /* ================= navigation ================= */
+const LEGACY_VIEWS = new Set(["lab", "outlook", "a2", "sigold"]);
 function go(v, quiet) {
   if (v === "globe") v = "map";                                        // old #v=globe links and commands still work
   if (!document.getElementById("v-" + v)) v = "brief";
+  if (LEGACY_VIEWS.has(v) && !Legacy.unlocked()) v = "a2bot";          // the earlier models open only inside ALADIN BOT
   view = v;
   $$(".view").forEach(el => el.classList.toggle("on", el.id === "v-" + v));
   $(".desk").classList.toggle("on-terminal", v === "terminal");       // dark chart workspace: regime strip folds away
@@ -272,7 +279,9 @@ function go(v, quiet) {
   }
   if (v === "houses") Houses.renderHouses();
   if (v === "lab") Aladin.renderAladin();
-  if (v === "signals") SG.mount();
+  if (v === "outlook") renderOutlook();
+  if (v === "signals") AE.mount();
+  if (v === "sigold") SG.mount();
   if (v === "indices") IX.mount();
   if (v === "crypto") CX.mount();
   if (v === "a2") A2V.mount();
@@ -1122,7 +1131,7 @@ function renderDetails() {
   const perfHtml = perf ? `<div class="perf">${perf.map(([k, v]) => `<div class="${v == null ? "" : v >= 0 ? "pu" : "pd"}"><span>${k}</span><b class="${ud(v)}">${v == null ? "--" : sg(v, 1) + "%"}</b></div>`).join("")}</div>` : "";
   const sections = [
     ["overview", "Overview", `${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}<div class="sec-t">Key stats</div>${statsHtml}${perfHtml ? `<div class="sec-t">Performance</div>${perfHtml}` : ""}`],
-    ["aladin", "ALADIN & signals", `${A2.wrap(sec)}${outlookHtml(sec)}${Aladin.renderAladinMini(sec)}${analysisHtml(sec)}`],
+    ["aladin", "ALADIN & signals", `${AE.miniHtml(sec)}${analysisHtml(sec)}${Legacy.unlocked() ? `<div class="sec-t">Earlier models (ALADIN BOT)</div>${A2.wrap(sec)}${outlookHtml(sec)}${Aladin.renderAladinMini(sec)}` : ""}`],
     ["revenue", "Revenue & links", revDepsHtml(sec) + predHtml(sec)],
     ["analyst", "Analyst view", analyst],
     ["screen", "B-Lab screen", screen],

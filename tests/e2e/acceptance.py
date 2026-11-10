@@ -16,11 +16,13 @@ import sys
 import time
 from pathlib import Path
 
+from _bot import skip, unlock
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 BASE = "http://127.0.0.1:8765/expert-dev.html"
-TABS = ["brief", "terminal", "movers", "sectors", "houses", "world", "map", "outlook", "news", "lab"]
+TABS = ["brief", "terminal", "movers", "sectors", "houses", "world", "map", "signals", "news"]   # public tabs; "signals" is ALADIN (model E)
+LEGACY_TABS = ["outlook", "lab"]   # the earlier models, only inside ALADIN BOT (Phase 6): visited when the page is unlocked
 ok = []
 GL_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-webgl"]      # software WebGL, so the headless browser can run the 3D globe
 
@@ -50,7 +52,8 @@ def page_for(pw, size=(1440, 900), init=None, throttle=None, routes=None):
 
 
 def visit_all(pg):
-    for t in TABS:
+    on = pg.evaluate("document.documentElement.classList.contains('legacy-on')")
+    for t in TABS + (LEGACY_TABS if on else []):
         pg.dispatch_event(f'#tabs [data-go="{t}"]', "click")
         pg.wait_for_timeout(1500 if t in ("map", "lab", "houses") else 600)
 
@@ -102,7 +105,8 @@ def run_perf():
         check("perf: the tiny geo_summary.json is what the Brief reads instead", "geo_summary.json" in names)
         check("perf: no map libraries (Leaflet / d3 / topojson) before the Globe tab opens", not re.search(r"leaflet|d3-geo|topojson", urls))
         tq = next((t0 for u, t0 in reqs if u.split("?")[0].endswith("quotes.json")), None)
-        for f in ("aladin.json", "sentiment.json", "paper.json", "aladin_method.json"):
+        check("perf: no file of the earlier models is requested while ALADIN BOT is locked", not any("/legacy/" in u and not u.split("?")[0].endswith("meta.json") for u, _ in reqs))
+        for f in ("sentiment.json",):
             ta = next((t0 for u, t0 in reqs if u.split("?")[0].endswith("/" + f)), None)
             check(f"perf: {f} is not requested during start-up (never before 4 s after the desk's own data)", ta is None or (tq is not None and ta - tq >= 4), None if ta is None else round(ta - tq, 1))
         n0 = len(reqs)
@@ -112,8 +116,10 @@ def run_perf():
         urls2 = " ".join(u for u, _ in reqs[n0:])
         check("perf: the map libraries are requested when Globe opens", "leaflet" in urls2)
         b.close()
-    sizes = {f: (ROOT / "site" / f).stat().st_size for f in ("aladin.json", "sentiment.json", "geo.json", "houses.json", "paper.json", "aladin_method.json", "geo_summary.json") if (ROOT / "site" / f).exists()}
-    check("size: aladin.json under 3 MB", sizes.get("aladin.json", 0) < 3_000_000, {k: f"{v / 1e3:.0f} KB" for k, v in sizes.items()})
+    for f in ("aladin.json", "paper.json", "aladin_method.json", "predict.json"):
+        check(f"privacy: {f} is not published readable (only encrypted under legacy/)", not (ROOT / "site" / f).exists() and (ROOT / "site" / "legacy" / (f + ".enc")).exists())
+    sizes = {f: (ROOT / "site" / f).stat().st_size for f in ("legacy/aladin.json.enc", "aladin_e.json", "sentiment.json", "geo.json", "houses.json", "paper.json", "aladin_method.json", "geo_summary.json") if (ROOT / "site" / f).exists()}
+    check("size: aladin.json (encrypted) under 3 MB", sizes.get("legacy/aladin.json.enc", 0) < 3_000_000, {k: f"{v / 1e3:.0f} KB" for k, v in sizes.items()})
 
 def run_degrade():
     def body(obj):
@@ -131,13 +137,18 @@ def run_degrade():
             b, pg, errs, reqs = page_for(pw, routes={"**/desk_data.json*": body(m)})
             pg.goto(BASE)
             pg.wait_for_timeout(7000)
+            opened = unlock(pg, BASE)
+            if opened:
+                pg.goto(BASE); pg.reload(); pg.wait_for_timeout(7000)
             visit_all(pg)
-            lab = pg.inner_text("#aladin")
-            if off.get("aladin") is False:
+            lab = pg.inner_text("#aladin") if opened else ""
+            if not opened:
+                skip(f"degrade [{name}]: Tools (ALADIN 1) checks")
+            elif off.get("aladin") is False:
                 check(f"degrade [{name}]: ALADIN says it is not available", "not available" in lab.lower(), lab[:70])
             else:
                 check(f"degrade [{name}]: ALADIN table still works", pg.eval_on_selector_all("#al-table tr.al-r", "e => e.length") > 0)
-            if off.get("sentiment") is False:
+            if off.get("sentiment") is False and opened:
                 check(f"degrade [{name}]: sentiment shows NO NEWS, P(up) falls back to the remaining views", pg.eval_on_selector_all("#al-table .sent[data-lvl='NO NEWS']", "e => e.length") > 0 if off.get("aladin") is not False else True)
             if off.get("geo") is False:
                 check(f"degrade [{name}]: the Globe's news-attention section says it has not been published", "not been published" in pg.inner_text("#geo-desk"))
@@ -165,15 +176,19 @@ def run_a11y():
         b, pg, errs, _ = page_for(pw)
         pg.goto(BASE); pg.wait_for_timeout(7000)
         pg.add_script_tag(url=AXE)
-        for label, tab in (("Brief", "brief"), ("Houses", "houses"), ("Tools (ALADIN)", "lab")):
+        for label, tab in (("Brief", "brief"), ("Houses", "houses"), ("ALADIN (model E)", "signals")):
             pg.dispatch_event(f'#tabs [data-go="{tab}"]', "click"); pg.wait_for_timeout(2500)
             res = pg.evaluate("async () => { const r = await axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'best-practice'] }); return r.violations.map(v => ({ id: v.id, impact: v.impact, n: v.nodes.length, help: v.help })); }")
             serious = [v for v in res if v["impact"] in ("serious", "critical")]
             print("   axe", label, [(v["id"], v["impact"], v["n"]) for v in res])
             check(f"a11y [{label}]: no serious or critical axe violations", not serious, [(v["id"], v["n"]) for v in serious])
-        # keyboard: tabs, dropdowns, sortable headers, sentiment details
-        pg.dispatch_event('#tabs [data-go="lab"]', "click"); pg.wait_for_timeout(1500)
+        # keyboard: tabs, dropdowns, sortable headers, sentiment details (Tools is inside ALADIN BOT now)
         check("a11y: tab buttons are keyboard focusable", pg.evaluate("() => [...document.querySelectorAll('#tabs button')].every(b => b.tabIndex >= 0)"))
+        if not unlock(pg, BASE):
+            skip("a11y: Tools (ALADIN 1) table controls"); b.close(); return
+        pg.goto(BASE); pg.reload(); pg.wait_for_timeout(6000)
+        pg.dispatch_event('#tabs [data-go="lab"]', "click"); pg.wait_for_timeout(1500)
+        check("a11y: tab buttons are keyboard focusable (unlocked)", pg.evaluate("() => [...document.querySelectorAll('#tabs button')].every(b => b.tabIndex >= 0)"))
         check("a11y: sortable headers are focusable and carry aria-sort", pg.evaluate("() => [...document.querySelectorAll('#al-table th[data-sort]')].every(t => t.tabIndex === 0 && t.hasAttribute('aria-sort'))"))
         check("a11y: filter controls have accessible names", pg.evaluate("() => [...document.querySelectorAll('.al-controls select, .al-controls input')].every(e => e.getAttribute('aria-label'))"))
         check("a11y: sentiment dropdowns are native <details>/<summary> (keyboard operable)", pg.eval_on_selector_all("#al-table details.sent > summary", "e => e.length") > 0)

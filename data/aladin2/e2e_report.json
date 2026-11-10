@@ -1,13 +1,9 @@
 {
- "base": "http://127.0.0.1:8767",
+ "base": "http://127.0.0.1:8765",
  "viewports": {
   "desk": {
-   "desk_ready_ms": 483,
-   "aladin2_requests_before_opening_a_stock_or_the_tab": [
-    "stock/TCS.json",
-    "scoreboard.json",
-    "regime.json"
-   ],
+   "desk_ready_ms": 1256,
+   "aladin2_requests_before_opening_a_stock_or_the_tab": [],
    "pages": {
     "weekly": {
      "disclaimer": true,
@@ -68,7 +64,7 @@
      "as_of": true,
      "svg_charts": 1,
      "svg_charts_with_aria_label": 1,
-     "svg_titles": 24,
+     "svg_titles": 166,
      "buttons_without_name": 0,
      "has_numbers_fallback": true
     },
@@ -95,15 +91,17 @@
     "terminal_symbol": "HDFCBANK"
    },
    "js_errors": [],
-   "unexpected_404s": []
+   "unexpected_404s": [
+    "H.json",
+    "I.json",
+    "T.json",
+    "fund.json",
+    "quotes.json"
+   ]
   },
   "phone": {
-   "desk_ready_ms": 417,
-   "aladin2_requests_before_opening_a_stock_or_the_tab": [
-    "stock/TCS.json",
-    "scoreboard.json",
-    "regime.json"
-   ],
+   "desk_ready_ms": 1327,
+   "aladin2_requests_before_opening_a_stock_or_the_tab": [],
    "pages": {
     "weekly": {
      "disclaimer": true,
@@ -164,7 +162,7 @@
      "as_of": true,
      "svg_charts": 1,
      "svg_charts_with_aria_label": 1,
-     "svg_titles": 24,
+     "svg_titles": 166,
      "buttons_without_name": 0,
      "has_numbers_fallback": true
     },
@@ -191,19 +189,25 @@
     "terminal_symbol": "HDFCBANK"
    },
    "js_errors": [],
-   "unexpected_404s": []
+   "unexpected_404s": [
+    "H.json",
+    "I.json",
+    "T.json",
+    "fund.json",
+    "quotes.json"
+   ]
   }
  },
  "throttled_stock_shard": {
   "profile": "150 ms round trip, 1.6 Mbit/s",
-  "ms_median": 195,
-  "ms_max": 204,
+  "ms_median": 180,
+  "ms_max": 2030,
   "bytes": [
-   6002,
-   6002,
-   5967,
-   5873,
-   5974
+   460,
+   460,
+   460,
+   460,
+   460
   ]
  }
 }

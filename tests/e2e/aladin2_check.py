@@ -12,6 +12,7 @@ import sys
 import time
 from pathlib import Path
 
+from _bot import skip, unlock
 from playwright.sync_api import sync_playwright
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8767").rstrip("/")
@@ -34,13 +35,18 @@ def main():
             early = [u for u in reqs if "aladin2/" in u]
             if pg.locator("#ob-skip").is_visible():
                 pg.locator("#ob-skip").click(); pg.wait_for_timeout(500)
+            if not unlock(pg, BASE + "/expert-dev.html"):   # ALADIN 2.0 is shown only inside ALADIN BOT (Phase 6); the code stays for this tab
+                skip("ALADIN 2.0 brief and research pages"); return
+            pg.goto(BASE + "/expert-dev.html#v=terminal&s=TCS"); pg.reload(); pg.wait_for_selector("#watch .wl-row", state="attached", timeout=60000); pg.wait_for_timeout(3000)
+            pg.evaluate("document.querySelector('[data-go=a2bot]').click()"); pg.wait_for_selector(".a2b-earlier [data-go=a2]", state="attached", timeout=30000)
+            pg.evaluate("document.querySelector('[data-go=terminal]').click()"); pg.wait_for_timeout(800)
             v = {"desk_ready_ms": ready_ms, "aladin2_requests_before_opening_a_stock_or_the_tab": [u.split("aladin2/")[-1].split("?")[0] for u in early], "pages": {}}
             # brief on the open stock
             pg.evaluate("document.querySelector('[data-side=details]') && document.querySelector('[data-side=details]').click()"); pg.wait_for_selector("#a2-brief svg", state="attached", timeout=20000)
             br = pg.locator("#a2-brief"); txt = br.inner_text()
             v["brief"] = {"disclaimer": DIS in txt, "as_of": "as of" in txt.lower(), "svg_titles": br.locator("svg title").count(), "svg_with_label": br.locator("svg[role=img][aria-label]").count(), "inputs_labelled": br.locator("label input").count() == br.locator("input").count(),
                           "table_fallback": br.locator("details summary").count() >= 1}
-            pg.evaluate("document.querySelector('[data-go=signals]').click()"); pg.wait_for_selector("#signals [data-go=a2]", timeout=20000); pg.evaluate("document.querySelector('#signals [data-go=a2]').click()"); pg.wait_for_timeout(1200)
+            pg.evaluate("document.querySelector('.a2b-earlier [data-go=a2]').click()"); pg.wait_for_timeout(1200)
             for t in TABS:
                 pg.evaluate(f"document.querySelector('[data-tab={t}]').click()"); pg.wait_for_timeout(1500)
                 root = pg.locator("#a2v"); text = root.inner_text(); svgs = root.locator("svg[role=img]")

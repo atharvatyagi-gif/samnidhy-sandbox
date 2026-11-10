@@ -29,7 +29,7 @@ const HELP = {
   range: "The lowest and highest price of the last 52 weeks (one year), and where today's price sits between them.",
   deliv: "Delivery %: the share of traded shares that buyers actually kept, instead of buying and selling the same day. Higher usually means longer-term holders.",
   vol20: "Today's trading compared with an average day over the last 20 sessions. Above 1× means busier than usual.",
-  model: "Our statistical model estimates the chance the price is higher after a number of trading days. 50% means it sees no edge either way. It is often wrong.",
+  model: "ALADIN ranks the most-traded stocks by how much they rose over the last 6 months; the best 25 form its portfolio. The record shown is how stocks with a similar rank did on past dates (2010-2026, before costs, companies listed today only). It is often wrong.",
   dd: "Biggest fall from a high: the worst drop from a peak to a later low in the period shown. A feel for how bumpy holding it has been.",
   nifty: "Nifty 50: an index of India's 50 biggest companies, used here as 'the market' to compare with.",
   links: "Customers and suppliers named in the company's own filings and earnings calls, each with the sentence it came from.",
@@ -219,7 +219,7 @@ async function openStory(sym, tab) {
     <div class="mt-6 -mb-px overflow-x-auto border-b border-gray-200 dark:border-gray-700"><div role="tablist" aria-label="About this stock" class="flex gap-1" id="st-tabs"></div></div>
     <section data-panel="overview" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" class="mt-5 space-y-4">
       <div class="st-card"><h3>In plain words</h3><ul class="mt-3 space-y-2 text-[15px] leading-relaxed text-zinc-200" id="st-plain"><li class="text-zinc-500">Reading the numbers…</li></ul></div>
-      <div class="grid gap-4 md:grid-cols-2"><div class="st-card" id="st-range"><h3>Where the price sits</h3></div><div class="st-card" id="st-model"><h3>What our models see</h3></div></div>
+      <div class="grid gap-4 md:grid-cols-2"><div class="st-card" id="st-range"><h3>Where the price sits</h3></div><div class="st-card" id="st-model"><h3>ALADIN</h3></div></div>
       <div class="st-card" id="st-depmini" hidden></div>
       <div class="st-card" id="st-linked" hidden></div>
       <div class="st-card" id="st-peers"><h3>Similar companies</h3><p class="mt-3 text-sm text-zinc-400">Loading…</p></div>
@@ -266,7 +266,7 @@ async function openStory(sym, tab) {
   if (d && d.length && qq.d && qq.d > d[d.length - 1][0] && qq.p) d.push([qq.d, qq.p, qq.p, qq.p, qq.p, 0]);   // the published history can lag a day or two: end it at today's price
   S.cur.d = d; S.cur.nf = nf;
   storyChart(); returnsCard(d, nf); rangeCard(e, d); whatIf();
-  const [f, a, g, dp] = await Promise.all([once("fund", () => get("t/fund.json").then(j => j.stocks || {})).catch(() => null), once("aladin", () => get("aladin.json")).catch(() => null),
+  const [f, a, g, dp] = await Promise.all([once("fund", () => get("t/fund.json").then(j => j.stocks || {})).catch(() => null), once("aladin_e", () => get("aladin_e.json")).catch(() => null),
     once("graph", () => get("supply_graph.json")).catch(() => null), once("deps", () => get("dependencies.json")).catch(() => null)]);
   if (S.cur?.e !== e) return;
   const pd = dp && dp.cos && dp.cos[sym];
@@ -296,8 +296,8 @@ function plainWords(e, d, nf, f, a, sym, pd) {
   }
   const ds = RD.plainSentence(pd, name);
   if (ds) out.push(`${esc(ds)} <button type="button" class="text-emerald-400 underline" data-go-tab="revenue">See customers</button>`);
-  const p10 = a && a.stocks && a.stocks[sym] && a.stocks[sym].t && a.stocks[sym].t.p && a.stocks[sym].t.p["10"];
-  if (p10 != null) out.push(`Our model gives a <b>${(p10 * 100).toFixed(0)}%</b> chance it is higher in 10 trading days: ${Math.abs(p10 - 0.5) < 0.04 ? "no clear edge either way" : p10 > 0.5 ? "a slight lean up, nothing certain" : "a slight lean down, nothing certain"}.`);
+  const er = a && a.stocks && a.stocks[sym];
+  if (er) out.push(`ALADIN ranks it <b>${er[0]} of ${a.universe_size}</b> by its 6-month rise: ${er[3] ? "it is in ALADIN's portfolio of the best " + a.portfolio_size : "no signal (the portfolio takes the best " + a.portfolio_size + ")"}. A rank, not a forecast.`);
   $("#st-plain").innerHTML = out.map(s => `<li class="flex gap-2"><span class="text-emerald-400" aria-hidden="true">•</span><span>${s}</span></li>`).join("");
   $("#st-plain").querySelectorAll("[data-go-tab]").forEach(b => b.onclick = () => selectTab(b.dataset.goTab));
 }
@@ -408,14 +408,16 @@ function peersCard(e, f, sym) {
 
 /* ---------------- Models ---------------- */
 function modelCard(a, sym) {
-  const el = $("#st-model"), s = a && a.stocks && a.stocks[sym], p = s && s.t && s.t.p;
-  if (!p) { el.innerHTML = `<h3>What our models see ${help("model")}</h3><p class="mt-3 text-sm text-zinc-400">Not scored: the model needs 250 days of trading history and recent activity.</p>`; return; }
-  const bar = v => `<div class="mt-1 h-1.5 rounded-full bg-zinc-800"><div class="h-1.5 rounded-full ${v >= 0.55 ? "bg-emerald-400" : v <= 0.45 ? "bg-red-400" : "bg-zinc-500"}" style="width:${(v * 100).toFixed(0)}%"></div></div>`;
-  const all = h => S.rankCache && S.rankCache[h] || ((S.rankCache = S.rankCache || {})[h] = Object.values(a.stocks).map(x => x.t && x.t.p && x.t.p[h]).filter(x => x != null).sort((x, y) => x - y));
-  const rank = (h, v) => { const xs = all(h); let lo = 0, hi = xs.length; while (lo < hi) { const m = (lo + hi) >> 1; if (xs[m] < v) lo = m + 1; else hi = m; } return xs.length ? Math.round(100 * lo / xs.length) : null; };
-  el.innerHTML = `<h3>What our models see ${help("model")}</h3><p class="mt-3 text-sm text-zinc-400">Chance the price is higher after… (as of ${esc(a.as_of || "--")})</p>
-    <dl class="mt-3 space-y-3">${["5", "10", "20"].filter(h => p[h] != null).map(h => `<div><div class="flex justify-between text-sm"><dt>${h} trading days</dt><dd class="font-mono font-semibold">${(p[h] * 100).toFixed(0)}%</dd></div>${bar(p[h])}${rank(h, p[h]) != null ? `<p class="mt-1 text-xs text-zinc-500">Higher than ${rank(h, p[h])}% of the stocks scored</p>` : ""}</div>`).join("")}</dl>
-    <p class="mt-3 text-xs text-zinc-500">Grey between 45% and 55%: close to a coin flip. The order of stocks is more reliable than the exact percentage.</p>`;
+  const el = $("#st-model"), r = a && a.stocks && a.stocks[sym];
+  if (!a) { el.innerHTML = `<h3>ALADIN ${help("model")}</h3><p class="mt-3 text-sm text-zinc-400">ALADIN is not published yet.</p>`; return; }
+  if (!r) { el.innerHTML = `<h3>ALADIN ${help("model")}</h3><p class="mt-3 text-sm text-zinc-400">Not ranked: ALADIN ranks the ${a.universe_size} most-traded stocks with at least a year of prices.</p>`; return; }
+  let g = null; for (const b of (a.calibration && a.calibration.buckets) || []) if (r[1] >= b.from && r[1] < b.to + (b.to >= 1 ? 1e-9 : 0)) g = b;
+  const p = v => (v * 100).toFixed(0) + "%", sg = v => (v >= 0 ? "+" : "") + v.toFixed(1) + "%";
+  el.innerHTML = `<h3>ALADIN ${help("model")}</h3><p class="mt-3 text-sm text-zinc-400">As of the ${esc(a.as_of)} close</p>
+    <p class="mt-3 font-mono text-2xl font-bold">Rank ${r[0]} <span class="text-sm text-zinc-500">of ${a.universe_size}</span></p>
+    <p class="text-sm ${r[3] ? "text-emerald-400" : "text-zinc-400"}">${r[3] ? "In ALADIN's portfolio" : "No signal"} · ${sg(r[2] * 100)} over 6 months</p>
+    ${g ? `<p class="mt-3 text-sm text-zinc-300">Stocks ranked like this beat the average stock <b>${p(g.beat_market)}</b> of the time over the next quarter (range ${p(g.beat_market_ci95[0])}–${p(g.beat_market_ci95[1])}); on average they led by ${sg(g.mean_excess_pct)} (range ${sg(g.mean_excess_ci95_pct[0])} to ${sg(g.mean_excess_ci95_pct[1])}).</p>` : ""}
+    <p class="mt-2 text-xs text-zinc-500">A rank and a past record, not a forecast for this stock. Before costs; the typical stock in every group trailed the average.</p>`;
 }
 
 /* ---------------- What if I had invested? (HyperUI range-inputs/1) ---------------- */

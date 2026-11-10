@@ -2,3 +2,4 @@
 - 2026-11-08: owner approved phase 2 ('go'); display fixes 1-4 applied and merged to main (commit on main), models unchanged.
 - 2026-11-10: owner chose option E (momentum + daily risk check). Invested share not stated: spec uses the recommended 70%, pending the owner's OK.
 - 2026-11-10: owner approved the spec ('continue'), 70% invested. Changed: no archiving; every old model keeps running and self-learning, hidden from the public site and shown inside ALADIN BOT behind the same code (Phase 6).
+- 2026-11-10: owner approved phase 5 ('go'). Phase 6 built: model E is the only public ALADIN; the earlier models keep running and are published encrypted, readable only inside ALADIN BOT with its existing code (GitHub secret ALADIN_BOT_CODE). Browser checks use a made-up test code only.

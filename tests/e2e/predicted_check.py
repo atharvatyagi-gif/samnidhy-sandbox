@@ -7,6 +7,7 @@ Browser checks for the NEXUS predicted links on the terminal's stock details and
 import sys
 from pathlib import Path
 
+from _bot import skip, unlock
 from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -75,13 +76,16 @@ def run():
         pg.locator("#mov-link .mv-tg").first.click(); pg.wait_for_timeout(2500)
         check("Movers: a row's expansion lists the linked companies today", "linked companies today" in pg.inner_text("#mov-alt").lower())
         check("Movers: 0 console errors", not errs, errs[:3])
-        pg.goto(f"{BASE}#v=signals"); pg.reload(); pg.wait_for_selector("#signals tr[data-sym]", timeout=30000)
-        pg.locator("#signals tr[data-sym]").first.click(); pg.wait_for_selector(".sg-sheet", timeout=20000); pg.wait_for_timeout(2500)
-        check("ALADIN: the stock's summary says how its linked companies moved", "linked compan" in pg.inner_text(".sg-sheet").lower())
-        pg.click('.sg-tabs [data-t="deps"]'); pg.wait_for_timeout(3000)
-        t = pg.inner_text(".sg-sheet").lower()
-        check("ALADIN: the dependencies tab shows linked companies today and predicted links", "linked companies today" in t and "predicted, not confirmed" in t)
-        check("ALADIN: 0 console errors", not errs, errs[:3])
+        if unlock(pg, BASE):      # the old weekly signal moved behind ALADIN BOT (Phase 6); the public ALADIN tab is model E
+            pg.evaluate("document.querySelector('[data-go=sigold]').click()"); pg.wait_for_selector("#signals-old tr[data-sym]", timeout=30000)
+            pg.locator("#signals-old tr[data-sym]").first.click(); pg.wait_for_selector(".sg-sheet", timeout=20000); pg.wait_for_timeout(2500)
+            check("Old weekly signal (bot): the stock's summary says how its linked companies moved", "linked compan" in pg.inner_text(".sg-sheet").lower())
+            pg.click('.sg-tabs [data-t="deps"]'); pg.wait_for_timeout(3000)
+            t = pg.inner_text(".sg-sheet").lower()
+            check("Old weekly signal (bot): the dependencies tab shows linked companies today and predicted links", "linked companies today" in t and "predicted, not confirmed" in t)
+            check("Old weekly signal (bot): 0 console errors", not errs, errs[:3])
+        else:
+            skip("Old weekly signal (bot): linked companies in the stock sheet")
         # (opening a stock without an ALADIN 2.0 shard logs a 404 for aladin2/stock/<SYM>.json: older behaviour of the terminal, not of this section)
         b.close()
 

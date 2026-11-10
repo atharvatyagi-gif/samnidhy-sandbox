@@ -173,7 +173,7 @@ function paintHead() {
   const T = ctx.S.transport;
   root.querySelector("#nx-asof").textContent = MOVING.has(t) && (t === "flight" || t === "vessel" || t === "chokepoint") && T ? `Position snapshot ${ageText(ageMin(T.generated_utc))}${isStale(T) ? " · older than its limit" : ""}`
     : graph ? `Supply-chain data generated ${graph.generated_utc} · ${graph.coverage.companies_done} companies read` : "";
-  const tabs = t === "company" ? COMPANY_TABS : [];
+  const tabs = t === "company" ? COMPANY_TABS.filter(([k]) => k !== "quant" || document.documentElement.classList.contains("legacy-on")) : [];      // Quant is an earlier ALADIN model: inside ALADIN BOT only
   root.querySelector("#nx-tabs").innerHTML = tabs.map(([k, l]) => `<button role="tab" aria-selected="${cur.tab === k}" class="${cur.tab === k ? "on" : ""}" data-nx-tab="${k}">${l}</button>`).join("");
   void esc;
 }

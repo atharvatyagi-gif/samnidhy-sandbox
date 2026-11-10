@@ -498,7 +498,7 @@ function bind() {
   root.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { st.filter = b.dataset.f; root.querySelectorAll("[data-f]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); }); paintList(); });
 }
 export async function mount() {
-  root = document.getElementById("signals"); if (!root) return;
+  root = document.getElementById("signals-old"); if (!root) return;
   if (!document.__sgKey) { document.__sgKey = true; document.addEventListener("keydown", e => { if (e.key === "Escape" && st.sel && root && root.isConnected) close(); }); }
   if (!W) { root.innerHTML = '<p class="note">Loading…</p>'; await load(); }
   const q0 = root.querySelector("#sg-q"), had = q0 && q0.value;

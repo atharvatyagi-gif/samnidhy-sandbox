@@ -148,6 +148,8 @@ jobs:
         run: python scripts/nse_live_poll.py
 
       - name: Put the data (or the "Data not updated" notice) into the page
+        env:
+          ALADIN_BOT_CODE: ${{ secrets.ALADIN_BOT_CODE }}      # encrypts the earlier ALADIN models for the bot (scripts/aladin2/legacy.py)
         run: |
           python scripts/embed_data.py
           python scripts/build_site.py

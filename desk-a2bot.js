@@ -7,10 +7,25 @@ import { esc, inr } from "./desk-aladin2.js";
 import { mountLive } from "./desk-a2live.js";
 
 const FILE = "aladin2/bot.enc.json", SS = "aladin2.bot.code";
+let earlierPublished = false;
 let ctx = null, root = null, blob = null, blobState = "idle", P = null, failures = 0, until = 0, live = null;
 const DISCLAIMER = "ALADIN is a statistical model built by students. It is often wrong. Educational analysis only, not investment advice. Past performance does not predict future results.";
 
+import * as Legacy from "./desk-legacy.js";
+
 export function init(c) { ctx = c; }
+
+/* The earlier ALADIN models (kept running, shown only here): one button each; they open their own pages once the code is accepted. */
+const EARLIER = [["sigold", "Old weekly signal and its paper bots", "The weekly top and bottom lists from ALADIN 1's 5-day score, the v5.1 paper account, the v4 shadow and the weekly ranking forward test."],
+  ["lab", "ALADIN 1 (Tools)", "Chance of closing higher in 5, 10 and 20 days from the technical model blended with fundamental, sentiment and supply-chain scores."],
+  ["outlook", "Outlook", "Chance each NIFTY 500 stock beats the NIFTY 50 over 20 trading days."],
+  ["a2", "ALADIN 2.0 research pages", "The strategy library, forecast ranges, scoreboard and journal (the engine is suspended by its own kill switch while live calibration is off)."]];
+function earlierPanel() {
+  const el = document.getElementById("a2bot-legacy"); if (!el) return;
+  el.innerHTML = Legacy.unlocked() ? `<div class="sg-card a2b-earlier"><h4>Earlier ALADIN models (still running and learning every night)</h4><div class="a2b-earlier-g">${EARLIER.map(([k, t, d]) => `<button type="button" class="a2b-earlier-b" data-go="${k}"><b>${t}</b><small>${d}</small></button>`).join("")}</div>
+    <p class="note">These were replaced on the public site by model E after the 2026 audit. They are shown here for comparison and research; their files are encrypted with this console's code. In Movers, "ALADIN probability" and the terminal's "Earlier models" block also appear while unlocked.</p><button type="button" class="a2b-earlier-lock">Lock again</button></div>` : "";
+  const lk = el.querySelector(".a2b-earlier-lock"); if (lk) lk.onclick = lockNow;
+}
 
 /* ---------- the lock (exported for tests/js/a2bot.test.mjs, which opens a fixture produced by the Python side) ---------- */
 export const normalise = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -61,7 +76,7 @@ export function tracePicture(t, w = 340, h = 160) {
 
 /* ---------- rendering ---------- */
 function lockScreen(msg) {
-  const missing = blobState === "missing";
+  const missing = blobState === "missing" && !earlierPublished;
   return `<div class="a2b-lock"><div class="a2b-lock-box"><div class="a2b-logo">ALADIN <b>BOT</b></div><p>${missing ? "The console is not published yet." : "This console shows what ALADIN is doing, step by step, and how it reaches each call. It is locked. Enter the access code."}</p>
     ${missing ? "" : `<form id="a2b-form" autocomplete="off"><label class="a2b-lbl" for="botcode">Access code</label><input id="botcode" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="ALADIN-XXXX-XXXX-XXXX-XXXX-XXXX" aria-describedby="a2b-msg"><button class="btn-ink" type="submit" id="a2b-go">Unlock</button></form>`}
     <p class="note" id="a2b-msg" role="status">${esc(msg || "")}</p><p class="note">The page's data is encrypted in the browser with your code (AES-256). Without the code the file cannot be read. ${DISCLAIMER}</p></div></div>`;
@@ -77,14 +92,15 @@ function bind() {
   const f = root.querySelector("#a2b-form");
   if (f) { f.onsubmit = e => { e.preventDefault(); unlock(root.querySelector("#botcode").value); }; const i = root.querySelector("#botcode"); if (i) i.focus(); }
 }
-function lockNow() { P = null; try { sessionStorage.removeItem(SS); } catch { /* fine */ } stop(); render("Locked."); }
+function lockNow() { P = null; try { sessionStorage.removeItem(SS); } catch { /* fine */ } Legacy.lock(); earlierPanel(); stop(); render("Locked."); }
 function stop() { if (live) { live.stop(); live = null; } }
 
 async function unlock(code) {
   const msg = root && root.querySelector("#a2b-msg"), now = Date.now();
   if (now < until) { if (msg) msg.textContent = `Wait ${Math.ceil((until - now) / 1000)} s before trying again.`; return; }
-  if (!blob) { if (msg) msg.textContent = "The file is still loading."; return; }
   if (msg) msg.textContent = "Checking the code (about a second)…";
+  const earlier = await Legacy.unlock(code); earlierPanel();
+  if (!blob) { if (earlier) { failures = 0; render("The console's own file is not published, but the earlier models are open above."); } else if (msg) msg.textContent = "That code does not open the console."; return; }
   try { P = await decrypt(blob, code); failures = 0; try { sessionStorage.setItem(SS, code); } catch { /* private window: you will be asked again */ } render(); }
   catch (e) { P = null; if (e && e.why === "insecure") { render("This browser cannot unlock here: it needs a secure (https) page."); return; } if (e && e.name === "SyntaxError") { render("The file opened but could not be read. Try again in a minute."); return; } failures++; until = Date.now() + Math.min(8000, 800 * failures); render("That code does not open the console. Check it letter by letter (no spaces needed, dashes optional)."); }
 }
@@ -94,7 +110,10 @@ export async function mount() {
   if (!blob && blobState === "idle") {
     blobState = "loading"; render("Loading…");
     try { const r = await fetch(FILE, { cache: "no-store" }); if (!r.ok) throw new Error("missing"); blob = await r.json(); blobState = "ready"; } catch { blobState = "missing"; }
+    earlierPublished = await Legacy.published().catch(() => false);
   }
   if (!P && blob) { let c = null; try { c = sessionStorage.getItem(SS); } catch { /* none */ } if (c) { try { P = await decrypt(blob, c); } catch { P = null; } } }
+  if (!Legacy.unlocked()) await Legacy.resume().catch(() => false);
+  earlierPanel();
   render();
 }

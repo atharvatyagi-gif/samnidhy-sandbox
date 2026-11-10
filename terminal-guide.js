@@ -79,6 +79,8 @@
     }
     var tm = det.match(/Summary\s+([A-Za-z ]+?)\s+(\d+) bearish · (\d+) neutral · (\d+) bullish/);
     if (tm) bits.push("Of " + (+tm[2] + +tm[3] + +tm[4]) + " common chart signals, " + tm[2] + " lean bearish, " + tm[3] + " are neutral and " + tm[4] + " lean bullish (" + tm[1].trim().toLowerCase() + ").");
+    var em = det.match(/(In the portfolio|No signal) · rank (\d+) of (\d+)/);
+    if (em) bits.push("ALADIN ranks it " + em[2] + " of the " + em[3] + " most-traded stocks by its 6-month rise: " + (em[1] === "In the portfolio" ? "it is in ALADIN's portfolio." : "no signal (only the top ranks are held).") + " A rank, not a forecast.");
     var om = det.match(/Chance it beats NIFTY 50\s+(\d+)%/);
     if (om) bits.push("The students' model puts the chance of beating the NIFTY 50 over the next 20 trading days at " + om[1] + "% (50% is a coin flip). It is often wrong.");
     if (!bits.length) { peBox.hidden = true; return; }

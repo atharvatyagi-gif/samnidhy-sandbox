@@ -1229,3 +1229,39 @@ body.resizing.rs-v { cursor: col-resize; } body.resizing.rs-h { cursor: row-resi
 .lk-c i { font-style: normal; color: var(--ink-3); margin-right: -2px; }
 .lk-c b { font-weight: 600; }
 .lk-key { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 6px 0 10px; color: var(--ink-3); font-size: 12px; }
+
+/* ---------- ALADIN model E (public) and the earlier models behind ALADIN BOT ---------- */
+html:not(.legacy-on) [data-legacy] { display: none !important; }
+.ae-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin: 12px 0; }
+.ae-strip.small { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.ae-cell { border: 1px solid var(--rule-2); border-radius: var(--r); padding: 8px 10px; background: var(--card); position: relative; }
+.ae-cell span { display: block; font: 600 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.ae-cell b { display: block; font: 700 16px var(--mono); margin: 2px 0; }
+.ae-cell small { display: block; color: var(--ink-3); font-size: 11.5px; line-height: 1.35; }
+.ae-cell.warn { border-color: var(--acc-edge); } .ae-cell.down { border-color: var(--down); }
+.ae-dd { display: block; height: 4px; margin-top: 6px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.ae-dd em { display: block; height: 100%; background: var(--down); }
+.ae-alert { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--acc-edge); border-radius: var(--r); background: var(--acc-soft); font-size: 13px; }
+.ae-alert.down { border-color: var(--down); background: var(--down-soft); }
+.ae-cap { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+.ae-cap input { width: 110px; }
+.ae-t td small, .ae-t td b + small { display: block; color: var(--ink-3); font-size: 11px; }
+.ae-r { cursor: pointer; } .ae-r.on td { background: var(--card-hover); }
+.ae-pill { display: inline-block; padding: 1px 8px; border: 1px solid var(--rule-2); border-radius: 999px; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+.ae-pill.on { border-color: var(--up); color: var(--up); }
+.ae-why { margin: 4px 0 6px 18px; padding: 0; line-height: 1.55; font-size: 13px; }
+.ae-state { margin: 4px 0; } .ae-state.on b { color: var(--up); }
+.ae-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin: 12px 0; }
+.ae-dl { display: grid; grid-template-columns: 1fr; gap: 4px; margin: 0; font-size: 12.5px; }
+.ae-dl div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--rule); padding: 4px 0; }
+.ae-dl dt { color: var(--ink-3); } .ae-dl dd { margin: 0; text-align: right; } .ae-dl dd small { color: var(--ink-3); }
+.ae-cal { width: 100%; height: auto; }
+.ae-cal .ae-lbl { font: 11px var(--sans); fill: var(--ink-2); } .ae-cal .ae-lbl.mid { text-anchor: middle; fill: var(--ink-3); }
+.ae-cal .ae-ci { stroke: var(--ink-3); stroke-width: 2; } .ae-cal .ae-zero { stroke: var(--rule-2); stroke-dasharray: 3 3; }
+.ae-cal .ae-pos { fill: var(--up); } .ae-cal .ae-neg { fill: var(--down); }
+.a2b-earlier { margin-bottom: 12px; }
+.a2b-earlier-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.a2b-earlier-b { text-align: left; padding: 10px 12px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--card); }
+.a2b-earlier-lock { margin-top: 8px; padding: 6px 12px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--card); }
+.a2b-earlier-b:hover, .a2b-earlier-b:focus-visible { border-color: var(--acc-edge); background: var(--card-hover); }
+.a2b-earlier-b b { display: block; font-size: 13px; } .a2b-earlier-b small { display: block; margin-top: 3px; color: var(--ink-3); font-size: 11.5px; line-height: 1.4; }

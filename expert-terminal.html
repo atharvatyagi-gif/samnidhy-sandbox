@@ -76,11 +76,13 @@
     <button data-go="indices">Indices</button>
     <button data-go="crypto">Crypto</button>
     <button data-go="map">Map</button>
-    <button data-go="outlook">Outlook</button>
+    <button data-go="outlook" data-legacy title="Earlier model: inside ALADIN BOT">Outlook</button>
     <button data-go="signals">ALADIN</button>
     <button data-go="a2bot" title="Locked: needs an access code">ALADIN BOT</button>
     <button data-go="news">News</button>
-    <button data-go="lab">Tools</button>
+    <button data-go="lab" data-legacy title="Earlier model: inside ALADIN BOT">Tools</button>
+    <button data-go="sigold" data-legacy title="Earlier model: inside ALADIN BOT">Old weekly signal</button>
+    <button data-go="a2" data-legacy title="Earlier model: inside ALADIN BOT">ALADIN 2.0</button>
     <span class="grow"></span>
     <button class="tab-side" data-go="terminal" data-side="watch">Watchlist <b id="wl-count">0</b></button>
     <button class="tab-side" id="setup-btn" title="Choose the stocks on your watchlist">Set up desk</button>
@@ -189,7 +191,7 @@
       <div class="page">
         <div class="page-head"><p class="kick">— NSE movers · all boards</p><h2>Where the money <span class="acc">moved today.</span></h2><p class="asof" data-asof="prices"></p></div>
         <div class="controls">
-          <div class="seg" id="mov-kind" role="group" aria-label="Movers view"><button data-k="price" class="on" aria-pressed="true">Price &amp; volume</button><button data-k="aladin" aria-pressed="false">ALADIN probability</button><button data-k="shock" aria-pressed="false">Supply-chain shocks</button><button data-k="link" aria-pressed="false">Linked companies</button></div>
+          <div class="seg" id="mov-kind" role="group" aria-label="Movers view"><button data-k="price" class="on" aria-pressed="true">Price &amp; volume</button><button data-k="aladin" data-legacy aria-pressed="false">ALADIN probability</button><button data-k="shock" aria-pressed="false">Supply-chain shocks</button><button data-k="link" aria-pressed="false">Linked companies</button></div>
           <div class="seg" id="mov-h" role="group" aria-label="Horizon" hidden><button data-h="5" aria-pressed="false">5D</button><button data-h="10" class="on" aria-pressed="true">10D</button><button data-h="20" aria-pressed="false">20D</button></div>
         </div>
         <div id="mov-price">
@@ -297,6 +299,13 @@
       </div>
     </section>
 
+    <!-- ================= the earlier weekly signal (inside ALADIN BOT) ================= -->
+    <section class="view" id="v-sigold">
+      <div class="page">
+        <div id="signals-old"><p class="note">Loading…</p></div>
+      </div>
+    </section>
+
     <!-- ================= ALADIN 2.0 ================= -->
     <section class="view" id="v-a2">
       <div class="page">
@@ -308,6 +317,7 @@
     <!-- ================= ALADIN BOT (locked by an access code) ================= -->
     <section class="view" id="v-a2bot">
       <div class="page">
+        <div id="a2bot-legacy"></div>
         <div id="a2bot"><p class="note">Loading…</p></div>
       </div>
     </section>

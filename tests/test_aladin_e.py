@@ -52,7 +52,7 @@ def test_orders_fill_at_the_next_open_never_at_the_signal_close():
     assert acct["pending"] and acct["pending"]["created"] == str(asof.date()) and not acct["positions"]
     nxt = n5.index[301]
     acct, out = AE.run(nxt, frames, n5, c, CAL, acct)
-    buys = [t for t in acct["trades"] if t["side"] == "buy"]
+    buys = [t for t in acct["trades"] if t["side"] == "enter"]
     assert buys and all(t["date"] == str(nxt.date()) for t in buys)
     t = buys[0]
     assert t["px"] == pytest.approx(round(float(frames[t["sym"]].loc[nxt, "o"]), 2))   # the open of the next session
@@ -131,3 +131,16 @@ def test_a_price_jump_beyond_any_price_band_is_treated_as_a_data_error():
     f.loc[f.index[250]:, "c"] *= 3                                               # an unadjusted 1:3 change in the window
     T = AE.rank_table(frames, asof, cfg())
     assert "S00" not in T.index and len(T) == 39
+
+
+def test_closed_positions_are_judged_against_the_nifty500_over_the_same_days():
+    frames, n5 = market(drift=[0.002 if i < 6 else 0 for i in range(60)])
+    c = cfg(rebalance_every_sessions=5)
+    acct = None
+    for k in range(300, 320):
+        acct, out = AE.run(n5.index[k], frames, n5, c, CAL, acct)
+    sells = [t for t in acct["trades"] if t["side"] == "exit"]
+    assert sells and all(t["index_return"] is not None for t in sells)
+    h = out["health"]
+    assert h["closed_positions"] == len(sells) and 0 <= h["last_20"]["hit_rate"] <= 1
+    assert "nifty500" in out["market"] and "breadth" in out["market"]

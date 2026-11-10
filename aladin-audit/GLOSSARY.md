@@ -54,3 +54,7 @@ Every term used in the audit, in plain words. Added to in each phase.
 | CAGR | Compound annual growth rate: the steady yearly growth that gives the same end result. |
 | Liquid fund | A low-risk debt mutual fund used to park cash; its return is modest and not guaranteed. |
 | Position sizing | Choosing how much of the money to put into the strategy, to control how deep losses can go. |
+| Encryption (AES-256-GCM) | Scrambling a file so only someone with the key can read it; GCM also detects any tampering. Used for the earlier models' files behind ALADIN BOT. |
+| Key derivation (PBKDF2) | Turning the access code into an encryption key by repeating a calculation 600,000 times, so guessing codes is slow. |
+| Legacy models | The earlier ALADIN models (ALADIN 1, Outlook, ALADIN 2.0, the weekly signal, the old paper bots). They still run every night, but are shown only inside ALADIN BOT. |
+| Degraded state | When prices are more than 2 sessions old, model E shows no signals until fresh data arrives, instead of showing stale ones. |

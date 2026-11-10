@@ -181,7 +181,9 @@ function expansionHtml(sym) {
   const rp = ctx.S.deps && ctx.S.deps.cos ? ctx.S.deps.cos[sym] : null, rt = RD.tag(rp, sym);                 // the revenue-dependency level, where the filings measured it
   if (rt) lin = `<p class="rd-line"><span class="rd-lv ${rt.tone}">${esc(rt.label)}</span> ${esc(RD.plainSentence(rp, sym) || rp.why || "")}</p>` + lin;
   let quant;
-  if (!a || !a.t) quant = `<p class="mut">${ctx.S.aladin ? "ALADIN has no probability for this stock (not enough price history, or not covered)." : (files().aladin ? "Loading…" : "ALADIN data has not been published yet.")}</p>`;
+  const earlierOn = document.documentElement.classList.contains("legacy-on");
+  if (!earlierOn) quant = (ctx.aladinE ? ctx.aladinE(sym) : "") || '<p class="mut">The ALADIN tab shows this stock\'s rank.</p>';
+  else if (!a || !a.t) quant = `<p class="mut">${ctx.S.aladin ? "ALADIN 1 has no probability for this stock (not enough price history, or not covered)." : "Loading…"}</p>`;
   else {
     const t = a.t, d = a.f && a.f.dist, n = (v, k = 2) => v == null || !isFinite(v) ? "—" : Number(v).toFixed(k);
     quant = `<p>Market turbulence now ${pct0(t.hmm)} · market-factor residual z ${n(t.pca_z)}</p>
@@ -194,7 +196,7 @@ function expansionHtml(sym) {
     <p class="mut">Retail chatter: ${esc(retail)}</p>
     <div class="sec-t">Liquidity sweeps</div>${evs.length ? evs.map(e => `<p>${e.dir > 0 ? "▲" : "▼"} ${esc(e.lvl)} at ${Number(e.px).toFixed(2)} · volume ${Number(e.rvol).toFixed(1)}× normal · wick ${Math.round(e.wick * 100)}% · ${e.confirmed ? "confirmed" : "forming"}</p>`).join("") : '<p class="mut">No sweep seen. Sweeps need the local tick program.</p>'}`;
   const go = (tab, label) => `<p><a href="#" data-nexus="company:${esc(sym)}" data-nexus-tab="${tab}">Open in NEXUS →</a> <span class="mut">${label}</span></p>`;
-  return `<div class="al-x3"><div><div class="sec-t">Supply lineage</div>${lin}${go("chain", "supply chain")}</div><div><div class="sec-t">Quant drivers</div>${quant}${go("quant", "quant")}</div><div><div class="sec-t">Sentiment &amp; sweeps</div>${sent}${go("sent", "sentiment and sweeps")}</div></div>`;
+  return `<div class="al-x3"><div><div class="sec-t">Supply lineage</div>${lin}${go("chain", "supply chain")}</div><div><div class="sec-t">${document.documentElement.classList.contains("legacy-on") ? "Quant drivers (earlier model)" : "ALADIN"}</div>${quant}${document.documentElement.classList.contains("legacy-on") ? go("quant", "quant") : ""}</div><div><div class="sec-t">Sentiment &amp; sweeps</div>${sent}${go("sent", "sentiment and sweeps")}</div></div>`;
 }
 const rowsFor = sym => [...ctx.$$("#v-movers tr[data-s]")].filter(r => r.dataset.s === sym && !r.classList.contains("mv-x"));
 function placeExpansion(tr, sym) {

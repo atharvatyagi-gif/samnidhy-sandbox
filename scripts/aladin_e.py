@@ -11,7 +11,7 @@ Every evening after the Daily update has saved the day's prices:
   2. The paper account is valued at today's close.
   3. Checks: prices older than `stale_sessions` sessions -> DEGRADED (no new decisions, signals hidden); a fall of `kill_drawdown`
      from the peak -> the kill switch (no buying, invested share at its risk-off level until the owner reviews); a one-day fall of
-     `daily_loss_no_buys` -> no buys at the next open.
+     `daily_loss_pause_entries` -> no buys at the next open.
   4. Ranks: the 126-session return of the 500 most-traded stocks (>= Rs 5 Cr a day, >= 250 sessions of prices). The best 5% are
      "In the portfolio". Every `rebalance_every_sessions` sessions the portfolio is rebalanced (leavers sold, newcomers bought,
      stayers untouched); whenever the invested share changes (NIFTY 500 crosses its 200-day average, kill switch) every position is
@@ -34,6 +34,8 @@ OUT = ROOT / "data" / "aladin_e"
 CFG = ROOT / "data" / "config" / "aladin_e.json"
 CAL = ROOT / "data" / "config" / "aladin_e_calibration.json"
 INDEX_FILE = TERM / "idx" / "out" / "d" / "Nifty_20500.json"
+VIX_FILE = TERM / "idx" / "out" / "d" / "India_20VIX.json"
+FII_FILE = ROOT / "data" / "institutional" / "fii_dii.json"
 JUMP = 0.45                                                # one-day moves above this are treated as data errors
 
 
@@ -83,6 +85,55 @@ def load_market(stocks):
     idx = load(INDEX_FILE, {}).get("d") or []
     n5 = pd.Series([r[4] for r in idx], index=pd.to_datetime([r[0] for r in idx])).sort_index() if idx else pd.Series(dtype=float)
     return frames, n5
+
+
+def series_of(path):
+    rows = load(path, {}).get("d") or []
+    return pd.Series([r[4] for r in rows], index=pd.to_datetime([r[0] for r in rows])).sort_index() if rows else pd.Series(dtype=float)
+
+
+def market_strip(frames, n5, vix, fii, asof, cfg):
+    """The facts shown above the list, each with its own as-of date. Nothing here changes a decision except the NIFTY 500 trend."""
+    out = {}
+    s = n5[n5.index <= asof]
+    if len(s) >= cfg["index_ma_days"]:
+        ma = s.iloc[-cfg["index_ma_days"]:].mean()
+        out["nifty500"] = {"as_of": str(s.index[-1].date()), "close": round(float(s.iloc[-1]), 2), "vs_200d_pct": round(float(s.iloc[-1] / ma - 1) * 100, 2),
+                           "change_3m_pct": round(float(s.iloc[-1] / s.iloc[-64] - 1) * 100, 2) if len(s) > 64 else None}
+    v = vix[vix.index <= asof] if len(vix) else vix
+    if len(v) > 30:
+        out["india_vix"] = {"as_of": str(v.index[-1].date()), "level": round(float(v.iloc[-1]), 2), "higher_than_pct_of_last_year": round(float((v.iloc[-252:] < v.iloc[-1]).mean()) * 100, 0)}
+    above, n = 0, 0
+    for f in frames.values():
+        c = f["c"][f.index <= asof]
+        if len(c) >= 200 and c.index[-1] >= asof - pd.Timedelta(days=7):
+            n += 1; above += int(c.iloc[-1] > c.iloc[-200:].mean())
+    if n:
+        out["breadth"] = {"as_of": str(asof.date()), "share_above_200d_pct": round(100 * above / n, 1), "stocks": n}
+    days = (fii or {}).get("days") or []
+    if days:
+        last = days[-20:]
+        out["fii_dii_20d"] = {"from": last[0].get("date"), "to": last[-1].get("date"), "fii_net_cr": round(sum(((x.get("fii") or {}).get("net_cr") or 0) for x in last)),
+                              "dii_net_cr": round(sum(((x.get("dii") or {}).get("net_cr") or 0) for x in last))}
+    return out
+
+
+def health(acct, n5, cfg):
+    """Live record of closed positions: a 'hit' is a position whose net return beat the NIFTY 500 over the same days."""
+    sells = [t for t in acct["trades"] if t["side"] == "exit" and t.get("index_return") is not None]
+    def rate(k):
+        x = sells[-k:]
+        return {"n": len(x), "hit_rate": round(sum(1 for t in x if t["net_return"] > t["index_return"]) / len(x), 3) if x else None}
+    alarm = None
+    h = acct["history"]
+    if len(h) >= 250 and len(n5):
+        a, b = h[-250], h[-1]
+        n0, n1 = n5[n5.index <= pd.Timestamp(a[0])], n5[n5.index <= pd.Timestamp(b[0])]
+        if len(n0) and len(n1):
+            gap = (b[1] / a[1] - 1) - (float(n1.iloc[-1]) / float(n0.iloc[-1]) - 1)
+            if gap < -cfg["alarm_trail_vs_nifty500_12m"]:
+                alarm = f"the paper account trails the NIFTY 500 by {abs(gap):.0%} over the last 12 months"
+    return {"last_20": rate(20), "last_60": rate(60), "last_250": rate(250), "closed_positions": len(sells), "alarm": alarm}
 
 
 def eligible_stocks(universe):
@@ -138,13 +189,13 @@ def slip(adv, cfg):
 def buy_cost(value, adv, cfg):
     c = cfg["costs"]
     ch = value * (c["exchange_txn_pct"] + c["sebi_fee_pct"] + c["brokerage_pct"]) / 100
-    return value * (c["stt_buy_pct"] + c["stamp_duty_buy_pct"]) / 100 + ch * (1 + c["gst_pct_on_brokerage_and_charges"] / 100) + value * slip(adv, cfg)
+    return value * (c["stt_entry_pct"] + c["stamp_duty_entry_pct"]) / 100 + ch * (1 + c["gst_pct_on_brokerage_and_charges"] / 100) + value * slip(adv, cfg)
 
 
 def sell_cost(value, adv, cfg):
     c = cfg["costs"]
     ch = value * (c["exchange_txn_pct"] + c["sebi_fee_pct"] + c["brokerage_pct"]) / 100
-    return value * c["stt_sell_pct"] / 100 + ch * (1 + c["gst_pct_on_brokerage_and_charges"] / 100) + value * slip(adv, cfg) + c["dp_charge_per_scrip_sell_inr"]
+    return value * c["stt_exit_pct"] / 100 + ch * (1 + c["gst_pct_on_brokerage_and_charges"] / 100) + value * slip(adv, cfg) + c["dp_charge_per_scrip_exit_inr"]
 
 
 def position_cap(cal, cfg):
@@ -173,7 +224,7 @@ def new_account(cfg, start):
             "last_processed": None, "last_rebalance": None, "share": None, "peak": float(cfg["capital_inr"]), "kill": None, "history": [], "trades": [], "costs_paid": 0.0}
 
 
-def fill_pending(acct, frames, dates, cfg):
+def fill_pending(acct, frames, dates, cfg, n5=None):
     """Fill the orders queued on an earlier evening at the open of the first session after that evening. -> list of fills."""
     p = acct.get("pending")
     if not p:
@@ -184,14 +235,14 @@ def fill_pending(acct, frames, dates, cfg):
         return []
     day = after[0]
     fills = []
-    for o in sorted(p["orders"], key=lambda o: o["side"] != "sell"):                         # sells first: they free the cash for the buys
+    for o in sorted(p["orders"], key=lambda o: o["side"] != "exit"):                         # sells first: they free the cash for the buys
         f = frames.get(o["sym"])
         if f is None or day not in f.index or not np.isfinite(f.loc[day, "o"]) or f.loc[day, "o"] <= 0:
             fills.append({**o, "status": "not filled: no opening price that day"}); continue
         px = float(f.loc[day, "o"])
         adv = o.get("adv", 0)
         pos = acct["positions"].get(o["sym"])
-        if o["side"] == "sell" and pos:
+        if o["side"] == "exit" and pos:
             sh = pos["shares"] if o.get("all") else min(pos["shares"], math.floor(o["value"] / px))
             if sh <= 0:
                 continue
@@ -199,14 +250,18 @@ def fill_pending(acct, frames, dates, cfg):
             c = sell_cost(gross, adv, cfg)
             acct["cash"] += gross - c; acct["costs_paid"] += c
             cost_basis = pos["entry_px"] * sh + pos["buy_cost"] * sh / pos["shares"]
-            acct["trades"].append({"sym": o["sym"], "side": "sell", "date": str(day.date()), "px": round(px, 2), "shares": sh, "cost": round(c, 2),
-                                   "net_return": round((gross - c) / cost_basis - 1, 4), "why": o["why"]})
+            ir = None
+            if n5 is not None and pos.get("n5_entry"):
+                e1 = n5[n5.index <= day]
+                ir = round(float(e1.iloc[-1]) / pos["n5_entry"] - 1, 4) if len(e1) else None
+            acct["trades"].append({"sym": o["sym"], "side": "exit", "date": str(day.date()), "px": round(px, 2), "shares": sh, "cost": round(c, 2),
+                                   "net_return": round((gross - c) / cost_basis - 1, 4), "index_return": ir, "entry_date": pos["entry_date"], "why": o["why"]})
             if sh >= pos["shares"]:
                 del acct["positions"][o["sym"]]
             else:
                 pos["buy_cost"] *= (pos["shares"] - sh) / pos["shares"]; pos["shares"] -= sh
             fills.append({**o, "status": f"sold {sh} at {px:.2f}"})
-        elif o["side"] == "buy":
+        elif o["side"] == "enter":
             budget = min(o["value"], acct["cash"])
             sh = math.floor(budget / (px * (1 + 0.003)))
             if sh <= 0:
@@ -217,8 +272,9 @@ def fill_pending(acct, frames, dates, cfg):
                 q = acct["positions"][o["sym"]]
                 q["entry_px"] = (q["entry_px"] * q["shares"] + px * sh) / (q["shares"] + sh); q["shares"] += sh; q["buy_cost"] += c
             else:
-                acct["positions"][o["sym"]] = {"shares": sh, "entry_px": px, "entry_date": str(day.date()), "buy_cost": c}
-            acct["trades"].append({"sym": o["sym"], "side": "buy", "date": str(day.date()), "px": round(px, 2), "shares": sh, "cost": round(c, 2), "why": o["why"]})
+                n5e = n5[n5.index <= day] if n5 is not None else []
+                acct["positions"][o["sym"]] = {"shares": sh, "entry_px": px, "entry_date": str(day.date()), "buy_cost": c, "n5_entry": float(n5e.iloc[-1]) if len(n5e) else None}
+            acct["trades"].append({"sym": o["sym"], "side": "enter", "date": str(day.date()), "px": round(px, 2), "shares": sh, "cost": round(c, 2), "why": o["why"]})
             fills.append({**o, "status": f"bought {sh} at {px:.2f}"})
     acct["pending"] = None
     return fills
@@ -247,7 +303,7 @@ def decide(acct, T, chosen, share, equity, asof, dates, cfg, cal, no_buys):
     keep = set(chosen)
     for sym in list(acct["positions"]):
         if due and sym not in keep:
-            orders.append({"sym": sym, "side": "sell", "all": True, "value": 0, "adv": adv.get(sym, 0), "why": f"left the best {cfg['pick_share']:.0%} at the rebalance"})
+            orders.append({"sym": sym, "side": "exit", "all": True, "value": 0, "adv": adv.get(sym, 0), "why": f"left the best {cfg['pick_share']:.0%} at the rebalance"})
     if not no_buys or share_changed:
         for sym in chosen:
             have = acct["positions"].get(sym)
@@ -255,15 +311,15 @@ def decide(acct, T, chosen, share, equity, asof, dates, cfg, cal, no_buys):
             cur = have["shares"] * px if (have and px) else 0.0
             gap = per - cur
             if have and share_changed and gap < -0.25 * per:
-                orders.append({"sym": sym, "side": "sell", "all": False, "value": -gap, "adv": adv.get(sym, 0), "why": "invested share lowered (risk check)"})
+                orders.append({"sym": sym, "side": "exit", "all": False, "value": -gap, "adv": adv.get(sym, 0), "why": "invested share lowered (risk check)"})
             elif gap > 0.25 * per and not no_buys and not (acct.get("kill")):
                 if not have or share_changed:
-                    orders.append({"sym": sym, "side": "buy", "value": gap, "adv": adv.get(sym, 0), "why": "joined the best 5%" if not have else "invested share raised (risk check)"})
+                    orders.append({"sym": sym, "side": "enter", "value": gap, "adv": adv.get(sym, 0), "why": "joined the best 5%" if not have else "invested share raised (risk check)"})
     reason = "rebalance" if due else "invested share changed"
     return orders, reason
 
 
-def run(asof, frames, n5, cfg, cal, acct, now=None):
+def run(asof, frames, n5, cfg, cal, acct, now=None, vix=None, fii=None):
     """One evening. -> (acct, latest dict). Pure apart from the inputs: tests drive it with synthetic prices."""
     dates = n5.index
     out = {"version": cfg["version"], "as_of": str(asof.date()), "generated_utc": (now or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ")}
@@ -271,7 +327,7 @@ def run(asof, frames, n5, cfg, cal, acct, now=None):
     stale = newest is None or len(dates) == 0 or sessions_between(dates, newest, dates[-1]) > cfg["stale_sessions"] or asof - newest > pd.Timedelta(days=7)
     if acct is None:
         acct = new_account(cfg, asof)
-    fills = fill_pending(acct, frames, dates[dates <= asof], cfg) if not stale else []
+    fills = fill_pending(acct, frames, dates[dates <= asof], cfg, n5) if not stale else []
     equity = value(acct, frames, asof)
     prev = acct["history"][-1][1] if acct["history"] else acct["capital"]
     day_ret = equity / prev - 1 if prev else 0.0
@@ -287,7 +343,7 @@ def run(asof, frames, n5, cfg, cal, acct, now=None):
     T["last_close"] = [float(frames[s]["c"][frames[s].index <= asof].iloc[-1]) for s in T.index]
     chosen = pick(T, cfg) if len(T) else []
     share = target_share(on, acct.get("kill"), cfg)
-    no_buys = day_ret <= -cfg["daily_loss_no_buys"]
+    no_buys = day_ret <= -cfg["daily_loss_pause_entries"]
     orders, reason = ([], None)
     status = "degraded" if stale else "stopped" if acct.get("kill") else "running"
     if not stale and not already and len(T):
@@ -303,14 +359,18 @@ def run(asof, frames, n5, cfg, cal, acct, now=None):
     out.update({
         "status": status, "degraded_reason": (f"prices end {newest.date() if newest is not None else 'nowhere'}" if stale else None),
         "risk": {"nifty500_close": n5_close, "nifty500_ma200": None if n5_ma is None else round(n5_ma, 2), "risk_on": on, "invested_share": share,
-                 "kill": acct.get("kill"), "no_buys_next_open": bool(no_buys)},
+                 "kill": acct.get("kill"), "pause_entries_next_open": bool(no_buys)},
         "rules": {"lookback_days": cfg["lookback_days"], "pick_share": cfg["pick_share"], "rebalance_every_sessions": cfg["rebalance_every_sessions"],
                   "universe": f"the {cfg['universe_top']} most-traded main-board stocks with at least Rs {cfg['min_adv_inr'] / 1e7:.0f} Cr a day and {cfg['min_history_days']} sessions of prices"},
         "universe_size": int(len(T)), "portfolio_size": len(chosen),
         "next_rebalance_in_sessions": None if since is None else max(0, cfg["rebalance_every_sessions"] - since),
         "stocks": {s: [int(T.loc[s, "rank"]), round(float(T.loc[s, "rank_pct"]), 4), round(float(T.loc[s, "r126"]), 4), 1 if s in chosen else 0] for s in T.index} if not stale else {},
         "portfolio": [{"sym": s, "rank": int(T.loc[s, "rank"]), "r126": round(float(T.loc[s, "r126"]), 4)} for s in chosen] if not stale else [],
-        "calibration": cal,
+        "calibration": cal, "costs": cfg["costs"],
+        "market": market_strip(frames, n5, vix if vix is not None else pd.Series(dtype=float), fii, asof, cfg),
+        "health": health(acct, n5, cfg), "last_rebalance": acct.get("last_rebalance"),
+        "holdings": [{"sym": s, "shares": p["shares"], "entry_px": round(p["entry_px"], 2), "entry_date": p["entry_date"],
+                      "last_close": round(float(frames[s]["c"][frames[s].index <= asof].iloc[-1]), 2) if s in frames and (frames[s].index <= asof).any() else None} for s, p in acct["positions"].items()],
         "paper": {"equity": round(equity, 2), "start": acct["start"], "capital": acct["capital"], "cash": round(acct["cash"], 2), "drawdown": round(dd, 4),
                   "positions": len(acct["positions"]), "costs_paid": round(acct["costs_paid"], 2), "pending": acct.get("pending"), "fills_today": fills,
                   "last_trades": acct["trades"][-40:], "history": acct["history"][-400:]},
@@ -331,7 +391,7 @@ def main():
     asof = n5.index[-1]
     OUT.mkdir(parents=True, exist_ok=True)
     acct = load(OUT / "paper.json")
-    acct, latest = run(asof, frames, n5, cfg, cal, acct)
+    acct, latest = run(asof, frames, n5, cfg, cal, acct, vix=series_of(VIX_FILE), fii=load(FII_FILE))
     (OUT / "paper.json").write_text(json.dumps(acct, separators=(",", ":"), default=str), encoding="utf-8")
     (OUT / "latest.json").write_text(json.dumps(latest, separators=(",", ":"), default=str, allow_nan=False), encoding="utf-8")
     print(f"aladin_e: {latest['as_of']} {latest['status']}; universe {latest['universe_size']}, portfolio {latest['portfolio_size']}; risk on {latest['risk']['risk_on']}, "
