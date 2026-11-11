@@ -341,7 +341,7 @@
    0.06292,
    0.06505,
    0.07064,
-   0.07126,
+   0.07125,
    0.07714,
    0.08047,
    0.0822,
@@ -1452,9 +1452,9 @@
    1.11256
   ]
  },
- "generated_utc": "2026-11-11T02:03:01+00:00",
- "generated_ist": "11 Nov 2026, 07:33 AM IST",
- "screened_ist": "11 Nov 2026, 07:33 AM IST",
+ "generated_utc": "2026-11-11T03:33:32+00:00",
+ "generated_ist": "11 Nov 2026, 09:03 AM IST",
+ "screened_ist": "11 Nov 2026, 09:03 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,11 +1484,11 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 310
+   "count": 291
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
-   "count": 174
+   "count": 163
   },
   {
    "step": "Best 10 by Magic Formula rank",
@@ -1499,12 +1499,12 @@
   "0": 0,
   "1": 0,
   "2": 4,
-  "3": 23,
-  "4": 41,
-  "5": 68,
-  "6": 76,
-  "7": 54,
-  "8": 29,
+  "3": 21,
+  "4": 37,
+  "5": 66,
+  "6": 72,
+  "7": 48,
+  "8": 28,
   "9": 15
  },
  "skipped": {
@@ -1515,9 +1515,7 @@
    "IOC",
    "JUBLFOOD",
    "NESTLEIND",
-   "RELIANCE",
-   "TCS",
-   "TVSMOTOR"
+   "RELIANCE"
   ],
   "accounts in USD": [
    "HCLTECH",
@@ -1528,6 +1526,27 @@
    "RUBICON"
   ],
   "download failed (YFRateLimitError)": [
+   "TCS",
+   "TDPOWERSYS",
+   "TECHM",
+   "TECHNOE",
+   "TEGA",
+   "TEJASNET",
+   "THANGAMAYL",
+   "THERMAX",
+   "TIINDIA",
+   "TIMKEN",
+   "TITAGARH",
+   "TITAN",
+   "TMPV",
+   "TORNTPHARM",
+   "TRENT",
+   "TRITURBINE",
+   "TVSMOTOR",
+   "UBL",
+   "ULTRACEMCO",
+   "UNITDSPR",
+   "UNOMINDA",
    "UPL",
    "URBANCO",
    "USHAMART",
@@ -1601,7 +1620,7 @@
    "magic_rank": 1,
    "rank_roc": 1,
    "rank_ey": 14,
-   "of": 174
+   "of": 163
   },
   {
    "symbol": "SIGNATURE",
@@ -1654,7 +1673,7 @@
    "magic_rank": 2,
    "rank_roc": 9,
    "rank_ey": 9,
-   "of": 174
+   "of": 163
   },
   {
    "symbol": "BLS",
@@ -1707,7 +1726,7 @@
    "magic_rank": 3,
    "rank_roc": 11,
    "rank_ey": 15,
-   "of": 174
+   "of": 163
   },
   {
    "symbol": "CASTROLIND",
@@ -1760,7 +1779,7 @@
    "magic_rank": 4,
    "rank_roc": 5,
    "rank_ey": 30,
-   "of": 174
+   "of": 163
   },
   {
    "symbol": "NBCC",
@@ -1813,7 +1832,7 @@
    "magic_rank": 5,
    "rank_roc": 10,
    "rank_ey": 27,
-   "of": 174
+   "of": 163
   },
   {
    "symbol": "HEROMOTOCO",
@@ -1866,7 +1885,7 @@
    "magic_rank": 6,
    "rank_roc": 18,
    "rank_ey": 22,
-   "of": 174
+   "of": 163
   },
   {
    "symbol": "ENGINERSIN",
@@ -1919,60 +1938,7 @@
    "magic_rank": 7,
    "rank_roc": 6,
    "rank_ey": 42,
-   "of": 174
-  },
-  {
-   "symbol": "HINDZINC",
-   "yahoo_ticker": "HINDZINC.NS",
-   "name": "Hindustan Zinc Ltd.",
-   "industry": "Metals & Mining",
-   "sector": "Basic Materials",
-   "fy_end": "2026-03-31",
-   "price": 575.95,
-   "avg_turnover_cr": 230.0,
-   "roc": 0.8006,
-   "earnings_yield": 0.0808,
-   "fscore": 8,
-   "fscore_known": 9,
-   "checks": {
-    "Profitable (net income > 0)": true,
-    "Cash from operations > 0": true,
-    "Return on assets improved": true,
-    "Cash profit above book profit": true,
-    "Long-term debt ratio fell (or none)": true,
-    "Current ratio improved": true,
-    "No new shares issued": true,
-    "Gross margin improved": true,
-    "Asset turnover improved": false
-   },
-   "ebit_cr": 19270.0,
-   "capital_cr": 24069.0,
-   "ev_cr": 238539.2,
-   "market_cap_cr": 243357.2,
-   "pe": 11.682556,
-   "pb": 8.12055,
-   "roe": 0.95413,
-   "debt_to_equity": 22.209,
-   "dividend_yield": 1.91,
-   "held_institutions": 0.04946,
-   "held_insiders": 0.88552004,
-   "analysts": 14,
-   "consensus": "positive",
-   "consensus_score": 2.21429,
-   "estimate_mean": 642.6429,
-   "estimate_high": 770.0,
-   "estimate_low": 495.0,
-   "eps": 49.3,
-   "shares_out": 4225319000.0,
-   "employees": 3303.0,
-   "website": "https://www.hzlindia.com",
-   "city": "Udaipur",
-   "beta": 0.73,
-   "summary": "Hindustan Zinc Limited explores for, extracts, and processes minerals in India, rest of Asia, and internationally. The company operates through two segments, Zinc, Lead, Silver & Others; and Wind Energy. The company produces refined zinc and lead, precious metals, and silver; sulphuric acid; rock-phosphate; and metals and related alloys. It also operates captive thermal with a capacity of 550.00 megawatt, wind power plant with a capacity of 273.50 megawatt, and solar power with capacity of 40.70 megawatt, and waste heat recovery boiler power plants of capacity 63.10 megawatt. In addition, the company offers di ammonium phosphate/nitrogen, phosphorus, and potassium fertilizers. The company was incorporated in 1966 and is based in Udaipur, India. Hindustan Zinc Limited operates as a subsidiary of Vedanta Limited.",
-   "magic_rank": 8,
-   "rank_roc": 29,
-   "rank_ey": 20,
-   "of": 174
+   "of": 163
   },
   {
    "symbol": "NATIONALUM",
@@ -2022,10 +1988,63 @@
    "city": "Bhubaneswar",
    "beta": 0.735,
    "summary": "National Aluminium Company Limited engages in the manufacture and sale of alumina and aluminum products in India and internationally. The company operates through Chemical and Aluminum segments. It offers aluminum metal products, such as ingots, alloy ingots, T-ingots, sows, billets, and wire rods; alumina and hydrate products, including calcined alumina and alumina hydrate; zeolite-A products; specialty alumina and hydrate products; and aluminum rolled and chequered sheets products. The company also owns and operates Coal Mine covering an area of 824.316 hectors situated in Chhendipada Tehsil of Angul District; an opencast mine covering an area of 16 square kilometers on Panchpatmali hills of Koraput district in Odisha; a wind power plant with 50.4 MW of generation capacity in Gandikota, Andhra Pradesh; a wind power plant with 47.6 MW of generation capacity at Jaisalmer, Rajasthan; a wind power plant with 50 MW of generation capacity at Devikot, Rajasthan; a wind power plant with 50.4 MW of generation capacity at Sangli, Maharashtra; and a solar power plants, as well as alumina refinery, aluminum smelter plants, and captive power plant. In addition, it provides testing services. N",
-   "magic_rank": 9,
-   "rank_roc": 43,
+   "magic_rank": 8,
+   "rank_roc": 41,
    "rank_ey": 7,
-   "of": 174
+   "of": 163
+  },
+  {
+   "symbol": "HINDZINC",
+   "yahoo_ticker": "HINDZINC.NS",
+   "name": "Hindustan Zinc Ltd.",
+   "industry": "Metals & Mining",
+   "sector": "Basic Materials",
+   "fy_end": "2026-03-31",
+   "price": 575.95,
+   "avg_turnover_cr": 230.0,
+   "roc": 0.8006,
+   "earnings_yield": 0.0808,
+   "fscore": 8,
+   "fscore_known": 9,
+   "checks": {
+    "Profitable (net income > 0)": true,
+    "Cash from operations > 0": true,
+    "Return on assets improved": true,
+    "Cash profit above book profit": true,
+    "Long-term debt ratio fell (or none)": true,
+    "Current ratio improved": true,
+    "No new shares issued": true,
+    "Gross margin improved": true,
+    "Asset turnover improved": false
+   },
+   "ebit_cr": 19270.0,
+   "capital_cr": 24069.0,
+   "ev_cr": 238539.2,
+   "market_cap_cr": 243357.2,
+   "pe": 11.682556,
+   "pb": 8.12055,
+   "roe": 0.95413,
+   "debt_to_equity": 22.209,
+   "dividend_yield": 1.91,
+   "held_institutions": 0.04946,
+   "held_insiders": 0.88552004,
+   "analysts": 14,
+   "consensus": "positive",
+   "consensus_score": 2.21429,
+   "estimate_mean": 642.6429,
+   "estimate_high": 770.0,
+   "estimate_low": 495.0,
+   "eps": 49.3,
+   "shares_out": 4225319000.0,
+   "employees": 3303.0,
+   "website": "https://www.hzlindia.com",
+   "city": "Udaipur",
+   "beta": 0.73,
+   "summary": "Hindustan Zinc Limited explores for, extracts, and processes minerals in India, rest of Asia, and internationally. The company operates through two segments, Zinc, Lead, Silver & Others; and Wind Energy. The company produces refined zinc and lead, precious metals, and silver; sulphuric acid; rock-phosphate; and metals and related alloys. It also operates captive thermal with a capacity of 550.00 megawatt, wind power plant with a capacity of 273.50 megawatt, and solar power with capacity of 40.70 megawatt, and waste heat recovery boiler power plants of capacity 63.10 megawatt. In addition, the company offers di ammonium phosphate/nitrogen, phosphorus, and potassium fertilizers. The company was incorporated in 1966 and is based in Udaipur, India. Hindustan Zinc Limited operates as a subsidiary of Vedanta Limited.",
+   "magic_rank": 9,
+   "rank_roc": 29,
+   "rank_ey": 20,
+   "of": 163
   },
   {
    "symbol": "ESCORTS",
@@ -2076,9 +2095,9 @@
    "beta": 0.386,
    "summary": "Escorts Kubota Limited manufactures and sells agricultural and construction equipment in India and internationally. The company offers rotavators, straw reapers, super seeders, MB ploughs, orchard sprayers, paddy harvesters, seed drills, and rice transplanters; filters, pumps, engine assemblies, gear parts, clutch systems, hydraulic pumps, cylinders, lubricants, oils, and service kits; and generator and diesel engines; and cranes, soil compactors, backhoe loaders, tandem rollers, and mini excavators. It also provides agricultural tractors; construction, earth moving, and material handling equipment; and round and flat tubes, heating elements, center buffer couplers, automobile shock absorbers, telescopic front fork and Mcpherson struts, internal combustion engines, and brake blocks. In addition, the company develops, produces, and imports parts and accessories, as well as provides maintenance and warranty, crop, and financing services. It offer its products under the Farmtrac, Powertrac, Digitrac, Steeltrac, Farmpower, and Kubota brands. The company was formerly known as Escorts Limited and changed its name to Escorts Kubota Limited in June 2022. Escorts Kubota Limited was incorpor",
    "magic_rank": 10,
-   "rank_roc": 35,
+   "rank_roc": 34,
    "rank_ey": 19,
-   "of": 174
+   "of": 163
   }
  ]
 }
