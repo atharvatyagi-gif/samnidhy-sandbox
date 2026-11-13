@@ -95,13 +95,14 @@ const intraOf = sym => ((S.intra[shard(sym)] || {})[sym]) || null;
 const histOf = sym => ((S.hist[shard(sym)] || {})[sym]) || [];
 
 async function boot() {
+  const legacyP = Legacy.resume().catch(() => false);                 // open mode / a code kept for this tab: read alongside the first files, not after them
   try {
     const [uni, quotes, live, screen, inst] = await Promise.all([getJSON("t/universe.json"), getJSON("t/quotes.json").catch(() => ({})),
       getJSON("live.json").catch(() => ({})), getJSON("screener.json").catch(() => ({})), getJSON("institutional.json").catch(() => ({}))]);
     S.news = await getJSON("news.json").catch(() => ({}));
     S.uni = uni; uni.stocks.forEach(s => S.map.set(s.s, s)); lastCheck = Date.now();
-    await Legacy.resume().catch(() => false);                       // the bot was unlocked earlier in this browser tab: show the earlier models again
-    S.pred = Legacy.unlocked() ? await getJSON("predict.json").catch(() => null) : null;
+    await legacyP;                                                  // the bot was unlocked earlier in this browser tab (or is open): show the earlier models again
+    S.pred = null;                                                  // the earlier models' Outlook file loads after the desk is drawn (below), never before it
     S.globeRaw = await getJSON("globe.json").catch(() => null); S.globe = freshGlobe(S.globeRaw);          // 7-day freshness rule, see globe-map.js
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
     S.nseLive = await getJSON("nse_live.json").catch(() => null);
@@ -123,6 +124,7 @@ async function boot() {
   go(hp.get("v") || (hp.get("s") ? "terminal" : "brief"), true);
   if (queuedGo) { const q = queuedGo; queuedGo = null; go(q[0], q[1]); }      // a tab clicked while the desk was loading opens now
   openSec(sec);
+  if (Legacy.unlocked()) getJSON("predict.json").then(j => { S.pred = j; renderDetails(); renderOutlook(); }).catch(() => {});
   getJSON("t/fund.json", false).then(f => { S.fund = f.stocks || {}; renderDetails(); }).catch(() => { S.fund = {}; renderDetails(); });
   if (!LS.get("blab-onboarded", false)) {
     if (hp.get("s") && S.map.has(hp.get("s"))) LS.set("blab-onboarded", true);   // arrived from the stock search with a stock chosen: show that stock, not the setup questions
