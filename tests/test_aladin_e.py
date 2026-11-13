@@ -191,3 +191,15 @@ def test_prices_older_than_the_account_never_change_it():
     acct2, out = AE.run(n5.index[299], frames, n5, c, CAL, json.loads(snap))
     assert json.dumps(acct2, default=str) == snap
     assert {b["sym"] for b in out["signals"]["buy"] if b["state"] == "held"} == set(acct["positions"])
+
+
+def test_orders_that_cannot_fill_are_logged_for_the_weekly_report():
+    frames, n5 = market(drift=[0.002 if i < 6 else 0 for i in range(60)])
+    c = cfg()
+    asof, nxt = n5.index[300], n5.index[301]
+    acct, _ = AE.run(asof, frames, n5, c, CAL, None)
+    first = acct["pending"]["orders"][0]["sym"]
+    frames[first].loc[nxt, "o"] = float("nan")                                   # no opening price that day
+    acct, _ = AE.run(nxt, frames, n5, c, CAL, acct)
+    assert acct["not_filled"] == [{"date": str(nxt.date()), "sym": first, "side": "enter", "why": "no opening price that day"}]
+    assert first not in acct["positions"]

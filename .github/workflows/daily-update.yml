@@ -94,6 +94,11 @@ jobs:
         timeout-minutes: 15
         run: python scripts/aladin_e.py
 
+      - name: ALADIN model E Friday report of the paper account (phase 7 rules; writes only for a Friday session, data/aladin_e/weekly)
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python scripts/aladin_e_weekly.py
+
       - name: Fundamentals for the terminal (NIFTY 500 daily, rest of the main board 1/5 per run, business-house members always)
         continue-on-error: true
         run: python scripts/terminal_fund.py

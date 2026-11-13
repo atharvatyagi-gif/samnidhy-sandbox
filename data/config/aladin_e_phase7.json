@@ -1,0 +1,12 @@
+{
+  "about": "ALADIN audit phase 7: the 4-week paper test of model E. Rules: aladin-audit/PHASE7_RULES.md (written 2026-11-13 before the first report). Read by scripts/aladin_e_weekly.py.",
+  "start": "2026-11-09",
+  "reports": ["2026-11-13", "2026-11-20", "2026-11-27", "2026-12-04"],
+  "verdict_on": "2026-12-04",
+  "stop": {"risk_limit_pct": -25.0, "since_start_pct": -13.71},
+  "fix": {"since_start_pct": -7.21, "max_not_filled": 2},
+  "not_filled_before_logging": [
+    {"date": "2026-11-11", "sym": "SANSERA", "side": "enter", "why": "one share cost more than the Rs 2,800 slot"}
+  ],
+  "fixes": []
+}

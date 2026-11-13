@@ -238,7 +238,8 @@ def fill_pending(acct, frames, dates, cfg, n5=None):
     for o in sorted(p["orders"], key=lambda o: o["side"] != "exit"):                         # sells first: they free the cash for the buys
         f = frames.get(o["sym"])
         if f is None or day not in f.index or not np.isfinite(f.loc[day, "o"]) or f.loc[day, "o"] <= 0:
-            fills.append({**o, "status": "not filled: no opening price that day"}); continue
+            fills.append({**o, "status": "not filled: no opening price that day"})
+            acct.setdefault("not_filled", []).append({"date": str(day.date()), "sym": o["sym"], "side": o["side"], "why": "no opening price that day"}); continue
         px = float(f.loc[day, "o"])
         adv = o.get("adv", 0)
         pos = acct["positions"].get(o["sym"])
@@ -265,7 +266,8 @@ def fill_pending(acct, frames, dates, cfg, n5=None):
             budget = min(o["value"], acct["cash"])
             sh = math.floor(budget / (px * (1 + 0.003)))
             if sh <= 0:
-                fills.append({**o, "status": "not filled: price above the position size or not enough cash"}); continue
+                fills.append({**o, "status": "not filled: price above the position size or not enough cash"})
+                acct.setdefault("not_filled", []).append({"date": str(day.date()), "sym": o["sym"], "side": o["side"], "why": "price above the position size or not enough cash"}); continue
             c = buy_cost(sh * px, adv, cfg)
             acct["cash"] -= sh * px + c; acct["costs_paid"] += c
             if o["sym"] in acct["positions"]:
