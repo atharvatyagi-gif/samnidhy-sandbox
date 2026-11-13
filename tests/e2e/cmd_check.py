@@ -16,6 +16,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from acceptance import BASE, check, ok, page_for  # noqa: E402
+from _bot import OPEN  # noqa: E402
 
 UNI = json.loads((ROOT / "data" / "terminal" / "universe.json").read_text(encoding="utf-8"))["stocks"]
 SECTOR = collections.Counter(s["ind"] for s in UNI if s.get("ind") and s.get("n500")).most_common(1)[0][0]
@@ -102,7 +103,7 @@ def run():
         run_cmd(pg, "MOVERS SHOCK", 800)
         check("MOVERS SHOCK opens the Supply-chain shocks view", pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "shock")
         run_cmd(pg, "MOVERS ALADIN", 1500)
-        check("MOVERS ALADIN while ALADIN BOT is locked stays on Price & volume (the probability view is an earlier model; unlocked case: movers_check)", pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "price")
+        check("MOVERS ALADIN opens the ALADIN probability view (open mode: no code)" if OPEN else "MOVERS ALADIN while ALADIN BOT is locked stays on Price & volume", pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == ("aladin" if OPEN else "price"))
         run_cmd(pg, "MOVERS", 800)
         run_cmd(pg, "MAP", 800)
         check("MAP: Globe tab", view_on(pg) == "v-map")

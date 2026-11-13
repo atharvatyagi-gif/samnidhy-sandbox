@@ -20,7 +20,7 @@ def _site(tmp_path):
 
 def test_protect_encrypts_every_legacy_file_and_leaves_no_readable_copy(tmp_path):
     s = _site(tmp_path)
-    r = legacy.protect(s, CODE, iterations=1000)
+    r = legacy.protect(s, CODE, iterations=1000, open_mode=False)
     assert r == {"files": 4, "bytes": r["bytes"], "encrypted": True}
     assert legacy.legacy_files(s) == []
     for rel in ("aladin.json", "predict.json", "aladin2/weekly.json", "aladin2/stock/TCS.json"):
@@ -36,7 +36,7 @@ def test_protect_encrypts_every_legacy_file_and_leaves_no_readable_copy(tmp_path
 
 def test_a_wrong_code_cannot_open_the_files(tmp_path):
     s = _site(tmp_path)
-    legacy.protect(s, CODE, iterations=1000)
+    legacy.protect(s, CODE, iterations=1000, open_mode=False)
     try:
         legacy.open_file(s, "aladin.json", "WRONG")
     except Exception:
@@ -47,7 +47,25 @@ def test_a_wrong_code_cannot_open_the_files(tmp_path):
 def test_without_a_code_the_files_are_removed_and_marked_missing(tmp_path, monkeypatch):
     monkeypatch.delenv("ALADIN_BOT_CODE", raising=False)
     s = _site(tmp_path)
-    r = legacy.protect(s)
+    r = legacy.protect(s, open_mode=False)
     assert r["encrypted"] is False and r["files"] == 4
     assert legacy.legacy_files(s) == []
     assert json.loads((s / "legacy" / "meta.json").read_text(encoding="utf-8")) == {"v": 1, "missing": True}
+
+
+def test_open_mode_keeps_the_files_readable_and_says_so(tmp_path):
+    """Owner, 2026-11-13: 'make the aladin bot accessible without any code' (data/config/aladin_bot.json "open": true)."""
+    import json as _j
+    from scripts.aladin2 import legacy as LG
+    (tmp_path / "aladin2").mkdir()
+    (tmp_path / "aladin.json").write_text('{"a": 1}', encoding="utf-8"); (tmp_path / "aladin2" / "weekly.json").write_text('{"w": 2}', encoding="utf-8")
+    r = LG.protect(tmp_path, code="ignored-in-open-mode", open_mode=True)
+    assert r["open"] and not r["encrypted"]
+    assert _j.loads((tmp_path / "aladin.json").read_text(encoding="utf-8")) == {"a": 1} and (tmp_path / "aladin2" / "weekly.json").exists()
+    assert _j.loads((tmp_path / "legacy" / "meta.json").read_text(encoding="utf-8")) == {"v": 1, "open": True}
+    assert not list((tmp_path / "legacy").rglob("*.enc"))
+
+
+def test_the_owner_setting_is_open():
+    from scripts.aladin2 import bot as BT
+    assert BT.is_open() is True

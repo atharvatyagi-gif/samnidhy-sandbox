@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _bot import skip, unlock  # noqa: E402
+from _bot import OPEN, skip, unlock  # noqa: E402
 from acceptance import BASE, check, ok, page_for  # noqa: E402
 from playwright.sync_api import sync_playwright  # noqa: E402
 
@@ -42,11 +42,19 @@ def run():
         check("E: a row opens 3 to 5 plain reasons", 3 <= pg.locator("#ae-list .ae-why li").count() <= 5)
         pg.fill("#ae-q", "TCS"); pg.wait_for_timeout(500)
         check("E: the search finds a stock by symbol", "TCS" in pg.inner_text("#ae-list"))
-        check("lock: no earlier-model tab or button is shown", legacy_visible(pg) == 0)
-        check("lock: no earlier-model file is requested", not any("/legacy/" in u and not u.split("?")[0].endswith("meta.json") for u, _ in reqs))
-        check("lock: aladin.json is not published readable", pg.evaluate("fetch('aladin.json').then(r => r.status)") == 404)
-        pg.goto(BASE + "#v=lab"); pg.reload(); pg.wait_for_timeout(5000)
-        check("lock: a link to the Tools tab opens ALADIN BOT instead", pg.evaluate("location.hash").startswith("#v=a2bot"))
+        if OPEN:                                                         # owner, 2026-11-13: ALADIN BOT without any code
+            check("open: the earlier-model tabs are shown to every visitor, with no code", legacy_visible(pg) >= 4, legacy_visible(pg))
+            check("open: aladin.json is published readable", pg.evaluate("fetch('aladin.json').then(r => r.status)") == 200)
+            pg.goto(BASE + "#v=lab"); pg.reload(); pg.wait_for_timeout(5000)
+            check("open: a link to the Tools tab opens Tools", pg.evaluate("location.hash").startswith("#v=lab"))
+            pg.goto(BASE + "#v=a2bot"); pg.reload(); pg.wait_for_timeout(6000)
+            check("open: ALADIN BOT shows the console with no code form and no lock button", pg.locator("#botcode").count() == 0 and pg.locator("#a2l-lockbtn").count() == 0 and pg.locator(".a2b-earlier-lock").count() == 0 and "ALADIN" in pg.inner_text("#a2bot"))
+        else:
+            check("lock: no earlier-model tab or button is shown", legacy_visible(pg) == 0)
+            check("lock: no earlier-model file is requested", not any("/legacy/" in u and not u.split("?")[0].endswith("meta.json") for u, _ in reqs))
+            check("lock: aladin.json is not published readable", pg.evaluate("fetch('aladin.json').then(r => r.status)") == 404)
+            pg.goto(BASE + "#v=lab"); pg.reload(); pg.wait_for_timeout(5000)
+            check("lock: a link to the Tools tab opens ALADIN BOT instead", pg.evaluate("location.hash").startswith("#v=a2bot"))
         check("E: 0 console errors", not [e for e in errs if "404" not in e], errs[:3])
         b.close()
 
@@ -66,8 +74,9 @@ def run():
             txt = pg.inner_text(sel)
             check(f"unlock: {v} opens and shows its data", want in txt and "not been published" not in txt and "Loading" not in txt[:300], txt[:80].replace("\n", " "))
             pg.evaluate("document.querySelector('[data-go=a2bot]').click()"); pg.wait_for_timeout(800)
-        pg.click(".a2b-earlier-lock"); pg.wait_for_timeout(800)
-        check("lock again: the earlier models are hidden and the code is forgotten", legacy_visible(pg) == 0 and pg.evaluate("sessionStorage.getItem('aladin2.bot.code')") is None)
+        if not OPEN:
+            pg.click(".a2b-earlier-lock"); pg.wait_for_timeout(800)
+            check("lock again: the earlier models are hidden and the code is forgotten", legacy_visible(pg) == 0 and pg.evaluate("sessionStorage.getItem('aladin2.bot.code')") is None)
         check("unlocked: 0 console errors", not [e for e in errs if "404" not in e], errs[:3])
         b.close()
     print(f"\n{sum(ok)}/{len(ok)} checks passed")

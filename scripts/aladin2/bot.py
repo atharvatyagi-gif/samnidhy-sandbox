@@ -9,6 +9,10 @@ and random (the generator below makes 99 bits).
   python -m scripts.aladin2.bot --new-code            print a fresh random code (nothing is written)
   python -m scripts.aladin2.bot --build               build data/aladin2/bot.enc.json from today's files using the code in the environment variable ALADIN_BOT_CODE
 Without ALADIN_BOT_CODE nothing is built and the page says the console is not published. The code is never written to disk, logged or committed by this script.
+
+OPEN MODE (owner, 2026-11-13: "make the aladin bot accessible without any code"): while data/config/aladin_bot.json says "open": true, the console is
+written READABLE to data/aladin2/bot.json (no code needed) and the page opens it for every visitor. "open": false brings the lock back.
+  python -m scripts.aladin2.bot --build               in open mode: builds data/aladin2/bot.json (ALADIN_BOT_CODE not needed)
 """
 import argparse
 import base64
@@ -23,6 +27,15 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 CUT = json.loads((ROOT / "data" / "config" / "aladin2.json").read_text(encoding="utf-8"))["weekly"]          # the signal cut-offs (best / worst share of the ranked stocks)
 DATA = ROOT / "data" / "aladin2"
 AAD = b"aladin-bot-v1"
+OPEN_CFG = ROOT / "data" / "config" / "aladin_bot.json"
+
+
+def is_open():
+    """True while the owner has opened ALADIN BOT to everyone (data/config/aladin_bot.json "open": true)."""
+    try:
+        return bool(json.loads(OPEN_CFG.read_text(encoding="utf-8")).get("open"))
+    except (OSError, ValueError):
+        return False
 ITER = 600_000
 ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"            # no I, L, O, 0, 1: nothing to misread when typing
 
@@ -132,6 +145,7 @@ def build_payload(weekly=None, study=None, phase3=None, ledger_lines=None, journ
 
 
 def build_from_files(code, out=None):
+    """code: the access code (encrypted file), or None in open mode (readable data/aladin2/bot.json)."""
     from . import data_lake as L
     weekly = _j(DATA / "weekly.json"); study = _j(DATA / "weekly_study.json")
     if not weekly or not weekly.get("built"):
@@ -147,6 +161,9 @@ def build_from_files(code, out=None):
     term = Path(L.TERM) / "aladin2"; cnt = {"price_files": len(list((Path(L.TERM) / "daily").glob("*.json"))), "deliv_files": len(list((term / "deliv").glob("2*.csv.gz"))), "fno_files": len(list((term / "fno").glob("2*.json"))),
                                             "last_bar": str(L.load_index().index[-1].date())}
     payload = build_payload(weekly, study, _j(DATA / "phase3_report.json"), led, _j(DATA / "journal.json"), _j(DATA / "state" / "latest_summary.json"), _j(DATA / "state" / "run_report.json"), _j(DATA / "state" / "strategies.json"), prices, _j(ROOT / "data" / "aladin" / "latest.json"), cnt)
+    if code is None:                                                  # open mode: readable, no code
+        out = Path(out or DATA / "bot.json"); out.write_text(json.dumps(payload, separators=(",", ":"), default=str), encoding="utf-8")
+        return {"built": True, "open": True, "bytes": out.stat().st_size, "signals": len(payload["traces"]), "as_of": payload["as_of"]}
     blob = encrypt(payload, code); out = Path(out or DATA / "bot.enc.json"); out.write_text(json.dumps(blob, separators=(",", ":")), encoding="utf-8")
     return {"built": True, "bytes": out.stat().st_size, "plain_bytes": len(json.dumps(payload)), "signals": len(payload["traces"]), "as_of": payload["as_of"]}
 
@@ -155,6 +172,8 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--new-code", action="store_true"); ap.add_argument("--build", action="store_true"); a = ap.parse_args()
     if a.new_code:
         print(new_code()); return
+    if a.build and is_open():
+        print(json.dumps(build_from_files(None), indent=1)); return
     code = os.environ.get("ALADIN_BOT_CODE", "")
     if not code:
         print("ALADIN_BOT_CODE is not set: the console is not built (it stays locked / unpublished)."); return

@@ -202,6 +202,8 @@ class Run:
 
     def s_bot(self):
         from . import bot as BT
+        if BT.is_open():                                               # owner, 2026-11-13: ALADIN BOT open to everyone, no code
+            r = BT.build_from_files(None, self.base / "bot.json"); return f"open console data rebuilt (readable): {r.get('bytes', 0):,} bytes, {r.get('signals', 0)} signals, as of {r.get('as_of')}" if r.get("built") else r.get("why", "not built")
         code = os.environ.get("ALADIN_BOT_CODE", "")
         if not code:
             return "ALADIN_BOT_CODE is not set: the locked console is not rebuilt (the last encrypted file, if any, stays)"

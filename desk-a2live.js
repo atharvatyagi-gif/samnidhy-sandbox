@@ -194,7 +194,7 @@ export function mountLive(root, P, { helpers = {}, onLock = null, onOpen = null 
   const setFocus = (sym, ts) => { const j = order.findIndex(t => t.sym === sym); if (j >= 0) { S.i = j; S.t0 = ts == null ? null : ts; S.hold = (ts || 0) + 24000; } };
   root.querySelectorAll("#a2l-cells .a2l-cell").forEach(b => b.onclick = () => setFocus(b.dataset.sym, performance.now()));
   const pb = q("#a2l-pause"); if (pb) { pb.textContent = S.paused ? "Play" : "Pause"; pb.setAttribute("aria-pressed", String(S.paused)); pb.onclick = () => { S.paused = !S.paused; pb.textContent = S.paused ? "Play" : "Pause"; pb.setAttribute("aria-pressed", String(S.paused)); }; }
-  const lk = q("#a2l-lockbtn"); if (lk) lk.onclick = () => { stop(); if (onLock) onLock(); };
+  const lk = q("#a2l-lockbtn"); if (lk) { if (!onLock) lk.remove(); else lk.onclick = () => { stop(); onLock(); }; }      // open mode: no lock button
   const who = q("#a2l-who");
   if (who) who.onclick = e => { const b = e.target.closest("[data-open]"); if (b && onOpen) onOpen(b.dataset.open); };
   q("#a2l-flow").querySelectorAll(".a2l-stg").forEach(b => b.onclick = () => { S.stage = +b.dataset.i; S.stgT = performance.now(); S.stgShown = -1; });

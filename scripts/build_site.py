@@ -196,6 +196,9 @@ def main() -> None:
         r = a2_publish.build(SITE / "aladin2", term=TERMINAL)
         if (DATA / "aladin2" / "bot.enc.json").exists():                      # the ENCRYPTED console data (readable only with the access code); copied as it is
             shutil.copyfile(DATA / "aladin2" / "bot.enc.json", SITE / "aladin2" / "bot.enc.json")
+        from scripts.aladin2 import bot as a2_bot
+        if a2_bot.is_open() and (DATA / "aladin2" / "bot.json").exists():        # open mode (owner, 2026-11-13): the readable console, no code
+            shutil.copyfile(DATA / "aladin2" / "bot.json", SITE / "aladin2" / "bot.json")
         print("ALADIN2 shards:", {k: r.get(k) for k in ("built", "stocks", "total_bytes", "biggest_stock_shard_bytes")} if r.get("built") else r)
     except Exception as e:                                    # noqa: BLE001
         print("ALADIN2 shards skipped:", repr(e))

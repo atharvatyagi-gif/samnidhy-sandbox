@@ -1,0 +1,4 @@
+{
+ "open": true,
+ "why": "Owner, 2026-11-13: 'make the aladin bot accessible without any code'. open = true: ALADIN BOT and the earlier ALADIN models are published readable and open for every visitor without a code. open = false: the 2026-11-10 lock comes back (files encrypted with the GitHub secret ALADIN_BOT_CODE)."
+}

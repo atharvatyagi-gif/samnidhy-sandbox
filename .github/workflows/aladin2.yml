@@ -136,7 +136,7 @@ jobs:
           import sys
           sys.path.insert(0, "scripts")
           from gitops import commit_and_push
-          ok = commit_and_push(["data/aladin2/ledger", "data/aladin2/state", "data/aladin2/journal.jsonl", "data/aladin2/journal.json", "data/aladin2/weekly.json", "data/aladin2/paper", "data/aladin2/bot.enc.json"],
+          ok = commit_and_push(["data/aladin2/ledger", "data/aladin2/state", "data/aladin2/journal.jsonl", "data/aladin2/journal.json", "data/aladin2/weekly.json", "data/aladin2/paper", "data/aladin2/bot.enc.json", "data/aladin2/bot.json"],
                                "ALADIN2 nightly: ledger, states, journal [skip ci]", min_interval_s=0, state_file="data/aladin2_cache/gitops_state.json")
           print("committed and pushed" if ok else "nothing new to save (or push not allowed)")
           EOF

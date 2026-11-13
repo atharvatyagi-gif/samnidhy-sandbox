@@ -9,6 +9,8 @@ Called by scripts/build_site.py after everything is copied into site/:
   stored in site/legacy/meta.json); each file has its own random IV. The browser derives the key once when the bot is unlocked.
 Without ALADIN_BOT_CODE in the environment the readable copies are still deleted (nothing leaks); the bot says they are not published.
 The code is never written, logged or committed.
+OPEN MODE (owner, 2026-11-13, data/config/aladin_bot.json "open": true): nothing is encrypted or deleted; the files stay readable at their
+usual paths and site/legacy/meta.json says {"open": true}, so the page shows the earlier models to every visitor without a code.
 """
 import base64
 import json
@@ -28,8 +30,8 @@ def legacy_files(site):
     return sorted(p for p in site.rglob("*.json") if LEGACY.match(p.relative_to(site).as_posix()))
 
 
-def protect(site, code=None, iterations=bot.ITER):
-    """-> dict(files, bytes, encrypted). Deletes every readable legacy file in `site`."""
+def protect(site, code=None, iterations=bot.ITER, open_mode=None):
+    """-> dict(files, bytes, encrypted). Deletes every readable legacy file in `site` (locked mode); open mode keeps them readable."""
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     site = Path(site)
     files = legacy_files(site)
@@ -37,6 +39,9 @@ def protect(site, code=None, iterations=bot.ITER):
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
+    if open_mode if open_mode is not None else bot.is_open():
+        (out / "meta.json").write_text(json.dumps({"v": 1, "open": True}), encoding="utf-8")
+        return {"files": len(files), "bytes": 0, "encrypted": False, "open": True}
     code = code if code is not None else os.environ.get("ALADIN_BOT_CODE")
     b = lambda x: base64.b64encode(x).decode()
     total = 0

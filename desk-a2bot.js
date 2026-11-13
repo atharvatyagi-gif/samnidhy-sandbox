@@ -23,7 +23,7 @@ const EARLIER = [["sigold", "Old weekly signal and its paper bots", "The weekly 
 function earlierPanel() {
   const el = document.getElementById("a2bot-legacy"); if (!el) return;
   el.innerHTML = Legacy.unlocked() ? `<div class="sg-card a2b-earlier"><h4>Earlier ALADIN models (still running and learning every night)</h4><div class="a2b-earlier-g">${EARLIER.map(([k, t, d]) => `<button type="button" class="a2b-earlier-b" data-go="${k}"><b>${t}</b><small>${d}</small></button>`).join("")}</div>
-    <p class="note">These were replaced on the public site by model E after the 2026 audit. They are shown here for comparison and research; their files are encrypted with this console's code. In Movers, "ALADIN probability" and the terminal's "Earlier models" block also appear while unlocked.</p><button type="button" class="a2b-earlier-lock">Lock again</button></div>` : "";
+    ${Legacy.isOpen() ? `<p class="note">These were replaced as the main ALADIN by model E after the 2026 audit. They stay open to everyone here for comparison and research; in Movers, "ALADIN probability" and the terminal's "Earlier models" block show them too.</p></div>` : `<p class="note">These were replaced on the public site by model E after the 2026 audit. They are shown here for comparison and research; their files are encrypted with this console's code. In Movers, "ALADIN probability" and the terminal's "Earlier models" block also appear while unlocked.</p><button type="button" class="a2b-earlier-lock">Lock again</button></div>`}` : "";
   const lk = el.querySelector(".a2b-earlier-lock"); if (lk) lk.onclick = lockNow;
 }
 
@@ -85,14 +85,14 @@ function lockScreen(msg) {
 function render(msg) {
   if (!root) return;
   if (live) { live.stop(); live = null; }
-  if (P) { live = mountLive(root, P, { helpers: { barSvg }, onLock: lockNow, onOpen: sym => { if (ctx) { ctx.openSec(sym); ctx.go("terminal"); } } }); return; }
+  if (P) { live = mountLive(root, P, { helpers: { barSvg }, onLock: Legacy.isOpen() ? null : lockNow, onOpen: sym => { if (ctx) { ctx.openSec(sym); ctx.go("terminal"); } } }); return; }
   root.innerHTML = lockScreen(msg); bind();
 }
 function bind() {
   const f = root.querySelector("#a2b-form");
   if (f) { f.onsubmit = e => { e.preventDefault(); unlock(root.querySelector("#botcode").value); }; const i = root.querySelector("#botcode"); if (i) i.focus(); }
 }
-function lockNow() { P = null; try { sessionStorage.removeItem(SS); } catch { /* fine */ } Legacy.lock(); earlierPanel(); stop(); render("Locked."); }
+function lockNow() { if (Legacy.isOpen()) return; P = null; try { sessionStorage.removeItem(SS); } catch { /* fine */ } Legacy.lock(); earlierPanel(); stop(); render("Locked."); }
 function stop() { if (live) { live.stop(); live = null; } }
 
 async function unlock(code) {
@@ -112,8 +112,11 @@ export async function mount() {
     try { const r = await fetch(FILE, { cache: "no-store" }); if (!r.ok) throw new Error("missing"); blob = await r.json(); blobState = "ready"; } catch { blobState = "missing"; }
     earlierPublished = await Legacy.published().catch(() => false);
   }
-  if (!P && blob) { let c = null; try { c = sessionStorage.getItem(SS); } catch { /* none */ } if (c) { try { P = await decrypt(blob, c); } catch { P = null; } } }
   if (!Legacy.unlocked()) await Legacy.resume().catch(() => false);
+  if (!P && Legacy.isOpen()) {                                       // open mode (owner, 2026-11-13): the readable console, no code
+    try { const r = await fetch("aladin2/bot.json", { cache: "no-store" }); if (r.ok) P = await r.json(); } catch { P = null; }
+  }
+  if (!P && blob) { let c = null; try { c = sessionStorage.getItem(SS); } catch { /* none */ } if (c) { try { P = await decrypt(blob, c); } catch { P = null; } } }
   earlierPanel();
   render();
 }

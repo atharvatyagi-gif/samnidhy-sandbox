@@ -16,7 +16,7 @@ import sys
 import time
 from pathlib import Path
 
-from _bot import skip, unlock
+from _bot import OPEN, skip, unlock
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -105,7 +105,8 @@ def run_perf():
         check("perf: the tiny geo_summary.json is what the Brief reads instead", "geo_summary.json" in names)
         check("perf: no map libraries (Leaflet / d3 / topojson) before the Globe tab opens", not re.search(r"leaflet|d3-geo|topojson", urls))
         tq = next((t0 for u, t0 in reqs if u.split("?")[0].endswith("quotes.json")), None)
-        check("perf: no file of the earlier models is requested while ALADIN BOT is locked", not any("/legacy/" in u and not u.split("?")[0].endswith("meta.json") for u, _ in reqs))
+        if not OPEN:
+            check("perf: no file of the earlier models is requested while ALADIN BOT is locked", not any("/legacy/" in u and not u.split("?")[0].endswith("meta.json") for u, _ in reqs))
         for f in ("sentiment.json",):
             ta = next((t0 for u, t0 in reqs if u.split("?")[0].endswith("/" + f)), None)
             check(f"perf: {f} is not requested during start-up (never before 4 s after the desk's own data)", ta is None or (tq is not None and ta - tq >= 4), None if ta is None else round(ta - tq, 1))
@@ -117,9 +118,12 @@ def run_perf():
         check("perf: the map libraries are requested when Globe opens", "leaflet" in urls2)
         b.close()
     for f in ("aladin.json", "paper.json", "aladin_method.json", "predict.json"):
-        check(f"privacy: {f} is not published readable (only encrypted under legacy/)", not (ROOT / "site" / f).exists() and (ROOT / "site" / "legacy" / (f + ".enc")).exists())
-    sizes = {f: (ROOT / "site" / f).stat().st_size for f in ("legacy/aladin.json.enc", "aladin_e.json", "sentiment.json", "geo.json", "houses.json", "paper.json", "aladin_method.json", "geo_summary.json") if (ROOT / "site" / f).exists()}
-    check("size: aladin.json (encrypted) under 3 MB", sizes.get("legacy/aladin.json.enc", 0) < 3_000_000, {k: f"{v / 1e3:.0f} KB" for k, v in sizes.items()})
+        if OPEN:
+            check(f"open mode: {f} is published readable, with no encrypted copy", (ROOT / "site" / f).exists() and not (ROOT / "site" / "legacy" / (f + ".enc")).exists())
+        else:
+            check(f"privacy: {f} is not published readable (only encrypted under legacy/)", not (ROOT / "site" / f).exists() and (ROOT / "site" / "legacy" / (f + ".enc")).exists())
+    sizes = {f: (ROOT / "site" / f).stat().st_size for f in ("aladin.json", "legacy/aladin.json.enc", "aladin_e.json", "sentiment.json", "geo.json", "houses.json", "paper.json", "aladin_method.json", "geo_summary.json") if (ROOT / "site" / f).exists()}
+    check("size: aladin.json (readable or encrypted) under 3 MB", max(sizes.get("legacy/aladin.json.enc", 0), sizes.get("aladin.json", 0)) < 3_000_000, {k: f"{v / 1e3:.0f} KB" for k, v in sizes.items()})
 
 def run_degrade():
     def body(obj):

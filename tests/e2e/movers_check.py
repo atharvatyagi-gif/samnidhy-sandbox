@@ -17,7 +17,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from acceptance import BASE, check, ok, page_for  # noqa: E402
-from _bot import CODE, skip, unlock  # noqa: E402
+from _bot import CODE, OPEN, skip, unlock  # noqa: E402
 
 FRONTS = {"Technical", "Fundamental", "Supply-chain impact", "Sentiment"}
 
@@ -75,9 +75,14 @@ def run():
         exp = pg.locator(f'tr.mv-x[data-for="{sym}"]')
         t = exp.inner_text().lower() if exp.count() else ""
         check("the expander opens a row below it, without leaving Movers", exp.count() == 1 and pg.evaluate("document.querySelector('#v-movers').classList.contains('on')"))
-        check("locked: the expansion has supply lineage, ALADIN (model E, heading once), sentiment & sweeps; Open in NEXUS for the two NEXUS tabs a visitor has",
-              "supply lineage" in t and t.count("\naladin\n") == 1 and "quant drivers" not in t and "sentiment & sweeps" in t and t.count("open in nexus") == 2, t[:300])
-        check("locked: the ALADIN probability view (an earlier model) is not offered", not pg.locator('#mov-kind [data-k="aladin"]').is_visible())
+        if OPEN:                                                         # owner, 2026-11-13: the earlier models are open to everyone
+            check("open: the expansion has supply lineage, quant drivers (earlier model), sentiment & sweeps, each ending in Open in NEXUS",
+                  "supply lineage" in t and "quant drivers" in t and "sentiment & sweeps" in t and t.count("open in nexus") == 3, t[:300])
+            check("open: the ALADIN probability view is offered", pg.locator('#mov-kind [data-k="aladin"]').is_visible())
+        else:
+            check("locked: the expansion has supply lineage, ALADIN (model E, heading once), sentiment & sweeps; Open in NEXUS for the two NEXUS tabs a visitor has",
+                  "supply lineage" in t and t.count("\naladin\n") == 1 and "quant drivers" not in t and "sentiment & sweeps" in t and t.count("open in nexus") == 2, t[:300])
+            check("locked: the ALADIN probability view (an earlier model) is not offered", not pg.locator('#mov-kind [data-k="aladin"]').is_visible())
         check("the supply-chain file is fetched only now", any("supply_graph.json" in u for u, _ in reqs))
         check("a company with no disclosed links says 'Not measured' and why", "not measured" in t or "none disclosed" in t, t[:160])
 
@@ -108,10 +113,10 @@ def run():
         # ---------- locked: the MOVERS ALADIN command stays on Price & volume ----------
         b, pg, errs, _ = fresh(pw)
         pg.fill("#cmd", "MOVERS ALADIN"); pg.press("#cmd", "Enter"); pg.wait_for_timeout(1800)
-        check("locked: MOVERS ALADIN opens Movers on Price & volume (the earlier model stays inside ALADIN BOT)",
-              pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == "price")
+        check("open: MOVERS ALADIN opens the ALADIN probability view" if OPEN else "locked: MOVERS ALADIN opens Movers on Price & volume (the earlier model stays inside ALADIN BOT)",
+              pg.eval_on_selector('#mov-kind button[aria-pressed="true"]', "e => e.dataset.k") == ("aladin" if OPEN else "price"))
         b.close()
-        if not CODE:
+        if not (CODE or OPEN):
             skip("movers: ALADIN probability, commands, accessibility and phone (earlier model, inside ALADIN BOT)")
             print("ALL OK" if all(ok) else f"{ok.count(False)} FAILED")
             return 0 if all(ok) else 1

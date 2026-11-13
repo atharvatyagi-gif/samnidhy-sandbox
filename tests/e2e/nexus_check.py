@@ -12,8 +12,8 @@ import sys
 import time
 from pathlib import Path
 
-from _bot import CODE, skip, unlock
-unlock_code = lambda: CODE
+from _bot import CODE, OPEN, skip, unlock
+unlock_code = lambda: CODE or OPEN
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -35,6 +35,12 @@ def inject_impact(route):
     sys.path.insert(0, str(ROOT))
     from scripts.aladin2 import bot
     r = route.fetch()
+    if OPEN:                                                                     # open mode: aladin.json is plain
+        j = r.json(); st = j["stocks"].get(SYM)
+        if st:
+            st["x"] = {"i": 35.0, "n": 1, "top": [["TESTCP", "supplies", 0.3, -2.1, 0.9]], "asof": j["as_of"]}     # TEST-ONLY
+        j["weights"]["impact_validated"] = False
+        route.fulfill(response=r, body=json.dumps(j)); return
     meta = json.loads((ROOT / "site" / "legacy" / "meta.json").read_text(encoding="utf-8"))
     d, e = base64.b64decode, lambda x: base64.b64encode(x).decode()
     g = AESGCM(bot._key(os.environ["E2E_BOT_CODE"], d(meta["salt"]), meta["iter"]))
@@ -135,7 +141,7 @@ def run():
         if not unlock_code():
             skip("ALADIN Impact column with a TEST-ONLY score (Tools is inside ALADIN BOT)")
         else:
-            b, pg, errs, _ = page_for(pw, routes={"**/legacy/aladin.json.enc*": inject_impact})
+            b, pg, errs, _ = page_for(pw, routes={("**/aladin.json*" if OPEN else "**/legacy/aladin.json.enc*"): inject_impact})
             pg.goto(BASE)
             pg.wait_for_timeout(5000)
             unlock(pg, BASE)
