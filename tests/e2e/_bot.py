@@ -19,6 +19,7 @@ def unlock(pg, base):
         pg.goto(base + "#v=a2bot")
         pg.evaluate("localStorage.setItem('blab-onboarded', 'true')"); pg.reload()
         pg.wait_for_function("document.documentElement.classList.contains('legacy-on')", timeout=30000)
+        pg.wait_for_selector(".a2b-earlier [data-go]", timeout=30000); pg.wait_for_timeout(500)      # the desk has loaded and the bot has drawn its buttons
         return True
     if not CODE:
         return False

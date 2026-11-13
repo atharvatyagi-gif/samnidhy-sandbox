@@ -106,7 +106,8 @@ async function boot() {
     S.quotes = quotes.quotes || {}; S.qmeta = quotes; S.live = live; S.screen = screen; S.inst = inst;
     S.nseLive = await getJSON("nse_live.json").catch(() => null);
     applyNseLive();
-    initDesk(); loadDeskData().then(() => Nexus.openFromHash(NX_HASH)).catch(() => {});                  // not awaited: the desk draws first, the desk files (tiny) fill in right after
+    initDesk(); deskInited = true;
+    loadDeskData().then(() => Nexus.openFromHash(NX_HASH)).catch(() => {});                  // not awaited: the desk draws first, the desk files (tiny) fill in right after
     setTimeout(() => { if (Legacy.unlocked()) Aladin.preload().then(a => { if (a) { renderBrief(); renderDetails(); } }).catch(() => {}); }, 5000);
     Legacy.onChange(on => { if (on) { getJSON("predict.json").then(j => { S.pred = j; renderDetails(); renderOutlook(); }).catch(() => {}); Aladin.preload().then(() => { renderBrief(); renderDetails(); }).catch(() => {}); } else { S.pred = null; S.aladin = null; renderOutlook(); } renderDetails(); });   // ALADIN data for the Details rail and Brief card: after start, never before it
     // geo.json itself loads only when the Globe tab is opened; the regime strip and Brief read the tiny geo_summary.json instead
@@ -120,6 +121,7 @@ async function boot() {
   $("#cmd").placeholder = `Search or jump to… SYMBOL FUNCTION, e.g. RELIANCE CH · HELP for the list (${S.uni.count.toLocaleString("en-IN")} NSE securities)`;
   fillSectorSelect(); updIndCount(); buildTypeMenu(); renderAll();
   go(hp.get("v") || (hp.get("s") ? "terminal" : "brief"), true);
+  if (queuedGo) { const q = queuedGo; queuedGo = null; go(q[0], q[1]); }      // a tab clicked while the desk was loading opens now
   openSec(sec);
   getJSON("t/fund.json", false).then(f => { S.fund = f.stocks || {}; renderDetails(); }).catch(() => { S.fund = {}; renderDetails(); });
   if (!LS.get("blab-onboarded", false)) {
@@ -262,7 +264,9 @@ async function loadDeskData() {
 
 /* ================= navigation ================= */
 const LEGACY_VIEWS = new Set(["lab", "outlook", "a2", "sigold"]);
+let deskInited = false, queuedGo = null;                               // a tab opened before the desk's modules are set up waits for them (ALADIN BOT's buttons appear early in open mode)
 function go(v, quiet) {
+  if (!deskInited && v !== "brief" && v !== "terminal") { queuedGo = [v, quiet]; return; }
   if (v === "globe") v = "map";                                        // old #v=globe links and commands still work
   if (!document.getElementById("v-" + v)) v = "brief";
   if (LEGACY_VIEWS.has(v) && !Legacy.unlocked()) v = "a2bot";          // the earlier models open only inside ALADIN BOT
