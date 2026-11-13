@@ -180,3 +180,14 @@ def test_sell_signals_appear_with_the_rebalance_exits_and_no_stop_price():
     assert any(t["side"] == "exit" for t in acct["trades"]) and out["signals"]["sold_recently"]
     txt = json.dumps(out["signals"]).lower()
     assert "stop_price" not in txt and "target" not in txt and out["signals"]["stop_loss"].startswith("none")
+
+
+def test_prices_older_than_the_account_never_change_it():
+    frames, n5 = market(drift=[0.002 if i < 6 else 0 for i in range(60)])
+    c = cfg()
+    acct, _ = AE.run(n5.index[300], frames, n5, c, CAL, None)
+    acct, _ = AE.run(n5.index[302], frames, n5, c, CAL, acct)
+    snap = json.dumps(acct, default=str)
+    acct2, out = AE.run(n5.index[299], frames, n5, c, CAL, json.loads(snap))
+    assert json.dumps(acct2, default=str) == snap
+    assert {b["sym"] for b in out["signals"]["buy"] if b["state"] == "held"} == set(acct["positions"])

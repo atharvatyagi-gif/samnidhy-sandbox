@@ -371,16 +371,18 @@ def run(asof, frames, n5, cfg, cal, acct, now=None, vix=None, fii=None):
     stale = newest is None or len(dates) == 0 or sessions_between(dates, newest, dates[-1]) > cfg["stale_sessions"] or asof - newest > pd.Timedelta(days=7)
     if acct is None:
         acct = new_account(cfg, asof)
-    fills = fill_pending(acct, frames, dates[dates <= asof], cfg, n5) if not stale else []
+    behind = bool(acct.get("last_processed")) and str(asof.date()) < acct["last_processed"]    # prices older than the account: show, never change it
+    fills = fill_pending(acct, frames, dates[dates <= asof], cfg, n5) if not (stale or behind) else []
     equity = value(acct, frames, asof)
     prev = acct["history"][-1][1] if acct["history"] else acct["capital"]
     day_ret = equity / prev - 1 if prev else 0.0
-    already = acct["last_processed"] == str(asof.date())
+    already = acct["last_processed"] == str(asof.date()) or behind
     if not already:
         acct["history"].append([str(asof.date()), round(equity, 2), acct.get("share")])
-    acct["peak"] = max(acct["peak"], equity)
+    if not behind:
+        acct["peak"] = max(acct["peak"], equity)
     dd = equity / acct["peak"] - 1
-    if dd <= -cfg["kill_drawdown"] and not acct.get("kill"):
+    if dd <= -cfg["kill_drawdown"] and not acct.get("kill") and not behind:
         acct["kill"] = {"since": str(asof.date()), "reason": f"the paper account fell {dd:.1%} from its peak (limit {-cfg['kill_drawdown']:.0%})"}
     on, n5_close, n5_ma = risk_on(n5, asof, cfg)
     T = rank_table(frames, asof, cfg)
