@@ -32,7 +32,6 @@ def legacy_files(site):
 
 def protect(site, code=None, iterations=bot.ITER, open_mode=None):
     """-> dict(files, bytes, encrypted). Deletes every readable legacy file in `site` (locked mode); open mode keeps them readable."""
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     site = Path(site)
     files = legacy_files(site)
     out = site / "legacy"
@@ -42,6 +41,7 @@ def protect(site, code=None, iterations=bot.ITER, open_mode=None):
     if open_mode if open_mode is not None else bot.is_open():
         (out / "meta.json").write_text(json.dumps({"v": 1, "open": True}), encoding="utf-8")
         return {"files": len(files), "bytes": 0, "encrypted": False, "open": True}
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM      # locked mode only (requirements.txt; open mode needs no cryptography)
     code = code if code is not None else os.environ.get("ALADIN_BOT_CODE")
     b = lambda x: base64.b64encode(x).decode()
     total = 0

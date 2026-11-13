@@ -4,3 +4,4 @@ numpy==2.3.4
 requests==2.34.2
 lightgbm==4.7.0
 scikit-learn==1.9.1
+cryptography>=43        # the site build encrypts the earlier ALADIN models when ALADIN BOT is locked (scripts/aladin2/legacy.py)

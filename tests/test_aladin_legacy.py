@@ -69,3 +69,14 @@ def test_open_mode_keeps_the_files_readable_and_says_so(tmp_path):
 def test_the_owner_setting_is_open():
     from scripts.aladin2 import bot as BT
     assert BT.is_open() is True
+
+
+def test_open_mode_needs_no_cryptography_library(tmp_path, monkeypatch):
+    """The live-prices build had no `cryptography` (2026-11-13): open mode must not need it."""
+    import sys as _s
+    for k in [k for k in _s.modules if k == "cryptography" or k.startswith("cryptography.")]:
+        monkeypatch.delitem(_s.modules, k)
+    monkeypatch.setitem(_s.modules, "cryptography", None)                  # any import of it now fails
+    (tmp_path / "aladin.json").write_text('{"a": 1}', encoding="utf-8")
+    r = legacy.protect(tmp_path, open_mode=True)
+    assert r["open"] and (tmp_path / "aladin.json").exists()
