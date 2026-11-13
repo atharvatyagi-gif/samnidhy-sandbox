@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-11-11",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_11112026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 495,
+  "eligible_count": 467,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "FACT",
+      "yahoo_ticker": "FACT.NS",
+      "name": "Fertilisers and Chemicals Travancore Ltd.",
+      "industry": "Chemicals",
+      "prev_close": 748.4,
+      "open": 759.0,
+      "high": 835.0,
+      "low": 755.25,
+      "close": 813.25,
+      "pct_change": 8.6652,
+      "volume": 4055020,
+      "turnover_crore": 330.79
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "KALYANKJIL",
+      "yahoo_ticker": "KALYANKJIL.NS",
+      "name": "Kalyan Jewellers India Ltd.",
+      "industry": "Consumer Durables",
+      "prev_close": 611.0,
+      "open": 630.0,
+      "high": 689.0,
+      "low": 620.0,
+      "close": 663.75,
+      "pct_change": 8.6334,
+      "volume": 64553190,
+      "turnover_crore": 4325.35
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "NETWEB",
+      "yahoo_ticker": "NETWEB.NS",
+      "name": "Netweb Technologies India Ltd.",
+      "industry": "Information Technology",
+      "prev_close": 3839.0,
+      "open": 3882.0,
+      "high": 4210.0,
+      "low": 3870.7,
+      "close": 4154.5,
+      "pct_change": 8.2183,
+      "volume": 3325013,
+      "turnover_crore": 1365.15
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "COCHINSHIP",
+      "yahoo_ticker": "COCHINSHIP.NS",
+      "name": "Cochin Shipyard Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 1290.0,
+      "open": 1200.0,
+      "high": 1222.0,
+      "low": 1186.5,
+      "close": 1202.0,
+      "pct_change": -6.8217,
+      "volume": 8510681,
+      "turnover_crore": 1024.67
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "PFOCUS",
+      "yahoo_ticker": "PFOCUS.NS",
+      "name": "Prime Focus Ltd.",
+      "industry": "Media Entertainment & Publication",
+      "prev_close": 279.6,
+      "open": 283.5,
+      "high": 284.75,
+      "low": 261.1,
+      "close": 264.55,
+      "pct_change": -5.3827,
+      "volume": 4765769,
+      "turnover_crore": 128.33
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "GALLANTT",
+      "yahoo_ticker": "GALLANTT.NS",
+      "name": "Gallantt Ispat Ltd.",
+      "industry": "Capital Goods",
+      "prev_close": 544.0,
+      "open": 544.0,
+      "high": 550.45,
+      "low": 511.0,
+      "close": 518.35,
+      "pct_change": -4.7151,
+      "volume": 1135828,
+      "turnover_crore": 59.71
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-11-12T09:12:38+00:00",
+  "fetched_at_ist": "12 Nov 2026, 02:42 PM IST"
+}
