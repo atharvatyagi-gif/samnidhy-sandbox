@@ -1,0 +1,193 @@
+{
+ "protocol": "ALADIN audit, phase 7 add-on: does a per-stock stop-loss help model E? (owner, 2026-11-13: \"give me buy and sell signals with\nexpected prices, stop losses etc\" + \"test a stop first\").\n\n  python aladin-audit/scripts/phase7_stop_test.py --panel <panel.pkl from phase 4>  -> aladin-audit/phase7_stop_test.json\n\nRULES, written down 2026-11-13 BEFORE any result was seen. Model E exactly as live (126-session momentum, best 5% of the 500 most\ntraded, rebalance every 63 sessions, the daily NIFTY 500 / 200-day check halves the money invested, 70% invested), plus ONE stop:\n  S1 fixed 15%     sell at the next open once a close is 15% or more below the entry price\n  S2 fixed 25%     the same at 25%\n  S3 trailing 20%  sell at the next open once a close is 20% or more below the highest close since entry\nOnly closes are used (the free data has no reliable intraday lows), so a stop fills at the NEXT OPEN, gaps included: that is what\na stop would really get. A stopped stock is not bought again before the next rebalance; its money waits in cash. Same costs.\n\nGATES (each stop judged on 2010-01-01 .. 2026-05-07; the hold-out 2026-05-08 .. end is reported, then checked once):\n  1 risk     worst fall at least 3 points shallower than E's\n  2 return   yearly growth (CAGR) no more than 2 points below E's\n  3 quality  Sharpe at least E's\n  4 hold-out return over the hold-out no more than 2 points below E's\nAdded after the first run (2026-11-13, recorded honestly): idle cash earns a 6% liquid-fund rate, as in phases 4 and 5 (the first\nrun had 0%, no stop passed). This favours the stops, which keep more money in cash. Also reported: 2017-01-01 .. 2026-05-07 (phase 5's dates).\nA stop passes only if all four pass. Three stops are looked at, so a pass is a little flattered; if more than one passes, the\none with the highest Sharpe is used and the other two are recorded. If none passes: E keeps no per-stock stop, and the signals\nshow E's real exits (the next rebalance date, the daily risk check, the -25% kill switch) instead of a stop price.",
+ "gates": {
+  "dd_better_pts": 3.0,
+  "cagr_worse_max_pts": 2.0,
+  "holdout_worse_max_pts": 2.0
+ },
+ "results": {
+  "none (E as live)": {
+   "design": {
+    "cagr_pct": 24.38,
+    "worst_fall_pct": -27.1,
+    "sharpe": 1.232,
+    "total_return_pct": 3195.34,
+    "from": "2010-01-04",
+    "to": "2026-05-07",
+    "trades": 1052,
+    "stopped_out": 0,
+    "win_rate": 0.466,
+    "costs_inr": NaN
+   },
+   "holdout": {
+    "cagr_pct": -11.84,
+    "worst_fall_pct": -30.1,
+    "sharpe": 0.021,
+    "total_return_pct": -6.06,
+    "from": "2026-05-08",
+    "to": "2026-11-05"
+   },
+   "full": {
+    "cagr_pct": 23.11,
+    "worst_fall_pct": -30.1,
+    "sharpe": 1.115,
+    "total_return_pct": 3003.56,
+    "from": "2010-01-04",
+    "to": "2026-11-05"
+   },
+   "since_2017": {
+    "cagr_pct": 27.81,
+    "worst_fall_pct": -27.1,
+    "sharpe": 1.369,
+    "total_return_pct": 846.06,
+    "from": "2017-01-02",
+    "to": "2026-05-07"
+   }
+  },
+  "S1 fixed 15%": {
+   "design": {
+    "cagr_pct": 21.22,
+    "worst_fall_pct": -25.0,
+    "sharpe": 1.211,
+    "total_return_pct": 2081.74,
+    "from": "2010-01-04",
+    "to": "2026-05-07",
+    "trades": 1137,
+    "stopped_out": 386,
+    "win_rate": 0.408,
+    "costs_inr": NaN
+   },
+   "holdout": {
+    "cagr_pct": -14.44,
+    "worst_fall_pct": -30.6,
+    "sharpe": -0.034,
+    "total_return_pct": -7.44,
+    "from": "2026-05-08",
+    "to": "2026-11-05"
+   },
+   "full": {
+    "cagr_pct": 19.98,
+    "worst_fall_pct": -30.6,
+    "sharpe": 1.068,
+    "total_return_pct": 1925.76,
+    "from": "2010-01-04",
+    "to": "2026-11-05"
+   },
+   "since_2017": {
+    "cagr_pct": 24.04,
+    "worst_fall_pct": -25.0,
+    "sharpe": 1.355,
+    "total_return_pct": 619.53,
+    "from": "2017-01-02",
+    "to": "2026-05-07"
+   }
+  },
+  "S2 fixed 25%": {
+   "design": {
+    "cagr_pct": 22.56,
+    "worst_fall_pct": -25.6,
+    "sharpe": 1.191,
+    "total_return_pct": 2503.77,
+    "from": "2010-01-04",
+    "to": "2026-05-07",
+    "trades": 1084,
+    "stopped_out": 167,
+    "win_rate": 0.452,
+    "costs_inr": NaN
+   },
+   "holdout": {
+    "cagr_pct": -12.39,
+    "worst_fall_pct": -30.2,
+    "sharpe": 0.01,
+    "total_return_pct": -6.35,
+    "from": "2026-05-08",
+    "to": "2026-11-05"
+   },
+   "full": {
+    "cagr_pct": 21.35,
+    "worst_fall_pct": -30.2,
+    "sharpe": 1.071,
+    "total_return_pct": 2344.62,
+    "from": "2010-01-04",
+    "to": "2026-11-05"
+   },
+   "since_2017": {
+    "cagr_pct": 25.7,
+    "worst_fall_pct": -25.6,
+    "sharpe": 1.331,
+    "total_return_pct": 712.72,
+    "from": "2017-01-02",
+    "to": "2026-05-07"
+   }
+  },
+  "S3 trailing 20%": {
+   "design": {
+    "cagr_pct": 14.61,
+    "worst_fall_pct": -25.4,
+    "sharpe": 1.014,
+    "total_return_pct": 788.32,
+    "from": "2010-01-04",
+    "to": "2026-05-07",
+    "trades": 1239,
+    "stopped_out": 597,
+    "win_rate": 0.428,
+    "costs_inr": NaN
+   },
+   "holdout": {
+    "cagr_pct": 0.63,
+    "worst_fall_pct": -14.8,
+    "sharpe": 0.168,
+    "total_return_pct": 0.31,
+    "from": "2026-05-08",
+    "to": "2026-11-05"
+   },
+   "full": {
+    "cagr_pct": 14.17,
+    "worst_fall_pct": -25.4,
+    "sharpe": 0.958,
+    "total_return_pct": 793.08,
+    "from": "2010-01-04",
+    "to": "2026-11-05"
+   },
+   "since_2017": {
+    "cagr_pct": 13.71,
+    "worst_fall_pct": -25.4,
+    "sharpe": 1.028,
+    "total_return_pct": 224.35,
+    "from": "2017-01-02",
+    "to": "2026-05-07"
+   }
+  }
+ },
+ "verdict": {
+  "S1 fixed 15%": {
+   "gates": {
+    "risk": false,
+    "return": false,
+    "quality": false,
+    "holdout": "True"
+   },
+   "pass": false
+  },
+  "S2 fixed 25%": {
+   "gates": {
+    "risk": false,
+    "return": true,
+    "quality": false,
+    "holdout": "True"
+   },
+   "pass": false
+  },
+  "S3 trailing 20%": {
+   "gates": {
+    "risk": false,
+    "return": false,
+    "quality": false,
+    "holdout": "True"
+   },
+   "pass": false
+  }
+ },
+ "chosen": null,
+ "created": "2026-11-13T10:15:27+05:30"
+}
