@@ -1,0 +1,367 @@
+{
+ "version": "aladin-e-weekly-1",
+ "week": 1,
+ "session": "2026-11-13",
+ "since": "2026-11-09",
+ "sessions_in_week": 3,
+ "account": {
+  "value": 101121.01,
+  "value_week_start": 100000.0,
+  "capital": 100000,
+  "week_pct": 1.12,
+  "since_start_pct": 1.12,
+  "from_peak_pct": -0.01,
+  "peak": 101134.16,
+  "cash": 40497.82,
+  "positions": 24,
+  "costs_paid_total": 113.35
+ },
+ "nifty500": {
+  "week_pct": 0.71,
+  "since_start_pct": 0.71
+ },
+ "backtest": {
+  "week_band": "not compared: this week had 3 sessions, the back-test range is for 5",
+  "since_start_band": "compared at week 4",
+  "week_range": {
+   "p01": -7.55,
+   "p05": -4.33,
+   "p10": -2.93,
+   "p25": -1.08,
+   "p50": 0.55,
+   "p75": 2.13,
+   "p90": 3.82,
+   "p95": 5.07,
+   "p99": 7.94,
+   "share_below_zero_pct": 41.0,
+   "n_windows": 4159
+  },
+  "four_week_range": {
+   "p01": -13.71,
+   "p05": -7.21,
+   "p10": -4.87,
+   "p25": -1.6,
+   "p50": 1.71,
+   "p75": 5.08,
+   "p90": 8.85,
+   "p95": 11.56,
+   "p99": 17.95,
+   "share_below_zero_pct": 36.7,
+   "n_windows": 4145
+  }
+ },
+ "trades": {
+  "count": 24,
+  "bought": 24,
+  "sold": 0,
+  "costs": 113.33,
+  "list": [
+   {
+    "sym": "TBZ",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 655.0,
+    "shares": 4,
+    "cost": 5.73,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "CUPID",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 345.0,
+    "shares": 8,
+    "cost": 4.65,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "SSWL",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 547.9,
+    "shares": 5,
+    "cost": 4.62,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "RAYMOND",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 1100.0,
+    "shares": 2,
+    "cost": 3.71,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "RATNAVEER",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 364.6,
+    "shares": 7,
+    "cost": 4.3,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "SKYGOLD",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 940.6,
+    "shares": 2,
+    "cost": 3.17,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "TFCILTD",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 169.8,
+    "shares": 16,
+    "cost": 4.58,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "MOREPENLAB",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 102.68,
+    "shares": 27,
+    "cost": 4.67,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "SHILPAMED",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 940.0,
+    "shares": 2,
+    "cost": 4.11,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "SHREEJISPG",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 885.2,
+    "shares": 3,
+    "cost": 5.81,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "AHCL",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 27.15,
+    "shares": 102,
+    "cost": 6.05,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "SBC",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 68.81,
+    "shares": 40,
+    "cost": 6.02,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "FCL",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 53.12,
+    "shares": 52,
+    "cost": 4.66,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "ATHERENERG",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 1860.8,
+    "shares": 1,
+    "cost": 3.14,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "SAREGAMA",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 649.2,
+    "shares": 4,
+    "cost": 5.68,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "PCJEWELLER",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 15.38,
+    "shares": 181,
+    "cost": 4.69,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "CYIENTDLM",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 785.95,
+    "shares": 3,
+    "cost": 5.15,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "LAURUSLABS",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 2480.0,
+    "shares": 1,
+    "cost": 4.18,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "WHEELS",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 2403.0,
+    "shares": 1,
+    "cost": 5.25,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "WELSPUNLIV",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 253.0,
+    "shares": 11,
+    "cost": 4.69,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "UNIMECH",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 1823.3,
+    "shares": 1,
+    "cost": 3.99,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "RUBICON",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 1771.7,
+    "shares": 1,
+    "cost": 3.87,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "STLTECH",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 672.0,
+    "shares": 4,
+    "cost": 4.53,
+    "why": "joined the best 5%"
+   },
+   {
+    "sym": "MARINE",
+    "side": "enter",
+    "date": "2026-11-11",
+    "px": 397.0,
+    "shares": 7,
+    "cost": 6.08,
+    "why": "joined the best 5%"
+   }
+  ]
+ },
+ "holdings": {
+  "best": [
+   [
+    "CYIENTDLM",
+    10.14
+   ],
+   [
+    "CUPID",
+    9.51
+   ],
+   [
+    "SKYGOLD",
+    8.66
+   ]
+  ],
+  "worst": [
+   [
+    "RUBICON",
+    -5.33
+   ],
+   [
+    "TBZ",
+    -4.21
+   ],
+   [
+    "TFCILTD",
+    -3.45
+   ]
+  ]
+ },
+ "risk": {
+  "risk_on": true,
+  "invested_share": 0.7,
+  "nifty500_close": 23734.2,
+  "nifty500_ma200": 22771.75,
+  "kill": null,
+  "next_rebalance_in_sessions": 60
+ },
+ "checks": [
+  {
+   "rule": "F1",
+   "what": "every trading day since the start has a record",
+   "ok": true,
+   "detail": "3 trading days checked"
+  },
+  {
+   "rule": "F1",
+   "what": "this evening's run used closing prices (it ran after 15:30 IST)",
+   "ok": true,
+   "detail": "run at 2026-11-13T16:44:15Z"
+  },
+  {
+   "rule": "S3",
+   "what": "cash plus holdings at the close equals the reported value",
+   "ok": true,
+   "detail": "Rs 1,01,121 worked out, Rs 1,01,121 reported"
+  },
+  {
+   "rule": "S3",
+   "what": "every fill this week was at that day's opening price",
+   "ok": true,
+   "detail": "24 of 24 fills checked"
+  },
+  {
+   "rule": "S3",
+   "what": "the public signals list exactly the account's holdings, at the prices it paid",
+   "ok": true,
+   "detail": "24 held in the signals, 24 in the account"
+  },
+  {
+   "rule": "F3",
+   "what": "no more than 2 orders not filled",
+   "ok": true,
+   "detail": "1 so far: SANSERA 2026-11-11 (one share cost more than the Rs 2,800 slot)"
+  }
+ ],
+ "rules": {
+  "stop": [],
+  "fix": [],
+  "verdict": "Continue",
+  "final": false,
+  "label": "So far, by the rules",
+  "rules_file": "aladin-audit/PHASE7_RULES.md"
+ },
+ "notes": [
+  "The back-test ranges come from free data that covers only companies listed today, so they flatter model E.",
+  "Four weeks cannot show whether model E has an edge; that needs at least a year of live record.",
+  "Educational analysis on paper only, not investment advice."
+ ],
+ "written_utc": "2026-11-13T16:44:18Z"
+}
