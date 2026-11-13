@@ -1,0 +1,32 @@
+{
+ "what": "Model E exactly as live (no stop, 70% invested, daily NIFTY 500 / 200-day check, 6% on idle cash), daily replay 2010-01-01 to the panel end; overlapping windows of 5 and 19 sessions, net of costs. Survivorship-biased free data (companies listed today only), so these flatter E.",
+ "source": "aladin-audit/scripts/phase7_stop_test.py simulate(ctx, None), phase 4 panel",
+ "panel_end": "2026-11-05",
+ "created": "2026-11-13T21:31:26+05:30",
+ "week_5_sessions": {
+  "p01": -7.55,
+  "p05": -4.33,
+  "p10": -2.93,
+  "p25": -1.08,
+  "p50": 0.55,
+  "p75": 2.13,
+  "p90": 3.82,
+  "p95": 5.07,
+  "p99": 7.94,
+  "share_below_zero_pct": 41.0,
+  "n_windows": 4159
+ },
+ "four_weeks_19_sessions": {
+  "p01": -13.71,
+  "p05": -7.21,
+  "p10": -4.87,
+  "p25": -1.6,
+  "p50": 1.71,
+  "p75": 5.08,
+  "p90": 8.85,
+  "p95": 11.56,
+  "p99": 17.95,
+  "share_below_zero_pct": 36.7,
+  "n_windows": 4145
+ }
+}
