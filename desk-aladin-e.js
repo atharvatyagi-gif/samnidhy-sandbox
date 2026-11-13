@@ -58,11 +58,11 @@ export function signalsHtml(sg, esc) {
   if (!sg) return "";
   const n = (v, dp = 2) => v == null || !isFinite(v) ? "--" : Number(v).toLocaleString("en-IN", { minimumFractionDigits: dp, maximumFractionDigits: dp });
   const chg = v => v == null ? "--" : `<span class="${v >= 0 ? "up" : "down"}">${pc(v * 100)}</span>`;
-  const rng = r => r ? `${n(r.low)} · <b>${n(r.typical)}</b> · ${n(r.high)}<small>${pc(r.pct[0], 0)} · ${pc(r.pct[1], 0)} · ${pc(r.pct[2], 0)}</small>` : "--";
+  const rng = r => r ? [["low", 0], ["typical", 1], ["high", 2]].map(([k, i]) => `<td class="r">${i === 1 ? `<b>${n(r[k])}</b>` : n(r[k])}<small>${pc(r.pct[i], 0)}</small></td>`).join("") : `<td class="r mut" colspan="3">not measured</td>`;
   const sells = (sg.sell || []).map(s => `<tr><td><span class="ae-sig sell">Sell${s.part ? " part" : ""}</span></td><td><b>${esc(s.sym)}</b></td><td class="r">${s.shares ?? "--"}</td><td class="r">${n(s.ref_price)}</td><td class="r">${n(s.entry_px)}</td><td class="r">${chg(s.change_since_entry)}</td><td>${esc(s.why)}</td></tr>`).join("");
   const buys = (sg.buy || []).map(b => `<tr><td><span class="ae-sig ${b.state === "held" ? "hold" : "buy"}">${b.state === "held" ? "Holding" : "Buy"}</span><small>${b.state === "held" ? "since " + esc(b.entry_date) : "at the next open"}</small></td>
     <td><b>${esc(b.sym)}</b><small>rank ${b.rank ?? "--"}</small></td><td class="r">${b.shares ?? "--"}</td><td class="r">${n(b.ref_price)}<small>${b.state === "held" ? "paid" : "last close"}</small></td>
-    <td class="r">${b.state === "held" ? `${n(b.last_close)}<small>${b.change_since_entry == null ? "" : pc(b.change_since_entry * 100)}</small>` : "--"}</td><td class="r ae-rng">${rng(b.range)}</td></tr>`).join("");
+    <td class="r">${b.state === "held" ? `${n(b.last_close)}<small>${b.change_since_entry == null ? "" : pc(b.change_since_entry * 100)}</small>` : "--"}</td>${rng(b.range)}</tr>`).join("");
   const done = (sg.sold_recently || []).slice(0, 8).map(t => `<li>${esc(t.date)}: sold ${t.shares} <b>${esc(t.sym)}</b> at ${n(t.px)}, ${t.net_return == null ? "" : chg(t.net_return) + " after costs, "}${esc(t.why)}</li>`).join("");
   const ex = sg.exits || {};
   return `<div class="sg-card ae-signals"><h4>Buy and sell signals <small>for the next open, after the ${esc(sg.as_of)} close</small></h4>
@@ -70,7 +70,7 @@ export function signalsHtml(sg, esc) {
     <h5>Sell at the next open</h5>
     ${sells ? `<div class="tablecard"><table class="tbl sm"><thead><tr><th>Signal</th><th>Stock</th><th class="r">Shares</th><th class="r">Last close</th><th class="r">Bought at</th><th class="r">Change</th><th>Why</th></tr></thead><tbody>${sells}</tbody></table></div>` : `<p class="note">No sell signal for the next open.</p>`}
     <h5>Buy and holding</h5>
-    ${buys ? `<div class="tablecard"><table class="tbl sm"><thead><tr><th>Signal</th><th>Stock</th><th class="r">Shares (₹1 lakh account)</th><th class="r">Entry price</th><th class="r">Last close</th><th class="r">Expected range in about 3 months: low · typical · high</th></tr></thead><tbody>${buys}</tbody></table></div>` : `<p class="note">No buy signal and no holding.</p>`}
+    ${buys ? `<div class="tablecard"><table class="tbl sm"><thead><tr><th>Signal</th><th>Stock</th><th class="r">Shares<small>₹1 lakh account</small></th><th class="r">Entry price</th><th class="r">Last close</th><th class="r ae-rh">Low<small>in ~3 months</small></th><th class="r ae-rh">Typical<small>in ~3 months</small></th><th class="r ae-rh">High<small>in ~3 months</small></th></tr></thead><tbody>${buys}</tbody></table></div>` : `<p class="note">No buy signal and no holding.</p>`}
     <p class="note">${esc(sg.range_note)}</p>
     <div class="ae-two"><dl class="ae-dl"><div><dt>Next quarterly rebalance</dt><dd>${ex.next_rebalance_in_sessions == null ? "--" : `in ${ex.next_rebalance_in_sessions} sessions`}<small> (stocks that leave the best 5% are sold)</small></dd></div>
       <div><dt>Daily market check</dt><dd>${esc(ex.risk_check || "")}</dd></div><div><dt>Kill switch</dt><dd>${esc(ex.kill_switch || "")}</dd></div>

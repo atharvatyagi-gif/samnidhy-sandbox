@@ -1270,4 +1270,4 @@ html:not(.legacy-on) [data-legacy] { display: none !important; }
 .ae-signals td small { display: block; color: var(--ink-3); font-size: 11px; }
 .ae-sig { display: inline-block; padding: 1px 8px; border: 1px solid var(--rule-2); border-radius: 999px; font: 600 11.5px var(--mono); white-space: nowrap; }
 .ae-sig.buy { border-color: var(--up); color: var(--up); } .ae-sig.sell { border-color: var(--down); color: var(--down); } .ae-sig.hold { color: var(--ink-2); }
-.ae-rng { white-space: nowrap; }
+.ae-signals th small { display: block; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--ink-3); }
