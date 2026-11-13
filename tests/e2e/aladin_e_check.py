@@ -31,7 +31,7 @@ def run():
         check("E: no banned word on the page", not BANNED.search(t), (BANNED.search(t) or [None])[0])
         sg = pg.evaluate("fetch('aladin_e.json').then(r => r.json()).then(d => ({sg: d.signals, hold: (d.holdings || []).map(h => [h.sym, h.entry_px])}))")
         st = pg.inner_text(".ae-signals") if pg.locator(".ae-signals").count() else ""
-        check("signals: the panel is shown with the SEBI / not-advice note, the exits and the stop-loss result", "Buy and sell signals" in st and "SEBI" in st and "not investment advice" in st.lower() and "Kill switch" in st and "Stop-loss" in st, st[:120])
+        check("signals: the panel is shown with the SEBI / not-advice note, the exits and the stop-loss result", all(w in st.lower() for w in ("buy and sell signals", "sebi", "not investment advice", "kill switch", "stop-loss")), st[:120])     # inner_text follows CSS capitals
         rows = pg.locator(".ae-signals tbody tr").count()
         want = len((sg["sg"] or {}).get("buy", [])) + len((sg["sg"] or {}).get("sell", []))
         check("signals: one row per buy, holding and sell signal in the data", rows == want, [rows, want])
