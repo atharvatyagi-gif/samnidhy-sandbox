@@ -1265,3 +1265,9 @@ html:not(.legacy-on) [data-legacy] { display: none !important; }
 .a2b-earlier-lock { margin-top: 8px; padding: 6px 12px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--card); }
 .a2b-earlier-b:hover, .a2b-earlier-b:focus-visible { border-color: var(--acc-edge); background: var(--card-hover); }
 .a2b-earlier-b b { display: block; font-size: 13px; } .a2b-earlier-b small { display: block; margin-top: 3px; color: var(--ink-3); font-size: 11.5px; line-height: 1.4; }
+.ae-signals h5 { margin: 12px 0 4px; font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.ae-signals h4 small { font-weight: 400; color: var(--ink-3); font-size: 12px; }
+.ae-signals td small { display: block; color: var(--ink-3); font-size: 11px; }
+.ae-sig { display: inline-block; padding: 1px 8px; border: 1px solid var(--rule-2); border-radius: 999px; font: 600 11.5px var(--mono); white-space: nowrap; }
+.ae-sig.buy { border-color: var(--up); color: var(--up); } .ae-sig.sell { border-color: var(--down); color: var(--down); } .ae-sig.hold { color: var(--ink-2); }
+.ae-rng { white-space: nowrap; }

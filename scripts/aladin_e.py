@@ -319,6 +319,50 @@ def decide(acct, T, chosen, share, equity, asof, dates, cfg, cal, no_buys):
     return orders, reason
 
 
+def price_range(px, b):
+    """-> {low, typical, high} prices 63 sessions on, from the rank group's measured spread (10th, 50th, 90th percentile), or None."""
+    q = (b or {}).get("price_change_pct")
+    if not q or not px:
+        return None
+    return {"low": round(px * (1 + q["p10"] / 100), 2), "typical": round(px * (1 + q["p50"] / 100), 2), "high": round(px * (1 + q["p90"] / 100), 2),
+            "pct": [q["p10"], q["p50"], q["p90"]]}
+
+
+def signals(acct, T, cal, cfg, asof, next_rebalance, chosen=()):
+    """Buy and sell signals, taken straight from the paper account: what it will trade at the next open and what it holds. No stop price:
+    the stop-loss test (aladin-audit/phase7_stop_test.py, 2026-11-13) failed, so the exits are the model's own rules."""
+    close = lambda s: float(T.loc[s, "last_close"]) if s in T.index else None
+    grp = lambda s: bucket(float(T.loc[s, "rank_pct"]), cal) if s in T.index else None
+    rank = lambda s: int(T.loc[s, "rank"]) if s in T.index else None
+    pend = (acct.get("pending") or {}) if (acct.get("pending") or {}).get("created") == str(asof.date()) else {}
+    buy, sell = [], []
+    for o in pend.get("orders", []):
+        px = close(o["sym"])
+        sh = math.floor(o["value"] / (px * 1.003)) if (px and o["side"] == "enter") else (acct["positions"].get(o["sym"], {}).get("shares") if o.get("all") else (math.floor(o["value"] / px) if px else None))
+        row = {"sym": o["sym"], "state": "next open", "shares": sh, "ref_price": px, "rank": rank(o["sym"]), "why": o["why"]}
+        if o["side"] == "enter":
+            buy.append({**row, "range": price_range(px, grp(o["sym"]))})
+        else:
+            p = acct["positions"].get(o["sym"])
+            sell.append({**row, "part": not o.get("all"), "entry_px": round(p["entry_px"], 2) if p else None,
+                         "change_since_entry": round(px / p["entry_px"] - 1, 4) if (p and px) else None})
+    leaving = {o["sym"] for o in pend.get("orders", []) if o["side"] == "exit" and o.get("all")}
+    for sym, p in acct["positions"].items():
+        if sym in leaving:
+            continue
+        px = close(sym)
+        buy.append({"sym": sym, "state": "held", "shares": p["shares"], "ref_price": round(p["entry_px"], 2), "entry_date": p["entry_date"], "last_close": px, "rank": rank(sym),
+                    "change_since_entry": round(px / p["entry_px"] - 1, 4) if px else None, "range": price_range(p["entry_px"], grp(sym)),
+                    "why": f"in the best {cfg['pick_share']:.0%}" if sym in chosen else "kept until the next rebalance"})
+    done = [{"sym": t["sym"], "date": t["date"], "px": t["px"], "shares": t["shares"], "net_return": t.get("net_return"), "why": t["why"]}
+            for t in acct["trades"] if t["side"] == "exit"][-20:][::-1]
+    return {"as_of": str(asof.date()), "buy": buy, "sell": sell, "sold_recently": done,
+            "exits": {"next_rebalance_in_sessions": next_rebalance, "risk_check": "every evening: if the NIFTY 500 closes below its 200-day average, every position is halved at the next open",
+                      "kill_switch": f"if the paper account falls {cfg['kill_drawdown']:.0%} from its peak, all buying stops"},
+            "stop_loss": "none: fixed 15%, fixed 25% and trailing 20% stops were tested on 2010-2026 and all lowered the return per unit of risk (aladin-audit/phase7_stop_test.json)",
+            "range_note": "Low and high: 8 in 10 stocks of the same rank group ended between them 63 sessions (about 3 months) after the entry; typical: the middle one. Measured 2010-2026, before costs, companies listed today only. Not a forecast for this stock."}
+
+
 def run(asof, frames, n5, cfg, cal, acct, now=None, vix=None, fii=None):
     """One evening. -> (acct, latest dict). Pure apart from the inputs: tests drive it with synthetic prices."""
     dates = n5.index
@@ -366,6 +410,7 @@ def run(asof, frames, n5, cfg, cal, acct, now=None, vix=None, fii=None):
         "next_rebalance_in_sessions": None if since is None else max(0, cfg["rebalance_every_sessions"] - since),
         "stocks": {s: [int(T.loc[s, "rank"]), round(float(T.loc[s, "rank_pct"]), 4), round(float(T.loc[s, "r126"]), 4), 1 if s in chosen else 0] for s in T.index} if not stale else {},
         "portfolio": [{"sym": s, "rank": int(T.loc[s, "rank"]), "r126": round(float(T.loc[s, "r126"]), 4)} for s in chosen] if not stale else [],
+        "signals": signals(acct, T, cal, cfg, asof, None if since is None else max(0, cfg["rebalance_every_sessions"] - since), chosen) if (not stale and len(T)) else None,
         "calibration": cal, "costs": cfg["costs"],
         "market": market_strip(frames, n5, vix if vix is not None else pd.Series(dtype=float), fii, asof, cfg),
         "health": health(acct, n5, cfg), "last_rebalance": acct.get("last_rebalance"),

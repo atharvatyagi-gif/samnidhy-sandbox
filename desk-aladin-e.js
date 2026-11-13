@@ -52,6 +52,32 @@ export function alerts(doc) {
   return a;
 }
 
+export const SIGNAL_NOTE = "Educational paper-trading signals from a student-built model, shown so you can follow the paper account. Not investment advice. The authors are not SEBI-registered research analysts. Real trades are your own decision and risk.";
+/* Buy and sell signals: the paper account's own orders for the next open and what it holds (owner, 2026-11-13). No stop price: the stop-loss test failed. */
+export function signalsHtml(sg, esc) {
+  if (!sg) return "";
+  const n = (v, dp = 2) => v == null || !isFinite(v) ? "--" : Number(v).toLocaleString("en-IN", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  const chg = v => v == null ? "--" : `<span class="${v >= 0 ? "up" : "down"}">${pc(v * 100)}</span>`;
+  const rng = r => r ? `${n(r.low)} · <b>${n(r.typical)}</b> · ${n(r.high)}<small>${pc(r.pct[0], 0)} · ${pc(r.pct[1], 0)} · ${pc(r.pct[2], 0)}</small>` : "--";
+  const sells = (sg.sell || []).map(s => `<tr><td><span class="ae-sig sell">Sell${s.part ? " part" : ""}</span></td><td><b>${esc(s.sym)}</b></td><td class="r">${s.shares ?? "--"}</td><td class="r">${n(s.ref_price)}</td><td class="r">${n(s.entry_px)}</td><td class="r">${chg(s.change_since_entry)}</td><td>${esc(s.why)}</td></tr>`).join("");
+  const buys = (sg.buy || []).map(b => `<tr><td><span class="ae-sig ${b.state === "held" ? "hold" : "buy"}">${b.state === "held" ? "Holding" : "Buy"}</span><small>${b.state === "held" ? "since " + esc(b.entry_date) : "at the next open"}</small></td>
+    <td><b>${esc(b.sym)}</b><small>rank ${b.rank ?? "--"}</small></td><td class="r">${b.shares ?? "--"}</td><td class="r">${n(b.ref_price)}<small>${b.state === "held" ? "paid" : "last close"}</small></td>
+    <td class="r">${b.state === "held" ? `${n(b.last_close)}<small>${b.change_since_entry == null ? "" : pc(b.change_since_entry * 100)}</small>` : "--"}</td><td class="r ae-rng">${rng(b.range)}</td></tr>`).join("");
+  const done = (sg.sold_recently || []).slice(0, 8).map(t => `<li>${esc(t.date)}: sold ${t.shares} <b>${esc(t.sym)}</b> at ${n(t.px)}, ${t.net_return == null ? "" : chg(t.net_return) + " after costs, "}${esc(t.why)}</li>`).join("");
+  const ex = sg.exits || {};
+  return `<div class="sg-card ae-signals"><h4>Buy and sell signals <small>for the next open, after the ${esc(sg.as_of)} close</small></h4>
+    <p class="ae-alert">${esc(SIGNAL_NOTE)}</p>
+    <h5>Sell at the next open</h5>
+    ${sells ? `<div class="tablecard"><table class="tbl sm"><thead><tr><th>Signal</th><th>Stock</th><th class="r">Shares</th><th class="r">Last close</th><th class="r">Bought at</th><th class="r">Change</th><th>Why</th></tr></thead><tbody>${sells}</tbody></table></div>` : `<p class="note">No sell signal for the next open.</p>`}
+    <h5>Buy and holding</h5>
+    ${buys ? `<div class="tablecard"><table class="tbl sm"><thead><tr><th>Signal</th><th>Stock</th><th class="r">Shares (₹1 lakh account)</th><th class="r">Entry price</th><th class="r">Last close</th><th class="r">Expected range in about 3 months: low · typical · high</th></tr></thead><tbody>${buys}</tbody></table></div>` : `<p class="note">No buy signal and no holding.</p>`}
+    <p class="note">${esc(sg.range_note)}</p>
+    <div class="ae-two"><dl class="ae-dl"><div><dt>Next quarterly rebalance</dt><dd>${ex.next_rebalance_in_sessions == null ? "--" : `in ${ex.next_rebalance_in_sessions} sessions`}<small> (stocks that leave the best 5% are sold)</small></dd></div>
+      <div><dt>Daily market check</dt><dd>${esc(ex.risk_check || "")}</dd></div><div><dt>Kill switch</dt><dd>${esc(ex.kill_switch || "")}</dd></div>
+      <div><dt>Stop-loss</dt><dd>${esc(sg.stop_loss || "")}</dd></div></dl>
+      <div>${done ? `<h5>Sold recently</h5><ul class="ae-why ae-sold">${done}</ul>` : `<p class="note">Nothing sold yet. Entries and sells are filled at the open of the next session; the paper account below shows every fill and charge.</p>`}</div></div></div>`;
+}
+
 /* ---------- data ---------- */
 async function load() {
   if (D || loading || failed) return loading;
@@ -149,6 +175,7 @@ function page() {
   return `<div class="sg"><div class="sg-head"><div><h2>ALADIN</h2><p>The ${D.universe_size} most-traded stocks ranked by their 6-month rise; the best ${D.portfolio_size} form the portfolio, changed about every quarter, half-sized when the market is below its 200-day average.</p></div></div>
     ${al.map(([c, t]) => `<p class="ae-alert ${c}" role="alert">${esc(t)}</p>`).join("")}
     ${strip(D.market || {})}
+    ${D.status === "degraded" ? "" : signalsHtml(D.signals, esc)}
     <div class="sg-bar"><div class="sg-search"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M14 14l4 4"/></svg><input id="ae-q" type="search" autocomplete="off" spellcheck="false" placeholder="Find any stock's rank: symbol or company name" value="${esc(st.q)}" aria-label="Find any stock's rank"></div>
       <label class="ae-cap">Your capital ₹ <input id="ae-cap" type="number" min="10000" step="10000" value="${Math.round(cap)}" aria-label="Your capital in rupees, for the size column"></label></div>
     <div id="ae-list">${D.status === "degraded" ? "" : listHtml(names)}</div>

@@ -1,7 +1,7 @@
 // node --test tests/js
 import test from "node:test";
 import assert from "node:assert/strict";
-import { groupOf, roundTripPct, reasons, search, alerts } from "../../desk-aladin-e.js";
+import { groupOf, roundTripPct, reasons, search, alerts, signalsHtml, SIGNAL_NOTE } from "../../desk-aladin-e.js";
 import { isLegacy, normalise } from "../../desk-legacy.js";
 
 const cal = { buckets: [
@@ -43,4 +43,21 @@ test("only the earlier models' files are kept behind the bot; the bot's own file
   for (const u of ["aladin.json", "./predict.json", "aladin2/weekly.json?x=1", "aladin2/stock/TCS.json", "paper.json"]) assert.ok(isLegacy(u), u);
   for (const u of ["aladin_e.json", "aladin2/bot.enc.json", "desk_data.json", "pl/A.json"]) assert.ok(!isLegacy(u), u);
   assert.equal(normalise(" ab-c 1 "), "ABC1");
+});
+
+test("signals: buy, holding and sell rows from the paper account, a range, the exits, the note, and no stop price or target", () => {
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const sg = { as_of: "2026-11-12", buy: [{ sym: "TBZ", state: "next open", shares: 4, ref_price: 650, rank: 3, range: { low: 492.7, typical: 659.1, high: 915.9, pct: [-24.2, 1.4, 40.9] } },
+    { sym: "CUPID", state: "held", shares: 8, ref_price: 345, entry_date: "2026-11-11", last_close: 351, change_since_entry: 0.0174, rank: 9, range: null }],
+    sell: [{ sym: "OLD<X>", state: "next open", shares: 5, ref_price: 100, entry_px: 120, change_since_entry: -0.1667, why: "left the best 5% at the rebalance", part: false }],
+    sold_recently: [], exits: { next_rebalance_in_sessions: 61, risk_check: "daily", kill_switch: "-25%" }, stop_loss: "none: tested and failed", range_note: "8 in 10" };
+  const h = signalsHtml(sg, esc);
+  assert.match(h, />Buy</); assert.match(h, />Holding</); assert.match(h, />Sell</);
+  assert.match(h, /TBZ/); assert.match(h, /492\.70/); assert.match(h, /915\.90/); assert.match(h, /in 61 sessions/);
+  assert.ok(h.includes("OLD&lt;X&gt;") && !h.includes("OLD<X>"), "symbols are escaped");
+  assert.ok(h.includes(esc(SIGNAL_NOTE)) && /SEBI/.test(SIGNAL_NOTE) && /Not investment advice/.test(SIGNAL_NOTE));
+  assert.ok(!/target|guaranteed|recommendation/i.test(h), "no banned wording");
+  assert.equal(signalsHtml(null, esc), "");
+  const empty = signalsHtml({ ...sg, buy: [], sell: [] }, esc);
+  assert.match(empty, /No sell signal for the next open/); assert.match(empty, /No buy signal and no holding/);
 });

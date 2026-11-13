@@ -8,6 +8,8 @@ The compliance wording check:   python scripts/check_banned.py [--existing]
 2. The mandatory disclaimer must be present, word for word, on the ALADIN view, the NEXUS panel and the Globe tab.
 3. --existing lists the same words in the desk's OLDER code (terminal.js, terminal.css, expert-terminal.html outside the new blocks): analyst labels such as "Strong buy" and
    price-target figures that were there before the ALADIN work. They are reported, never silently changed; the owner decides whether to rename them.
+Owner exception (2026-11-13, "public, on the ALADIN tab"): the ALADIN tab's buy and sell signals may use the words buy and sell in
+desk-aladin-e.js only (ALLOW_BUY_SELL). target, recommendation and guaranteed stay banned there as everywhere.
 Exit code 1 when 1 or 2 finds a problem. The report of 3 never fails the run.
 """
 import json
@@ -23,6 +25,7 @@ NEW_HTML = [r'<section class="view" id="v-houses">.*?</section>', r'<section cla
 CONFIG_JSON = ["aladin2_method.json", "business_houses.json", "geo_exposure.json", "aladin_method.json", "news_aliases.json", "tone_words.json", "aladin_config.json", "trade_lanes.json", "cargo_carriers.json", "aladin2.json"]            # nexus_sources.json is instructions to a model, not served and not shown
 SERVED_JSON = ["aladin/latest.json", "aladin/sentiment.json", "aladin/geo.json", "aladin/moves.json", "aladin/shocks.json", "aladin/impact.json", "supply_graph.json",
                "config/business_houses.json", "config/aladin_method.json", "config/trade_lanes.json", "paper_trades/portfolio.json", "live_extra/aladin_telemetry.json"]
+ALLOW_BUY_SELL = {"desk-aladin-e.js"}                                    # owner exception, 2026-11-13 (see the docstring)
 SYMBOL = re.compile(r"^[A-Z0-9&.\-]{1,24}$")                           # a key that is a stock symbol is data, not wording
 THIRD_PARTY = {"title", "heads", "items", "q", "quote", "n", "name", "cpn", "desc", "headline"}      # text quoted from publishers, filings or the exchange
 
@@ -65,7 +68,10 @@ def check(root=ROOT):
     problems = []
     for name in NEW_JS:
         p = root / name
-        if p.exists() and (h := hits(strip_tokens(p.read_text(encoding="utf-8")))):
+        h = hits(strip_tokens(p.read_text(encoding="utf-8"))) if p.exists() else []
+        if name in ALLOW_BUY_SELL:
+            h = [w for w in h if w not in ("buy", "sell")]
+        if h:
             problems.append(f"{name}: {h}")
     html = (root / "expert-terminal.html").read_text(encoding="utf-8")
     for pat in NEW_HTML:

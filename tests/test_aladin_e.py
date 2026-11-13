@@ -144,3 +144,39 @@ def test_closed_positions_are_judged_against_the_nifty500_over_the_same_days():
     h = out["health"]
     assert h["closed_positions"] == len(sells) and 0 <= h["last_20"]["hit_rate"] <= 1
     assert "nifty500" in out["market"] and "breadth" in out["market"]
+
+
+def test_signals_are_the_paper_accounts_own_orders_and_holdings():
+    """Buy/sell signals (owner, 2026-11-13) come from the paper account: the next open's orders, then what it holds, with the price it paid."""
+    frames, n5 = market(drift=[0.002 if i < 6 else 0 for i in range(60)])
+    c = cfg()
+    acct, out = AE.run(n5.index[300], frames, n5, c, CAL, None)
+    sg = out["signals"]
+    pend = {o["sym"] for o in acct["pending"]["orders"] if o["side"] == "enter"}
+    assert {b["sym"] for b in sg["buy"] if b["state"] == "next open"} == pend and not sg["sell"]
+    for b in sg["buy"]:
+        assert b["ref_price"] == pytest.approx(float(frames[b["sym"]]["c"][frames[b["sym"]].index <= n5.index[300]].iloc[-1]))
+        assert b["range"]["low"] < b["ref_price"] * 1.0 < b["range"]["high"] and b["range"]["low"] <= b["range"]["typical"] <= b["range"]["high"]
+    acct, out = AE.run(n5.index[301], frames, n5, c, CAL, acct)
+    held = {b["sym"]: b for b in out["signals"]["buy"] if b["state"] == "held"}
+    assert set(held) == set(acct["positions"])
+    for s, b in held.items():
+        assert b["ref_price"] == pytest.approx(round(acct["positions"][s]["entry_px"], 2)) and b["shares"] == acct["positions"][s]["shares"]
+
+
+def test_sell_signals_appear_with_the_rebalance_exits_and_no_stop_price():
+    frames, n5 = market(drift=[0.002 if i < 6 else 0 for i in range(60)])
+    c = cfg(rebalance_every_sessions=5)
+    acct = None
+    for k in range(300, 312):
+        frames2 = frames
+        if k >= 305:                                                       # the early leaders fall back: they leave the best group
+            frames2 = {s: (f.assign(c=f["c"] * np.where(f.index >= n5.index[305], 0.6, 1.0), o=f["o"] * np.where(f.index >= n5.index[305], 0.6, 1.0)) if s < "S03" else f) for s, f in frames.items()}
+        acct, out = AE.run(n5.index[k], frames2, n5, c, CAL, acct)
+        sg = out["signals"]
+        exits = [o for o in ((acct.get("pending") or {}).get("orders") or []) if o["side"] == "exit"] if (acct.get("pending") or {}).get("created") == str(n5.index[k].date()) else []
+        assert {s["sym"] for s in sg["sell"]} == {o["sym"] for o in exits}
+        assert all(s["why"] for s in sg["sell"])
+    assert any(t["side"] == "exit" for t in acct["trades"]) and out["signals"]["sold_recently"]
+    txt = json.dumps(out["signals"]).lower()
+    assert "stop_price" not in txt and "target" not in txt and out["signals"]["stop_loss"].startswith("none")

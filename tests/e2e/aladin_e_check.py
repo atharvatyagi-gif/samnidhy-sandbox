@@ -12,7 +12,7 @@ from _bot import skip, unlock  # noqa: E402
 from acceptance import BASE, check, ok, page_for  # noqa: E402
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-BANNED = re.compile(r"\b(buy|sell|target|recommendation|guaranteed)\b", re.I)
+BANNED = re.compile(r"\b(target|recommendation|guaranteed)\b", re.I)      # buy and sell are allowed on this tab (owner, 2026-11-13: public signals)
 
 
 def legacy_visible(pg):
@@ -29,8 +29,17 @@ def run():
         check("E: the market strip shows the NIFTY 500 risk check", "NIFTY 500" in t and "200-day" in t)
         check("E: the student-model disclaimer is on the page", "It is often wrong" in t)
         check("E: no banned word on the page", not BANNED.search(t), (BANNED.search(t) or [None])[0])
+        sg = pg.evaluate("fetch('aladin_e.json').then(r => r.json()).then(d => ({sg: d.signals, hold: (d.holdings || []).map(h => [h.sym, h.entry_px])}))")
+        st = pg.inner_text(".ae-signals") if pg.locator(".ae-signals").count() else ""
+        check("signals: the panel is shown with the SEBI / not-advice note, the exits and the stop-loss result", "Buy and sell signals" in st and "SEBI" in st and "not investment advice" in st.lower() and "Kill switch" in st and "Stop-loss" in st, st[:120])
+        rows = pg.locator(".ae-signals tbody tr").count()
+        want = len((sg["sg"] or {}).get("buy", [])) + len((sg["sg"] or {}).get("sell", []))
+        check("signals: one row per buy, holding and sell signal in the data", rows == want, [rows, want])
+        held = {b["sym"]: b["ref_price"] for b in (sg["sg"] or {}).get("buy", []) if b["state"] == "held"}
+        check("signals: the holdings are exactly the paper account's positions, at the price it paid", held == {s: p for s, p in sg["hold"]}, [len(held), len(sg["hold"])])
+        check("signals: each buy or holding has an expected range (low, typical, high)", all(b.get("range") for b in (sg["sg"] or {}).get("buy", [])))
         pg.locator("#ae-list tr.ae-r").first.click(); pg.wait_for_timeout(500)
-        check("E: a row opens 3 to 5 plain reasons", 3 <= pg.locator(".ae-why li").count() <= 5)
+        check("E: a row opens 3 to 5 plain reasons", 3 <= pg.locator("#ae-list .ae-why li").count() <= 5)
         pg.fill("#ae-q", "TCS"); pg.wait_for_timeout(500)
         check("E: the search finds a stock by symbol", "TCS" in pg.inner_text("#ae-list"))
         check("lock: no earlier-model tab or button is shown", legacy_visible(pg) == 0)

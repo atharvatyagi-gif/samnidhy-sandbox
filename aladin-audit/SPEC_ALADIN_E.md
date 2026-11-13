@@ -30,6 +30,13 @@ Its rank ("better than 93% of the 500"), its state ("In the portfolio" / "No sig
 trading"), the measured chance that stocks in its rank group beat the market over the next 63 days **with a 95% range**, the
 as-of date, and the model version. No price target is ever shown.
 
+**Buy and sell signals (added 2026-11-13, owner):** the ALADIN tab also lists the paper account's own orders for the next open
+(Buy / Sell) and its holdings, with the price paid, the share count on the ₹1 lakh account, and an expected range in about 3 months
+(low, typical, high = the 10th, 50th and 90th percentile of the measured 63-day price change of the stock's rank group, 2010–2026).
+No stop price: fixed 15%, fixed 25% and trailing 20% stops failed their pre-declared test (aladin-audit/phase7_stop_test.json); the
+exits are the rebalance, the daily risk check and the kill switch. Shown with an "educational, not investment advice, not
+SEBI-registered" note.
+
 ## Position size and loss limits
 - **Invested share: 70% of capital** (30% kept in cash / a liquid fund), so the tested worst fall stays inside the owner's −25%
   limit. Halved to 35% when the daily risk check says so.
