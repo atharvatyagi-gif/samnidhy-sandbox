@@ -1452,9 +1452,9 @@
    1.1116
   ]
  },
- "generated_utc": "2026-11-14T13:32:02+00:00",
- "generated_ist": "14 Nov 2026, 07:02 PM IST",
- "screened_ist": "14 Nov 2026, 07:02 PM IST",
+ "generated_utc": "2026-11-14T18:49:02+00:00",
+ "generated_ist": "15 Nov 2026, 12:19 AM IST",
+ "screened_ist": "15 Nov 2026, 12:19 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1973,7 +1973,7 @@
    "capital_cr": 333.2,
    "ev_cr": 16159.8,
    "market_cap_cr": 17597.5,
-   "pe": 19.315239,
+   "pe": 19.617794,
    "pb": 5.266079,
    "roe": 0.29681,
    "debt_to_equity": 0.468,
@@ -1986,7 +1986,7 @@
    "estimate_mean": 322.66666,
    "estimate_high": 388.0,
    "estimate_low": 290.0,
-   "eps": 16.21,
+   "eps": 15.96,
    "shares_out": 562042373.0,
    "employees": 2747.0,
    "website": "https://www.engineersindia.com",
