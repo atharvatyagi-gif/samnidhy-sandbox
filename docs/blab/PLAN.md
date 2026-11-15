@@ -50,9 +50,10 @@ B-Lab desk (orchestrator: schedules, collects, never blends the divisions)
     ├── S2 Global & macro scraper GDELT, global wires: policy, commodities, geopolitics                      [reuses globe_data]
     ├── S3 Sector scraper        industry and regulator news per sector
     ├── S4 Social scraper        only sources whose terms allow it; otherwise shown as "not measured"
-    ├── S5 News analyst (AI)     reads the day's most important items: event type, who is named, direction, and which
+    ├── S5 Headline scorer       the tone of headlines that NAME a stock (the existing FinBERT job, news part only)   [step 1]
+    ├── S6 News analyst (AI)     reads the day's most important items: event type, who is named, direction, and which
     │                            stocks are exposed WITHOUT being named (via sector and the NEXUS supply graph)
-    └── S6 Event historian       for each event type, which stocks moved after similar events in the past
+    └── S7 Event historian       for each event type, which stocks moved after similar events in the past
                                  (GDELT event history goes back years for free; our own news only since the job began)
 ```
 
@@ -82,11 +83,11 @@ analyst runs on what they found. A final job merges, scores and publishes. Free 
 
 ## 6. Order of work (one step at a time, each tested and merged before the next)
 
-1. Framework, dashboard and the scouts that wrap existing jobs, so the page shows real work from day one.
+1. Framework, dashboard and the scouts that wrap existing jobs, so the page shows real work from day one. **Done 2026-11-15**: scripts/blab/, lab.html, workflow blab.yml; S5 is the first analyst (rule declared before any scoring: average tone beyond ±0.25 over at least 2 headlines naming the stock).
 2. Fundamental: F2-F5, ending with the blind-spot analyst.
 3. Technical: T3-T5 (regime, strategy lab, analogs).
 4. Macro: M1-M4, with the freshness checks and the tested outcome.
-5. Sentiment: S2-S6, ending with the AI analyst and the event historian.
+5. Sentiment: S3, S6 and S7, ending with the AI analyst and the event historian.
 6. Scorecards run at least 8 weeks; then the owner chooses what moves to the main site.
 
 ## 7. Free sources only (owner, 15 Nov 2026)

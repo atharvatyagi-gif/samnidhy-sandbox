@@ -1,0 +1,75 @@
+# B-Lab research desk (docs/blab/PLAN.md): the four divisions run AT THE SAME TIME as separate jobs (Fundamental, Technical,
+# Macro, Sentiment; inside each, its bots run in parallel too), then one job collects them, adds new findings to the ledger,
+# scores the older ones against the NIFTY 500 and saves data/blab/. The next Live prices run publishes it for lab.html.
+# Twice a day: after the evening daily update (21:00 IST) and before the market opens (08:15 IST). Standard library only.
+# Free sources only (owner, 15 Nov 2026). Commits end in "[skip ci]" and touch nothing but data/blab/.
+name: B-Lab research desk
+
+on:
+  schedule:
+    - cron: "30 15 * * *"
+    - cron: "45 2 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/blab.yml", "scripts/blab/**"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: blab
+  cancel-in-progress: false
+
+jobs:
+  division:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        division: [fundamental, technical, macro, sentiment]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run the ${{ matrix.division }} division
+        continue-on-error: true
+        run: python scripts/blab/run.py --division ${{ matrix.division }} --out blab_${{ matrix.division }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blab-${{ matrix.division }}
+          path: blab_${{ matrix.division }}.json
+          if-no-files-found: warn
+          retention-days: 3
+
+  collect:
+    needs: division
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: blab-*
+          merge-multiple: true
+          path: parts
+      - name: Collect, score and write data/blab
+        run: python scripts/blab/run.py --collect parts/*.json
+      - name: Save data/blab to the repository (the next Live prices run publishes it)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/blab
+          if git diff --cached --quiet; then
+            echo "Nothing new to save."
+          else
+            git commit -q -m "B-Lab research desk: $(date -u +%Y-%m-%d\ %H:%M) UTC [skip ci]"
+            for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && break; sleep 10; done
+          fi
