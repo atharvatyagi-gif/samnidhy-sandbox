@@ -86,6 +86,7 @@ async function load() {
 }
 export async function ready() { await load(); return D; }
 export function doc() { return D; }
+export function view(sym) { if (!D || D.status === "degraded") return null; const row = D.stocks[sym] || null; return { row, group: row ? groupOf(row[1], D.calibration) : null, universe: D.universe_size }; }
 
 /* A short block for the terminal's Details panel and anywhere else a stock is open. */
 export function miniHtml(sym) {

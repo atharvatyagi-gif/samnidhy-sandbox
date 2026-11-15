@@ -1251,6 +1251,13 @@ html:not(.legacy-on) [data-legacy] { display: none !important; }
 .ae-pill.on { border-color: var(--up); color: var(--up); }
 .ae-why { margin: 4px 0 6px 18px; padding: 0; line-height: 1.55; font-size: 13px; }
 .ae-state { margin: 4px 0; } .ae-state.on b { color: var(--up); }
+.vx-rows { display: grid; gap: 6px; margin: 6px 0; }
+.vx-r { display: grid; grid-template-columns: minmax(110px, 34%) 1fr; gap: 8px; padding: 6px 0; border-top: 1px solid var(--rule); }
+.vx-q b { display: block; font: 600 12px var(--mono); } .vx-q small { color: var(--ink-3); font-size: 11px; }
+.vx-a > b { font: 600 13px var(--mono); margin-right: 6px; } .vx-a > b.up { color: var(--up); } .vx-a > b.down { color: var(--down); }
+.vx-tag { font: 11px var(--mono); color: var(--ink-3); border: 1px solid var(--rule); border-radius: var(--r); padding: 0 5px; } .vx-tag.up { color: var(--up); } .vx-tag.down { color: var(--down); }
+.vx-a .note { margin: 3px 0 0; } .vx-sum { margin: 6px 0; font-size: 13px; }
+@media (max-width: 520px) { .vx-r { grid-template-columns: 1fr; } }
 .ae-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin: 12px 0; }
 .ae-dl { display: grid; grid-template-columns: 1fr; gap: 4px; margin: 0; font-size: 12.5px; }
 .ae-dl div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--rule); padding: 4px 0; }
