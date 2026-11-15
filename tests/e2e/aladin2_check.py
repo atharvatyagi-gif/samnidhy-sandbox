@@ -41,11 +41,19 @@ def main():
             pg.evaluate("document.querySelector('[data-go=a2bot]').click()"); pg.wait_for_selector(".a2b-earlier [data-go=a2]", state="attached", timeout=30000)
             pg.evaluate("document.querySelector('[data-go=terminal]').click()"); pg.wait_for_timeout(800)
             v = {"desk_ready_ms": ready_ms, "aladin2_requests_before_opening_a_stock_or_the_tab": [u.split("aladin2/")[-1].split("?")[0] for u in early], "pages": {}}
-            # brief on the open stock
-            pg.evaluate("document.querySelector('[data-side=details]') && document.querySelector('[data-side=details]').click()"); pg.wait_for_selector("#a2-brief svg", state="attached", timeout=20000)
+            # the open stock: since 2026-11-15 its page shows the "Three questions" box (ALADIN 1 quoted there) and a link to the earlier models, not the ALADIN 2.0 brief
+            pg.evaluate("document.querySelector('[data-side=details]') && document.querySelector('[data-side=details]').click()"); pg.wait_for_selector(".vx", state="attached", timeout=20000)
+            vx = pg.inner_text(".vx")
+            v["stock_page"] = {"three_questions_box": all(w in vx for w in ("Trend so far", "Next 10 days", "Next 3 months")), "earlier_models_link": pg.locator("#dsec-aladin [data-aladin]").count() == 1,
+                               "no_a2_brief_on_stock_page": pg.locator("#dsec-aladin #a2-brief").count() == 0}
+            # the ALADIN 2.0 brief where it still lives: the old weekly signal, a row's range tab (inside ALADIN BOT)
+            pg.goto(BASE + "/expert-dev.html#v=sigold"); pg.reload(); pg.wait_for_selector("#sg-list tbody tr", state="attached", timeout=60000)
+            pg.evaluate("document.querySelector('#sg-list tbody tr').click()"); pg.wait_for_selector("[data-t=range]", state="attached", timeout=20000)
+            pg.evaluate("document.querySelector('[data-t=range]').click()"); pg.wait_for_selector("#a2-brief svg", state="attached", timeout=30000)
             br = pg.locator("#a2-brief"); txt = br.inner_text()
             v["brief"] = {"disclaimer": DIS in txt, "as_of": "as of" in txt.lower(), "svg_titles": br.locator("svg title").count(), "svg_with_label": br.locator("svg[role=img][aria-label]").count(), "inputs_labelled": br.locator("label input").count() == br.locator("input").count(),
                           "table_fallback": br.locator("details summary").count() >= 1}
+            pg.evaluate("document.querySelector('[data-go=a2bot]').click()"); pg.wait_for_selector(".a2b-earlier [data-go=a2]", state="attached", timeout=30000)
             pg.evaluate("document.querySelector('.a2b-earlier [data-go=a2]').click()"); pg.wait_for_timeout(1200)
             for t in TABS:
                 pg.evaluate(f"document.querySelector('[data-tab={t}]').click()"); pg.wait_for_timeout(1500)

@@ -99,6 +99,17 @@ jobs:
         timeout-minutes: 5
         run: python scripts/aladin_e_weekly.py
 
+      - name: Node for the Technicals gauge record (it runs the page's own chart-indicators.js)
+        continue-on-error: true
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Technicals gauge track record for the stock page's "Three questions" box (re-tests at most every 28 days, data/config/technicals_record.json)
+        continue-on-error: true
+        timeout-minutes: 10
+        run: node scripts/technicals_record.mjs
+
       - name: Fundamentals for the terminal (NIFTY 500 daily, rest of the main board 1/5 per run, business-house members always)
         continue-on-error: true
         run: python scripts/terminal_fund.py

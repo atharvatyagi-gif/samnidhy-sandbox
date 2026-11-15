@@ -1077,6 +1077,20 @@ function perfFrom(sym) {
   return [["1W", f(back(5))], ["1M", f(back(21))], ["3M", f(back(63))], ["6M", f(back(126))], ["YTD", f(ytd)], ["1Y", f(back(250))], ["3Y", f(back(745))], ["5Y", f(back(1240))]];
 }
 S.tech = {}; S.rec = {};
+let techRec, techRecLoading = null;                     // the Technicals gauge's track record (scripts/technicals_record.mjs), for the "Three questions" box
+function loadTechRec() {
+  if (techRec !== undefined || techRecLoading || !S.deskMan) return;
+  if (!S.deskMan.tech_rec) { techRec = null; return; }
+  techRecLoading = getJSON("technicals_record.json", false).then(j => { techRec = j; }).catch(() => { techRec = null; }).finally(() => { techRecLoading = null; if (side === "details") renderDetails(); });
+}
+let VX = null, vxLoading = null;                         // desk-verdict.js loads when a stock's details first open, never at start-up (the Brief's 2 s budget)
+function verdictBox(sym) {
+  if (!VX) { if (!vxLoading) vxLoading = import("./desk-verdict.js").then(m => { VX = m; if (side === "details") renderDetails(); }).catch(() => { vxLoading = null; }); return `<div class="vx"><div class="sec-t">Three questions, three answers</div><p class="note">Loading…</p></div>`; }
+  loadTechRec();
+  const T = S.daily[sym] === undefined ? undefined : (S.tech[sym] !== undefined ? S.tech[sym] : (S.tech[sym] = technicals(dailyBars(sym))));
+  const ten = Legacy.unlocked() ? Aladin.tenDay(sym) : null;
+  return VX.verdictHtml({ sym, tech: T ? T.all.label : null, techRec, e: AE.view(sym), ten }, esc);
+}
 const dailyBars = sym => dailyOf(sym).map(r => ({ time: r[0], o: r[1], h: r[2], l: r[3], c: r[4], v: r[5], day: r[0] }));
 const pctS = v => v == null ? "--" : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + "%";
 function analysisHtml(sym) {
@@ -1087,7 +1101,7 @@ function analysisHtml(sym) {
   eng.suggested = R ? R.top.map(r => ({ name: r.name, add: r.add })) : [];
   const gauge = (lbl, sc) => `<div class="tg"><div class="tg-top"><span class="mut">${lbl}</span><b class="${sc.score > 0.1 ? "up" : sc.score < -0.1 ? "down" : ""}">${sc.label}</b></div>
     <div class="tg-bar"><i style="left:calc(${((sc.score + 1) / 2 * 100).toFixed(1)}% - 2px)"></i></div><div class="tg-n">${sc.bear} bearish · ${sc.neutral} neutral · ${sc.bull} bullish</div></div>`;
-  let h = `<div class="sec-t">Technicals · daily</div>`;
+  let h = `<div class="sec-t">Technicals · trend so far (daily)</div>`;
   h += T ? gauge("Summary", T.all) + `<div class="tg2">${gauge("Moving averages", T.ma)}${gauge("Oscillators", T.osc)}</div>
     <details class="tg-rows"><summary>All ${T.rows.length} signals</summary><table class="prints"><tbody>${T.rows.map(r => `<tr><td>${esc(r.name)}</td><td class="num">${inr(r.value)}</td><td class="${r.sig > 0 ? "up" : r.sig < 0 ? "down" : "mut"}">${r.sig > 0 ? "Bullish" : r.sig < 0 ? "Bearish" : "Neutral"}</td></tr>`).join("")}</tbody></table></details>
     <p class="note">Counts simple rules (price vs 12 moving averages; RSI, Stochastic, CCI, ADX, Momentum, MACD, Williams %R), the way TradingView's Technicals gauge does. Not advice.</p>`
@@ -1137,7 +1151,7 @@ function renderDetails() {
   const perfHtml = perf ? `<div class="perf">${perf.map(([k, v]) => `<div class="${v == null ? "" : v >= 0 ? "pu" : "pd"}"><span>${k}</span><b class="${ud(v)}">${v == null ? "--" : sg(v, 1) + "%"}</b></div>`).join("")}</div>` : "";
   const sections = [
     ["overview", "Overview", `${rangeBar("Day's range", x.l, x.h, x.p)}${rangeBar("52-week range", s.lo52, s.hi52, x.p)}<div class="sec-t">Key stats</div>${statsHtml}${perfHtml ? `<div class="sec-t">Performance</div>${perfHtml}` : ""}`],
-    ["aladin", "ALADIN & signals", `${AE.miniHtml(sec)}${analysisHtml(sec)}${Legacy.unlocked() ? `<div class="sec-t">Earlier models (ALADIN BOT)</div>${A2.wrap(sec)}${outlookHtml(sec)}${Aladin.renderAladinMini(sec)}` : ""}`],
+    ["aladin", "ALADIN & signals", `${verdictBox(sec)}${AE.miniHtml(sec)}${analysisHtml(sec)}${Legacy.unlocked() ? `<p class="note">Earlier models for ${esc(sec)} (ALADIN 1, ALADIN 2.0, Outlook) are kept for comparison inside ALADIN BOT: <a href="#" data-aladin="${esc(sec)}">open ${esc(sec)} there →</a></p>` : ""}`],
     ["revenue", "Revenue & links", revDepsHtml(sec) + predHtml(sec)],
     ["analyst", "Analyst view", analyst],
     ["screen", "B-Lab screen", screen],
@@ -1463,19 +1477,6 @@ function renderOutlook() {
 $$("#ol-mode button").forEach(b => b.onclick = () => { olMode = b.dataset.om; $$("#ol-mode button").forEach(x => x.classList.toggle("on", x === b)); renderOutlook(); });
 $("#ol-sector").onchange = e => { olSector = e.target.value; renderOutlook(); };
 $("#ol-q").oninput = e => { olQuery = e.target.value; renderOutlook(); };
-function outlookHtml(sym) {
-  const P = S.pred, v = P && P.stocks ? P.stocks[sym] : null;
-  let h = `<div class="sec-t">Model outlook · next ${P ? P.horizon_days : 20} trading days</div>`;
-  if (!P || !P.stocks) return h + `<p class="note">The model hasn't been published yet.</p>`;
-  if (!v) return h + `<p class="note">${esc(sym)} is outside the NIFTY 500 (or lacks enough history), so the model doesn't cover it.</p>`;
-  const M = P.oos.metrics;
-  return h + `<div class="ol-mini"><div class="tg-top"><span class="mut">Chance it beats NIFTY 50</span><b class="${v.p >= 0.55 ? "up" : v.p <= 0.45 ? "down" : ""}">${pct0(v.p)}</b></div>
-      <div class="tg-bar"><i style="left:calc(${Math.round(v.p * 100)}% - 2px)"></i></div>
-      <div class="tg-n">Decile ${v.dec}/10 · stocks in this decile did ${pct1(v.er)} vs NIFTY on average (unseen years)</div>
-      <div class="ol-drv">${driversHtml(v.drivers, 5)}</div>
-      <p class="note">Model right ${pct0(M.accuracy)} of the time on unseen years (coin flip ${pct0(M.base_rate)}). As of ${esc(P.as_of)} close. <a href="#" data-go="outlook">How good is it? →</a></p></div>`;
-}
-
 /* ================= GLOBE (globe.json: scripts/globe_data.py) ================= */
 // Real live flight positions (OpenSky) near 7 shipping/oil chokepoints, real news about each (GDELT), and a
 // general world-events feed (GDELT). No live cargo-ship positions exist for free anywhere, so ships aren't

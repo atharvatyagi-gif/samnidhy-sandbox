@@ -471,6 +471,16 @@ export function geoDelta(sym) {
   const without = combine(a.t.p[h], F, Math.max(-100, Math.min(100, sn.sc - geo * 100)), sw == null ? null : sw, W(), I).p;
   return { dp: Math.round((withG - without) * 1000) / 10, geo, h };
 }
+/* ALADIN 1's chance of a rise at its main horizon for the stock page's "Three questions" box (desk-verdict.js): the chance, its rank
+   today, and the tested hit rates of its top and bottom 10% against any stock (out-of-sample record in aladin.json). null if not loaded. */
+export function tenDay(sym) {
+  if (!ctx || !ctx.S.aladin) return null;
+  const A = ctx.S.aladin, h = A.primary || 10, c = calc(sym, h);
+  if (!c) return null;
+  const m = ((A.oos || {})[h] || {}).metrics || {};
+  return { p: c.p, h, rank: rankOf(h, c.p), top: m.top_decile_hit ?? null, bottom: m.bottom_decile_hit ?? null, base: m.base_rate ?? null };
+}
+
 export function stockView(sym) {
   if (!ctx || !ctx.S.aladin) return null;
   const h = ctx.S.aladin.primary || 10, c = calc(sym, h);
