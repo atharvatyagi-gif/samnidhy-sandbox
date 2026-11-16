@@ -3,8 +3,9 @@
 # data/supply_graph.json. The next Live prices run publishes it (build_site.py), the nightly ALADIN run scores it.
 # Daily until the whole Nifty 500 has been read (the builder takes Nifty 500 first and stops cleanly when the day's free quota is used up, resuming next day); filings change only a few times a year, so after that a weekly run is enough.
 # The derived-share step reads the related-party notes of companies already in the graph (it resumes where it stopped and skips finished ones).
-# Every step may fail: the repository keeps the previous graph, and the file is only saved when check_graph.py says "ok".
-# Commits end in "[skip ci]" and touch nothing but data/supply_graph.json.
+# Every step may fail: the repository keeps the previous graph, and the file is only saved when check_graph.py says "ok"
+# (a failed check is named in the log, as an annotation on the run page and in the job summary).
+# Commits end in "[skip ci]" and touch only data/supply_graph.json and the revenue, BRSR and dependency profiles.
 name: NEXUS graph
 
 on:
@@ -124,14 +125,24 @@ jobs:
           path: data/nexus_cache
           key: nexus-${{ github.run_id }}
 
-      - name: Save supply_graph.json to the repository (only when the audit passed)
-        if: steps.audit.outcome == 'success'
+      # The graph is saved only when its audit passed. The revenue, BRSR and dependency profiles have nothing to do with the graph's
+      # audit, so they are saved every run (from 24 Oct to 15 Nov 2026 a graph-only size rule also held them back); when the graph
+      # fails, the committed graph is put back first, so dependencies.json is built from the audited graph, never the rejected one.
+      - name: Save to the repository (supply_graph.json only when the audit passed; the revenue, BRSR and dependency profiles every run)
+        if: always()
         continue-on-error: true
+        env:
+          AUDIT: ${{ steps.audit.outcome }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$AUDIT" != "success" ]; then
+            echo "::warning title=NEXUS graph not saved::the audit outcome was '$AUDIT' (the 'Audit the graph' step names each failed check); the repository keeps its previous supply_graph.json"
+            git checkout -- data/supply_graph.json 2>/dev/null || true
+          fi
           python scripts/dependency_profile.py || true
-          git add data/supply_graph.json data/revenue_profile.json data/brsr_profile.json data/dependencies.json 2>/dev/null || git add data/supply_graph.json
+          for f in data/revenue_profile.json data/brsr_profile.json data/dependencies.json; do if [ -f "$f" ]; then git add "$f"; fi; done
+          if [ "$AUDIT" = "success" ]; then git add data/supply_graph.json; fi
           if git diff --cached --quiet; then
             echo "Nothing new to save."
           else

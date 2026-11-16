@@ -189,6 +189,59 @@ def test_audit_flags_weak_anonymous_resolution_and_unlabelled_coordinates():
     assert any("evidence" in p for p in probs) and any("precision" in p for p in probs)
 
 
+def big_graph(n_fac, quote):
+    """good_doc() with n_fac facilities that pass every other check; quote(i) gives each one's text."""
+    d = good_doc()
+    d["fac"] = {f"FAC_{i}": {"co": "BOSCHLTD", "n": f"Plant {i}", "kind": "plant", "url": "https://nsearchives.nseindia.com/annual_reports/AR_x.pdf",
+                             "pg": i % 300 + 1, "q": quote(i), "lat": None, "lon": None, "geo_prec": None} for i in range(n_fac)}
+    return d
+
+
+def test_size_rule_is_the_download_budget_not_the_old_3_mb_raw_rule():
+    """The 15 Nov 2026 graph (3,157,485 bytes raw, ~460 KB gzip; its only problem was the old raw 3 MB rule) must pass; over either budget fails, named."""
+    d = good_doc()
+    assert cg.audit(d, size_bytes=3_157_485, gzip_bytes=460_000) == []
+    assert cg.audit(d, size_bytes=cg.RAW_LIMIT, gzip_bytes=cg.DOWNLOAD_LIMIT) == []
+    over_dl = cg.audit(d, size_bytes=5_000_000, gzip_bytes=cg.DOWNLOAD_LIMIT + 1)
+    assert len(over_dl) == 1 and "download" in over_dl[0] and f"{cg.DOWNLOAD_LIMIT:,}" in over_dl[0]
+    over_raw = cg.audit(d, size_bytes=cg.RAW_LIMIT + 1, gzip_bytes=900_000)
+    assert len(over_raw) == 1 and "on disk" in over_raw[0]
+    assert cg.RAW_LIMIT >= 10_000_000 and cg.DOWNLOAD_LIMIT >= 1_400_000, "the budgets must leave room for the whole universe (~10 MB raw, ~1.4 MB gzip)"
+
+
+def test_main_passes_a_real_sized_graph_and_names_a_failed_check_in_actions(tmp_path, monkeypatch, capsys):
+    import os
+    ok = tmp_path / "supply_graph.json"
+    ok.write_text(json.dumps(big_graph(11_000, lambda i: f"The Company operates its manufacturing plant number {i} at Pune, Maharashtra, with an installed capacity of {i * 7} tonnes per annum."), separators=(",", ":")), encoding="utf-8")
+    assert ok.stat().st_size > 3_000_000, "bigger than the old raw limit"
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    assert cg.main([str(ok)]) == 0
+    out = capsys.readouterr().out
+    assert "graph check: ok" in out and "bytes to download" in out
+
+    bad = tmp_path / "bad" / "supply_graph.json"
+    bad.parent.mkdir()
+    bad.write_text(json.dumps(big_graph(25_000, lambda i: os.urandom(66).hex()), separators=(",", ":")), encoding="utf-8")   # random text barely compresses
+    summary = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+    assert cg.main([str(bad)]) == 1
+    out = capsys.readouterr().out
+    assert "PROBLEM size: a visitor would download" in out and "graph check: FAILED (1 problem(s)); supply_graph.json is NOT saved" in out
+    assert "::error title=NEXUS graph audit failed (supply_graph.json not saved)::size: a visitor would download" in out
+    text = summary.read_text(encoding="utf-8")
+    assert "NEXUS graph audit FAILED: 1 problem(s)" in text and "- size: a visitor would download" in text
+
+
+def test_actions_report_is_silent_outside_actions_and_on_a_clean_audit(tmp_path, capsys):
+    summary = tmp_path / "s.md"
+    cg.report_to_actions(["x: missing url"], "supply_graph.json", env={"GITHUB_STEP_SUMMARY": str(summary)})
+    cg.report_to_actions([], "supply_graph.json", env={"GITHUB_ACTIONS": "true", "GITHUB_STEP_SUMMARY": str(summary)})
+    assert capsys.readouterr().out == "" and not summary.exists()
+    cg.report_to_actions([f"e{i}: missing url" for i in range(45)], "supply_graph.json", env={"GITHUB_ACTIONS": "true", "GITHUB_STEP_SUMMARY": str(summary)})
+    assert capsys.readouterr().out.count("::error") == 10 and "...and 5 more" in summary.read_text(encoding="utf-8")
+
+
 # ---------------------------------------------------------------- driver with a mocked model and a fake NSE
 
 class FakeFetcher:
