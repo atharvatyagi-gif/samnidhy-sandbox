@@ -47,3 +47,15 @@ test("one stock across divisions, and the scorecard says when there are too few"
   assert.match(c, /too few so far \(0 of 20\)/); assert.match(c, /from the next close/);
   assert.ok(!/\b(buy|sell|target|recommendation|guaranteed)\b/i.test(headHtml(doc) + orgHtml(doc) + c));
 });
+
+import { techHtml } from "../../lab.js";
+test("the Technical panel shows today's state, the strategy table and the analog days; nothing when not published", () => {
+  assert.equal(techHtml(doc), "");
+  const d = { ...doc, bots: [...doc.bots,
+    { id: "T3", detail: "Today: up trend, high volatility.", data: { state: "up trend, high volatility" } },
+    { id: "T4", data: { today_state: "up trend, high volatility", record: { "up trend, high volatility": { trend: { n: 97, mean_pct: 2.89, ci95_pct: [0.54, 5.24], verdict: "measurably better than the average stock" }, reversal: { n: 101, mean_pct: -0.82, ci95_pct: [-2.18, 0.54], verdict: "no measurable difference" } } } } },
+    { id: "T5", detail: "4 of 10 higher.", data: { analogs: { features: ["21-session return"], days: [{ date: "2013-05-10", distance: 0.8, n50_21: -1.2, n50_63: 3.1, bank_21: null }] } } }] };
+  const h = techHtml(d);
+  assert.match(h, /up trend, high volatility \(today\)/); assert.match(h, /class="up">\+2\.89%/); assert.match(h, /class="mut">-0\.82%/);
+  assert.match(h, /2013-05-10/); assert.match(h, /not measured/); assert.match(h, /after a 0\.4% cost/);
+});

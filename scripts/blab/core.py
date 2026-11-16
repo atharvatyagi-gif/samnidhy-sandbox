@@ -124,8 +124,9 @@ def run_bot(bot: Bot, ctx: Ctx) -> dict:
         detail = (detail + " " if detail else "") + "The source has no date, so its freshness cannot be checked."
     for f in r.get("findings", []):
         f.setdefault("bot", bot.id); f.setdefault("division", bot.division); f.setdefault("source_as_of", r.get("as_of"))
+    extra = {k: v for k, v in r.items() if k not in ("items", "as_of", "detail", "findings", "errors")}   # a bot's own evidence (tables, lists) for the dashboard
     return {**base, "state": state, "detail": detail, "items": r.get("items"), "as_of": r.get("as_of"), "age_h": age,
-            "took_s": round(time.perf_counter() - t0, 2), "errors": r.get("errors", []), "findings": r.get("findings", [])}
+            "took_s": round(time.perf_counter() - t0, 2), "errors": r.get("errors", []), "findings": r.get("findings", []), **({"data": extra} if extra else {})}
 
 
 def run_division(bots, division, ctx=None, workers=8) -> dict:
@@ -187,16 +188,21 @@ def forward(closes, index, seen, h):
     return (closes[d1] / closes[d0] - 1) - (index[d1] / index[d0] - 1), d0
 
 
-def scorecard(ledger, prices, index):
-    """Per bot and horizon: findings scored, mean of (direction x excess return vs NIFTY 500) in %, 95% range, share right, verdict."""
-    out = {}
+def scorecard(ledger, prices, index, scopes=None):
+    """Per bot and horizon: findings scored, mean of (direction x excess return vs NIFTY 500) in %, 95% range, share right, verdict.
+    A finding about a whole market (scope, e.g. "NIFTY 50", no stock) is scored on that index's own return, not an excess."""
+    out, scopes = {}, scopes or {}
     for bot in sorted({f["bot"] for f in ledger}):
-        rows = [f for f in ledger if f["bot"] == bot and f.get("direction") in (1, -1) and f.get("sym")]
+        rows = [f for f in ledger if f["bot"] == bot and f.get("direction") in (1, -1) and (f.get("sym") or f.get("scope") in scopes)]
         out[bot] = {"directional": len(rows)}
         for h in HORIZONS:
             xs = []
             for f in rows:
-                r = forward(prices.get(f["sym"], {}), index, f["seen"], h)
+                if f.get("sym"):
+                    r = forward(prices.get(f["sym"], {}), index, f["seen"], h)
+                else:
+                    ser = scopes[f["scope"]]
+                    r = forward(ser, {d: 1.0 for d in ser}, f["seen"], h)          # a flat benchmark: the index's own return
                 if r is not None:
                     xs.append(f["direction"] * r[0] * 100)
             n = len(xs)

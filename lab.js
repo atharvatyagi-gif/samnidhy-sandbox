@@ -80,6 +80,31 @@ export function scoreHtml(doc) {
     <tbody>${ids.map(id => `<tr><td>${esc(id)}</td><td>${doc.scorecard[id].directional}</td>${H.map(h => `<td>${cell(doc.scorecard[id][String(h)])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 
+const STATES = ["up trend, low volatility", "up trend, normal volatility", "up trend, high volatility", "down trend, low volatility", "down trend, normal volatility", "down trend, high volatility"];
+const pc2 = v => v == null ? "" : `${v > 0 ? "+" : ""}${Number(v).toFixed(2)}%`;
+
+/* The Technical division's own evidence: today's state, the strategy-by-state record, the analog days. "" when not published. */
+export function techHtml(doc) {
+  const by = id => (doc.bots || []).find(b => b.id === id) || {};
+  const T3 = by("T3"), T4 = by("T4"), T5 = by("T5");
+  const rec = T4.data && T4.data.record, today = (T4.data && T4.data.today_state) || (T3.data && T3.data.state), an = T5.data && T5.data.analogs;
+  if (!rec && !an) return "";
+  let h = `<p class="note">Today's market state: <b>${esc(today || "not measured")}</b>. ${esc(T3.detail || "")}</p>`;
+  if (rec) {
+    const strats = [...new Set(Object.values(rec).flatMap(x => Object.keys(x)))];
+    const cell = c => !c ? "" : `<span class="${/better/.test(c.verdict) ? "up" : /worse/.test(c.verdict) ? "down" : "mut"}">${esc(pc2(c.mean_pct))}</span><br><small>${c.ci95_pct ? esc(`${pc2(c.ci95_pct[0])} to ${pc2(c.ci95_pct[1])}`) : ""} · ${c.n}</small>`;
+    h += `<div class="lab-scroll" tabindex="0" role="region" aria-label="Strategy lab by market state"><table class="lab-tbl"><caption class="note">Strategy lab: each strategy's best 10% against the average stock over the next 21 sessions, after a 0.4% cost, by the market state on the day it picked (range, start days). Green or red only when the range is clear of zero.</caption>
+      <thead><tr><th>Strategy</th>${STATES.map(s => `<th${s === today ? ' class="lab-now"' : ""}>${esc(s)}${s === today ? " (today)" : ""}</th>`).join("")}</tr></thead>
+      <tbody>${strats.map(k => `<tr><td>${esc(k)}</td>${STATES.map(s => `<td${s === today ? ' class="lab-now"' : ""}>${cell((rec[s] || {})[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  }
+  if (an && an.days) {
+    h += `<p class="note">${esc(T5.detail || "")}</p><div class="lab-scroll" tabindex="0" role="region" aria-label="Analog days"><table class="lab-tbl"><thead><tr><th>Past day most like today</th><th>Distance</th><th>NIFTY 50, next 21 sessions</th><th>next 63</th><th>Bank Nifty, next 21</th></tr></thead>
+      <tbody>${an.days.map(x => `<tr><td>${esc(x.date)}</td><td>${esc(x.distance)}</td><td class="${x.n50_21 > 0 ? "up" : "down"}">${esc(pc2(x.n50_21))}</td><td class="${x.n50_63 > 0 ? "up" : "down"}">${esc(pc2(x.n50_63))}</td><td>${esc(x.bank_21 == null ? "not measured" : pc2(x.bank_21))}</td></tr>`).join("")}</tbody></table></div>
+      <p class="note">Compared on: ${esc((an.features || []).join(", "))}.</p>`;
+  }
+  return h;
+}
+
 export function filtersHtml(doc) {
   return `<div class="lab-filters"><label>Division <select id="lab-div"><option value="">All</option>${doc.divisions.map(d => `<option value="${esc(d.id)}">${esc(d.name)}</option>`).join("")}</select></label>
     <label>Bot <select id="lab-bot"><option value="">All</option>${doc.bots.filter(b => b.role === "analyst" || b.findings_total).map(b => `<option value="${esc(b.id)}">${esc(b.id)} · ${esc(b.name)}</option>`).join("")}</select></label>
@@ -93,6 +118,7 @@ async function boot() {
   catch (e) { root.innerHTML = `<p class="note">The research desk has not published yet (blab/status.json is missing). It runs every evening after the daily update.</p>`; return; }
   root.innerHTML = `<header class="lab-head">${headHtml(doc)}</header>
     <h2 class="sec-t">Divisions and bots</h2>${orgHtml(doc)}
+    ${techHtml(doc) ? `<h2 class="sec-t">Technical: market state, strategies, analogs</h2>${techHtml(doc)}` : ""}
     <h2 class="sec-t">Findings</h2>${filtersHtml(doc)}<div id="lab-feed"></div>
     <h2 class="sec-t">One stock, every division</h2><div class="lab-filters"><label>Stock <input id="lab-one" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. IDEA"></label></div><div id="lab-stock">${stockHtml(doc, "")}</div>
     <h2 class="sec-t">Scorecards</h2>${scoreHtml(doc)}

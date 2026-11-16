@@ -37,6 +37,11 @@ def site_prices(syms, fetch=core.fetch_json):
     return got, idx
 
 
+def site_scopes(fetch=core.fetch_json):
+    """Index series for findings about a whole market (scope)."""
+    return {"NIFTY 50": {r[0]: r[4] for r in fetch(core.SITE_URL + "t/x/d/Nifty_2050.json").get("d", [])}}
+
+
 def collect(parts, now=None, prices=None, out=core.OUT):
     now = now or datetime.now(timezone.utc)
     out.mkdir(parents=True, exist_ok=True)
@@ -54,7 +59,8 @@ def collect(parts, now=None, prices=None, out=core.OUT):
     syms = {f["sym"] for f in ledger if f.get("sym") and f.get("direction") in (1, -1)}
     try:
         px, idx = prices if prices is not None else (site_prices(syms) if syms else ({}, {}))
-        card = core.scorecard(ledger, px, idx)
+        sc = {} if prices is not None else (site_scopes() if any(f.get("scope") and not f.get("sym") for f in ledger) else {})
+        card = core.scorecard(ledger, px, idx, sc)
         card_note = None
     except Exception as e:  # noqa: BLE001  scoring needs the site's prices; without them the status still publishes
         card, card_note = {}, f"Scoring skipped this run: prices could not be read ({type(e).__name__})."

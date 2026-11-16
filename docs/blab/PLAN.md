@@ -88,7 +88,10 @@ analyst runs on what they found. A final job merges, scores and publishes. Free 
    (NSE shareholding history, SAST Reg 29), F3 governance (NSE announcements by category), F5 blind-spot analyst with rules
    R1-R9 written in that file before scoring (one refinement after reading the first run, recorded there). Not measured, with
    reasons: insider (PIT) trades (NSE's feed returns no recent rows), rating direction and pledges (only in the PDFs).
-3. Technical: T3-T5 (regime, strategy lab, analogs).
+3. Technical: T3-T5 (regime, strategy lab, analogs). **Done 2026-11-16** (scripts/blab/technical.py, rules written there
+   before results): T3 state = NIFTY 50 trend x volatility since 2007 (+ breadth); T4 six strategies by state after a 0.4% cost,
+   picks filed only for strategies measurably better in today's state; T5 the 10 nearest past days, a lean only at 8+ of 10;
+   T2 adds NSE bulk/block/short deals. F&O open interest: not measured yet. Dashboard: the strategy-by-state table and analogs.
 4. Macro: M1-M4, with the freshness checks and the tested outcome.
 5. Sentiment: S3, S6 and S7, ending with the AI analyst and the event historian.
 6. Scorecards run at least 8 weeks; then the owner chooses what moves to the main site.

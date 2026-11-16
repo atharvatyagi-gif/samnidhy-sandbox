@@ -1312,3 +1312,5 @@ body.lab-page { overflow: auto; background: var(--paper); }
 .lab a { color: var(--ink); }
 .lab .up { color: var(--up); } .lab .down { color: var(--down); } .lab .mut { color: var(--ink-3); }
 .lab-foot { margin-top: 24px; }
+.lab-tbl caption { text-align: left; padding: 8px 10px; caption-side: top; }
+.lab-tbl .lab-now { background: var(--card-hover); }

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from .core import Bot
 from .fundamental import f2_ownership, f3_governance, f5_blind_spots
+from .technical import t2_flows, t3_regime, t4_lab, t5_analogs
 
 
 def _f1_statements(ctx):
@@ -40,15 +41,6 @@ def _t1_prices(ctx):
     last = (n5.get("d") or [[None]])[-1][0]
     return {"items": q.get("covered") or len(q.get("quotes", {})), "as_of": last,
             "detail": f"End-of-day prices for {q.get('covered')} of {q.get('main_board')} main-board stocks (session {q.get('session_date')}); NIFTY 500 to {last}."}
-
-
-def _t2_flows(ctx):
-    f, _ = ctx.read("data/institutional/fii_dii.json")
-    days = f.get("days", [])
-    last = days[-1] if days else {}
-    return {"items": len(days), "as_of": last.get("date"),
-            "detail": f"FII/DII cash-market flows for {len(days)} sessions to {last.get('date')} (FII net Rs {last.get('fii', {}).get('net_cr', 0):,.0f} Cr, DII net Rs {last.get('dii', {}).get('net_cr', 0):,.0f} Cr). "
-                      "Bulk and block deals and F&O open interest arrive in step 3."}
 
 
 def _s1_india_media(ctx):
@@ -108,10 +100,10 @@ BOTS = [
     B("F5", "fundamental", "Blind-spot analyst", "analyst", "Nine red-flag tests on ownership, governance and the annual statements, each finding citing its filing.", ["F2", "F3", "annual statements"], 100, f5_blind_spots, 2),
     # Technical: what trading produces
     B("T1", "technical", "Price scout", "scout", "End-of-day prices, volume and every NSE index.", ["NSE end-of-day files", "Yahoo Finance"], 100, _t1_prices, 1, "scripts/nse_eod.py, scripts/terminal_hist.py, scripts/indices_eod.py"),
-    B("T2", "technical", "Flows scout", "scout", "FII/DII flows; bulk and block deals and F&O open interest from step 3.", ["NSE FII/DII report"], 100, _t2_flows, 1, "the daily update's FII/DII step"),
-    B("T3", "technical", "Regime bot", "analyst", "Today's market state: trend, volatility, breadth.", ["T1", "T2"], 100, None, 3),
-    B("T4", "technical", "Strategy lab", "analyst", "A fixed library of strategies tested in every past market state.", ["T1", "T3"], 100, None, 3),
-    B("T5", "technical", "Analog finder", "analyst", "The past periods most like today and what came next.", ["T1", "T3"], 100, None, 3),
+    B("T2", "technical", "Flows scout", "scout", "FII/DII flows and NSE's bulk, block and short deals; F&O open interest not measured yet.", ["NSE FII/DII report", "NSE large deals"], 100, t2_flows, 3, "also the daily update's FII/DII step"),
+    B("T3", "technical", "Regime bot", "analyst", "Today's market state (trend x volatility) from NIFTY 50 history since 2007, with breadth.", ["NSE index history", "history branch"], 100, t3_regime, 3),
+    B("T4", "technical", "Strategy lab", "analyst", "Six fixed strategies tested in every past market state after costs; files the picks of those measurably better in today's.", ["NSE prices of the 500 stocks since 1996"], 24 * 8, t4_lab, 3),
+    B("T5", "technical", "Analog finder", "analyst", "The 10 past days most like today and what NIFTY 50 and Bank Nifty did next.", ["NSE index history"], 100, t5_analogs, 3),
     # Macro: official statistics
     B("M1", "macro", "India scout", "scout", "RBI (repo, liquidity, credit, reserves) and MOSPI (CPI, IIP, GDP).", ["RBI DBIE", "MOSPI"], 24 * 45, None, 4),
     B("M2", "macro", "Global scout", "scout", "US and global rates, inflation, dollar, and India series, from FRED and the World Bank.", ["FRED (free key)", "World Bank API"], 24 * 45, None, 4),

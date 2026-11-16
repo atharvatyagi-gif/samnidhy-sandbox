@@ -26,7 +26,7 @@ concurrency:
 jobs:
   division:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -49,6 +49,23 @@ jobs:
             ~/.cache/huggingface
           key: blab-read-only-${{ github.run_id }}
           restore-keys: aladin-cache-
+      - name: Prices and NSE access for the Technical division
+        if: matrix.division == 'technical'
+        run: pip install requests==2.34.2 numpy
+      - name: Daily prices for the Technical division (read-only copy of the daily job's cache)
+        if: matrix.division == 'technical'
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: data/terminal
+          key: blab-read-only-${{ github.run_id }}
+          restore-keys: terminal-
+      - name: Older price history (the daily job's "history" branch, NIFTY 50 from 2007, stocks from 1996)
+        if: matrix.division == 'technical'
+        continue-on-error: true
+        run: |
+          mkdir -p data/terminal/archive
+          git fetch -q --depth=1 origin history && git archive FETCH_HEAD | tar -x -C data/terminal/archive
       - name: Run the ${{ matrix.division }} division
         continue-on-error: true
         run: python scripts/blab/run.py --division ${{ matrix.division }} --out blab_${{ matrix.division }}.json
@@ -59,11 +76,23 @@ jobs:
           path: blab_${{ matrix.division }}.json
           if-no-files-found: warn
           retention-days: 3
-      - uses: actions/upload-artifact@v4          # only the division that writes the stores uploads them (others hold stale copies)
+      - uses: actions/upload-artifact@v4          # only the division that writes a store uploads it (others hold stale copies)
         if: always() && matrix.division == 'fundamental'
         with:
           name: blab-store-fundamental
-          path: data/blab/store/
+          path: |
+            data/blab/store/shareholding.json
+            data/blab/store/sast29.json
+            data/blab/store/announcements.json
+          if-no-files-found: warn
+          retention-days: 3
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.division == 'technical'
+        with:
+          name: blab-store-technical
+          path: |
+            data/blab/store/deals.json
+            data/blab/store/strategy_lab.json
           if-no-files-found: warn
           retention-days: 3
 
@@ -85,7 +114,7 @@ jobs:
       - name: Put the Fundamental stores back in place
         run: |
           mkdir -p data/blab/store
-          for f in shareholding.json sast29.json announcements.json; do [ -f "$f" ] && mv -f "$f" data/blab/store/ || true; done
+          for f in shareholding.json sast29.json announcements.json deals.json strategy_lab.json; do [ -f "$f" ] && mv -f "$f" data/blab/store/ || true; done
       - name: Collect, score and write data/blab (the scouts' stores came back in data/blab/store/)
         run: python scripts/blab/run.py --collect blab_*.json
       - name: Save data/blab to the repository (the next Live prices run publishes it)
