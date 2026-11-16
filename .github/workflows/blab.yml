@@ -43,8 +43,10 @@ jobs:
         if: matrix.division == 'fundamental'
         uses: actions/cache/restore@v4
         continue-on-error: true
-        with:
-          path: data/aladin_cache
+        with:                                   # the SAME paths as aladin.yml saves: a cache only matches its exact path list
+          path: |
+            data/aladin_cache
+            ~/.cache/huggingface
           key: blab-read-only-${{ github.run_id }}
           restore-keys: aladin-cache-
       - name: Run the ${{ matrix.division }} division
