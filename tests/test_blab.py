@@ -117,5 +117,8 @@ def test_headline_scorer_uses_named_news_only_and_its_declared_rule():
 
 
 def test_no_bot_reads_the_env_file():
-    for p in (ROOT / "scripts" / "blab").glob("*.py"):              # keys come from the environment (GitHub secrets), never from .env
-        assert ".env" not in p.read_text(encoding="utf-8"), p.name
+    bad = ('".env"', "'.env'", "/.env", "dotenv")                  # a path to the key file or a loader; os.environ (GitHub secrets) is fine
+    for p in (ROOT / "scripts" / "blab").glob("*.py"):
+        txt = p.read_text(encoding="utf-8")
+        assert not any(b in txt for b in bad), p.name
+    assert any(b in 'open(".env")' for b in bad) and not any(b in 'os.environ.get("FRED_API_KEY")' for b in bad)

@@ -3,7 +3,8 @@
 # scores the older ones against the NIFTY 500 and saves data/blab/. The next Live prices run publishes it for lab.html.
 # Twice a day: after the evening daily update (21:00 IST) and before the market opens (08:15 IST). Standard library only,
 # except the Fundamental division: `requests` for NSE (through the repository's own NSE session) and a read-only copy of the
-# ALADIN statements cache. Scouts keep small rolling stores in data/blab/store/, saved by the collect job.
+# ALADIN statements cache. Scouts keep small rolling stores in data/blab/store/, saved by the collect job. The Macro job alone
+# receives the free FRED key (GitHub secret FRED_API_KEY); it is never written to a file or a log.
 # Free sources only (owner, 15 Nov 2026). Commits end in "[skip ci]" and touch nothing but data/blab/.
 name: B-Lab research desk
 
@@ -66,8 +67,16 @@ jobs:
         run: |
           mkdir -p data/terminal/archive
           git fetch -q --depth=1 origin history && git archive FETCH_HEAD | tar -x -C data/terminal/archive
+      - name: NIFTY 50 and Bank Nifty since 2007 for the macro analyst (two files from the "history" branch)
+        if: matrix.division == 'macro'
+        continue-on-error: true
+        run: |
+          mkdir -p data/terminal/archive
+          git fetch -q --depth=1 origin history && git archive FETCH_HEAD _5eNSEI.json _5eNSEBANK.json | tar -x -C data/terminal/archive
       - name: Run the ${{ matrix.division }} division
         continue-on-error: true
+        env:
+          FRED_API_KEY: ${{ matrix.division == 'macro' && secrets.FRED_API_KEY || '' }}      # only the Macro job sees the free FRED key
         run: python scripts/blab/run.py --division ${{ matrix.division }} --out blab_${{ matrix.division }}.json
       - uses: actions/upload-artifact@v4
         if: always()
@@ -84,6 +93,15 @@ jobs:
             data/blab/store/shareholding.json
             data/blab/store/sast29.json
             data/blab/store/announcements.json
+          if-no-files-found: warn
+          retention-days: 3
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.division == 'macro'
+        with:
+          name: blab-store-macro
+          path: |
+            data/blab/store/fred.json
+            data/blab/store/rbi.json
           if-no-files-found: warn
           retention-days: 3
       - uses: actions/upload-artifact@v4
@@ -114,7 +132,7 @@ jobs:
       - name: Put the Fundamental stores back in place
         run: |
           mkdir -p data/blab/store
-          for f in shareholding.json sast29.json announcements.json deals.json strategy_lab.json; do [ -f "$f" ] && mv -f "$f" data/blab/store/ || true; done
+          for f in shareholding.json sast29.json announcements.json deals.json strategy_lab.json fred.json rbi.json; do [ -f "$f" ] && mv -f "$f" data/blab/store/ || true; done
       - name: Collect, score and write data/blab (the scouts' stores came back in data/blab/store/)
         run: python scripts/blab/run.py --collect blab_*.json
       - name: Save data/blab to the repository (the next Live prices run publishes it)

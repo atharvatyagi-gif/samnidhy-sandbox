@@ -92,7 +92,11 @@ analyst runs on what they found. A final job merges, scores and publishes. Free 
    before results): T3 state = NIFTY 50 trend x volatility since 2007 (+ breadth); T4 six strategies by state after a 0.4% cost,
    picks filed only for strategies measurably better in today's state; T5 the 10 nearest past days, a lean only at 8+ of 10;
    T2 adds NSE bulk/block/short deals. F&O open interest: not measured yet. Dashboard: the strategy-by-state table and analogs.
-4. Macro: M1-M4, with the freshness checks and the tested outcome.
+4. Macro: M1-M4, with the freshness checks and the tested outcome. **Built 2026-11-17, waiting for the owner's OK on the
+   preview** (scripts/blab/macro.py, factor rules written there before results). India: RBI (daily snapshot), FRED India
+   10-year and call-money rate, MOSPI CPI (late: the API stops at Dec 2025 after the base change). US inputs (owner,
+   2026-11-16: US and Indian inputs allowed, findings about Indian markets only): FRED fed funds, CPI, sentiment, rupee,
+   Brent, dollar, US VIX, US 10-year. First result: no factor measurably changed NIFTY 50's next 63 sessions since 2007.
 5. Sentiment: S3, S6 and S7, ending with the AI analyst and the event historian.
 6. Scorecards run at least 8 weeks; then the owner chooses what moves to the main site.
 

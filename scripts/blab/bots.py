@@ -10,6 +10,7 @@ from __future__ import annotations
 from .core import Bot
 from .fundamental import f2_ownership, f3_governance, f5_blind_spots
 from .technical import t2_flows, t3_regime, t4_lab, t5_analogs
+from .macro import m1_india, m2_us, m3_market, m4_analyst
 
 
 def _f1_statements(ctx):
@@ -105,10 +106,10 @@ BOTS = [
     B("T4", "technical", "Strategy lab", "analyst", "Six fixed strategies tested in every past market state after costs; files the picks of those measurably better in today's.", ["NSE prices of the 500 stocks since 1996"], 24 * 8, t4_lab, 3),
     B("T5", "technical", "Analog finder", "analyst", "The 10 past days most like today and what NIFTY 50 and Bank Nifty did next.", ["NSE index history"], 100, t5_analogs, 3),
     # Macro: official statistics
-    B("M1", "macro", "India scout", "scout", "RBI (repo, liquidity, credit, reserves) and MOSPI (CPI, IIP, GDP).", ["RBI DBIE", "MOSPI"], 24 * 45, None, 4),
-    B("M2", "macro", "Global scout", "scout", "US and global rates, inflation, dollar, and India series, from FRED and the World Bank.", ["FRED (free key)", "World Bank API"], 24 * 45, None, 4),
-    B("M3", "macro", "Market-macro scout", "scout", "Crude, gold, USD/INR and the US 10-year yield, daily.", ["Yahoo Finance"], 100, None, 4),
-    B("M4", "macro", "Macro analyst", "analyst", "Today's macro state and its tested outcome for the NIFTY 500, sectors and strategies.", ["M1-M3", "T4"], 100, None, 4),
+    B("M1", "macro", "India scout", "scout", "RBI policy rates, CRR, SLR and the rupee reference rate (saved daily); India 10-year yield and call-money rate; India CPI.", ["RBI", "FRED (India series)", "MOSPI"], 100, m1_india, 4),
+    B("M2", "macro", "US scout", "scout", "US fed funds rate, inflation and consumer sentiment, used only for their effect on Indian markets.", ["FRED"], 24 * 60, m2_us, 4),
+    B("M3", "macro", "Market-macro scout", "scout", "Rupee per dollar, Brent, the dollar index, US VIX, US 10-year; India VIX and the 10-year G-Sec index.", ["FRED", "NSE"], 24 * 7, m3_market, 4),
+    B("M4", "macro", "Macro analyst", "analyst", "Six macro factors, each tested since 2007 for what NIFTY 50, Bank Nifty and the six strategies did next.", ["M1-M3", "T4 start-day values"], 100, m4_analyst, 4),
     # Sentiment: what other people write or say
     B("S1", "sentiment", "India media scraper", "scout", "Indian business media headlines.", ["Economic Times, Mint, Business Standard RSS", "Google News"], 6, _s1_india_media, 1, "scripts/news_wire.py"),
     B("S2", "sentiment", "Global & macro scraper", "scout", "World events and news around shipping and oil chokepoints.", ["GDELT", "global wires"], 6, _s2_global, 1, "scripts/globe_data.py"),

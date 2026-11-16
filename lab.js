@@ -105,6 +105,35 @@ export function techHtml(doc) {
   return h;
 }
 
+/* The Macro division's own evidence: every series (value, date, source, late or not), today's factor levels and what NIFTY 50
+   and the strategies did next on such days. "" when not published. */
+export function macroHtml(doc) {
+  const by = id => (doc.bots || []).find(b => b.id === id) || {};
+  const series = ["M1", "M2", "M3"].flatMap(id => ((by(id).data || {}).series || []).map(s => ({ ...s, bot: id })));
+  const M4 = (by("M4").data || {});
+  if (!series.length && !M4.today) return "";
+  let h = "";
+  if (series.length) h += `<div class="lab-scroll" tabindex="0" role="region" aria-label="Macro series"><table class="lab-tbl"><caption class="note">Every macro series the scouts collect. US series are used only for their effect on Indian markets.</caption>
+    <thead><tr><th>Series</th><th>Latest</th><th>Dated</th><th>Source</th><th>On time?</th></tr></thead>
+    <tbody>${series.map(s => `<tr><td>${esc(s.name)}</td><td>${s.value == null ? "not measured" : esc(`${s.unit === "Rs" ? "Rs " : ""}${s.value}${s.unit === "%" ? "%" : ""}`)}${s.extra ? `<br><small>${esc(s.extra)}</small>` : ""}</td><td>${esc(s.date || "")} <small>(${esc(s.freq)})</small></td><td>${esc(s.source)}</td>
+      <td>${s.late ? `<span class="lab-pill st-stale">late</span>${s.why_late ? `<br><small>${esc(s.why_late)}</small>` : ""}` : '<span class="lab-pill st-ok">on time</span>'}</td></tr>`).join("")}</tbody></table></div>`;
+  const o = (M4.outcomes || {})["NIFTY 50 63"];
+  if (M4.today && o) {
+    h += `<div class="lab-scroll" tabindex="0" role="region" aria-label="Macro factors"><table class="lab-tbl"><caption class="note">Six macro factors since 2007, each value counted from the day it was published. NIFTY 50 over the next 63 sessions: on all days ${esc(pc2(o.all_pct))} on average; by level below (difference from all days, 95% range, start days). Green or red only when the range is clear of zero.</caption>
+      <thead><tr><th>Factor</th><th>Today</th><th>NIFTY 50 next 63 sessions, by level</th></tr></thead>
+      <tbody>${Object.entries(M4.today).map(([f, lev]) => `<tr><td>${esc(f)}</td><td><b>${esc(lev || "not measured")}</b></td><td>${Object.entries((o.by || {})[f] || {}).map(([l, c]) =>
+        `<span class="${/better/.test(c.verdict) ? "up" : /worse/.test(c.verdict) ? "down" : "mut"}">${l === lev ? "<b>" : ""}${esc(l)}: ${esc(pc2(c.mean_pct))} (${esc(pc2(c.diff_pct))}${c.ci95_pct ? esc(`, ${pc2(c.ci95_pct[0])} to ${pc2(c.ci95_pct[1])}`) : ""}, ${c.n})${l === lev ? "</b>" : ""}</span>`).join("<br>")}</td></tr>`).join("")}</tbody></table></div>`;
+    const st = M4.strategies || {};
+    const strats = [...new Set(Object.values(st).flatMap(x => Object.values(x).flatMap(y => Object.keys(y))))];
+    if (strats.length) h += `<div class="lab-scroll" tabindex="0" role="region" aria-label="Strategies under today's macro"><table class="lab-tbl"><caption class="note">The Technical division's six strategies against the average stock over 21 sessions after costs, on past days with the same level as today for each factor.</caption>
+      <thead><tr><th>Strategy</th>${Object.entries(M4.today).map(([f, l]) => `<th>${esc(f)}: ${esc(l || "-")}</th>`).join("")}</tr></thead>
+      <tbody>${strats.map(k => `<tr><td>${esc(k)}</td>${Object.entries(M4.today).map(([f, l]) => { const c = ((st[f] || {})[l] || {})[k];
+        return `<td>${c ? `<span class="${/better/.test(c.verdict) ? "up" : /worse/.test(c.verdict) ? "down" : "mut"}">${esc(pc2(c.mean_pct))}</span><br><small>${c.ci95_pct ? esc(`${pc2(c.ci95_pct[0])} to ${pc2(c.ci95_pct[1])}`) : ""} · ${c.n}</small>` : ""}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+    h += `<p class="note">${esc(by("M4").detail || "")}</p>`;
+  }
+  return h;
+}
+
 export function filtersHtml(doc) {
   return `<div class="lab-filters"><label>Division <select id="lab-div"><option value="">All</option>${doc.divisions.map(d => `<option value="${esc(d.id)}">${esc(d.name)}</option>`).join("")}</select></label>
     <label>Bot <select id="lab-bot"><option value="">All</option>${doc.bots.filter(b => b.role === "analyst" || b.findings_total).map(b => `<option value="${esc(b.id)}">${esc(b.id)} · ${esc(b.name)}</option>`).join("")}</select></label>
@@ -119,6 +148,7 @@ async function boot() {
   root.innerHTML = `<header class="lab-head">${headHtml(doc)}</header>
     <h2 class="sec-t">Divisions and bots</h2>${orgHtml(doc)}
     ${techHtml(doc) ? `<h2 class="sec-t">Technical: market state, strategies, analogs</h2>${techHtml(doc)}` : ""}
+    ${macroHtml(doc) ? `<h2 class="sec-t">Macro: India and US inputs, tested on Indian markets</h2>${macroHtml(doc)}` : ""}
     <h2 class="sec-t">Findings</h2>${filtersHtml(doc)}<div id="lab-feed"></div>
     <h2 class="sec-t">One stock, every division</h2><div class="lab-filters"><label>Stock <input id="lab-one" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. IDEA"></label></div><div id="lab-stock">${stockHtml(doc, "")}</div>
     <h2 class="sec-t">Scorecards</h2>${scoreHtml(doc)}

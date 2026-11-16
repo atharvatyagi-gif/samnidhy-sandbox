@@ -59,3 +59,17 @@ test("the Technical panel shows today's state, the strategy table and the analog
   assert.match(h, /up trend, high volatility \(today\)/); assert.match(h, /class="up">\+2\.89%/); assert.match(h, /class="mut">-0\.82%/);
   assert.match(h, /2013-05-10/); assert.match(h, /not measured/); assert.match(h, /after a 0\.4% cost/);
 });
+
+import { macroHtml } from "../../lab.js";
+test("the Macro panel lists every series with its lateness, today's factors and their tested outcome", () => {
+  assert.equal(macroHtml(doc), "");
+  const d = { ...doc, bots: [...doc.bots,
+    { id: "M1", data: { series: [{ name: "RBI policy repo rate", unit: "%", value: 5.5, date: "2026-11-17", freq: "daily snapshot", source: "RBI", late: false },
+      { name: "India CPI", unit: "", value: 198, date: "2025-12-01", freq: "monthly", source: "MOSPI", late: true, why_late: "the MOSPI API stops at December 2025", extra: "inflation 1.33% a year" }] } },
+    { id: "M4", detail: "0 finding(s) filed.", data: { today: { oil: "flat" }, outcomes: { "NIFTY 50 63": { all_pct: 2.57, by: { oil: { flat: { n: 588, mean_pct: 2.03, diff_pct: -0.54, ci95_pct: [-3.39, 2.31], verdict: "no measurable difference" } } } } },
+      strategies: { oil: { flat: { momentum: { n: 400, mean_pct: 1.1, ci95_pct: [0.2, 2.0], verdict: "measurably better than the average stock" } } } } } }] };
+  const h = macroHtml(d);
+  assert.match(h, /RBI policy repo rate/); assert.match(h, /5\.5%/); assert.match(h, /lab-pill st-stale">late/); assert.match(h, /stops at December 2025/);
+  assert.match(h, /<b>flat<\/b>/); assert.match(h, /flat: \+2\.03% \(-0\.54%/); assert.match(h, /class="up">\+1\.10%/);
+  assert.ok(!/\b(buy|sell|target|recommendation|guaranteed)\b/i.test(h));
+});
