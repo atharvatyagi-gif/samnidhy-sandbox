@@ -64,6 +64,7 @@ class Ctx:
     now: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     fetch: Callable = None
     used: list = field(default_factory=list)
+    shared: dict = field(default_factory=dict)   # what a division's scouts collected this run, for its analysts
 
     def read(self, repo_path: str = None, site_path: str = None):
         """-> (document, where). The repository copy if it exists, else the live site's copy."""
@@ -128,22 +129,32 @@ def run_bot(bot: Bot, ctx: Ctx) -> dict:
 
 
 def run_division(bots, division, ctx=None, workers=8) -> dict:
-    """Every bot of one division at the same time."""
+    """A division's scouts all at the same time, then its analysts all at the same time (they read what the scouts put in ctx.shared)."""
     ctx = ctx or Ctx()
     mine = [b for b in bots if b.division == division]
-    with ThreadPoolExecutor(max_workers=max(1, min(workers, len(mine)))) as ex:
-        res = list(ex.map(lambda b: run_bot(b, ctx), mine))
-    return {"division": division, "ran_utc": ctx.now.strftime("%Y-%m-%dT%H:%M:%SZ"), "bots": res}
+    res = {}
+    for phase in ("scout", "analyst"):
+        group = [b for b in mine if b.role == phase]
+        if group:
+            with ThreadPoolExecutor(max_workers=max(1, min(workers, len(group)))) as ex:
+                for b, r in zip(group, ex.map(lambda b: run_bot(b, ctx), group)):
+                    res[b.id] = r
+    return {"division": division, "ran_utc": ctx.now.strftime("%Y-%m-%dT%H:%M:%SZ"), "bots": [res[b.id] for b in mine]}
 
 
 def finding_id(f):
-    k = f"{f['bot']}|{f.get('sym') or f.get('scope')}|{f.get('kind')}|{f.get('direction')}|{f.get('seen')}"
+    if f.get("event"):                            # tied to one filing or disclosure: the same event is one finding, ever
+        k = f"{f['bot']}|{f.get('sym') or f.get('scope')}|{f.get('kind')}|{f['event']}"
+    else:
+        k = f"{f['bot']}|{f.get('sym') or f.get('scope')}|{f.get('kind')}|{f.get('direction')}|{f.get('seen')}"
     return hashlib.sha1(k.encode()).hexdigest()[:12]
 
 
 def add_findings(ledger, new, today: date):
-    """Append findings, one per bot + stock + kind + direction within REPEAT_DAYS (a mood that lasts a week is one finding,
-    not seven: repeats would inflate the scorecard with overlapping copies). -> number added."""
+    """Append findings. One tied to an event (a filing, a disclosure) is added once, ever. Otherwise one per bot + stock + kind +
+    direction within REPEAT_DAYS (a mood that lasts a week is one finding, not seven: repeats would inflate the scorecard with
+    overlapping copies). -> number added."""
+    ids = {f["id"] for f in ledger}
     last = {}
     for f in ledger:
         k = (f["bot"], f.get("sym") or f.get("scope"), f.get("kind"), f.get("direction"))
@@ -151,6 +162,11 @@ def add_findings(ledger, new, today: date):
     added = 0
     for f in new:
         f = {**f, "seen": f.get("seen") or today.isoformat()}
+        if f.get("event"):
+            f["id"] = finding_id(f)
+            if f["id"] not in ids:
+                ledger.append(f); ids.add(f["id"]); added += 1
+            continue
         k = (f["bot"], f.get("sym") or f.get("scope"), f.get("kind"), f.get("direction"))
         if k in last and (today - date.fromisoformat(last[k])).days < REPEAT_DAYS:
             continue

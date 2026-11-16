@@ -84,7 +84,10 @@ analyst runs on what they found. A final job merges, scores and publishes. Free 
 ## 6. Order of work (one step at a time, each tested and merged before the next)
 
 1. Framework, dashboard and the scouts that wrap existing jobs, so the page shows real work from day one. **Done 2026-11-15**: scripts/blab/, lab.html, workflow blab.yml; S5 is the first analyst (rule declared before any scoring: average tone beyond ±0.25 over at least 2 headlines naming the stock).
-2. Fundamental: F2-F5, ending with the blind-spot analyst.
+2. Fundamental: F2-F5, ending with the blind-spot analyst. **Done 2026-11-16** (scripts/blab/fundamental.py): F2 ownership
+   (NSE shareholding history, SAST Reg 29), F3 governance (NSE announcements by category), F5 blind-spot analyst with rules
+   R1-R9 written in that file before scoring (one refinement after reading the first run, recorded there). Not measured, with
+   reasons: insider (PIT) trades (NSE's feed returns no recent rows), rating direction and pledges (only in the PDFs).
 3. Technical: T3-T5 (regime, strategy lab, analogs).
 4. Macro: M1-M4, with the freshness checks and the tested outcome.
 5. Sentiment: S3, S6 and S7, ending with the AI analyst and the event historian.

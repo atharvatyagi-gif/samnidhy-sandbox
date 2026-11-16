@@ -8,6 +8,7 @@ statistics; what people write). Where an existing job mixes sources, the bot tak
 from __future__ import annotations
 
 from .core import Bot
+from .fundamental import f2_ownership, f3_governance, f5_blind_spots
 
 
 def _f1_statements(ctx):
@@ -21,15 +22,6 @@ def _f1_statements(ctx):
     return {"items": len(fund), "as_of": a.get("generated_utc"),
             "detail": f"Fundamental scores for {len(fund)} stocks (value, quality, fundamental momentum, distress band) from the nightly ALADIN fundamentals job"
                       + (f"; company profiles for {n_tf} stocks on the site." if n_tf else "; the site's company-profile file could not be read this run.")}
-
-
-def _f3_governance(ctx):
-    a, _ = ctx.read("data/aladin/latest.json")
-    nlp = [x["f"]["nlp"] for x in a.get("stocks", {}).values() if isinstance(x.get("f"), dict) and isinstance(x["f"].get("nlp"), dict)]
-    newest = max((n.get("at") for n in nlp if n.get("at")), default=None)
-    docs = sum(n.get("n") or 0 for n in nlp)
-    return {"items": len(nlp), "as_of": newest,
-            "detail": f"Exchange filings read for {len(nlp)} stocks ({docs:,} filings, tone and hedging) by the existing filings job; newest reading {newest}. Auditor, director and rating changes as separate alerts arrive in step 2."}
 
 
 def _f4_related(ctx):
@@ -110,10 +102,10 @@ B = Bot
 BOTS = [
     # Fundamental: what the company or a regulator files
     B("F1", "fundamental", "Statements scout", "scout", "Collects results and statements and the fundamental scores built from them.", ["Yahoo Finance statements", "NSE results"], 60, _f1_statements, 1, "scripts/aladin_fund.py, scripts/terminal_fund.py"),
-    B("F2", "fundamental", "Ownership scout", "scout", "Shareholding pattern, promoter pledges and invocations, SEBI insider (PIT) trades.", ["NSE shareholding", "NSE pledge data", "NSE SEBI PIT disclosures"], 60, None, 2),
-    B("F3", "fundamental", "Governance scout", "scout", "Reads exchange filings: tone, hedging, auditor, director and rating changes, corporate actions.", ["NSE corporate announcements"], 60, _f3_governance, 1, "scripts/aladin_filings.py"),
+    B("F2", "fundamental", "Ownership scout", "scout", "Promoter and public shareholding each quarter; takeover-code (SAST Reg 29) acquisitions and sales by large holders and promoters.", ["NSE shareholding pattern", "NSE SAST Reg 29 disclosures"], 100, f2_ownership, 2),
+    B("F3", "fundamental", "Governance scout", "scout", "Collects governance announcements: auditors, ratings, delayed results, insolvency, pledges, related-party deals, litigation, regulator actions.", ["NSE corporate announcements"], 100, f3_governance, 2, "also reports the tone reading of scripts/aladin_filings.py"),
     B("F4", "fundamental", "Related-party scout", "scout", "Related-party deals, group companies and who depends on whom, from the companies' own filings.", ["Annual-report segment notes", "BRSR", "Business-group list"], 24 * 8, _f4_related, 1, "NEXUS (scripts/supply_graph build, revenue_profile.py, brsr_profile.py)"),
-    B("F5", "fundamental", "Blind-spot analyst", "analyst", "Red-flag tests on the scouts' data, each citing its filing.", ["F1-F4"], 60, None, 2),
+    B("F5", "fundamental", "Blind-spot analyst", "analyst", "Nine red-flag tests on ownership, governance and the annual statements, each finding citing its filing.", ["F2", "F3", "annual statements"], 100, f5_blind_spots, 2),
     # Technical: what trading produces
     B("T1", "technical", "Price scout", "scout", "End-of-day prices, volume and every NSE index.", ["NSE end-of-day files", "Yahoo Finance"], 100, _t1_prices, 1, "scripts/nse_eod.py, scripts/terminal_hist.py, scripts/indices_eod.py"),
     B("T2", "technical", "Flows scout", "scout", "FII/DII flows; bulk and block deals and F&O open interest from step 3.", ["NSE FII/DII report"], 100, _t2_flows, 1, "the daily update's FII/DII step"),

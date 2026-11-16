@@ -1,7 +1,9 @@
 # B-Lab research desk (docs/blab/PLAN.md): the four divisions run AT THE SAME TIME as separate jobs (Fundamental, Technical,
 # Macro, Sentiment; inside each, its bots run in parallel too), then one job collects them, adds new findings to the ledger,
 # scores the older ones against the NIFTY 500 and saves data/blab/. The next Live prices run publishes it for lab.html.
-# Twice a day: after the evening daily update (21:00 IST) and before the market opens (08:15 IST). Standard library only.
+# Twice a day: after the evening daily update (21:00 IST) and before the market opens (08:15 IST). Standard library only,
+# except the Fundamental division: `requests` for NSE (through the repository's own NSE session) and a read-only copy of the
+# ALADIN statements cache. Scouts keep small rolling stores in data/blab/store/, saved by the collect job.
 # Free sources only (owner, 15 Nov 2026). Commits end in "[skip ci]" and touch nothing but data/blab/.
 name: B-Lab research desk
 
@@ -34,6 +36,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: NSE access for the Fundamental division
+        if: matrix.division == 'fundamental'
+        run: pip install requests==2.34.2
+      - name: Annual statements for the blind-spot analyst (read-only copy of the nightly ALADIN cache)
+        if: matrix.division == 'fundamental'
+        uses: actions/cache/restore@v4
+        continue-on-error: true
+        with:
+          path: data/aladin_cache
+          key: blab-read-only-${{ github.run_id }}
+          restore-keys: aladin-cache-
       - name: Run the ${{ matrix.division }} division
         continue-on-error: true
         run: python scripts/blab/run.py --division ${{ matrix.division }} --out blab_${{ matrix.division }}.json
@@ -42,6 +55,13 @@ jobs:
         with:
           name: blab-${{ matrix.division }}
           path: blab_${{ matrix.division }}.json
+          if-no-files-found: warn
+          retention-days: 3
+      - uses: actions/upload-artifact@v4          # only the division that writes the stores uploads them (others hold stale copies)
+        if: always() && matrix.division == 'fundamental'
+        with:
+          name: blab-store-fundamental
+          path: data/blab/store/
           if-no-files-found: warn
           retention-days: 3
 
@@ -59,9 +79,13 @@ jobs:
         with:
           pattern: blab-*
           merge-multiple: true
-          path: parts
-      - name: Collect, score and write data/blab
-        run: python scripts/blab/run.py --collect parts/*.json
+          path: .
+      - name: Put the Fundamental stores back in place
+        run: |
+          mkdir -p data/blab/store
+          for f in shareholding.json sast29.json announcements.json; do [ -f "$f" ] && mv -f "$f" data/blab/store/ || true; done
+      - name: Collect, score and write data/blab (the scouts' stores came back in data/blab/store/)
+        run: python scripts/blab/run.py --collect blab_*.json
       - name: Save data/blab to the repository (the next Live prices run publishes it)
         run: |
           git config user.name "github-actions[bot]"
