@@ -118,6 +118,8 @@ def run_bot(bot: Bot, ctx: Ctx) -> dict:
                 "took_s": round(time.perf_counter() - t0, 2), "errors": [f"{type(e).__name__}: {str(e)[:300]}"]}
     when = parse_when(r.get("as_of"))
     age = None if when is None else round((ctx.now - when).total_seconds() / 3600, 1)
+    if age is not None and age < 0 and len(str(r.get("as_of"))) == 10:
+        age = 0.0                                   # a date-only "today" counts from the 15:30 close; before it, it is simply today
     state = "error" if when is None else "stale" if age > bot.fresh_h else "ok"
     detail = r.get("detail", "")
     if when is None:

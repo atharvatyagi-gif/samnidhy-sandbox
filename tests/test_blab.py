@@ -44,6 +44,9 @@ def test_states_fresh_stale_error_planned_and_no_key():
     assert got["X4"]["state"] == "planned" and "step 4" in got["X4"]["detail"]
     assert got["X5"]["state"] == "error" and "no date" in got["X5"]["detail"]
     assert got["X6"]["state"] == "no_key" and "FRED" in got["X6"]["detail"]
+    morning = core.Ctx(now=datetime(2026, 11, 16, 4, 0, tzinfo=timezone.utc))               # 09:30 IST, before the 15:30 close
+    today = core.run_bot(core.Bot("X7", "macro", "h", "scout", "d", ["s"], 24, lambda c: {"items": 1, "as_of": "2026-11-16"}), morning)
+    assert today["age_h"] == 0.0 and today["state"] == "ok"                                  # a date-only "today" is never a negative age
 
 
 def test_a_division_runs_its_bots_at_the_same_time():
