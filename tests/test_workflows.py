@@ -79,3 +79,17 @@ def test_nexus_workflow_reads_filings_then_derives_shares_then_geocodes_and_audi
     step = next(s for s in steps(d) if "related_party_shares.py" in s.get("run", ""))
     assert step["continue-on-error"] is True and step["timeout-minutes"] == 60 and "--limit 40" in step["run"]
     assert {"GROQ_API_KEY", "GEMINI_API_KEY", "GROQ_API_KEY_1", "GEMINI_API_KEY_1"} <= set(step["env"])
+
+
+def test_nexus_saves_the_graph_only_after_its_audit_and_the_profiles_every_run():
+    d = load("nexus.yml")
+    audit = next(s for s in steps(d) if "check_graph.py" in s.get("run", ""))
+    save = next(s for s in steps(d) if "git push" in s.get("run", ""))
+    assert audit["id"] == "audit" and audit["continue-on-error"] is True
+    assert save["if"] == "always()" and save["env"]["AUDIT"] == "${{ steps.audit.outcome }}"
+    run = save["run"]
+    assert 'if [ "$AUDIT" = "success" ]; then git add data/supply_graph.json; fi' in run
+    assert run.index("git checkout -- data/supply_graph.json") < run.index("dependency_profile.py"), "a rejected graph is put back before the dependency profile is built"
+    for f in ("revenue_profile.json", "brsr_profile.json", "dependencies.json"):
+        assert f"data/{f}" in run
+    assert "[skip ci]" in run and "--force" not in run
