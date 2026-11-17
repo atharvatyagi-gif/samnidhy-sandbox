@@ -36,6 +36,19 @@ MIN_SCORED = 20                   # fewer scored findings than this: "too few so
 REPEAT_DAYS = 7                   # the same bot, stock and direction is one finding until 7 days have passed
 
 
+def mask_secrets(text, env=None):
+    """Replace the value of every key, token or secret in the environment with *** (an error message can quote a header)."""
+    import os
+    env = os.environ if env is None else env
+    out = str(text)
+    for k, v in env.items():
+        if v and len(v.strip()) >= 8 and any(k.upper().endswith(t) or t + "_" in k.upper() for t in ("KEY", "TOKEN", "SECRET", "PASSWORD")):
+            for form in {v, v.strip()}:
+                if len(form) >= 8:
+                    out = out.replace(form, "***")
+    return out
+
+
 class NoKey(Exception):
     """A free key the owner has not added yet."""
 
@@ -110,12 +123,12 @@ def run_bot(bot: Bot, ctx: Ctx) -> dict:
     try:
         r = bot.fn(ctx) or {}
     except NoKey as e:
-        return {**base, "state": "no_key", "detail": str(e), "items": None, "as_of": None, "age_h": None, "took_s": round(time.perf_counter() - t0, 2), "errors": []}
+        return {**base, "state": "no_key", "detail": mask_secrets(e), "items": None, "as_of": None, "age_h": None, "took_s": round(time.perf_counter() - t0, 2), "errors": []}
     except Limit as e:
-        return {**base, "state": "limit", "detail": str(e), "items": None, "as_of": None, "age_h": None, "took_s": round(time.perf_counter() - t0, 2), "errors": []}
+        return {**base, "state": "limit", "detail": mask_secrets(e), "items": None, "as_of": None, "age_h": None, "took_s": round(time.perf_counter() - t0, 2), "errors": []}
     except Exception as e:  # noqa: BLE001  one bot's failure is reported, never spread
         return {**base, "state": "error", "detail": "The run failed; see errors.", "items": None, "as_of": None, "age_h": None,
-                "took_s": round(time.perf_counter() - t0, 2), "errors": [f"{type(e).__name__}: {str(e)[:300]}"]}
+                "took_s": round(time.perf_counter() - t0, 2), "errors": [mask_secrets(f"{type(e).__name__}: {str(e)[:300]}")]}
     when = parse_when(r.get("as_of"))
     age = None if when is None else round((ctx.now - when).total_seconds() / 3600, 1)
     if age is not None and age < 0 and len(str(r.get("as_of"))) == 10:
@@ -127,8 +140,8 @@ def run_bot(bot: Bot, ctx: Ctx) -> dict:
     for f in r.get("findings", []):
         f.setdefault("bot", bot.id); f.setdefault("division", bot.division); f.setdefault("source_as_of", r.get("as_of"))
     extra = {k: v for k, v in r.items() if k not in ("items", "as_of", "detail", "findings", "errors")}   # a bot's own evidence (tables, lists) for the dashboard
-    return {**base, "state": state, "detail": detail, "items": r.get("items"), "as_of": r.get("as_of"), "age_h": age,
-            "took_s": round(time.perf_counter() - t0, 2), "errors": r.get("errors", []), "findings": r.get("findings", []), **({"data": extra} if extra else {})}
+    return {**base, "state": state, "detail": mask_secrets(detail), "items": r.get("items"), "as_of": r.get("as_of"), "age_h": age,
+            "took_s": round(time.perf_counter() - t0, 2), "errors": [mask_secrets(x) for x in r.get("errors", [])], "findings": r.get("findings", []), **({"data": extra} if extra else {})}
 
 
 def run_division(bots, division, ctx=None, workers=8) -> dict:

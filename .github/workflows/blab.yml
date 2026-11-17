@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  models: read        # GitHub Models' free tier for the Sentiment division's AI analyst (the workflow's own token)
 
 concurrency:
   group: blab
@@ -53,8 +54,11 @@ jobs:
       - name: Prices and NSE access for the Technical division
         if: matrix.division == 'technical'
         run: pip install requests==2.34.2 numpy
-      - name: Daily prices for the Technical division (read-only copy of the daily job's cache)
-        if: matrix.division == 'technical'
+      - name: News, name matching and NSE access for the Sentiment division
+        if: matrix.division == 'sentiment'
+        run: pip install requests==2.34.2 rapidfuzz
+      - name: Daily prices for the Technical and Sentiment divisions (read-only copy of the daily job's cache)
+        if: matrix.division == 'technical' || matrix.division == 'sentiment'
         uses: actions/cache/restore@v4
         continue-on-error: true
         with:
@@ -75,8 +79,15 @@ jobs:
           git fetch -q --depth=1 origin history && git archive FETCH_HEAD _5eNSEI.json _5eNSEBANK.json | tar -x -C data/terminal/archive
       - name: Run the ${{ matrix.division }} division
         continue-on-error: true
-        env:
-          FRED_API_KEY: ${{ matrix.division == 'macro' && secrets.FRED_API_KEY || '' }}      # only the Macro job sees the free FRED key
+        env:                                                                                   # each free key reaches only the job that uses it
+          FRED_API_KEY: ${{ matrix.division == 'macro' && secrets.FRED_API_KEY || '' }}
+          GROQ_API_KEY: ${{ matrix.division == 'sentiment' && secrets.GROQ_API_KEY || '' }}
+          GROQ_API_KEY_1: ${{ matrix.division == 'sentiment' && secrets.GROQ_API_KEY_1 || '' }}
+          GROQ_API_KEY_2: ${{ matrix.division == 'sentiment' && secrets.GROQ_API_KEY_2 || '' }}
+          GEMINI_API_KEY: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY || '' }}
+          GEMINI_API_KEY_1: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY_1 || '' }}
+          GEMINI_API_KEY_2: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY_2 || '' }}
+          GITHUB_MODELS_TOKEN: ${{ matrix.division == 'sentiment' && github.token || '' }}
         run: python scripts/blab/run.py --division ${{ matrix.division }} --out blab_${{ matrix.division }}.json
       - uses: actions/upload-artifact@v4
         if: always()
@@ -93,6 +104,17 @@ jobs:
             data/blab/store/shareholding.json
             data/blab/store/sast29.json
             data/blab/store/announcements.json
+          if-no-files-found: warn
+          retention-days: 3
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.division == 'sentiment'
+        with:
+          name: blab-store-sentiment
+          path: |
+            data/blab/store/news_us.json
+            data/blab/store/news_sectors.json
+            data/blab/store/ai_news.json
+            data/blab/store/events_hist.json
           if-no-files-found: warn
           retention-days: 3
       - uses: actions/upload-artifact@v4
@@ -132,7 +154,7 @@ jobs:
       - name: Put the Fundamental stores back in place
         run: |
           mkdir -p data/blab/store
-          for f in shareholding.json sast29.json announcements.json deals.json strategy_lab.json fred.json rbi.json; do [ -f "$f" ] && mv -f "$f" data/blab/store/ || true; done
+          for f in shareholding.json sast29.json announcements.json deals.json strategy_lab.json fred.json rbi.json news_us.json news_sectors.json ai_news.json events_hist.json; do [ -f "$f" ] && mv -f "$f" data/blab/store/ || true; done
       - name: Collect, score and write data/blab (the scouts' stores came back in data/blab/store/)
         run: python scripts/blab/run.py --collect blab_*.json
       - name: Save data/blab to the repository (the next Live prices run publishes it)

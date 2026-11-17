@@ -184,6 +184,8 @@ def main() -> None:
     if (DATA / "blab" / "status.json").exists():
         (SITE / "blab").mkdir(exist_ok=True)
         shutil.copyfile(DATA / "blab" / "status.json", SITE / "blab" / "status.json")
+        if (DATA / "blab" / "stocks.json").exists():                  # every stock's card for the "One stock, every division" search
+            shutil.copyfile(DATA / "blab" / "stocks.json", SITE / "blab" / "stocks.json")
     # The Technicals gauge's track record (scripts/technicals_record.mjs) for the stock page's "Three questions" box
     present["tech_rec"] = (DATA / "config" / "technicals_record.json").exists()
     if present["tech_rec"]:

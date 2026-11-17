@@ -122,3 +122,12 @@ def test_no_bot_reads_the_env_file():
         txt = p.read_text(encoding="utf-8")
         assert not any(b in txt for b in bad), p.name
     assert any(b in 'open(".env")' for b in bad) and not any(b in 'os.environ.get("FRED_API_KEY")' for b in bad)
+
+
+def test_error_messages_never_carry_a_key(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", " AQ.madeUpKey123456")
+    monkeypatch.setenv("SOME_TOKEN", "tok_madeup_987654")
+    def boom(c): raise ValueError("Invalid header value ' AQ.madeUpKey123456' and tok_madeup_987654")
+    r = core.run_bot(core.Bot("X8", "macro", "x", "scout", "d", ["s"], 24, boom), ctx())
+    assert "madeUpKey" not in r["errors"][0] and "tok_madeup" not in r["errors"][0] and "***" in r["errors"][0]
+    assert core.mask_secrets("plain text with no secrets", {"PATH": "/usr/bin/longpath"}) == "plain text with no secrets"

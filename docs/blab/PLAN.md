@@ -97,7 +97,11 @@ analyst runs on what they found. A final job merges, scores and publishes. Free 
    10-year and call-money rate, MOSPI CPI (late: the API stops at Dec 2025 after the base change). US inputs (owner,
    2026-11-16: US and Indian inputs allowed, findings about Indian markets only): FRED fed funds, CPI, sentiment, rupee,
    Brent, dollar, US VIX, US 10-year. First result: no factor measurably changed NIFTY 50's next 63 sessions since 2007.
-5. Sentiment: S3, S6 and S7, ending with the AI analyst and the event historian.
+5. Sentiment: S3, S6 and S7, ending with the AI analyst and the event historian. **Built 2026-11-17, waiting for the owner's
+   OK on the preview** (scripts/blab/sentiment.py, rules written there before results, one refinement recorded): S2 adds US
+   market headlines (CNBC, Google News US); S3 Indian sector and company news; S6 AI analyst on free tiers (Groq, Gemini,
+   GitHub Models), high-confidence effects on named Indian companies plus their NEXUS neighbours; S7 event study of NSE
+   announcement kinds over up to 3 years (monthly-clustered ranges, 12+ months, findings only after 2 years of history).
 6. Scorecards run at least 8 weeks; then the owner chooses what moves to the main site.
 
 ## 7. Free sources only (owner, 15 Nov 2026)

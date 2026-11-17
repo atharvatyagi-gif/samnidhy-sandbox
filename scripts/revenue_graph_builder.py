@@ -459,6 +459,7 @@ class LLM:
         prov, model = cand
         model, _, idx = model.partition("#")                           # "name#1" = the model on the second key
         keyname = {"groq": "GROQ_API_KEY", "gemini": "GEMINI_API_KEY", "github": "GITHUB_MODELS_TOKEN"}[prov] + (f"_{idx}" if idx else "")
+        os.environ[keyname] = os.environ[keyname].strip()            # a stray space or line end in a key breaks the header (and the error would quote it)
         if prov == "github":
             body = {"model": model, "temperature": 0, "response_format": {"type": "json_object"}, "max_tokens": 3500,
                     "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
@@ -508,6 +509,9 @@ class LLM:
                 if self.fails[cand] >= 3:                                  # persistently overloaded: use the next model
                     self.dead.add(cand)
                 self.sleep(min(30, 2 ** (attempt + 1)))
+                continue
+            if r.status_code in (401, 403):                                 # a key that is revoked, expired or lacks access: use the next model
+                self.dead.add(cand)
                 continue
             if r.status_code in (400, 413):
                 raise LLMBadRequest(f"{r.status_code}: {r.text[:160]}")

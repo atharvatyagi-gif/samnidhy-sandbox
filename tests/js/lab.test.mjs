@@ -73,3 +73,16 @@ test("the Macro panel lists every series with its lateness, today's factors and 
   assert.match(h, /<b>flat<\/b>/); assert.match(h, /flat: \+2\.03% \(-0\.54%/); assert.match(h, /class="up">\+1\.10%/);
   assert.ok(!/\b(buy|sell|target|recommendation|guaranteed)\b/i.test(h));
 });
+
+import { sentimentHtml } from "../../lab.js";
+test("the Sentiment panel shows the AI readings and the event history; unsafe links are not linked", () => {
+  assert.equal(sentimentHtml(doc), "");
+  const d = { ...doc, bots: [...doc.bots,
+    { id: "S6", detail: "30 new headlines read.", data: { recent: [{ title: "Power Grid approves Rs 220 crore line", url: "https://x.example/pg", src: "ET", region: "IN", effect: "positive", confidence: "high", event: "capex or expansion", companies: ["Power Grid"], sectors: ["Power"], why: "investment expands assets" },
+      { title: "Bad link", url: "javascript:alert(1)", region: "US", effect: "none", confidence: "low", event: "other", companies: [], sectors: [], why: "" }] } },
+    { id: "S7", detail: "History spans 135 days.", data: { history: { from: "2026-07-04", to: "2026-11-16" }, study: { "Acquisition": { reaction: { n: 40, months: 4, mean_pct: 1.2, ci95_pct: [-0.5, 2.9], verdict: "too few months (4 of 12)" }, "21": { n: 40, months: 4, mean_pct: 4.49, ci95_pct: [0.1, 8.9], verdict: "too few months (4 of 12)" } } } } }] };
+  const h = sentimentHtml(d);
+  assert.match(h, /href="https:\/\/x\.example\/pg"/); assert.ok(!h.includes("javascript:"));
+  assert.match(h, /class="up">positive/); assert.match(h, /Acquisition/); assert.match(h, /class="mut">\+4\.49%/); assert.match(h, /40 events, 4 months/);
+  assert.ok(!/\b(buy|sell|target|recommendation|guaranteed)\b/i.test(h.replace(/<[^>]+>/g, " ")));   // visible text only: an <a target> attribute is not wording
+});
