@@ -69,6 +69,13 @@ def collect(parts, now=None, prices=None, out=core.OUT):
     if card_note:
         doc["scorecard_note"] = card_note
     lp.write_text(json.dumps({"findings": ledger}, separators=(",", ":"), ensure_ascii=False), encoding="utf-8")
+    if out == core.OUT:                                      # the per-stock cards for the dashboard search (scripts/blab/stocks.py)
+        try:
+            from blab import stocks
+            stocks.write(ledger, doc["bots"], now.date())
+            doc["stocks_note"] = None
+        except Exception as e:  # noqa: BLE001  the status still publishes; the page says the cards are missing
+            doc["stocks_note"] = f"Stock cards not built this run ({type(e).__name__})."
     (out / "status.json").write_text(json.dumps(doc, separators=(",", ":"), ensure_ascii=False, allow_nan=False), encoding="utf-8")
     return doc
 

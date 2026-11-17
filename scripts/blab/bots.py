@@ -10,6 +10,9 @@ from __future__ import annotations
 from .core import Bot
 from .fundamental import f2_ownership, f3_governance, f5_blind_spots
 from .technical import t2_flows, t3_regime, t4_lab, t5_analogs
+from .macro import m1_india, m2_us, m3_market, m4_analyst
+from .sentiment import _nid, s2_us_news, s3_sectors, s6_ai_analyst, s7_historian
+from .core import parse_when as core_parse
 
 
 def _f1_statements(ctx):
@@ -45,8 +48,12 @@ def _t1_prices(ctx):
 
 def _s1_india_media(ctx):
     w, _ = ctx.read(site_path="news.json")
-    srcs = [s for g in w.get("groups", []) for s in g.get("sources", [])]
-    items = sum(len(s.get("items", [])) for s in srcs)
+    srcs = [s for g in w.get("groups", []) for s in g.get("sources", []) if g.get("id") == "india"] or [s for g in w.get("groups", []) for s in g.get("sources", [])]
+    items = sum(len(s.get("items") or []) for s in srcs)
+    from datetime import timedelta
+    gen = core_parse(w.get("generated_utc")) or ctx.now
+    ctx.shared["S1_rows"] = [[_nid(i["t"]), "IN", "Markets", i["t"], i["u"], s["name"], ((gen - timedelta(minutes=i["age_min"])).strftime("%Y-%m-%dT%H:%M:%SZ") if i.get("age_min") is not None else None),
+                              ctx.now.strftime("%Y-%m-%dT%H:%M:%SZ")] for s in srcs for i in (s.get("items") or []) if i.get("t") and i.get("u")]
     return {"items": items, "as_of": w.get("generated_utc"),
             "detail": f"{items} headlines from {len(srcs)} feeds ({', '.join(s['name'] for s in srcs[:4])}{'…' if len(srcs) > 4 else ''}) by the existing news wire."}
 
@@ -55,8 +62,13 @@ def _s2_global(ctx):
     g, _ = ctx.read("data/globe/latest.json")
     geo, _ = ctx.read("data/aladin/geo.json")
     ev = g.get("events", [])
-    return {"items": len(ev), "as_of": g.get("generated_utc"),
-            "detail": f"{len(ev)} world events (GDELT) and news around {len(g.get('chokepoints', []))} shipping and oil chokepoints; {len(geo.get('regions', []) if isinstance(geo.get('regions'), list) else geo.get('regions', {}))} regions scored for news attention."}
+    try:
+        us, n_us, errs = s2_us_news(ctx)
+    except Exception as e:  # noqa: BLE001  world events still report
+        us, n_us, errs = [], 0, [f"US news: {type(e).__name__}"]
+    return {"items": len(ev) + len(us), "as_of": g.get("generated_utc"), "errors": errs[:3],
+            "detail": f"{len(ev)} world events (GDELT) and news around {len(g.get('chokepoints', []))} shipping and oil chokepoints; {len(geo.get('regions', []) if isinstance(geo.get('regions'), list) else geo.get('regions', {}))} regions scored for news attention. "
+                      f"US market headlines kept for the AI analyst: {len(us)} ({n_us} new; CNBC, Google News US). Used only for their effect on Indian stocks."}
 
 
 def _s4_social(ctx):
@@ -105,16 +117,16 @@ BOTS = [
     B("T4", "technical", "Strategy lab", "analyst", "Six fixed strategies tested in every past market state after costs; files the picks of those measurably better in today's.", ["NSE prices of the 500 stocks since 1996"], 24 * 8, t4_lab, 3),
     B("T5", "technical", "Analog finder", "analyst", "The 10 past days most like today and what NIFTY 50 and Bank Nifty did next.", ["NSE index history"], 100, t5_analogs, 3),
     # Macro: official statistics
-    B("M1", "macro", "India scout", "scout", "RBI (repo, liquidity, credit, reserves) and MOSPI (CPI, IIP, GDP).", ["RBI DBIE", "MOSPI"], 24 * 45, None, 4),
-    B("M2", "macro", "Global scout", "scout", "US and global rates, inflation, dollar, and India series, from FRED and the World Bank.", ["FRED (free key)", "World Bank API"], 24 * 45, None, 4),
-    B("M3", "macro", "Market-macro scout", "scout", "Crude, gold, USD/INR and the US 10-year yield, daily.", ["Yahoo Finance"], 100, None, 4),
-    B("M4", "macro", "Macro analyst", "analyst", "Today's macro state and its tested outcome for the NIFTY 500, sectors and strategies.", ["M1-M3", "T4"], 100, None, 4),
+    B("M1", "macro", "India scout", "scout", "RBI policy rates, CRR, SLR and the rupee reference rate (saved daily); India 10-year yield and call-money rate; India CPI.", ["RBI", "FRED (India series)", "MOSPI"], 100, m1_india, 4),
+    B("M2", "macro", "US scout", "scout", "US fed funds rate, inflation and consumer sentiment, used only for their effect on Indian markets.", ["FRED"], 24 * 60, m2_us, 4),
+    B("M3", "macro", "Market-macro scout", "scout", "Rupee per dollar, Brent, the dollar index, US VIX, US 10-year; India VIX and the 10-year G-Sec index.", ["FRED", "NSE"], 24 * 7, m3_market, 4),
+    B("M4", "macro", "Macro analyst", "analyst", "Six macro factors, each tested since 2007 for what NIFTY 50, Bank Nifty and the six strategies did next.", ["M1-M3", "T4 start-day values"], 100, m4_analyst, 4),
     # Sentiment: what other people write or say
     B("S1", "sentiment", "India media scraper", "scout", "Indian business media headlines.", ["Economic Times, Mint, Business Standard RSS", "Google News"], 6, _s1_india_media, 1, "scripts/news_wire.py"),
-    B("S2", "sentiment", "Global & macro scraper", "scout", "World events and news around shipping and oil chokepoints.", ["GDELT", "global wires"], 6, _s2_global, 1, "scripts/globe_data.py"),
-    B("S3", "sentiment", "Sector scraper", "scout", "Industry and regulator news per sector.", ["sector RSS feeds"], 24, None, 5),
+    B("S2", "sentiment", "Global & macro scraper", "scout", "World events, news around shipping and oil chokepoints, and US market headlines (inputs for Indian stocks).", ["GDELT", "CNBC", "Google News US"], 6, _s2_global, 1, "scripts/globe_data.py"),
+    B("S3", "sentiment", "Sector scraper", "scout", "Indian sector and company news: one Google News search per sector, plus company feeds.", ["Google News India", "Economic Times", "Business Standard", "Mint"], 24, s3_sectors, 5),
     B("S4", "sentiment", "Social scraper", "scout", "Retail chatter, only where the source's terms allow.", ["Reddit (existing job, when reachable)"], 6, _s4_social, 1, "scripts/aladin_sentiment_engine.py"),
     B("S5", "sentiment", "Headline scorer", "analyst", "Scores the tone of headlines that name a stock (FinBERT, news only).", ["S1"], 6, _s5_scorer, 1, "scripts/aladin_sentiment_engine.py (news part)"),
-    B("S6", "sentiment", "News analyst (AI)", "analyst", "Reads the day's key news: event, who is named, and which stocks are exposed without being named.", ["S1-S4", "NEXUS graph", "GitHub Models (free)"], 24, None, 5),
-    B("S7", "sentiment", "Event historian", "analyst", "Which stocks moved after similar events in the past.", ["GDELT history", "T1"], 24, None, 5),
+    B("S6", "sentiment", "News analyst (AI)", "analyst", "Reads up to 30 new Indian and US headlines a run with a free AI model; files high-confidence effects on named Indian companies and their supply-chain neighbours.", ["S1-S3", "NEXUS graph", "free AI tiers"], 24, s6_ai_analyst, 5),
+    B("S7", "sentiment", "Event historian", "analyst", "What the 500 stocks did after each kind of company announcement over up to 3 years; files new announcements of kinds with a measurable after-effect.", ["NSE announcements", "NSE prices"], 24, s7_historian, 5),
 ]

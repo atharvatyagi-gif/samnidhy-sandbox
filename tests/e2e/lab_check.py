@@ -33,6 +33,18 @@ def run():
             check("lab: the stock filter narrows the feed", 0 < pg.locator("#lab-feed tbody tr").count() <= rows)
             pg.fill("#lab-one", sym); pg.wait_for_timeout(300)
             check("lab: one stock, every division", pg.locator("#lab-stock .lab-div").count() == 4 and sym in pg.inner_text("#lab-stock"))
+        sx = pg.evaluate("fetch('blab/stocks.json').then(r => r.ok ? r.json() : null)")
+        if sx:
+            have = {f["sym"] for f in doc.get("findings_recent", []) if f.get("sym")}
+            quiet = next((s for s in sx["cards"] if s not in have), None)
+            pg.fill("#lab-one", quiet); pg.wait_for_timeout(600)
+            t1 = pg.inner_text("#lab-stock")
+            check("lab: a covered stock with no findings still gets all four divisions", pg.locator("#lab-stock .lab-div").count() == 4 and quiet in t1, quiet)
+            outside = next((n[0] for n in sx["names"] if not n[2]), None)
+            if outside:
+                pg.fill("#lab-one", outside); pg.wait_for_timeout(400)
+                check("lab: a listed stock outside the 500 says it is not covered", "outside the 500" in pg.inner_text("#lab-stock"), outside)
+            check("lab: the search suggests every searchable stock", pg.locator("#lab-stocks option").count() == len(sx["names"]), [pg.locator("#lab-stocks option").count(), len(sx["names"])])
         check("lab: the scorecard section explains how findings are scored", "next close" in pg.inner_text("#lab"))
         pg.add_script_tag(url=AXE)
         res = pg.evaluate("async () => { const r = await axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'best-practice'] }); return r.violations.map(v => ({ id: v.id, impact: v.impact, n: v.nodes.length })); }")

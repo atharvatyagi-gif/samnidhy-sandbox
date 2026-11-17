@@ -50,6 +50,7 @@ LAB_REFRESH_DAYS = 7
 STRATS = ["momentum", "reversal", "52-week high", "low volatility", "quality trend", "trend"]
 COST = 0.004
 HOLD, STEP = 21, 5
+LAB_DAILY = {}                                       # each start day's strategy values from the last lab() run
 
 
 def _rows(p):
@@ -175,9 +176,9 @@ def signals(P, t):
 
 
 def lab(dates, P, st, today_state):
-    """Strategy x state record. -> {state: {strategy: {...}}}, plus the start-day count."""
+    """Strategy x state record -> {state: {strategy: {...}}}. Also fills LAB_DAILY (each start day's values) for the macro analyst."""
     import numpy as np
-    vals = {}
+    vals, daily = {}, {"dates": [], "values": {k: [] for k in STRATS}}
     for t in range(259, len(dates) - HOLD - 1, STEP):
         if not st[t]:
             continue
@@ -189,6 +190,9 @@ def lab(dates, P, st, today_state):
         if base_ok.sum() < 50:
             continue
         base = float(np.mean(fwd[base_ok]))
+        daily["dates"].append(dates[t])
+        for k in STRATS:
+            daily["values"][k].append(None)
         for k, v in sig.items():
             ok = np.isfinite(v) & np.isfinite(fwd)
             if ok.sum() < 50:
@@ -197,7 +201,9 @@ def lab(dates, P, st, today_state):
             pick = ok & (v >= cut)
             if pick.sum() < 5:
                 continue
-            vals.setdefault(st[t], {}).setdefault(k, []).append(float(np.mean(fwd[pick]) - base - COST))
+            x = float(np.mean(fwd[pick]) - base - COST)
+            vals.setdefault(st[t], {}).setdefault(k, []).append(x)
+            daily["values"][k][-1] = round(x, 5)
     out = {}
     for s, by in vals.items():
         out[s] = {}
@@ -208,6 +214,7 @@ def lab(dates, P, st, today_state):
             lo, hi = (None, None) if half is None else (mu - half, mu + half)
             verdict = "too few start days" if n < 30 else "measurably better than the average stock" if lo > 0 else "measurably worse than the average stock" if hi < 0 else "no measurable difference"
             out[s][k] = {"n": n, "mean_pct": round(mu * 100, 2), "ci95_pct": None if lo is None else [round(lo * 100, 2), round(hi * 100, 2)], "verdict": verdict}
+    LAB_DAILY.clear(); LAB_DAILY.update(daily)
     return out
 
 
@@ -306,13 +313,14 @@ def t4_lab(ctx):
         old = json.loads(cache.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         old = {}
-    fresh = old.get("to") and (ctx.now.date() - date.fromisoformat(old["created"][:10])).days < LAB_REFRESH_DAYS
+    fresh = old.get("to") and old.get("daily") and (ctx.now.date() - date.fromisoformat(old["created"][:10])).days < LAB_REFRESH_DAYS
     if fresh:
         rec = old["record"]
     else:
         rec = lab(M["dates"], M["P"], M["st"], today)
         STORE.mkdir(parents=True, exist_ok=True)
-        cache.write_text(json.dumps({"created": ctx.now.isoformat(), "from": M["dates"][259], "to": M["dates"][-HOLD - 2], "record": rec, "rules": "scripts/blab/technical.py"},
+        cache.write_text(json.dumps({"created": ctx.now.isoformat(), "from": M["dates"][259], "to": M["dates"][-HOLD - 2], "record": rec, "rules": "scripts/blab/technical.py",
+                                     "daily": dict(LAB_DAILY)},
                                     separators=(",", ":")), encoding="utf-8")
     here = rec.get(today or "", {})
     good = [k for k, v in here.items() if v["verdict"].startswith("measurably better")]
