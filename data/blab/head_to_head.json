@@ -1,0 +1,561 @@
+{
+ "created": "2026-11-17T08:21:28+00:00",
+ "data": {
+  "companies": 4283,
+  "from": "2008-01-01",
+  "to": "2026-11-16"
+ },
+ "cases": {
+  "base": {
+   "model_e": {
+    "whole": {
+     "cagr_pct": 16.89,
+     "worst_fall_pct": -33.27,
+     "sharpe": 0.94,
+     "from": "2010-01-05",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 17.39,
+     "worst_fall_pct": -28.75,
+     "sharpe": 0.98,
+     "from": "2010-01-05",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 13.26,
+     "worst_fall_pct": -26.58,
+     "sharpe": 0.69,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "desk": {
+    "whole": {
+     "cagr_pct": 8.7,
+     "worst_fall_pct": -35.19,
+     "sharpe": 0.73,
+     "from": "2010-07-08",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 9.96,
+     "worst_fall_pct": -35.19,
+     "sharpe": 0.83,
+     "from": "2010-07-08",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 0.14,
+     "worst_fall_pct": -18.93,
+     "sharpe": 0.08,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "desk_mode": "blend",
+   "desk_tried": 64,
+   "desk_live": [
+    "mad_l250_s21"
+   ],
+   "desk_unlevered": {
+    "whole": {
+     "cagr_pct": 12.12,
+     "worst_fall_pct": -46.69,
+     "sharpe": 0.73,
+     "from": "2010-07-08",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 13.97,
+     "worst_fall_pct": -46.69,
+     "sharpe": 0.83,
+     "from": "2010-07-08",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": -0.32,
+     "worst_fall_pct": -26.4,
+     "sharpe": 0.08,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "model_e_unlevered": {
+    "whole": {
+     "cagr_pct": 23.66,
+     "worst_fall_pct": -45.28,
+     "sharpe": 0.94,
+     "from": "2010-01-05",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 24.48,
+     "worst_fall_pct": -38.75,
+     "sharpe": 0.98,
+     "from": "2010-01-05",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 17.77,
+     "worst_fall_pct": -36.97,
+     "sharpe": 0.69,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "nifty50": {
+    "whole": {
+     "cagr_pct": 9.96,
+     "worst_fall_pct": -38.44,
+     "sharpe": 0.66,
+     "from": "2010-01-04",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 10.86,
+     "worst_fall_pct": -38.44,
+     "sharpe": 0.7,
+     "from": "2010-01-04",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 3.63,
+     "worst_fall_pct": -15.56,
+     "sharpe": 0.33,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "model_e_trades": 2328,
+   "model_e_vanished": 10
+  },
+  "stress": {
+   "model_e": {
+    "whole": {
+     "cagr_pct": 14.51,
+     "worst_fall_pct": -34.49,
+     "sharpe": 0.82,
+     "from": "2010-01-05",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 14.82,
+     "worst_fall_pct": -30.61,
+     "sharpe": 0.85,
+     "from": "2010-01-05",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 12.23,
+     "worst_fall_pct": -28.57,
+     "sharpe": 0.64,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "desk": {
+    "whole": {
+     "cagr_pct": -1.72,
+     "worst_fall_pct": -45.31,
+     "sharpe": -0.14,
+     "from": "2010-07-08",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": -0.71,
+     "worst_fall_pct": -45.31,
+     "sharpe": -0.02,
+     "from": "2010-07-08",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": -8.53,
+     "worst_fall_pct": -21.49,
+     "sharpe": -1.14,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "desk_mode": "selector",
+   "desk_tried": 67,
+   "desk_live": [],
+   "desk_unlevered": {
+    "whole": {
+     "cagr_pct": -2.72,
+     "worst_fall_pct": -58.87,
+     "sharpe": -0.14,
+     "from": "2010-07-08",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": -1.3,
+     "worst_fall_pct": -58.87,
+     "sharpe": -0.02,
+     "from": "2010-07-08",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": -12.11,
+     "worst_fall_pct": -29.46,
+     "sharpe": -1.14,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "model_e_unlevered": {
+    "whole": {
+     "cagr_pct": 20.05,
+     "worst_fall_pct": -46.72,
+     "sharpe": 0.82,
+     "from": "2010-01-05",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 20.57,
+     "worst_fall_pct": -41.99,
+     "sharpe": 0.85,
+     "from": "2010-01-05",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 16.22,
+     "worst_fall_pct": -39.4,
+     "sharpe": 0.64,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "nifty50": {
+    "whole": {
+     "cagr_pct": 9.96,
+     "worst_fall_pct": -38.44,
+     "sharpe": 0.66,
+     "from": "2010-01-04",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 10.86,
+     "worst_fall_pct": -38.44,
+     "sharpe": 0.7,
+     "from": "2010-01-04",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 3.63,
+     "worst_fall_pct": -15.56,
+     "sharpe": 0.33,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "model_e_trades": 2322,
+   "model_e_vanished": 10
+  }
+ },
+ "holdout_from": "2024-11-16",
+ "gates": {
+  "1 risk (worst fall no deeper than -25%)": false,
+  "2 quality (higher Sharpe than model E, design years)": false,
+  "3 hold-out (yearly return within 2 points of model E)": false,
+  "4 stress (Sharpe above model E with vanished holdings at zero)": false
+ },
+ "verdict": "keep model E; the desk stays a research page",
+ "old_cache": {
+  "model_e": {
+   "whole": {
+    "cagr_pct": 17.44,
+    "worst_fall_pct": -34.16,
+    "sharpe": 0.98,
+    "from": "2010-01-05",
+    "to": "2026-11-13"
+   },
+   "design": {
+    "cagr_pct": 18.62,
+    "worst_fall_pct": -34.16,
+    "sharpe": 1.04,
+    "from": "2010-01-05",
+    "to": "2024-11-14"
+   },
+   "holdout": {
+    "cagr_pct": 9.03,
+    "worst_fall_pct": -23.5,
+    "sharpe": 0.57,
+    "from": "2024-11-18",
+    "to": "2026-11-13"
+   }
+  },
+  "desk": {
+   "whole": {
+    "cagr_pct": 14.0,
+    "worst_fall_pct": -44.06,
+    "sharpe": 0.95,
+    "from": "2010-07-08",
+    "to": "2026-11-13"
+   },
+   "design": {
+    "cagr_pct": 15.73,
+    "worst_fall_pct": -44.06,
+    "sharpe": 1.04,
+    "from": "2010-07-08",
+    "to": "2024-11-14"
+   },
+   "holdout": {
+    "cagr_pct": 2.17,
+    "worst_fall_pct": -24.12,
+    "sharpe": 0.23,
+    "from": "2024-11-18",
+    "to": "2026-11-13"
+   }
+  },
+  "desk_mode": "blend"
+ },
+ "run1_before_series_fix": {
+  "base": {
+   "model_e": {
+    "whole": {
+     "cagr_pct": 17.54,
+     "worst_fall_pct": -33.67,
+     "sharpe": 0.99,
+     "from": "2010-01-05",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 18.24,
+     "worst_fall_pct": -28.26,
+     "sharpe": 1.04,
+     "from": "2010-01-05",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 12.52,
+     "worst_fall_pct": -28.65,
+     "sharpe": 0.67,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "desk": {
+    "whole": {
+     "cagr_pct": 11.47,
+     "worst_fall_pct": -33.45,
+     "sharpe": 0.92,
+     "from": "2010-07-08",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 12.57,
+     "worst_fall_pct": -33.45,
+     "sharpe": 1.0,
+     "from": "2010-07-08",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 3.9,
+     "worst_fall_pct": -15.9,
+     "sharpe": 0.36,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "desk_mode": "blend",
+   "desk_tried": 60,
+   "desk_live": [
+    "mad_l250_s21"
+   ],
+   "desk_unlevered": {
+    "whole": {
+     "cagr_pct": 16.19,
+     "worst_fall_pct": -44.64,
+     "sharpe": 0.92,
+     "from": "2010-07-08",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 17.83,
+     "worst_fall_pct": -44.64,
+     "sharpe": 1.0,
+     "from": "2010-07-08",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 5.09,
+     "worst_fall_pct": -22.15,
+     "sharpe": 0.36,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "model_e_unlevered": {
+    "whole": {
+     "cagr_pct": 24.71,
+     "worst_fall_pct": -45.71,
+     "sharpe": 0.99,
+     "from": "2010-01-05",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 25.84,
+     "worst_fall_pct": -38.22,
+     "sharpe": 1.04,
+     "from": "2010-01-05",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 16.75,
+     "worst_fall_pct": -39.46,
+     "sharpe": 0.67,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "nifty50": {
+    "whole": {
+     "cagr_pct": 9.96,
+     "worst_fall_pct": -38.44,
+     "sharpe": 0.66,
+     "from": "2010-01-04",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 10.86,
+     "worst_fall_pct": -38.44,
+     "sharpe": 0.7,
+     "from": "2010-01-04",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 3.63,
+     "worst_fall_pct": -15.56,
+     "sharpe": 0.33,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "model_e_trades": 2334,
+   "model_e_vanished": 77
+  },
+  "stress": {
+   "model_e": {
+    "whole": {
+     "cagr_pct": -0.98,
+     "worst_fall_pct": -77.76,
+     "sharpe": 0.06,
+     "from": "2010-01-05",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": -0.13,
+     "worst_fall_pct": -71.52,
+     "sharpe": 0.11,
+     "from": "2010-01-05",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": -7.12,
+     "worst_fall_pct": -30.21,
+     "sharpe": -0.36,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "desk": {
+    "whole": {
+     "cagr_pct": -9.71,
+     "worst_fall_pct": -81.1,
+     "sharpe": -1.17,
+     "from": "2010-07-08",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": -7.95,
+     "worst_fall_pct": -70.32,
+     "sharpe": -0.92,
+     "from": "2010-07-08",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": -21.37,
+     "worst_fall_pct": -39.67,
+     "sharpe": -3.79,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "desk_mode": "selector",
+   "desk_tried": 63,
+   "desk_live": [],
+   "desk_unlevered": {
+    "whole": {
+     "cagr_pct": -13.76,
+     "worst_fall_pct": -91.06,
+     "sharpe": -1.17,
+     "from": "2010-07-08",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": -11.37,
+     "worst_fall_pct": -82.88,
+     "sharpe": -0.92,
+     "from": "2010-07-08",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": -29.16,
+     "worst_fall_pct": -51.54,
+     "sharpe": -3.79,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "model_e_unlevered": {
+    "whole": {
+     "cagr_pct": -2.98,
+     "worst_fall_pct": -89.83,
+     "sharpe": 0.06,
+     "from": "2010-01-05",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": -1.88,
+     "worst_fall_pct": -85.1,
+     "sharpe": 0.11,
+     "from": "2010-01-05",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": -10.8,
+     "worst_fall_pct": -40.81,
+     "sharpe": -0.36,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "nifty50": {
+    "whole": {
+     "cagr_pct": 9.96,
+     "worst_fall_pct": -38.44,
+     "sharpe": 0.66,
+     "from": "2010-01-04",
+     "to": "2026-11-16"
+    },
+    "design": {
+     "cagr_pct": 10.86,
+     "worst_fall_pct": -38.44,
+     "sharpe": 0.7,
+     "from": "2010-01-04",
+     "to": "2024-11-14"
+    },
+    "holdout": {
+     "cagr_pct": 3.63,
+     "worst_fall_pct": -15.56,
+     "sharpe": 0.33,
+     "from": "2024-11-18",
+     "to": "2026-11-16"
+    }
+   },
+   "model_e_trades": 2141,
+   "model_e_vanished": 71
+  }
+ }
+}

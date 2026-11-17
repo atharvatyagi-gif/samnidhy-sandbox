@@ -6,7 +6,9 @@ Builds the same matrices as evolve.Market (dates x stocks: open, close, traded v
     NSE's corporate-actions record (scripts/corp_actions.py); where the file's previous-close field already differs from the
     last close by more than 2% (NSE adjusted it), that field is used. Falls beyond 45% with no recorded action stay in.
   - renamed symbols joined by ISIN (a symbol stops, a new one with the same ISIN starts the next trading day)
-  - EQ series only; a locked circuit (open = high = low = close) cannot be filled
+  - prices from the EQ, BE (trade-to-trade) and BZ series: a company moved to BE keeps trading and can still be sold there
+    (fixed 2026-11-17 after the first run counted such moves as vanished holdings); new buys only on a day it trades in EQ
+  - a locked circuit (open = high = low = close) cannot be filled
   - a holding with no trade for 10 sessions in a row is treated by `vanish`: "base" sells at the last close, "stress" at zero
 """
 from __future__ import annotations
@@ -21,8 +23,12 @@ from . import evolve as V
 VANISH_SESSIONS = 10
 
 
+HOLD_SERIES = ("EQ", "BE", "BZ")
+
+
 def read_days(folder: Path, start="2008-01-01"):
-    """-> {date: [(symbol, open, high, low, close, prevclose, value, isin)]} for EQ rows."""
+    """-> {date: [(symbol, open, high, low, close, prevclose, value, isin, series)]}: EQ, BE and BZ rows, EQ first when a
+    company has more than one the same day."""
     days = {}
     for p in sorted(Path(folder).glob("*/*.csv.gz")):
         d = p.stem[:10]
@@ -31,12 +37,13 @@ def read_days(folder: Path, start="2008-01-01"):
         rows = []
         with gzip.open(p, "rt", encoding="utf-8") as f:
             for r in csv.reader(f):
-                if len(r) < 11 or r[2] != "EQ":
+                if len(r) < 11 or r[2] not in HOLD_SERIES:
                     continue
                 try:
-                    rows.append((r[1], float(r[3] or r[6]), float(r[4] or r[6]), float(r[5] or r[6]), float(r[6]), float(r[7] or r[6]), float(r[9] or 0), r[10]))
+                    rows.append((r[1], float(r[3] or r[6]), float(r[4] or r[6]), float(r[5] or r[6]), float(r[6]), float(r[7] or r[6]), float(r[9] or 0), r[10], r[2]))
                 except ValueError:
                     continue
+        rows.sort(key=lambda x: HOLD_SERIES.index(x[8]))
         if rows:
             days[d] = rows
     return days
@@ -47,7 +54,7 @@ def join_renames(days):
     dates = sorted(days)
     last_seen, first_seen, isin_of = {}, {}, {}
     for d in dates:
-        for s, *_x, isin in days[d]:
+        for s, *_x, isin, _ser in days[d]:
             first_seen.setdefault(s, d); last_seen[s] = d; isin_of.setdefault(s, isin)
     pos = {d: i for i, d in enumerate(dates)}
     key = {s: s for s in first_seen}
@@ -82,11 +89,15 @@ class BhavMarket(V.Market):
         O, H, L, C, TV = (np.full((T, N), np.nan, np.float32) for _ in range(5))
         PC = np.full((T, N), np.nan, np.float64)
         F = np.ones((T, N), np.float64)
+        EQ = np.zeros((T, N), bool)
         for t, d in enumerate(self.dates):
-            for s, o, h, lo, c, pc, val, _isin in days[d]:
+            for s, o, h, lo, c, pc, val, _isin, ser in days[d]:
                 j = col[key[s]]
+                if not np.isnan(C[t, j]):
+                    continue                                              # EQ came first: keep it
                 O[t, j], H[t, j], L[t, j], C[t, j], TV[t, j], PC[t, j] = o, h, lo, c, val, pc
                 F[t, j] = ca.get((s, d), 1.0)
+                EQ[t, j] = ser == "EQ"
         # adjusted close: chain the day returns (split/bonus adjusted by NSE's previous close); scale open/high/low by the same factor
         adj = np.full((T, N), np.nan, np.float64)
         self.unexplained = []
@@ -121,3 +132,4 @@ class BhavMarket(V.Market):
             self.n50 = pd.Series(self.n50).ffill().bfill().to_numpy()
         self._cache = {}
         self._prep()
+        self.elig &= EQ                                                   # new buys only on a day the company trades in the EQ series
