@@ -9,7 +9,13 @@ in data. If it works, then you will need to replace the existing ALADIN model."
 - Source: NSE's own daily files (bhavcopy), every trading day, every security that traded that day, including companies
   later delisted, merged away or suspended (scripts/bhav_history.py; data branch `bhav`, one file per day).
 - **Survivorship:** gone. The tradable list on any day is built only from that day's and earlier files.
-- **Splits and bonuses:** each day's return is close / previous close, where NSE adjusts the previous close on the ex-date.
+- **Splits and bonuses:** each day's return is close / (previous close x the split or bonus factor on its ex-date), from
+  NSE's own corporate-actions record (scripts/corp_actions.py: split Rs 10 -> 2 = 0.2, bonus 1:1 = 0.5). Where a file's
+  previous-close field already differs from the last close by more than 2% (NSE adjusted it), that field is used instead.
+  **Changed 2026-11-17, before any result:** the first plan assumed NSE always adjusts the previous close; a check of the
+  2008-2009 files showed it does not (ACE's 10 -> 2 split on 13 Mar 2008 appears as 344.25 -> 70.75), so the corporate
+  actions record is used. A one-day fall beyond 45% with no recorded action is kept as a real loss (real collapses must
+  stay in) and the number of such cases is reported. Rights issues and dividends are not adjusted (price returns).
   An adjusted price index is chained from those returns; opens are scaled by the same day's factor.
 - **Renamed symbols:** when a symbol stops and a new symbol with the same ISIN starts on the next trading day, the two are
   joined (one company, one history).
