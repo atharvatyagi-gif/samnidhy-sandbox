@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-11-17T12:21:05+00:00",
+  "generated_on": "2026-11-17T13:31:16+00:00",
   "session_date": "2026-11-17",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -69,7 +69,7 @@
         "turnover_crore": 147.72
       },
       "latest_close": 835.6,
-      "trailing_pe": 10.139545,
+      "trailing_pe": 10.153098,
       "market_cap": 117557248000,
       "history": {
         "first_date": "2023-09-27",
@@ -98,7 +98,7 @@
         "turnover_crore": 319.44
       },
       "latest_close": 265.62,
-      "trailing_pe": 57.24569,
+      "trailing_pe": 58.122536,
       "market_cap": 250066616320,
       "history": {
         "first_date": "2021-11-10",
