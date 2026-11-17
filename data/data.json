@@ -1,6 +1,6 @@
 {
   "site_name": "Samnidhy Sandbox",
-  "generated_on": "2026-11-17T02:00:37+00:00",
+  "generated_on": "2026-11-17T03:31:31+00:00",
   "session_date": "2026-11-16",
   "source": "NSE end-of-day file (picks and session moves); Yahoo Finance via yfinance (price history, P/E, market cap)",
   "trading_days_per_year": 252,
@@ -40,13 +40,13 @@
         "turnover_crore": 2137.05
       },
       "latest_close": 235.09,
-      "trailing_pe": 39.31271,
+      "trailing_pe": 36.00153,
       "market_cap": 227367747584,
       "history": {
         "first_date": "2025-05-28",
         "trading_days": 364,
         "years": 1.47,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": 0.828483,
       "total_return": 1.428471,
@@ -104,7 +104,7 @@
         "first_date": "2021-11-09",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.082201,
       "total_return": -0.118484,
@@ -133,7 +133,7 @@
         "first_date": "2022-11-22",
         "trading_days": 981,
         "years": 3.98,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.378176,
       "total_return": -0.50267,
@@ -162,7 +162,7 @@
         "first_date": "2021-11-09",
         "trading_days": 1238,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.204995,
       "total_return": -0.286292,
@@ -191,7 +191,7 @@
         "first_date": "2021-11-09",
         "trading_days": 1239,
         "years": 5.02,
-        "session_price_from": "NSE"
+        "session_price_from": "Yahoo"
       },
       "annualised_return": -0.48991,
       "total_return": -0.628315,
@@ -218,12 +218,12 @@
       "start": "2021-11-09",
       "end": "2026-11-16",
       "years": 5.02,
-      "session_price_from": "NSE"
+      "session_price_from": "Yahoo"
     },
     "latest_close": 25291.1,
     "session_pct_change": 0.5838,
     "annualised_return": 0.01475,
-    "total_return": 0.021762,
+    "total_return": 0.021761,
     "annualised_volatility": 0.127425,
     "max_drawdown": -0.155601
   },
@@ -1749,7 +1749,7 @@
         710.36,
         697.65,
         684.9,
-        698.15,
+        698.14,
         754.15,
         757.04,
         725.99,
@@ -1791,7 +1791,7 @@
         695.92,
         664.04,
         683.03,
-        663.01,
+        663.0,
         627.04,
         617.24,
         573.15,
