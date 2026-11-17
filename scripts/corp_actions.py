@@ -19,24 +19,27 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SPLIT = re.compile(r"(?:split|sub-?division).*?(?:from\s*)?(?:rs\.?|re\.?)\s*([\d.]+).*?to\s*(?:rs\.?|re\.?)\s*([\d.]+)", re.I)
+SPLIT = re.compile(r"(?:split|spilt|sub-?division|\bf\.?\s?v\b\.?|face\s*value)[^0-9]*?(?:rs|re)\.?\s*([\d.]+)[^0-9]*?to\s*(?:rs|re)\.?\s*([\d.]+)", re.I)
+KEYWORDS = re.compile(r"split|spilt|sub-?division|\bf\.?\s?v\b|face\s*value|bonus", re.I)
 BONUS = re.compile(r"bonus\D*(\d+)\s*:\s*(\d+)", re.I)
 
 
 def factor(subject):
-    """-> price factor for a split or bonus subject, else None. 'Fv Split Rs.10/- To Rs.2/' -> 0.2; 'Bonus 1:1' -> 0.5."""
+    """-> price factor for a split and/or bonus subject, else None. 'Fv Split Rs.10/- To Rs.2/' -> 0.2; 'Bonus 1:1' -> 0.5;
+    both in one subject -> 0.1. Dividends and rights issues -> None (not adjusted: price returns)."""
     s = subject or ""
+    f = 1.0
     m = SPLIT.search(s)
     if m:
         old, new = float(m.group(1)), float(m.group(2))
         if old > 0 and new > 0 and new != old:
-            return new / old
+            f *= new / old
     m = BONUS.search(s)
     if m:
         a, b = int(m.group(1)), int(m.group(2))
         if a > 0 and b > 0:
-            return b / (a + b)
-    return None
+            f *= b / (a + b)
+    return None if f == 1.0 else f
 
 
 def months(start: date, end: date):
@@ -67,6 +70,8 @@ def run(out: Path, start=date(2008, 1, 1), end=None, session=None, log=print):
         rows = j if isinstance(j, list) else (j or {}).get("data", [])
         for r in rows or []:
             f = factor(r.get("subject"))
+            if f is None and KEYWORDS.search(r.get("subject") or "") and r.get("symbol"):
+                st.setdefault("unparsed", []).append([r.get("symbol"), r.get("exDate"), r.get("subject")])   # kept for review, never guessed
             if f is None or not r.get("symbol"):
                 continue
             try:

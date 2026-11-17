@@ -112,26 +112,37 @@ def load_all(out: Path, start: str = "0000", end: str = "9999"):
     return rows
 
 
-def run(start: date, end: date, out: Path, log=print, get=None, budget_s=None):
+def run(start: date, end: date, out: Path, log=print, get=None, budget_s=None, workers=4):
+    """Fetch every weekday in [start, end] not saved yet and not a known no-file day, `workers` at a time. Resumable."""
+    from concurrent.futures import ThreadPoolExecutor
     out.mkdir(parents=True, exist_ok=True)
     miss_p = out / "_missing.json"
     missing = set(json.loads(miss_p.read_text())) if miss_p.exists() else set()
-    d, t0, got, none = start, time.time(), 0, 0
+    todo, d = [], start
     while d <= end:
-        if budget_s and time.time() - t0 > budget_s:
-            log(f"bhav: time budget used; stopped at {d} (run again to continue)"); break
         if d.weekday() < 5 and d.isoformat() not in missing and not day_file(out, d).exists():
-            raw = fetch(d, get=get)
-            if raw is None:
-                missing.add(d.isoformat()); none += 1
-            else:
-                rows = parse(raw, d)
-                if rows:
-                    save_day(out, d, rows); got += 1
-                else:
-                    missing.add(d.isoformat())
-            time.sleep(0.3)
+            todo.append(d)
         d += timedelta(days=1)
+    t0, got, none = time.time(), 0, 0
+
+    def one(day):
+        time.sleep(0.2)
+        raw = fetch(day, get=get)
+        return day, (parse(raw, day) if raw is not None else None)
+
+    for k in range(0, len(todo), 40):                                    # in chunks, so progress is saved as it goes
+        if budget_s and time.time() - t0 > budget_s:
+            log(f"bhav: time budget used; {len(todo) - k} day(s) left (run again to continue)"); break
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            for day, rows in ex.map(one, todo[k:k + 40]):
+                if rows is None:
+                    missing.add(day.isoformat()); none += 1
+                elif rows:
+                    save_day(out, day, rows); got += 1
+                else:
+                    missing.add(day.isoformat())
+        miss_p.write_text(json.dumps(sorted(missing)))
+        log(f"bhav: {got} saved, {none} no-file so far ({k + 40} of {len(todo)} checked)")
     miss_p.write_text(json.dumps(sorted(missing)))
     log(f"bhav: {got} new day(s) saved, {none} day(s) with no file (holidays); {len(missing)} known no-file days in total")
     return got

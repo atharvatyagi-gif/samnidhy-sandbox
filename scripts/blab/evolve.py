@@ -206,6 +206,8 @@ def signals(M, fam, p):
             sc = M.sma(p["s"]) / M.sma(p["l"]); return ("rank", np.where(sc > 1, sc, np.nan), None, None)
         if fam == "hi52":
             return ("rank", C / M.hi(p["n"], lag=0), None, None)
+        if fam == "mom":                                                  # model E's rule: return over the last n sessions
+            return ("rank", C / M.pdC.shift(p["n"]).to_numpy(np.float32) - 1, None, None)
     raise ValueError(fam)
 
 
@@ -222,13 +224,25 @@ def state_of(M, fam, p):
 
 # ------------------------------------------------------------------ the paper account
 
-def simulate(M, cand, cfg, start=START):
+def simulate(M, cand, cfg, start=START, slots=SLOTS, rebal=REBAL, top_n=None, min_value=None, vanish=None):
     """One candidate's paper account from `start` to the last day. -> {"eq": [...], "dates": [...], "trades": [...], "orders": [...]}.
-    Orders decided at day t's close fill at day t+1's open; nothing uses data after the day it is decided on."""
+    Orders decided at day t's close fill at day t+1's open; nothing uses data after the day it is decided on.
+    Options (all off by default): slots / rebal (model E: 25 and 63), top_n (only the n most-traded eligible stocks), min_value
+    (a higher traded-value floor), vanish ("base": a holding with no trade for 10 sessions is sold at its last close; "stress":
+    at zero). A market with a `locked` mask (circuit-locked days) never fills there."""
     import numpy as np
     sys.path.insert(0, str(ROOT / "scripts"))
     import aladin_e as AE
     kind, A, B, K = signals(M, cand["fam"], cand["p"])
+    SL = slots
+    elig = M.elig if min_value is None else (M.elig & (M.tv >= min_value))
+    if top_n:
+        rank_tv = np.where(elig, M.tv, -1.0)
+        thresh = -np.sort(-rank_tv, axis=1)[:, min(top_n, rank_tv.shape[1]) - 1:min(top_n, rank_tv.shape[1])]
+        elig = elig & (rank_tv >= thresh)
+    locked = getattr(M, "locked", None)
+    traded = ~np.isnan(M.C)
+    quiet = {}
     if cand.get("filt"):
         F = state_of(M, *cand["filt"])
         A = A & F
@@ -240,15 +254,15 @@ def simulate(M, cand, cfg, start=START):
         # 1. fill yesterday's orders at today's open
         for side, j in pending:
             px = float(M.O[t, j])
-            if not np.isfinite(px) or px <= 0:
+            if not np.isfinite(px) or px <= 0 or (locked is not None and locked[t, j]):
                 continue
             if side == "exit" and j in pos:
                 sh, epx, et, bc = pos.pop(j)
                 g = sh * px; c = AE.sell_cost(g, float(M.tv[t - 1, j]), cfg)
                 cash += g - c
                 trades.append([M.dates[t], M.syms[j], "exit", round(px, 2), sh, round((g - c) / (sh * epx + bc) - 1, 4), M.dates[et]])
-            elif side == "enter" and j not in pos and len(pos) < SLOTS:
-                val = equity_prev / SLOTS
+            elif side == "enter" and j not in pos and len(pos) < SL:
+                val = equity_prev / SL
                 sh = math.floor(min(val, cash) / (px * 1.003))
                 if sh <= 0:
                     continue
@@ -257,6 +271,15 @@ def simulate(M, cand, cfg, start=START):
                 pos[j] = [sh, px, t, c]
                 trades.append([M.dates[t], M.syms[j], "enter", round(px, 2), sh, None, None])
         pending = []
+        # 1b. a holding that has not traded for VANISH sessions (suspended or delisted) leaves the account
+        if vanish:
+            for j in list(pos):
+                quiet[j] = 0 if traded[t, j] else quiet.get(j, 0) + 1
+                if quiet[j] >= 10:
+                    sh, epx, et, bc = pos.pop(j)
+                    px = float(M.Cf[t, j]) if vanish == "base" else 0.0
+                    cash += sh * px
+                    trades.append([M.dates[t], M.syms[j], "exit", round(px, 2), sh, round((sh * px) / (sh * epx + bc) - 1, 4), M.dates[et], "stopped trading"])
         # 2. mark to market at today's close
         mark = sum(sh * float(M.Cf[t, j]) for j, (sh, *_r) in pos.items())
         equity_prev = cash + mark
@@ -266,17 +289,17 @@ def simulate(M, cand, cfg, start=START):
         # 3. decide at today's close
         held = set(pos)
         if kind == "rank":
-            if (t - t0) % REBAL == 0:
-                sc = np.where(M.elig[t], A[t], np.nan)
+            if (t - t0) % rebal == 0:
+                sc = np.where(elig[t], A[t], np.nan)
                 ok = np.isfinite(sc)
-                top = set(np.argsort(-np.where(ok, sc, -np.inf))[:SLOTS][: int(ok.sum())].tolist())
+                top = set(np.argsort(-np.where(ok, sc, -np.inf))[:SL][: int(ok.sum())].tolist())
                 pending += [("exit", j) for j in held - top] + [("enter", j) for j in sorted(top - held, key=lambda j: -sc[j])]
         else:
             exits = [j for j in held if B[t, j] or (K and t - pos[j][2] >= K)]
             pending += [("exit", j) for j in exits]
-            free = SLOTS - len(held) + len(exits)
+            free = SL - len(held) + len(exits)
             if free > 0:
-                cand_j = np.nonzero(A[t] & M.elig[t])[0]
+                cand_j = np.nonzero(A[t] & elig[t])[0]
                 cand_j = [j for j in cand_j if j not in held]
                 cand_j.sort(key=lambda j: -M.tv[t, j])
                 pending += [("enter", j) for j in cand_j[:free]]
@@ -359,7 +382,7 @@ def breed(live, pool_ids):
     return new[:BREED]
 
 
-def replay(M, cfg, extra=(), log=print):
+def replay(M, cfg, extra=(), log=print, vanish=None):
     """Run every candidate, then the selector month by month with no future data. -> the full record."""
     import numpy as np
     dates = M.dates
@@ -371,7 +394,7 @@ def replay(M, cfg, extra=(), log=print):
     def run(cid_, born):
         if cid_ not in runs:
             c = pool[cid_]
-            runs[cid_] = simulate(M, c, cfg, start=born)
+            runs[cid_] = simulate(M, c, cfg, start=born, vanish=vanish)
             e = np.array(runs[cid_]["eq"], float)
             runs[cid_]["ret"] = dict(zip(runs[cid_]["dates"][1:], (e[1:] / e[:-1] - 1).tolist()))
         return runs[cid_]
@@ -441,7 +464,8 @@ def replay(M, cfg, extra=(), log=print):
     for name, (dd, ee) in (("selector", (sd, se)), ("blend", (bd, be)), ("nifty50", (nd, ne))):
         res[name] = {"whole": stats(ee, dd), "design": stats(ee, dd, b=hold), "holdout": stats(ee, dd, a=hold)}
     return {"pool": pool, "status": status, "runs": runs, "picks": picks_log, "live": live, "tried": tried, "result": res, "last_scores": last_scores,
-            "holdout_from": hold, "selector_curve": [sd[::5], [round(x, 4) for x in se[::5]]], "blend_curve": [bd[::5], [round(x, 4) for x in be[::5]]]}
+            "holdout_from": hold, "selector_curve": [sd[::5], [round(x, 4) for x in se[::5]]], "blend_curve": [bd[::5], [round(x, 4) for x in be[::5]]],
+            "sel_ret": sel_ret, "blend_ret": blend_ret}
 
 
 # ------------------------------------------------------------------ the AI paper scout
