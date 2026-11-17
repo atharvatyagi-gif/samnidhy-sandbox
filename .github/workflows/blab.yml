@@ -87,6 +87,7 @@ jobs:
           GEMINI_API_KEY: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY || '' }}
           GEMINI_API_KEY_1: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY_1 || '' }}
           GEMINI_API_KEY_2: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY_2 || '' }}
+          GEMINI_API_KEY_3: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY_3 || '' }}
           GITHUB_MODELS_TOKEN: ${{ matrix.division == 'sentiment' && github.token || '' }}
         run: python scripts/blab/run.py --division ${{ matrix.division }} --out blab_${{ matrix.division }}.json
       - uses: actions/upload-artifact@v4

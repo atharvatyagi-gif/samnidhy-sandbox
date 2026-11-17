@@ -428,7 +428,7 @@ class LLM:
         # GitHub Models (free with the GitHub account; in Actions the workflow's own token with "models: read", passed as GITHUB_MODELS_TOKEN) comes last:
         # small daily allowances per model, but no extra key to manage. Each model has its own allowance. Requests are capped at about 8,000 tokens in.
         for prov, base in (("groq", "GROQ_API_KEY"), ("gemini", "GEMINI_API_KEY"), ("github", "GITHUB_MODELS_TOKEN")):
-            keys = [("", base)] + [(f"#{i}", f"{base}_{i}") for i in (1, 2)]
+            keys = [("", base)] + [(f"#{i}", f"{base}_{i}") for i in (1, 2, 3, 4, 5)]          # each extra free key has its own daily allowance
             have = [(tag, name) for tag, name in keys if env.get(name)]
             if not (want in ("auto", prov) and have):
                 continue
