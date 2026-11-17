@@ -238,7 +238,7 @@
    -0.07262,
    -0.07221,
    -0.07188,
-   -0.07087,
+   -0.07086,
    -0.07065,
    -0.06986,
    -0.06823,
@@ -1077,7 +1077,7 @@
    0.28274,
    0.28327,
    0.28329,
-   0.28368,
+   0.28369,
    0.28383,
    0.28388,
    0.28405,
@@ -1452,9 +1452,9 @@
    1.1116
   ]
  },
- "generated_utc": "2026-11-16T23:00:41+00:00",
- "generated_ist": "17 Nov 2026, 04:30 AM IST",
- "screened_ist": "17 Nov 2026, 04:30 AM IST",
+ "generated_utc": "2026-11-17T02:03:24+00:00",
+ "generated_ist": "17 Nov 2026, 07:33 AM IST",
+ "screened_ist": "17 Nov 2026, 07:33 AM IST",
  "ranked_on": "closing prices",
  "universe_source": "downloaded",
  "rules": {
@@ -1484,7 +1484,7 @@
   },
   {
    "step": "Complete annual-report data",
-   "count": 269
+   "count": 268
   },
   {
    "step": "Piotroski F-Score 6 or more (out of 9)",
@@ -1500,7 +1500,7 @@
   "1": 0,
   "2": 3,
   "3": 18,
-  "4": 36,
+  "4": 35,
   "5": 61,
   "6": 67,
   "7": 41,
@@ -1526,6 +1526,7 @@
    "RUBICON"
   ],
   "download failed (YFRateLimitError)": [
+   "SHRIPISTON",
    "SHYAMMETL",
    "SIEMENS",
    "SIGNATURE",
