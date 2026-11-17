@@ -49,15 +49,22 @@ test("one stock across divisions, and the scorecard says when there are too few"
 });
 
 import { techHtml } from "../../lab.js";
-test("the Technical panel shows today's state, the strategy table and the analog days; nothing when not published", () => {
+test("the strategy desk panel says which money rule applies, lists every active strategy, and shows the market states", () => {
   assert.equal(techHtml(doc), "");
+  const st = (c, w) => ({ cagr_pct: c, worst_fall_pct: w, sharpe: 0.9, from: "2010-07-08", to: "2026-11-13" });
   const d = { ...doc, bots: [...doc.bots,
     { id: "T3", detail: "Today: up trend, high volatility.", data: { state: "up trend, high volatility" } },
-    { id: "T4", data: { today_state: "up trend, high volatility", record: { "up trend, high volatility": { trend: { n: 97, mean_pct: 2.89, ci95_pct: [0.54, 5.24], verdict: "measurably better than the average stock" }, reversal: { n: 101, mean_pct: -0.82, ci95_pct: [-2.18, 0.54], verdict: "no measurable difference" } } } } },
-    { id: "T5", detail: "4 of 10 higher.", data: { analogs: { features: ["21-session return"], days: [{ date: "2013-05-10", distance: 0.8, n50_21: -1.2, n50_63: 3.1, bank_21: null }] } } }] };
+    { id: "T4", data: { mode: "blend", explain: "The selector did not beat the blend, so the live account follows the blend.", live: ["mad_l200_s21"], tried: 52, go_live: "2026-11-18", holdout_from: "2024-11-13", blend_orders: 4,
+      result: { selector: { whole: st(12.5, -58.5) }, blend: { whole: st(17.5, -56.9) }, nifty50: { whole: st(10.3, -38.4) } },
+      candidates: [{ id: "mad_l200_s21", family: "Moving-average distance", rule: "hold the 10 stocks whose 21-day average is furthest above their 200-day average (monthly)", origin: "research grid", born: "2010-01-04", p_skill: 0.539, live: true, whole: st(28.7, -62.9), holdout: st(20.3, -20), positions: [["TCS", 3, 3000, "2026-10-01"]], orders: [["enter", "INFY"]] },
+                   { id: "rsi_x", family: "RSI bounce", rule: "in when RSI(14) closes back above 30", origin: "AI scout: A paper", born: "2026-11-17", p_skill: null, live: false, whole: null, holdout: null, positions: [], orders: [] }],
+      retired: [{ id: "rsi_hi55_k10_lo30", retired: "2011-06-01" }],
+      states: { "NIFTY 50": { "up trend, high volatility": { days: 473, yearly_pct: 57.8 } }, "mad_l200_s21": { "down trend, high volatility": { days: 435, yearly_pct: -30.1 } } } } },
+    { id: "T6", detail: "Read 40 new finance abstracts; 0 rules proposed.", data: { runs: [{ date: "2026-11-17", read: 40, proposed: [] }] } }] };
   const h = techHtml(d);
-  assert.match(h, /up trend, high volatility \(today\)/); assert.match(h, /class="up">\+2\.89%/); assert.match(h, /class="mut">-0\.82%/);
-  assert.match(h, /2013-05-10/); assert.match(h, /not measured/); assert.match(h, /after a 0\.4% cost/);
+  for (const w of ["follows the blend of all active strategies", "Self-evolving selector (top 3)", "All active strategies, equal money", "NIFTY 50 held", "<b>live</b> · Moving-average distance",
+                   "54%", "not yet", "AI scout: A paper", "in INFY", "TCS", "up trend, high volatility (today)", "+57.80%", "rsi_hi55_k10_lo30 (2011-06-01)", "AI paper scout:", "Companies listed today only"]) assert.ok(h.includes(w), w);
+  assert.ok(!/\b(buy|sell|target|recommendation|guaranteed)\b/i.test(h.replace(/<[^>]+>/g, " ")));
 });
 
 import { macroHtml } from "../../lab.js";

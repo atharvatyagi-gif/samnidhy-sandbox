@@ -3,7 +3,7 @@
 # scores the older ones against the NIFTY 500 and saves data/blab/. The next Live prices run publishes it for lab.html.
 # Twice a day: after the evening daily update (21:00 IST) and before the market opens (08:15 IST). Standard library only,
 # except the Fundamental division: `requests` for NSE (through the repository's own NSE session) and a read-only copy of the
-# ALADIN statements cache. Scouts keep small rolling stores in data/blab/store/, saved by the collect job. The Macro job alone
+# ALADIN statements cache; the Technical division adds pandas, the price cache, the history branch and (for its monthly paper scout) the free AI keys. Scouts keep small rolling stores in data/blab/store/, saved by the collect job. The Macro job alone
 # receives the free FRED key (GitHub secret FRED_API_KEY); it is never written to a file or a log.
 # Free sources only (owner, 15 Nov 2026). Commits end in "[skip ci]" and touch nothing but data/blab/.
 name: B-Lab research desk
@@ -53,7 +53,7 @@ jobs:
           restore-keys: aladin-cache-
       - name: Prices and NSE access for the Technical division
         if: matrix.division == 'technical'
-        run: pip install requests==2.34.2 numpy
+        run: pip install requests==2.34.2 numpy pandas
       - name: News, name matching and NSE access for the Sentiment division
         if: matrix.division == 'sentiment'
         run: pip install requests==2.34.2 rapidfuzz
@@ -81,14 +81,14 @@ jobs:
         continue-on-error: true
         env:                                                                                   # each free key reaches only the job that uses it
           FRED_API_KEY: ${{ matrix.division == 'macro' && secrets.FRED_API_KEY || '' }}
-          GROQ_API_KEY: ${{ matrix.division == 'sentiment' && secrets.GROQ_API_KEY || '' }}
-          GROQ_API_KEY_1: ${{ matrix.division == 'sentiment' && secrets.GROQ_API_KEY_1 || '' }}
-          GROQ_API_KEY_2: ${{ matrix.division == 'sentiment' && secrets.GROQ_API_KEY_2 || '' }}
-          GEMINI_API_KEY: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY || '' }}
-          GEMINI_API_KEY_1: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY_1 || '' }}
-          GEMINI_API_KEY_2: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY_2 || '' }}
-          GEMINI_API_KEY_3: ${{ matrix.division == 'sentiment' && secrets.GEMINI_API_KEY_3 || '' }}
-          GITHUB_MODELS_TOKEN: ${{ matrix.division == 'sentiment' && github.token || '' }}
+          GROQ_API_KEY: ${{ (matrix.division == 'sentiment' || matrix.division == 'technical') && secrets.GROQ_API_KEY || '' }}
+          GROQ_API_KEY_1: ${{ (matrix.division == 'sentiment' || matrix.division == 'technical') && secrets.GROQ_API_KEY_1 || '' }}
+          GROQ_API_KEY_2: ${{ (matrix.division == 'sentiment' || matrix.division == 'technical') && secrets.GROQ_API_KEY_2 || '' }}
+          GEMINI_API_KEY: ${{ (matrix.division == 'sentiment' || matrix.division == 'technical') && secrets.GEMINI_API_KEY || '' }}
+          GEMINI_API_KEY_1: ${{ (matrix.division == 'sentiment' || matrix.division == 'technical') && secrets.GEMINI_API_KEY_1 || '' }}
+          GEMINI_API_KEY_2: ${{ (matrix.division == 'sentiment' || matrix.division == 'technical') && secrets.GEMINI_API_KEY_2 || '' }}
+          GEMINI_API_KEY_3: ${{ (matrix.division == 'sentiment' || matrix.division == 'technical') && secrets.GEMINI_API_KEY_3 || '' }}
+          GITHUB_MODELS_TOKEN: ${{ (matrix.division == 'sentiment' || matrix.division == 'technical') && github.token || '' }}
         run: python scripts/blab/run.py --division ${{ matrix.division }} --out blab_${{ matrix.division }}.json
       - uses: actions/upload-artifact@v4
         if: always()
@@ -134,6 +134,8 @@ jobs:
           path: |
             data/blab/store/deals.json
             data/blab/store/strategy_lab.json
+            data/blab/store/evolve_pool.json
+            data/blab/store/evolve_ledger.json
           if-no-files-found: warn
           retention-days: 3
 
@@ -155,7 +157,7 @@ jobs:
       - name: Put the Fundamental stores back in place
         run: |
           mkdir -p data/blab/store
-          for f in shareholding.json sast29.json announcements.json deals.json strategy_lab.json fred.json rbi.json news_us.json news_sectors.json ai_news.json events_hist.json; do [ -f "$f" ] && mv -f "$f" data/blab/store/ || true; done
+          for f in shareholding.json sast29.json announcements.json deals.json strategy_lab.json fred.json rbi.json news_us.json news_sectors.json ai_news.json events_hist.json evolve_pool.json evolve_ledger.json; do [ -f "$f" ] && mv -f "$f" data/blab/store/ || true; done
       - name: Collect, score and write data/blab (the scouts' stores came back in data/blab/store/)
         run: python scripts/blab/run.py --collect blab_*.json
       - name: Save data/blab to the repository (the next Live prices run publishes it)

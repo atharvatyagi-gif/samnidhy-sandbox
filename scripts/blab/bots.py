@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from .core import Bot
 from .fundamental import f2_ownership, f3_governance, f5_blind_spots
-from .technical import t2_flows, t3_regime, t4_lab, t5_analogs
+from .technical import t2_flows, t3_regime, t5_analogs
+from .desk import t4_desk, t6_scout
 from .macro import m1_india, m2_us, m3_market, m4_analyst
 from .sentiment import _nid, s2_us_news, s3_sectors, s6_ai_analyst, s7_historian
 from .core import parse_when as core_parse
@@ -114,8 +115,9 @@ BOTS = [
     B("T1", "technical", "Price scout", "scout", "End-of-day prices, volume and every NSE index.", ["NSE end-of-day files", "Yahoo Finance"], 100, _t1_prices, 1, "scripts/nse_eod.py, scripts/terminal_hist.py, scripts/indices_eod.py"),
     B("T2", "technical", "Flows scout", "scout", "FII/DII flows and NSE's bulk, block and short deals; F&O open interest not measured yet.", ["NSE FII/DII report", "NSE large deals"], 100, t2_flows, 3, "also the daily update's FII/DII step"),
     B("T3", "technical", "Regime bot", "analyst", "Today's market state (trend x volatility) from NIFTY 50 history since 2007, with breadth.", ["NSE index history", "history branch"], 100, t3_regime, 3),
-    B("T4", "technical", "Strategy lab", "analyst", "Six fixed strategies tested in every past market state after costs; files the picks of those measurably better in today's.", ["NSE prices of the 500 stocks since 1996"], 24 * 8, t4_lab, 3),
+    B("T4", "technical", "Strategy desk (self-evolving)", "analyst", "Simple research-backed strategies, each a Rs 1 lakh paper account on every tradable NSE stock; a selector re-picks the top 3 monthly, penalised for luck, and breeds new variants.", ["NSE prices of every listed stock since 1996", "T6 proposals"], 100, t4_desk, 3),
     B("T5", "technical", "Analog finder", "analyst", "The 10 past days most like today and what NIFTY 50 and Bank Nifty did next.", ["NSE index history"], 100, t5_analogs, 3),
+    B("T6", "technical", "Strategy scout (AI)", "scout", "Every 28 days reads the newest finance research (arXiv) and proposes simple price rules for the strategy desk; nothing is used until it earns a record.", ["arXiv q-fin", "free AI tiers"], 24 * 30, t6_scout, 3),
     # Macro: official statistics
     B("M1", "macro", "India scout", "scout", "RBI policy rates, CRR, SLR and the rupee reference rate (saved daily); India 10-year yield and call-money rate; India CPI.", ["RBI", "FRED (India series)", "MOSPI"], 100, m1_india, 4),
     B("M2", "macro", "US scout", "scout", "US fed funds rate, inflation and consumer sentiment, used only for their effect on Indian markets.", ["FRED"], 24 * 60, m2_us, 4),

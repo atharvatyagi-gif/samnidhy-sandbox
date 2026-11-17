@@ -104,6 +104,14 @@ analyst runs on what they found. A final job merges, scores and publishes. Free 
    announcement kinds over up to 3 years (monthly-clustered ranges, 12+ months, findings only after 2 years of history).
 6. Scorecards run at least 8 weeks; then the owner chooses what moves to the main site.
 
+## 6b. The self-evolving strategy desk (owner, 2026-11-17)
+
+The old ranking lab (T4) is replaced by a desk of simple, research-backed strategies operated as paper accounts on every
+tradable NSE stock, with a monthly selector that picks the top 3 (penalised for luck), retires losers, breeds variants and
+takes rules proposed by an AI scout of new arXiv papers (T6). Evidence, rules and the one recorded change:
+docs/blab/STRATEGY_EVIDENCE.md. Code: scripts/blab/evolve.py, scripts/blab/desk.py. First replay (2010-2026): the selector did
+not beat the equal-money blend of all active strategies, so by the rule written beforehand the live account follows the blend.
+
 ## 7. Free sources only (owner, 15 Nov 2026)
 
 Every source is free. None needs a paid plan, and none needs a key the owner must create:

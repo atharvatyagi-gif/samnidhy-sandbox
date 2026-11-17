@@ -129,17 +129,31 @@ const pc2 = v => v == null ? "" : `${v > 0 ? "+" : ""}${Number(v).toFixed(2)}%`;
 /* The Technical division's own evidence: today's state, the strategy-by-state record, the analog days. "" when not published. */
 export function techHtml(doc) {
   const by = id => (doc.bots || []).find(b => b.id === id) || {};
-  const T3 = by("T3"), T4 = by("T4"), T5 = by("T5");
-  const rec = T4.data && T4.data.record, today = (T4.data && T4.data.today_state) || (T3.data && T3.data.state), an = T5.data && T5.data.analogs;
-  if (!rec && !an) return "";
+  const T3 = by("T3"), T4 = by("T4"), T5 = by("T5"), T6 = by("T6");
+  const D = T4.data || {}, an = (T5.data || {}).analogs, today = (T3.data || {}).state;
+  if (!D.candidates && !an) return "";
   let h = `<p class="note">Today's market state: <b>${esc(today || "not measured")}</b>. ${esc(T3.detail || "")}</p>`;
-  if (rec) {
-    const strats = [...new Set(Object.values(rec).flatMap(x => Object.keys(x)))];
-    const cell = c => !c ? "" : `<span class="${/better/.test(c.verdict) ? "up" : /worse/.test(c.verdict) ? "down" : "mut"}">${esc(pc2(c.mean_pct))}</span><br><small>${c.ci95_pct ? esc(`${pc2(c.ci95_pct[0])} to ${pc2(c.ci95_pct[1])}`) : ""} · ${c.n}</small>`;
-    h += `<div class="lab-scroll" tabindex="0" role="region" aria-label="Strategy lab by market state"><table class="lab-tbl"><caption class="note">Strategy lab: each strategy's best 10% against the average stock over the next 21 sessions, after a 0.4% cost, by the market state on the day it picked (range, start days). Green or red only when the range is clear of zero.</caption>
-      <thead><tr><th>Strategy</th>${STATES.map(s => `<th${s === today ? ' class="lab-now"' : ""}>${esc(s)}${s === today ? " (today)" : ""}</th>`).join("")}</tr></thead>
-      <tbody>${strats.map(k => `<tr><td>${esc(k)}</td>${STATES.map(s => `<td${s === today ? ' class="lab-now"' : ""}>${cell((rec[s] || {})[k])}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  if (D.candidates) {
+    const st = s => s ? `${esc(pc2(s.cagr_pct))} a year<br><small>worst fall ${esc(pc2(s.worst_fall_pct))} · risk-adjusted ${esc(s.sharpe ?? "-")}</small>` : "<small>not enough days</small>";
+    const R = D.result || {};
+    h += `<p class="note"><b>${D.mode === "selector" ? "The selector's live strategies run the money." : "The live paper account follows the blend of all active strategies."}</b> ${esc(D.explain || "")}</p>
+      <div class="lab-scroll" tabindex="0" role="region" aria-label="Selector against the blend"><table class="lab-tbl"><caption class="note">The whole self-evolving process replayed ${esc((R.selector && R.selector.whole && R.selector.whole.from) || "")} to ${esc((R.selector && R.selector.whole && R.selector.whole.to) || "")} with no future data at any step, after costs. The last two years (from ${esc(D.holdout_from || "")}) were never used to design anything. Companies listed today only, which flatters every strategy.</caption>
+      <thead><tr><th></th><th>Whole period</th><th>Design years</th><th>Held-out years</th></tr></thead>
+      <tbody>${[["selector", "Self-evolving selector (top 3)"], ["blend", "All active strategies, equal money"], ["nifty50", "NIFTY 50 held"]].map(([k, n]) => `<tr><td>${esc(n)}</td><td>${st((R[k] || {}).whole)}</td><td>${st((R[k] || {}).design)}</td><td>${st((R[k] || {}).holdout)}</td></tr>`).join("")}</tbody></table></div>`;
+    const live = (D.live || []).join(", ") || "none clears the skill bar";
+    h += `<p class="note">Strategies tried since 2010: ${esc(D.tried)}. Live by the selector now: <b>${esc(live)}</b>. Paper record since going live: ${esc(D.go_live || "")}. Orders for the next open across the active strategies: ${esc(D.blend_orders ?? 0)}.</p>
+      <div class="lab-scroll" tabindex="0" role="region" aria-label="Active strategies"><table class="lab-tbl"><caption class="note">Every active strategy, best chance of real skill first (deflated Sharpe ratio: the chance its record is not luck, given how many strategies were tried; 0.5 or more to go live). Each is a Rs 1 lakh paper account, at most 10 stocks, next-day-open fills, full Indian costs.</caption>
+      <thead><tr><th>Strategy</th><th>Came from</th><th>Chance of real skill</th><th>Since 2010</th><th>Held-out years</th><th>Holding now</th><th>Next open</th></tr></thead>
+      <tbody>${D.candidates.map(c => `<tr><td>${c.live ? "<b>live</b> · " : ""}${esc(c.family)}<br><small>${esc(c.rule)}</small></td><td><small>${esc(c.origin)}${c.born && c.born > "2010-01-04" ? `, from ${esc(c.born)}` : ""}</small></td>
+        <td><span class="${c.p_skill >= 0.5 ? "up" : c.p_skill < 0.1 ? "down" : "mut"}">${c.p_skill == null ? "not yet" : esc(Math.round(c.p_skill * 100) + "%")}</span></td><td>${st(c.whole)}</td><td>${st(c.holdout)}</td>
+        <td><small>${(c.positions || []).map(p => esc(p[0])).join(", ") || "-"}</small></td><td><small>${(c.orders || []).map(o => esc(`${o[0] === "enter" ? "in" : "out"} ${o[1]}`)).join(", ") || "-"}</small></td></tr>`).join("")}</tbody></table></div>`;
+    const S = D.states || {}, names = Object.keys(S), STS = ["up trend, low volatility", "up trend, normal volatility", "up trend, high volatility", "down trend, low volatility", "down trend, normal volatility", "down trend, high volatility"];
+    if (names.length) h += `<div class="lab-scroll" tabindex="0" role="region" aria-label="Strategies by market state"><table class="lab-tbl"><caption class="note">How each did in each kind of market (average daily return, as a yearly rate, on the days the regime bot gave that state; 60+ days only).</caption>
+      <thead><tr><th>Strategy</th>${STS.map(s => `<th${s === today ? ' class="lab-now"' : ""}>${esc(s)}${s === today ? " (today)" : ""}</th>`).join("")}</tr></thead>
+      <tbody>${names.map(n => `<tr><td>${esc(n)}</td>${STS.map(s => { const c = (S[n] || {})[s]; return `<td${s === today ? ' class="lab-now"' : ""}>${c ? `<span class="${c.yearly_pct > 0 ? "up" : "down"}">${esc(pc2(c.yearly_pct))}</span><br><small>${c.days} days</small>` : ""}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+    if ((D.retired || []).length) h += `<p class="note">Retired (6 re-picks in a row under a 10% chance of real skill; the pool never falls below 15): ${D.retired.slice(-12).map(r => esc(`${r.id} (${r.retired})`)).join(", ")}.</p>`;
   }
+  if (T6.detail) h += `<p class="note"><b>AI paper scout:</b> ${esc(T6.detail)}</p>${(((T6.data || {}).runs || []).slice(-1)[0] || {}).proposed?.length ? `<ul class="lab-ul">${T6.data.runs.slice(-1)[0].proposed.map(n => `<li>${esc(n.candidate)} from <a href="${esc(safeUrl(n.paper) || "#")}" rel="noopener noreferrer" target="_blank">${esc(n.title)}</a>: ${esc(n.why)}</li>`).join("")}</ul>` : ""}`;
   if (an && an.days) {
     h += `<p class="note">${esc(T5.detail || "")}</p><div class="lab-scroll" tabindex="0" role="region" aria-label="Analog days"><table class="lab-tbl"><thead><tr><th>Past day most like today</th><th>Distance</th><th>NIFTY 50, next 21 sessions</th><th>next 63</th><th>Bank Nifty, next 21</th></tr></thead>
       <tbody>${an.days.map(x => `<tr><td>${esc(x.date)}</td><td>${esc(x.distance)}</td><td class="${x.n50_21 > 0 ? "up" : "down"}">${esc(pc2(x.n50_21))}</td><td class="${x.n50_63 > 0 ? "up" : "down"}">${esc(pc2(x.n50_63))}</td><td>${esc(x.bank_21 == null ? "not measured" : pc2(x.bank_21))}</td></tr>`).join("")}</tbody></table></div>
@@ -212,7 +226,7 @@ async function boot() {
   catch (e) { root.innerHTML = `<p class="note">The research desk has not published yet (blab/status.json is missing). It runs every evening after the daily update.</p>`; return; }
   root.innerHTML = `<header class="lab-head">${headHtml(doc)}</header>
     <h2 class="sec-t">Divisions and bots</h2>${orgHtml(doc)}
-    ${techHtml(doc) ? `<h2 class="sec-t">Technical: market state, strategies, analogs</h2>${techHtml(doc)}` : ""}
+    ${techHtml(doc) ? `<h2 class="sec-t">Technical: market state, the self-evolving strategy desk, analogs</h2>${techHtml(doc)}` : ""}
     ${macroHtml(doc) ? `<h2 class="sec-t">Macro: India and US inputs, tested on Indian markets</h2>${macroHtml(doc)}` : ""}
     ${sentimentHtml(doc) ? `<h2 class="sec-t">Sentiment: AI news readings and event history</h2>${sentimentHtml(doc)}` : ""}
     <h2 class="sec-t">Findings</h2>${filtersHtml(doc)}<div id="lab-feed"></div>
