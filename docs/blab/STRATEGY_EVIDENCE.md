@@ -74,6 +74,12 @@ retirement needs 6 re-picks in a row under 0.1 and never takes the pool below 15
 scores are the parents for breeding. The first replay's numbers (selector 22.9% a year, blend 23.3%, NIFTY 50 10.3%) are kept
 in the record. (The grid gives 39 starting candidates, not "about 60" as first estimated.)
 
+**Bug fixed 2026-11-17, recorded honestly.** Indicators were computed on raw closes, so a single day without a trade blanked
+a stock's 200-day average for 200 days and a state filter then read the gap as "out", forcing exits (found while building
+the signal sheet). Indicators now use the last known close; entries still need a trade that day. Replay before the fix:
+selector 12.5% a year (Sharpe 0.64), blend 17.5% (0.88); after: selector 14.4% (0.70), blend 19.8% (0.95), NIFTY 50 10.3%
+(0.67). The conclusion (the selector does not beat the blend) is unchanged.
+
 ## 5. The AI paper scout (monthly, free)
 
 Reads new abstracts from arXiv's free API (q-fin.TR, q-fin.PM, q-fin.ST), asks a free model whether a paper proposes a

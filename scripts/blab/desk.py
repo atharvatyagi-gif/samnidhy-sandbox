@@ -127,6 +127,7 @@ def t4_desk(ctx):
                                  "text": f"Entry at the next open by a live strategy ({V.describe(c['fam'], c['p'], c.get('filt'))}); chosen by the selector with a {R['last_scores'].get(k, 0):.0%} probability of real skill.",
                                  "evidence": [{"src": "B-Lab strategy desk (NSE prices)", "url": "", "quote": k}]})
     blend_orders = sum(len(R["runs"][k]["orders"]) for k in active)
+    sheet = signal_sheet(M, R, live_ids or active)
     day = {"date": today, "mode": mode, "live": live_ids, "active": len(active), "orders": {k: R["runs"][k]["orders"] for k in (live_ids or active)}}
     ledger["days"] = [d for d in ledger["days"] if d["date"] != today] + [day]
     ledger["days"] = ledger["days"][-400:]
@@ -141,7 +142,67 @@ def t4_desk(ctx):
             "mode": mode, "explain": explain, "live": R["live"], "result": res, "holdout_from": hold, "tried": R["tried"], "go_live": ledger["go_live"],
             "candidates": rows, "retired": retired[-40:], "picks": R["picks"][-24:], "states": states,
             "curves": {"selector": R["selector_curve"], "blend": R["blend_curve"]}, "blend_orders": blend_orders,
+            "sheet": sheet,
             "detail": f"{len(active)} active simple strategies on {len(M.syms):,} NSE stocks ({R['tried']} tried since {V.START}, {len(retired)} retired). "
                       f"Live now: {', '.join(R['live']) or 'none clears the skill bar'}. {explain} "
                       f"Replay 2010-{today[:4]} after costs: selector {sel.get('cagr_pct')}% a year (worst fall {sel.get('worst_fall_pct')}%), "
                       f"blend {bl.get('cagr_pct')}% ({bl.get('worst_fall_pct')}%), NIFTY 50 {(res['nifty50']['whole'] or {}).get('cagr_pct')}%."}
+
+
+def stop_rule(M, c, j, t):
+    """The exit the strategy's own rule implies, as a price where it has one. -> (price or None, words)."""
+    import numpy as np
+    fam, p = c["fam"], c["p"]
+    if fam == "trend":
+        v = float(M.sma(p["n"])[t, j])
+        return (round(v, 2) if np.isfinite(v) else None), f"a close below the {p['n']}-day average (today {v:,.2f}) means out at the next open"
+    if fam == "breakout":
+        v = float(M.lo(p["out"], lag=0)[t, j])
+        return (round(v, 2) if np.isfinite(v) else None), f"a close below the lowest close of the last {p['out']} days (today {v:,.2f}) means out at the next open"
+    if fam == "cross":
+        return None, f"out when the {p['s']}-day average falls below the {p['l']}-day; no fixed price"
+    if fam == "rsi":
+        return None, f"out when RSI(14) reaches {p['hi']} or after {p['k']} sessions; no fixed price"
+    return None, "out at the monthly review if it drops out of the top 10; no fixed price"
+
+
+def trade_range(trades, since):
+    """Low / typical / high net result of the strategy's own closed trades since `since` (10th, 50th, 90th percentile)."""
+    import numpy as np
+    r = [t[5] for t in trades if t[2] == "exit" and t[5] is not None and t[0] >= since and len(t) <= 7]
+    if len(r) < 30:
+        return None, len(r)
+    q = np.percentile(r, [10, 50, 90])
+    days = [(np.datetime64(t[0]) - np.datetime64(t[6])).astype(int) for t in trades if t[2] == "exit" and len(t) <= 7 and t[0] >= since and t[6]]
+    return {"low": round(float(q[0]), 4), "typical": round(float(q[1]), 4), "high": round(float(q[2]), 4), "n": len(r), "days": int(np.median(days)) if days else None}, len(r)
+
+
+def signal_sheet(M, R, ids):
+    """One list of tomorrow's entries and exits across the strategies that hold the money (`ids`), each with the strategies that
+    agree, the reference price (last close), its rule's stop and the strategy's own tested range turned into prices."""
+    t = len(M.dates) - 1
+    col = {s: j for j, s in enumerate(M.syms)}
+    since = str(int(M.dates[t][:4]) - 3) + M.dates[t][4:]
+    rng = {k: trade_range(R["runs"][k]["trades"], since) for k in ids}
+    enter, exit_ = {}, {}
+    for k in ids:
+        c = R["pool"][k]
+        for side, sym in R["runs"][k]["orders"]:
+            j = col.get(sym)
+            if j is None:
+                continue
+            px = float(M.Cf[t, j])
+            row = (enter if side == "enter" else exit_).setdefault(sym, {"sym": sym, "ref_price": round(px, 2), "by": []})
+            item = {"strategy": k, "family": V.LABEL[c["fam"]], "rule": V.describe(c["fam"], c["p"], c.get("filt"))}
+            if side == "enter":
+                stop, words = stop_rule(M, c, j, t)
+                r, n = rng[k]
+                item.update({"stop": stop, "stop_rule": words, "trades_behind": n,
+                             "range": None if not r else {"low": round(px * (1 + r["low"]), 2), "typical": round(px * (1 + r["typical"]), 2), "high": round(px * (1 + r["high"]), 2),
+                                                          "days": r["days"], "from_trades": r["n"]}})
+            row["by"].append(item)
+    order = lambda d: sorted(d.values(), key=lambda x: (-len(x["by"]), x["sym"]))  # noqa: E731
+    return {"as_of": M.dates[t], "enter": order(enter), "exit": order(exit_),
+            "note": "Orders fill at the next open. Ranges are the 10th, 50th and 90th percentile of the strategy's own closed trades over the last 3 years "
+                    "(net of costs; shown only with 30 or more trades) applied to the last close: what similar past trades did, not a forecast. "
+                    "Stops are the strategy's own exit rule; strategies without a price rule say what makes them exit. Paper only, not investment advice."}

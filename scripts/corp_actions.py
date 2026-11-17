@@ -19,7 +19,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SPLIT = re.compile(r"(?:split|spilt|sub-?division|\bf\.?\s?v\b\.?|face\s*value)[^0-9]*?(?:rs|re)\.?\s*([\d.]+)[^0-9]*?to\s*(?:rs|re)\.?\s*([\d.]+)", re.I)
+SPLIT = re.compile(r"(?:split|spilt|\bspl\b|sub-?division|\bf\.?\s?v\b\.?|face\s*value)[^0-9]*?(?:rs|re)\.?\s*([\d.]+)[^0-9]*?to\s*(?:rs|re)?\.?\s*([\d.]+)", re.I)
 KEYWORDS = re.compile(r"split|spilt|sub-?division|\bf\.?\s?v\b|face\s*value|bonus", re.I)
 BONUS = re.compile(r"bonus\D*(\d+)\s*:\s*(\d+)", re.I)
 

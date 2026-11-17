@@ -162,6 +162,28 @@ export function techHtml(doc) {
   return h;
 }
 
+/* The strategy desk's signal sheet: tomorrow's entries and exits for the strategies that hold the money, each with the strategies that
+   agree, the reference price, the rule's own stop and the strategy's tested range. "" when not published. */
+export function sheetHtml(doc) {
+  const T4 = (doc.bots || []).find(b => b.id === "T4") || {};
+  const sh = (T4.data || {}).sheet;
+  if (!sh) return "";
+  const rs = v => v == null ? "-" : `Rs ${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+  const ent = sh.enter || [], ext = sh.exit || [];
+  let h = `<p class="note">Orders for the next open after the ${esc(sh.as_of)} close, from the strategies that hold the money now. ${esc(sh.note)}</p>`;
+  h += ent.length ? `<div class="lab-scroll" tabindex="0" role="region" aria-label="Entries for the next open"><table class="lab-tbl"><caption class="note">Enter at the next open (${ent.length})</caption>
+    <thead><tr><th>Stock</th><th>Last close</th><th>Strategies that agree</th><th>Stop (the rule's own exit)</th><th>Tested range (low / typical / high)</th></tr></thead>
+    <tbody>${ent.map(r => `<tr><td class="sym">${esc(r.sym)}</td><td>${esc(rs(r.ref_price))}</td><td>${r.by.map(b => `${esc(b.family)}<br><small>${esc(b.rule)}</small>`).join("<br>")}</td>
+      <td>${r.by.map(b => `${b.stop != null ? `<b>${esc(rs(b.stop))}</b><br>` : ""}<small>${esc(b.stop_rule || "")}</small>`).join("<br>")}</td>
+      <td>${r.by.map(b => b.range ? `${esc(rs(b.range.low))} / <b>${esc(rs(b.range.typical))}</b> / ${esc(rs(b.range.high))}<br><small>from ${b.range.from_trades} past trades, about ${esc(b.range.days ?? "?")} days held</small>` : `<small>too few past trades (${esc(b.trades_behind)} of 30)</small>`).join("<br>")}</td></tr>`).join("")}</tbody></table></div>`
+    : `<p class="note">No entries for the next open.</p>`;
+  h += ext.length ? `<div class="lab-scroll" tabindex="0" role="region" aria-label="Exits for the next open"><table class="lab-tbl"><caption class="note">Exit at the next open (${ext.length})</caption>
+    <thead><tr><th>Stock</th><th>Last close</th><th>Strategies exiting</th></tr></thead>
+    <tbody>${ext.map(r => `<tr><td class="sym">${esc(r.sym)}</td><td>${esc(rs(r.ref_price))}</td><td><small>${r.by.map(b => esc(b.family)).join(", ")}</small></td></tr>`).join("")}</tbody></table></div>`
+    : `<p class="note">No exits for the next open.</p>`;
+  return h;
+}
+
 /* The Macro division's own evidence: every series (value, date, source, late or not), today's factor levels and what NIFTY 50
    and the strategies did next on such days. "" when not published. */
 export function macroHtml(doc) {
@@ -227,6 +249,7 @@ async function boot() {
   root.innerHTML = `<header class="lab-head">${headHtml(doc)}</header>
     <h2 class="sec-t">Divisions and bots</h2>${orgHtml(doc)}
     ${techHtml(doc) ? `<h2 class="sec-t">Technical: market state, the self-evolving strategy desk, analogs</h2>${techHtml(doc)}` : ""}
+    ${sheetHtml(doc) ? `<h2 class="sec-t">Signal sheet: the strategy desk's orders for the next open</h2>${sheetHtml(doc)}` : ""}
     ${macroHtml(doc) ? `<h2 class="sec-t">Macro: India and US inputs, tested on Indian markets</h2>${macroHtml(doc)}` : ""}
     ${sentimentHtml(doc) ? `<h2 class="sec-t">Sentiment: AI news readings and event history</h2>${sentimentHtml(doc)}` : ""}
     <h2 class="sec-t">Findings</h2>${filtersHtml(doc)}<div id="lab-feed"></div>

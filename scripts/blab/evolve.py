@@ -148,7 +148,8 @@ class Market:
         recent_jump = pd.DataFrame(jump.astype(np.float32)).rolling(20, min_periods=1).max().to_numpy() > 0   # a one-day move beyond 45%: a data error until shown otherwise
         self.elig = (self.C >= MIN_PRICE) & (count >= MIN_HIST) & (tv >= MIN_VALUE) & ~recent_jump
         self.tv = np.nan_to_num(tv, nan=0.0)
-        self.pdC = C
+        self.pdC = pd.DataFrame(self.Cf)          # indicators on the last known close: a day without a trade must not blank a 200-day average
+                                                  # (fixed 2026-11-17; before, any gap blanked averages for n days and forced exits)
 
     def sma(self, n):
         import numpy as np

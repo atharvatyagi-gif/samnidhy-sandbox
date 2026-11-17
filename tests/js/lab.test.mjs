@@ -93,3 +93,15 @@ test("the Sentiment panel shows the AI readings and the event history; unsafe li
   assert.match(h, /class="up">positive/); assert.match(h, /Acquisition/); assert.match(h, /class="mut">\+4\.49%/); assert.match(h, /40 events, 4 months/);
   assert.ok(!/\b(buy|sell|target|recommendation|guaranteed)\b/i.test(h.replace(/<[^>]+>/g, " ")));   // visible text only: an <a target> attribute is not wording
 });
+
+import { sheetHtml } from "../../lab.js";
+test("the signal sheet lists entries with the rule's stop and a tested range, and exits; nothing when not published", () => {
+  assert.equal(sheetHtml(doc), "");
+  const d = { ...doc, bots: [...doc.bots, { id: "T4", data: { sheet: { as_of: "2026-11-17", note: "Paper only, not investment advice.",
+    enter: [{ sym: "TCS", ref_price: 3000, by: [{ strategy: "trend_n200", family: "Trend filter", rule: "hold while the close is above its 200-day average", stop: 2850.5, stop_rule: "a close below the 200-day average means out", trades_behind: 120, range: { low: 2700, typical: 3030, high: 3450, days: 40, from_trades: 120 } },
+                                                     { strategy: "mad", family: "Moving-average distance", rule: "top 10", stop: null, stop_rule: "out at the monthly review", trades_behind: 12, range: null }] }],
+    exit: [{ sym: "INFY", ref_price: 1500, by: [{ family: "Channel breakout" }] }] } } }] };
+  const h = sheetHtml(d);
+  for (const w of ["Enter at the next open (1)", "TCS", "Rs 3,000", "<b>Rs 2,850.5</b>", "Rs 2,700 / <b>Rs 3,030</b> / Rs 3,450", "from 120 past trades", "too few past trades (12 of 30)", "out at the monthly review", "Exit at the next open (1)", "INFY", "not investment advice"]) assert.ok(h.includes(w), w);
+  assert.ok(!/\b(buy|sell|target|recommendation|guaranteed)\b/i.test(h.replace(/<[^>]+>/g, " ")));
+});
