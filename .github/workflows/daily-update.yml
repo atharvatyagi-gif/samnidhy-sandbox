@@ -12,17 +12,10 @@ name: Daily update
 
 on:
   schedule:
-    # Times are UTC. Runs every day; on weekends and holidays it simply refreshes the last session.
-    # 13:30 UTC = 19:00 IST: the same day's session, once NSE has published its end-of-day file.
+    # Times are UTC. 13:30 UTC = 19:00 IST: the same day's session, once NSE has published its end-of-day file.
+    # The 07:30 and 09:00 IST morning runs are done by the Azure server.
     - cron: "30 13 * * *"
-    # 02:00 UTC = 07:30 IST: morning run, catches anything the evening run missed.
-    - cron: "0 2 * * *"
-    # 03:30 UTC = 09:00 IST: backup, in case GitHub started a run late or Yahoo was slow to publish.
-    - cron: "30 3 * * *"
   workflow_dispatch: # adds a "Run workflow" button on the Actions tab
-  push: # a change to this schedule runs the update straight away
-    branches: [main]
-    paths: [".github/workflows/daily-update.yml"]
 
 permissions:
   contents: write   # save the day's data in the repository

@@ -8,12 +8,8 @@
 name: ALADIN sentiment
 
 on:
-  schedule:
-    - cron: "40 * * * *"
+  # The live lane runs on the Azure server, not here; this file is kept only for a manual run (Actions tab > Run workflow).
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: [".github/workflows/aladin-sentiment.yml", "scripts/aladin_sentiment_engine.py", "data/config/news_aliases.json", "data/config/tone_words.json"]
 
 permissions:
   contents: write
