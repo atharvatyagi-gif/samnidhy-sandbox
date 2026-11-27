@@ -13,6 +13,7 @@ import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
 import { technicals, suggest } from "./chart-indicators.js";
 import { LIVE_RELAY_URL } from "./config.js";
 import { priceState } from "./market-state.js";
+import { histUrl, yahooRows } from "./yahoo-history.js";
 import { GlobeMap, freshGlobe } from "./globe-map.js";
 import * as Houses from "./desk-houses.js";
 import * as GeoDesk from "./desk-map.js";
@@ -411,16 +412,16 @@ async function loadDaily(sym) {
   return S.daily[sym];
 }
 const dailyOf = sym => S.daily[sym] || histOf(sym);
-// Older years (before the 5-year file) live on the repository's "history" branch; fetched when you scroll back.
-const ARCHIVE = "https://raw.githubusercontent.com/atharvatyagi-gif/samnidhy-sandbox/history/";
+// Older years (before the 5-year file): every daily candle since listing, from Yahoo through the site's worker (yahoo-history.js); fetched when you scroll back.
 S.arch = {};
 async function loadArchive(sym) {
   if (S.arch[sym] !== undefined) return S.arch[sym] === "loading" ? null : S.arch[sym];
   const cur = S.daily[sym]; if (!cur || !cur.length) return null;
   S.arch[sym] = "loading";
   try {
-    const r = await fetch(ARCHIVE + dkey(sym) + ".json"); if (!r.ok) throw new Error(r.status);
-    const d = (await r.json()).d, first = cur[0][0], ov = d.find(x => x[0] === first);
+    const r = await fetch(histUrl(sym, "1d")); if (!r.ok) throw new Error(r.status);
+    const d = yahooRows(await r.json(), false); if (!d.length) throw new Error("no rows");
+    const first = cur[0][0], ov = d.find(x => x[0] === first);
     const k = ov && ov[4] ? cur[0][4] / ov[4] : 1;              // a split since the archive was made: rescale the old part
     const old = d.filter(x => x[0] < first).map(x => [x[0], +(x[1] * k).toFixed(2), +(x[2] * k).toFixed(2), +(x[3] * k).toFixed(2), +(x[4] * k).toFixed(2), Math.round(x[5] / k)]);
     S.daily[sym] = old.concat(cur); S.arch[sym] = old;
@@ -599,13 +600,16 @@ async function scrollBack() {
   }
   return done(IVSEC[iv] >= 3600 ? "Start of the hourly history (about 2 years). Switch to 1D for decades." : "Start of the 5-minute history (about 60 days). Switch to 1h for 2 years, or 1D for decades.");
 }
-const INTRADAY_DEEP = "https://raw.githubusercontent.com/atharvatyagi-gif/samnidhy-sandbox/intraday/";
 S.deep = {};
-async function loadDeep(sym) {
+async function loadDeep(sym) {                               // 60 days of 5-minute + up to 2 years of hourly candles (yahoo-history.js)
   if (S.deep[sym] !== undefined) return S.deep[sym];
   try {
-    const r = await fetch(INTRADAY_DEEP + dkey(sym) + ".json"); if (!r.ok) throw new Error(r.status);
-    const d = await r.json();
+    const get = async (i, rg) => { const r = await fetch(histUrl(sym, i, rg)); if (!r.ok) throw new Error(r.status); return yahooRows(await r.json(), true); };
+    const [m5, h730] = await Promise.all([get("5m").catch(() => []), get("1h", "730d").catch(() => [])]);
+    let h1 = h730;
+    for (const rg of ["365d", "180d"]) if (!h1.length) h1 = await get("1h", rg).catch(() => []);     // recent listings: Yahoo refuses 730 days
+    if (!m5.length && !h1.length) throw new Error("no rows");
+    const d = { m5, h1 };
     const conv = rows => rows.map(x => ({ time: ts(x[0].slice(0, 10), x[0].slice(11, 16)), o: x[1], h: x[2], l: x[3], c: x[4], v: x[5] }));
     S.deep[sym] = { m5: d.m5 || [], h1: d.h1 || [], b5: conv(d.m5 || []), b60: conv(d.h1 || []) };
   } catch (e) { S.deep[sym] = null; }
