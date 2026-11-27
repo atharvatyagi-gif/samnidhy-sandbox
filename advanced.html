@@ -3934,7 +3934,16 @@
       pill.className = "status-pill stale"; txt.textContent = `Delayed · ${LIVE.last_bar_ist} IST`;
       note.textContent = `Prices have not refreshed for ${Math.round(ageMin)} minutes. They are shown as of ${LIVE.last_bar_ist} IST and will catch up on the next update.`;
       note.classList.add("show");
+    } else if (clockOpenNow() && ageMin > 25) {
+      /* NSE is open by the clock but the price file is old: updates stopped. Never call this "closed" (same rule as market-state.js). */
+      pill.className = "status-pill stale"; txt.textContent = `Prices not updating · last ${LIVE.last_bar_ist} IST`;
+      note.textContent = `The market is open, but prices have not refreshed for ${Math.round(ageMin)} minutes. They are shown as of ${LIVE.last_bar_ist} IST (${day}) and will catch up on the next update.`;
+      note.classList.add("show");
     } else { pill.className = "status-pill"; txt.textContent = `Market closed · ${day}`; }
+  }
+  function clockOpenNow() {
+    const n = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })), m = n.getHours() * 60 + n.getMinutes();
+    return n.getDay() >= 1 && n.getDay() <= 5 && m >= 555 && m <= 930;
   }
 
   /* ---------------- market weather ---------------- */

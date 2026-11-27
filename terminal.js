@@ -12,6 +12,7 @@ import * as RD from "./desk-revdeps.js";
 import { ChartEngine, CHART_TYPES } from "./chart-engine.js";
 import { technicals, suggest } from "./chart-indicators.js";
 import { LIVE_RELAY_URL } from "./config.js";
+import { priceState } from "./market-state.js";
 import { GlobeMap, freshGlobe } from "./globe-map.js";
 import * as Houses from "./desk-houses.js";
 import * as GeoDesk from "./desk-map.js";
@@ -203,7 +204,7 @@ function renderAsOf() {
   const prices = RP.on ? `<b>REPLAY of ${esc(dayLbl(RP.day))} at ${esc(rpClock(RP.k))} IST</b> · real NSE 1-minute prices played back (NIFTY 50 only) · not live prices`
     : LIVE.ok
     ? `Prices: <b>real-time</b> (NSE via Angel One) · ${esc(dayLbl(new Date().toLocaleDateString("en-CA", { timeZone: IST })))}`
-    : q.session_date ? `Prices: <b>${esc(dayLbl(q.session_date))} · ${esc(q.last_bar_ist || "")} IST</b> ${q.market === "open" ? "(market open · delayed about 15 min)" : "(market closed · last trading session)"} · published ${esc(agoTxt(pm))}`
+    : q.session_date ? `Prices: <b>${esc(dayLbl(q.session_date))} · ${esc(q.last_bar_ist || "")} IST</b> ${q.market === "open" ? "(market open · delayed about 15 min)" : priceState(q).state === "stale" ? "(market is open, but prices have not updated since this time)" : "(market closed · last trading session)"} · published ${esc(agoTxt(pm))}`
       + (S.uni ? ` · NSE end-of-day files: ${esc(dayLbl(S.uni.session_date))}` : "")
       + (S.nseLive && S.nseLive.stocks ? ` · <span title="nseindia.com's own public site data, unofficial and not a licensed feed">${Object.keys(S.nseLive.stocks).length} stocks tagged NSE carry NSE's own live numbers</span>` : "")
       : "Prices: not available";
@@ -306,10 +307,10 @@ function breadthNow() {
   return { a, d, u };
 }
 function renderMast() {
-  const open = S.qmeta.market === "open", b = breadthNow();
+  const open = S.qmeta.market === "open", b = breadthNow(), stale = priceState(S.qmeta).state === "stale";   // stale: NSE is open by the clock but the price file stopped updating
   $("#livechip").classList.toggle("on", open);
   $("#livechip").classList.toggle("rt", LIVE.ok);
-  $("#live-txt").textContent = RP.on ? `REPLAY · ${dayLbl(RP.day)}` : LIVE.ok ? "REAL-TIME · NSE" : Ticks.active() ? (Ticks.source() === "angel" ? "REAL-TIME · NSE (THIS PC)" : "LIVE · NSE WEB (THIS PC, 1-3 min)") : open ? "LIVE · DELAYED" : "MARKET CLOSED";
+  $("#live-txt").textContent = RP.on ? `REPLAY · ${dayLbl(RP.day)}` : LIVE.ok ? "REAL-TIME · NSE" : Ticks.active() ? (Ticks.source() === "angel" ? "REAL-TIME · NSE (THIS PC)" : "LIVE · NSE WEB (THIS PC, 1-3 min)") : open ? "LIVE · DELAYED" : stale ? "PRICES NOT UPDATING" : "MARKET CLOSED";
   $("#ms-stocks").textContent = S.uni.count.toLocaleString("en-IN");
   $("#ms-live").textContent = (S.qmeta.covered || 0).toLocaleString("en-IN");
   $("#ms-ad").textContent = `${b.a.toLocaleString("en-IN")} / ${b.d.toLocaleString("en-IN")}`;
