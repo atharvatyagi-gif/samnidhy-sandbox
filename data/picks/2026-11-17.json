@@ -1,0 +1,140 @@
+{
+  "session_date": "2026-11-17",
+  "source": {
+    "session_file": "https://nsearchives.nseindia.com/products/content/sec_bhavdata_full_17112026.csv",
+    "universe": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+    "universe_source": "downloaded"
+  },
+  "settings": {
+    "picks": {
+      "gainers_count": 3,
+      "losers_count": 3
+    },
+    "filters": {
+      "universe_name": "NIFTY 500",
+      "universe_url": "https://niftyindices.com/IndexConstituent/ind_nifty500list.csv",
+      "series": [
+        "EQ"
+      ],
+      "min_price": 50,
+      "min_turnover_crore": 10,
+      "max_abs_move_pct": 30,
+      "min_history_years": 1,
+      "exclude_prefixes": [
+        "DUMMY"
+      ],
+      "exclude_symbols": []
+    }
+  },
+  "universe_count": 495,
+  "eligible_count": 445,
+  "gainers": [
+    {
+      "group": "gainer",
+      "rank": 1,
+      "label": "Top Gainer #1",
+      "symbol": "FIRSTCRY",
+      "yahoo_ticker": "FIRSTCRY.NS",
+      "name": "Brainbees Solutions Ltd.",
+      "industry": "Consumer Services",
+      "prev_close": 158.59,
+      "open": 157.85,
+      "high": 182.0,
+      "low": 156.6,
+      "close": 178.97,
+      "pct_change": 12.8507,
+      "volume": 136854430,
+      "turnover_crore": 2420.2
+    },
+    {
+      "group": "gainer",
+      "rank": 2,
+      "label": "Top Gainer #2",
+      "symbol": "SIGNATURE",
+      "yahoo_ticker": "SIGNATURE.NS",
+      "name": "Signatureglobal (India) Ltd.",
+      "industry": "Realty",
+      "prev_close": 765.6,
+      "open": 765.9,
+      "high": 844.0,
+      "low": 765.15,
+      "close": 835.6,
+      "pct_change": 9.1432,
+      "volume": 1797681,
+      "turnover_crore": 147.72
+    },
+    {
+      "group": "gainer",
+      "rank": 3,
+      "label": "Top Gainer #3",
+      "symbol": "WELSPUNLIV",
+      "yahoo_ticker": "WELSPUNLIV.NS",
+      "name": "Welspun Living Ltd.",
+      "industry": "Textiles",
+      "prev_close": 246.13,
+      "open": 246.13,
+      "high": 267.5,
+      "low": 244.11,
+      "close": 265.62,
+      "pct_change": 7.9186,
+      "volume": 12244187,
+      "turnover_crore": 319.44
+    }
+  ],
+  "losers": [
+    {
+      "group": "loser",
+      "rank": 1,
+      "label": "Top Loser #1",
+      "symbol": "URBANCO",
+      "yahoo_ticker": "URBANCO.NS",
+      "name": "Urban Company Ltd.",
+      "industry": "Consumer Services",
+      "prev_close": 171.7,
+      "open": 172.1,
+      "high": 173.15,
+      "low": 160.5,
+      "close": 161.63,
+      "pct_change": -5.8649,
+      "volume": 28788011,
+      "turnover_crore": 472.55
+    },
+    {
+      "group": "loser",
+      "rank": 2,
+      "label": "Top Loser #2",
+      "symbol": "INDIACEM",
+      "yahoo_ticker": "INDIACEM.NS",
+      "name": "India Cements Ltd.",
+      "industry": "Construction Materials",
+      "prev_close": 336.85,
+      "open": 336.85,
+      "high": 337.0,
+      "low": 319.0,
+      "close": 321.5,
+      "pct_change": -4.5569,
+      "volume": 929060,
+      "turnover_crore": 30.1
+    },
+    {
+      "group": "loser",
+      "rank": 3,
+      "label": "Top Loser #3",
+      "symbol": "CONCORDBIO",
+      "yahoo_ticker": "CONCORDBIO.NS",
+      "name": "Concord Biotech Ltd.",
+      "industry": "Healthcare",
+      "prev_close": 581.0,
+      "open": 584.4,
+      "high": 584.4,
+      "low": 553.5,
+      "close": 554.8,
+      "pct_change": -4.5095,
+      "volume": 690494,
+      "turnover_crore": 38.85
+    }
+  ],
+  "skipped": [],
+  "fetched_at_utc": "2026-11-18T03:31:20+00:00",
+  "fetched_at_ist": "18 Nov 2026, 09:01 AM IST"
+}
