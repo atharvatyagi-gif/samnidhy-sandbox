@@ -7,9 +7,6 @@ name: Verify terminal-v2 sources
 
 on:
   workflow_dispatch:
-  push:
-    branches: [terminal-v2]
-    paths: [".github/workflows/verify-terminal-v2-sources.yml", "scripts/verify_terminal_v2_sources.py"]
 
 permissions:
   contents: write

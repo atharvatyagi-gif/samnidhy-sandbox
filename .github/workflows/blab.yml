@@ -13,9 +13,6 @@ on:
     - cron: "30 15 * * *"
     - cron: "45 2 * * *"
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: [".github/workflows/blab.yml", "scripts/blab/**"]
 
 permissions:
   contents: write

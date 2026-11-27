@@ -17,12 +17,8 @@
 name: Globe data
 
 on:
-  schedule:
-    - cron: "20 * * * *"   # hourly backup in case the heartbeat is ever down
+  # The live lane runs on the Azure server, not here; this file is kept only for a manual run (Actions tab > Run workflow).
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: [".github/workflows/globe-data.yml", "scripts/globe_data.py", "scripts/globe_layers.py", "scripts/geo_tension.py", "data/config/geo_exposure.json"]
 
 permissions:
   contents: write

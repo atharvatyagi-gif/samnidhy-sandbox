@@ -4,8 +4,7 @@
 name: Crypto live
 
 on:
-  schedule:
-    - cron: "*/15 * * * *"
+  # The live lane runs on the Azure server, not here; this file is kept only for a manual run (Actions tab > Run workflow).
   workflow_dispatch:
 
 permissions:
